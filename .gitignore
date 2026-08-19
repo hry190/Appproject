@@ -1,0 +1,3 @@
+# Local Claude Code config — must never be committed (contains Figma PAT)
+.mcp.json
+.mcp.local.json
