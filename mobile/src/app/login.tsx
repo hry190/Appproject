@@ -177,11 +177,11 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* 密码模式下：「忘记密码？」链接（密码字段下方右对齐） */}
+          {/* 密码模式下：「忘记密码？找回密码」链接（密码字段下方右对齐） */}
           {mode === 'password' && (
             <Pressable
               accessibilityRole="link"
-              accessibilityLabel="忘记密码"
+              accessibilityLabel="忘记密码 找回密码"
               onPress={() => router.push('/forgot')}
               hitSlop={8}
               style={styles.forgotLinkWrap}>
@@ -189,7 +189,7 @@ export default function LoginScreen() {
                 style={styles.forgotLink}
                 maxFontSizeMultiplier={1.6}
                 allowFontScaling>
-                忘记密码？
+                忘记密码?找回密码
               </Text>
             </Pressable>
           )}
@@ -538,12 +538,13 @@ const styles = StyleSheet.create({
   /* Forgot Link（仅密码模式） */
   forgotLinkWrap: {
     marginTop: 8,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
   },
   forgotLink: {
-    fontSize: 12,
-    color: ACTION_GRAY,
+    fontSize: 13,
+    color: TEXT_DARK,
     fontFamily: 'Microsoft YaHei',
+    textDecorationLine: 'underline',
   },
 
   /* Agreement Row */
