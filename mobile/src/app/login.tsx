@@ -80,14 +80,14 @@ export default function LoginScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: mode === 'code' }}
               onPress={() => setMode('code')}
-              style={[styles.tabHalf, styles.tabActive]}>
+              style={[styles.tabHalf, mode === 'code' ? styles.tabActive : styles.tabInactive]}>
               <Image
                 source={pandaFace}
                 style={styles.faceIcon}
                 resizeMode="contain"
               />
               <Text
-                style={[styles.tabText, styles.tabTextActive]}
+                style={[styles.tabText, mode === 'code' ? styles.tabTextActive : styles.tabTextInactive]}
                 maxFontSizeMultiplier={1.4}
                 numberOfLines={1}
                 allowFontScaling>
@@ -99,9 +99,9 @@ export default function LoginScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: mode === 'password' }}
               onPress={() => setMode('password')}
-              style={[styles.tabHalf, styles.tabInactive]}>
+              style={[styles.tabHalf, mode === 'password' ? styles.tabActive : styles.tabInactive]}>
               <Text
-                style={[styles.tabText, styles.tabTextInactive]}
+                style={[styles.tabText, mode === 'password' ? styles.tabTextActive : styles.tabTextInactive]}
                 maxFontSizeMultiplier={1.4}
                 numberOfLines={1}
                 allowFontScaling>
