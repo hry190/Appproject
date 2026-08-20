@@ -388,6 +388,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Microsoft YaHei',
     letterSpacing: 1.2,
     paddingVertical: 0,
+    lineHeight: 18,              // 显式行高，杜绝 Android 抖动
+    textAlignVertical: 'center', // Android 垂直居中
+    includeFontPadding: false,   // 去掉 Android 默认字体内边距
   },
   divider: {
     width: 1,
