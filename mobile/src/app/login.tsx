@@ -380,18 +380,18 @@ const styles = StyleSheet.create({
   },
   ipNiang: {
     position: 'absolute',
-    top: 80,
+    top: 60,
     right: 0,
-    width: 53,
-    height: 150,
+    width: 70,
+    height: 200,
   },
   decor3: {
     position: 'absolute',
-    top: 30,
-    right: -30,
-    width: 130,
-    height: 130,
-    opacity: 0.85,
+    top: 0,
+    left: -40,
+    width: 220,
+    height: 220,
+    opacity: 0.9,
   },
   decor1: {
     position: 'absolute',
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.6,
+    opacity: 0.85,
   },
 
   /* WELCOME */
