@@ -30,6 +30,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# Figma design raw exports (cache, not source)
+.figma-design.json
+.figma-*.json
+
 # local env files
 .env*.local
 
