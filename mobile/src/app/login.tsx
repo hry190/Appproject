@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     marginTop: 80,            // Figma 148dp 间距缩到 80，平衡可视图比例
     marginHorizontal: Layout.px,
     backgroundColor: WHITE,
-    paddingTop: 21,           // 模拟 Figma 白条顶部 21dp 溢出区
+    paddingTop: 0,           // 模拟 Figma 白条顶部 21dp 溢出区
     borderTopRightRadius: 25,
     borderTopLeftRadius: 0,
   },
