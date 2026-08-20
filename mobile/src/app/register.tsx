@@ -64,7 +64,7 @@ export default function RegisterScreen() {
           <View style={styles.header}>
             <Pressable
               hitSlop={12}
-              onPress={() => router.back()}
+              onPress={() => router.replace('/login')}
               accessibilityRole="button"
               accessibilityLabel="返回登录页"
               style={styles.backBtn}>
