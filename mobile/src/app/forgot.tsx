@@ -343,18 +343,18 @@ const styles = StyleSheet.create({
   /* Panda Decorations */
   pandaDecor: {
     position: 'absolute',
-    top: 30,
-    right: 0,
-    width: 260,
-    height: 240,
+    top: 0,
+    right: -20,
+    width: 200,
+    height: 200,
     opacity: 0.9,
   },
   pandaThinking: {
     position: 'absolute',
-    top: 130,
-    right: 30,
+    top: 40,
+    right: 0,
     width: 110,
-    height: 150,
+    height: 100,
     opacity: 0.95,
   },
 
