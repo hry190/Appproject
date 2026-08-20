@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Layout } from '@/constants/theme';
+import ipNiang from '@/assets/images/login/ip-niang.png';
+import pandaFace from '@/assets/images/login/panda-face.png';
+import decor1 from '@/assets/images/login/decor-1.png';
+import decor2 from '@/assets/images/login/decor-2.png';
+import decor3 from '@/assets/images/login/decor-3.png';
 
 /**
- * 登录页 —— 验证码登录 / 密码登录 双 Tab 切换。
+ * 登录页 —— 验证码 / 密码 双 Tab 切换。
  *
  * 布局策略（v2，已按 Figma 节点 185:1476 实测调整）：
  * 1. flex 替代 absolute——WELCOME / Tab / Card 按内容流排版
@@ -38,14 +43,21 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<LoginMode>('code');
   const [phone, setPhone] = useState('');
   const [secret, setSecret] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   const handleLogin = () => {
+    if (!agreed) {
+      // TODO: 弹 toast 提示勾选协议
+      console.warn('[login] 未勾选用户协议');
+      return;
+    }
     // TODO: 接入登录 API
     router.replace('/(tabs)');
   };
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
+      <View style={styles.canvas}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -61,42 +73,54 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* 2. Tab 切换条 */}
-        <View style={styles.tabBar}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: mode === 'code' }}
-            onPress={() => setMode('code')}
-            style={[styles.tabHalf, styles.tabActive]}>
-            <View style={styles.faceIcon}>
-              <View style={[styles.eye, styles.eyeLeft]} />
-              <View style={[styles.eye, styles.eyeRight]} />
-              <View style={styles.faceMouth} />
-            </View>
-            <Text
-              style={[styles.tabText, styles.tabTextActive]}
-              maxFontSizeMultiplier={1.4}
-              allowFontScaling>
-              验证码登录
-            </Text>
-          </Pressable>
+        {/* 2. Rectangle 172 白条（含 Tab 切换条） */}
+        <View style={styles.tabStrip}>
+          <View style={styles.tabBar}>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: mode === 'code' }}
+              onPress={() => setMode('code')}
+              style={[styles.tabHalf, styles.tabActive]}>
+              <Image
+                source={pandaFace}
+                style={styles.faceIcon}
+                resizeMode="contain"
+              />
+              <Text
+                style={[styles.tabText, styles.tabTextActive]}
+                maxFontSizeMultiplier={1.4}
+                numberOfLines={1}
+                allowFontScaling>
+                验证码
+              </Text>
+            </Pressable>
 
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: mode === 'password' }}
-            onPress={() => setMode('password')}
-            style={[styles.tabHalf, styles.tabInactive]}>
-            <Text
-              style={[styles.tabText, styles.tabTextInactive]}
-              maxFontSizeMultiplier={1.4}
-              allowFontScaling>
-              密码登录
-            </Text>
-          </Pressable>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: mode === 'password' }}
+              onPress={() => setMode('password')}
+              style={[styles.tabHalf, styles.tabInactive]}>
+              <Text
+                style={[styles.tabText, styles.tabTextInactive]}
+                maxFontSizeMultiplier={1.4}
+                numberOfLines={1}
+                allowFontScaling>
+                密码
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* 3. 主区卡：flex:1 拿剩余高度 */}
         <View style={styles.card}>
+          {/* 装饰图：橄榄绿底上的竹枝（覆盖在卡背景） */}
+          <Image
+            source={decor2}
+            style={styles.cardDecor}
+            resizeMode="cover"
+            pointerEvents="none"
+          />
+
           {/* 字段 1：手机号 */}
           <View style={styles.field}>
             <Text style={styles.label} allowFontScaling>手机号</Text>
@@ -110,6 +134,7 @@ export default function LoginScreen() {
                 maxLength={11}
                 value={phone}
                 onChangeText={setPhone}
+                maxFontSizeMultiplier={1.4}
                 allowFontScaling
               />
             </View>
@@ -131,6 +156,7 @@ export default function LoginScreen() {
                 maxLength={mode === 'code' ? 6 : 24}
                 value={secret}
                 onChangeText={setSecret}
+                maxFontSizeMultiplier={1.4}
                 allowFontScaling
               />
               {mode === 'code' && (
@@ -148,9 +174,6 @@ export default function LoginScreen() {
               )}
             </View>
           </View>
-
-          {/* Spacer: 把下面推到卡的下半 */}
-          <View style={styles.spacer} />
 
           {/* 登录按钮 */}
           <Pressable
@@ -180,10 +203,81 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
 
+          {/* 协议行（圆点复选框 + 文本；点击行内任意非链接区切换状态） */}
+          <View style={styles.agreementRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: agreed }}
+              onPress={() => setAgreed((v) => !v)}
+              style={styles.checkboxWrap}
+              hitSlop={8}>
+              <View style={[styles.checkbox, agreed && styles.checkboxOn]}>
+                {agreed ? <Text style={styles.checkmark}>✓</Text> : null}
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setAgreed((v) => !v)}
+              style={styles.agreementTextWrap}
+              hitSlop={4}>
+              <Text
+                style={styles.agreementText}
+                maxFontSizeMultiplier={1.6}
+                allowFontScaling>
+                我已阅读并同意
+              </Text>
+            </Pressable>
+
+            <Text
+              style={styles.agreementLink}
+              maxFontSizeMultiplier={1.6}
+              allowFontScaling
+              onPress={() => { /* TODO: 跳《用户协议》 */ }}>
+              《用户协议》
+            </Text>
+
+            <Text
+              style={styles.agreementText}
+              maxFontSizeMultiplier={1.6}
+              allowFontScaling>
+              和
+            </Text>
+
+            <Text
+              style={styles.agreementLink}
+              maxFontSizeMultiplier={1.6}
+              allowFontScaling
+              onPress={() => { /* TODO: 跳《隐私条款》 */ }}>
+              《隐私条款》
+            </Text>
+          </View>
+
           {/* 底部安全区缓冲（避手势条 / 三键导航） */}
           <View style={{ height: insets.bottom }} />
         </View>
       </ScrollView>
+
+      {/* IP娘角色立绘（右侧装饰，绝对定位覆盖内容） */}
+      <Image
+        source={ipNiang}
+        style={[styles.ipNiang, { pointerEvents: 'none' }]}
+        resizeMode="contain"
+      />
+
+      {/* 装饰图 decor-3：右上角灰色竹叶 */}
+      <Image
+        source={decor3}
+        style={[styles.decor3, { pointerEvents: 'none' }]}
+        resizeMode="contain"
+      />
+
+      {/* 装饰图 decor-1：底部水墨氛围（半透）） */}
+      <Image
+        source={decor1}
+        style={[styles.decor1, { pointerEvents: 'none' }]}
+        resizeMode="contain"
+      />
+      </View>
     </SafeAreaView>
   );
 }
@@ -277,8 +371,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: CREAM,
   },
+  canvas: {
+    flex: 1,
+    position: 'relative',
+  },
   scrollContent: {
     flexGrow: 1,
+  },
+  ipNiang: {
+    position: 'absolute',
+    top: 80,
+    right: 0,
+    width: 53,
+    height: 150,
+  },
+  decor3: {
+    position: 'absolute',
+    top: 30,
+    right: -30,
+    width: 130,
+    height: 130,
+    opacity: 0.85,
+  },
+  decor1: {
+    position: 'absolute',
+    bottom: 0,
+    left: -50,
+    width: 200,
+    height: 190,
+    opacity: 0.5,
+  },
+  cardDecor: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.6,
   },
 
   /* WELCOME */
@@ -294,10 +423,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  /* Rectangle 172 白条 */
+  tabStrip: {
+    marginTop: 80,            // Figma 148dp 间距缩到 80，平衡可视图比例
+    marginHorizontal: Layout.px,
+    backgroundColor: WHITE,
+    paddingTop: 21,           // 模拟 Figma 白条顶部 21dp 溢出区
+    borderTopRightRadius: 25,
+    borderTopLeftRadius: 0,
+  },
+
   /* Tab Bar */
   tabBar: {
-    marginTop: Layout.sectionGap * 2,
-    marginHorizontal: Layout.px,
     height: 64,
     flexDirection: 'row',
     overflow: 'hidden',
@@ -320,38 +457,9 @@ const styles = StyleSheet.create({
 
   /* Face Icon */
   faceIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: FACE_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: FACE_BORDER,
-  },
-  eye: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: TEXT_DARK,
-    top: 12,
-  },
-  eyeLeft: { left: 9 },
-  eyeRight: { left: 21 },
-  faceMouth: {
-    position: 'absolute',
-    width: 14,
-    height: 7,
-    borderBottomLeftRadius: 7,
-    borderBottomRightRadius: 7,
-    borderColor: TEXT_DARK,
-    borderWidth: 1.5,
-    borderTopWidth: 0,
-    top: 18,
-    left: 11,
+    width: 30,
+    height: 28,
+    marginRight: 8,
   },
 
   /* Card */
@@ -364,6 +472,7 @@ const styles = StyleSheet.create({
     backgroundColor: OLIVE,
     paddingHorizontal: Layout.contentInset,
     paddingTop: 60,
+    paddingBottom: 60,    // ← 呼吸区放卡片底部
   },
 
   /* Field */
@@ -407,9 +516,7 @@ const styles = StyleSheet.create({
   },
 
   /* Spacer */
-  spacer: {
-    flex: 1,
-  },
+  // 已移除 — 由 card.paddingBottom 60 提供呼吸区
 
   /* Login Button */
   loginBtn: {
@@ -436,5 +543,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: TEXT_DARK,
     fontFamily: 'Microsoft YaHei',
+  },
+
+  /* Agreement Row */
+  agreementRow: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 4,
+  },
+  checkboxWrap: {
+    paddingVertical: 4,
+    paddingRight: 4,
+  },
+  agreementTextWrap: {
+    paddingVertical: 4,
+  },
+  checkbox: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: TEXT_DARK,
+    backgroundColor: 'transparent',
+    marginRight: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxOn: {
+    backgroundColor: TEXT_DARK,
+  },
+  checkmark: {
+    color: '#F4E7D1',
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 10,
+  },
+  agreementText: {
+    fontSize: 12,
+    color: TEXT_DARK,
+    fontFamily: 'Microsoft YaHei',
+  },
+  agreementLink: {
+    fontSize: 12,
+    color: TEXT_DARK,
+    fontFamily: 'Microsoft YaHei',
+    textDecorationLine: 'underline',
   },
 });
