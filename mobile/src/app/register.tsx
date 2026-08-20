@@ -55,21 +55,34 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <View style={styles.canvas}>
+        {/* 装饰层 - 先渲染，在最底层；pointerEvents="none" 让触摸穿透 */}
+        <Image
+          source={decorSide}
+          style={styles.ipNiang}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
+        <Image
+          source={decor3}
+          style={styles.decor3}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
+        <Image
+          source={decor1}
+          style={styles.decor1}
+          resizeMode="contain"
+          pointerEvents="none"
+        />
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 
-          {/* 1. 顶部标题区：返回按钮 + panda 脸 + 「注册」 */}
+          {/* 1. 顶部标题区：spacer（给绝对定位的返回按钮预留位置）+ panda 脸 + 「注册」 */}
           <View style={styles.header}>
-            <Pressable
-              hitSlop={12}
-              onPress={() => router.replace('/login')}
-              accessibilityRole="button"
-              accessibilityLabel="返回登录页"
-              style={styles.backBtn}>
-              <Text style={styles.backArrow}>‹</Text>
-            </Pressable>
+            <View style={styles.headerSpacer} />
             <Image
               source={pandaFace}
               style={styles.faceIcon}
@@ -233,23 +246,23 @@ export default function RegisterScreen() {
         {/* decor-side 角色立绘（右侧装饰） */}
         <Image
           source={decorSide}
-          style={[styles.ipNiang, { pointerEvents: 'none' }]}
+          style={styles.ipNiang}
           resizeMode="contain"
+          pointerEvents="none"
         />
 
-        {/* 装饰图 decor-3：右上角灰色竹叶 */}
-        <Image
-          source={decor3}
-          style={[styles.decor3, { pointerEvents: 'none' }]}
-          resizeMode="contain"
-        />
-
-        {/* 装饰图 decor-1：底部水墨氛围 */}
-        <Image
-          source={decor1}
-          style={[styles.decor1, { pointerEvents: 'none' }]}
-          resizeMode="contain"
-        />
+        {/* 返回按钮 —— canvas 最外层，绝对定位，永远在装饰图之上 */}
+        <Pressable
+          hitSlop={16}
+          onPress={() => router.replace('/login')}
+          accessibilityRole="button"
+          accessibilityLabel="返回登录页"
+          style={({ pressed }) => [
+            styles.backBtnAbsolute,
+            pressed && styles.backBtnPressed,
+          ]}>
+          <Text style={styles.backArrow}>‹</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -330,12 +343,25 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     marginTop: 12,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+  /* 给绝对定位的返回按钮预留位置：44dp 按钮 + 8dp 间距 */
+  headerSpacer: {
+    width: 52,
+  },
+  backBtnAbsolute: {
+    position: 'absolute',
+    top: 24,           // 原来 header paddingTop 12 + marginTop 12
+    left: 16,          // 原来 header paddingHorizontal 16
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    backgroundColor: 'transparent',
+    zIndex: 999,       // 强制在最上层
+  },
+  backBtnPressed: {
+    backgroundColor: 'rgba(0,0,0,0.10)',
+    transform: [{ scale: 0.9 }],
   },
   backArrow: {
     fontSize: 32,

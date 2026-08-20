@@ -60,6 +60,26 @@ export default function LoginScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <View style={styles.canvas}>
+      {/* 装饰层 - 先渲染，在最底层；pointerEvents="none" 让触摸穿透 */}
+      <Image
+        source={decorSide}
+        style={styles.ipNiang}
+        resizeMode="contain"
+        pointerEvents="none"
+      />
+      <Image
+        source={decor3}
+        style={styles.decor3}
+        resizeMode="contain"
+        pointerEvents="none"
+      />
+      <Image
+        source={decor1}
+        style={styles.decor1}
+        resizeMode="contain"
+        pointerEvents="none"
+      />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -275,27 +295,6 @@ export default function LoginScreen() {
           <View style={{ height: insets.bottom }} />
         </View>
       </ScrollView>
-
-      {/* decor-side 角色立绘（右侧装饰，绝对定位覆盖内容） */}
-      <Image
-        source={decorSide}
-        style={[styles.ipNiang, { pointerEvents: 'none' }]}
-        resizeMode="contain"
-      />
-
-      {/* 装饰图 decor-3：右上角灰色竹叶 */}
-      <Image
-        source={decor3}
-        style={[styles.decor3, { pointerEvents: 'none' }]}
-        resizeMode="contain"
-      />
-
-      {/* 装饰图 decor-1：底部水墨氛围（半透）） */}
-      <Image
-        source={decor1}
-        style={[styles.decor1, { pointerEvents: 'none' }]}
-        resizeMode="contain"
-      />
       </View>
     </SafeAreaView>
   );
