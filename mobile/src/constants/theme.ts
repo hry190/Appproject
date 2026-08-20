@@ -75,5 +75,32 @@ export const Spacing = {
   six: 64,
 } as const;
 
+/**
+ * 布局 token —— 来自 Figma 节点 185:1476 实测。
+ * 用 dp 单位（非 px），覆盖 360×640 模拟器 ~ 412×917 小米 12。
+ */
+export const Layout = {
+  /** 帧横向 gutter（卡片到屏幕边） */
+  px: 8,
+  /** 卡内输入框到卡边的内 padding */
+  contentInset: 23,
+  /** 字段间 / 字段到按钮的垂直 gap */
+  contentGap: 24,
+  /** 短间距，用于 WELCOME → tab 等小呼吸 */
+  sectionGap: 12,
+
+  /** 卡片上圆角 */
+  radiusCard: 25,
+  /** 输入框圆角 */
+  radiusField: 5,
+  /** 登录按钮圆角 */
+  radiusButton: 10,
+
+  /** 输入框最小高度 */
+  inputH: 50,
+  /** 登录按钮 padding-vertical 推出的高度（约 56） */
+  buttonVPad: 16,
+} as const;
+
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
