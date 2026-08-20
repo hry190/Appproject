@@ -9,6 +9,8 @@ import pandaFace from '@/assets/images/login/panda-face.png';
 import decor1 from '@/assets/images/login/decor-1.png';
 import decor2 from '@/assets/images/login/decor-2.png';
 import decor3 from '@/assets/images/login/decor-3.png';
+import peopleSafe from '@/assets/images/login/People-safe.png';
+import keyIcon from '@/assets/images/login/Key.png';
 
 /**
  * 登录页 —— 验证码 / 密码 双 Tab 切换。
@@ -146,7 +148,7 @@ export default function LoginScreen() {
               {mode === 'code' ? '验证码' : '密码'}
             </Text>
             <View style={styles.inputBox}>
-              <ShieldGlyph />
+              <ShieldGlyph variant={mode} />
               <TextInput
                 style={styles.input}
                 placeholder={mode === 'code' ? '请输入验证码' : '请输入密码'}
@@ -294,13 +296,13 @@ function IphoneGlyph() {
   );
 }
 
-function ShieldGlyph() {
+function ShieldGlyph({ variant }: { variant: 'code' | 'password' }) {
   return (
-    <View style={glyphStyles.wrap}>
-      <View style={glyphStyles.shieldBody} />
-      <View style={glyphStyles.shieldCheckA} />
-      <View style={glyphStyles.shieldCheckB} />
-    </View>
+    <Image
+      source={variant === 'code' ? peopleSafe : keyIcon}
+      style={glyphStyles.wrap}
+      resizeMode="contain"
+    />
   );
 }
 
@@ -309,8 +311,6 @@ const glyphStyles = StyleSheet.create({
     width: 22,
     height: 22,
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   iphoneBody: {
     width: 14,
@@ -334,33 +334,6 @@ const glyphStyles = StyleSheet.create({
     height: 1.5,
     backgroundColor: TEXT_DARK,
     borderRadius: 1,
-  },
-  shieldBody: {
-    width: 18,
-    height: 18,
-    borderWidth: 1.5,
-    borderColor: TEXT_DARK,
-    borderTopLeftRadius: 9,
-    borderTopRightRadius: 9,
-    transform: [{ rotate: '180deg' }],
-  },
-  shieldCheckA: {
-    position: 'absolute',
-    width: 4,
-    height: 1.5,
-    backgroundColor: TEXT_DARK,
-    bottom: 7,
-    left: 4,
-    transform: [{ rotate: '45deg' }],
-  },
-  shieldCheckB: {
-    position: 'absolute',
-    width: 8,
-    height: 1.5,
-    backgroundColor: TEXT_DARK,
-    bottom: 6,
-    left: 6,
-    transform: [{ rotate: '-45deg' }],
   },
 });
 
