@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Layout } from '@/constants/theme';
-import ipNiang from '@/assets/images/login/ip-niang.png';
+import decorSide from '@/assets/images/login/decor-side.png';
 import pandaFace from '@/assets/images/login/panda-face.png';
 import decor1 from '@/assets/images/login/decor-1.png';
 import decor2 from '@/assets/images/login/decor-2.png';
@@ -259,9 +259,9 @@ export default function LoginScreen() {
         </View>
       </ScrollView>
 
-      {/* IP娘角色立绘（右侧装饰，绝对定位覆盖内容） */}
+      {/* decor-side 角色立绘（右侧装饰，绝对定位覆盖内容） */}
       <Image
-        source={ipNiang}
+        source={decorSide}
         style={[styles.ipNiang, { pointerEvents: 'none' }]}
         resizeMode="contain"
       />
