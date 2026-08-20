@@ -91,7 +91,7 @@ export default function LoginScreen() {
                 maxFontSizeMultiplier={1.4}
                 numberOfLines={1}
                 allowFontScaling>
-                验证码
+                验证码登录
               </Text>
             </Pressable>
 
@@ -105,7 +105,7 @@ export default function LoginScreen() {
                 maxFontSizeMultiplier={1.4}
                 numberOfLines={1}
                 allowFontScaling>
-                密码
+                密码登录
               </Text>
             </Pressable>
           </View>
@@ -383,12 +383,12 @@ const styles = StyleSheet.create({
     top: 60,
     right: 0,
     width: 70,
-    height: 200,
+    height: 100,
   },
   decor3: {
     position: 'absolute',
     top: 0,
-    left: -40,
+    left:-35,
     width: 220,
     height: 220,
     opacity: 0.9,
@@ -397,14 +397,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: -50,
-    width: 200,
+    width: 300,
     height: 190,
     opacity: 0.5,
   },
   cardDecor: {
     position: 'absolute',
     top: 0,
-    left: 0,
+    left: -300,
     right: 0,
     bottom: 0,
     opacity: 0.85,
