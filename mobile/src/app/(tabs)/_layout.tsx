@@ -1,17 +1,22 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
-import AppTabs from '@/components/app-tabs';
-
 /**
- * 路由组 (tabs) 的布局：在该组内渲染 NativeTabs。
- * 主题 provider 只在这里挂，因为 splash/login 页是独立样式。
+ * (tabs) 组布局:主题 provider + Stack(无 header,无 tab bar)。
+ *
+ * 旧的 5-tab 底部导航(app-tabs.tsx)已删除。文件在 (tabs) 下的几个
+ * 页面仍然可达,但用户需从其他入口跳转 —首页本身只有 4 个快捷键。
  */
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AppTabs />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'none',
+        }}
+      />
     </ThemeProvider>
   );
 }

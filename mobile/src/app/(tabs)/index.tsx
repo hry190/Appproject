@@ -1,271 +1,275 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { SvgXml } from 'react-native-svg';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
-
-const LIFE_QUESTION = {
-  title: '今天校园里的落叶应该按“可回收”扔吗？',
-  tags: ['垃圾分类', '生物', '日常'],
-  blurb:
-    '落叶属于厨余垃圾还是其他垃圾？一起来拆解这个问题的判断依据。',
-};
-
-const CURRENT_TASKS = [
-  { title: '阅读《百炼识物诀》第 3 章', progress: 0.6, unit: '5 / 8 页' },
-  { title: '完成预测题：为什么树叶会变色', progress: 0.0, unit: '未开始' },
-  { title: '向同学提交一份「评招帖」', progress: 0.5, unit: '1 / 2 篇' },
-];
-
-const PROGRESS = [
-  { name: '偶得秘籍', current: 7, total: 12 },
-  { name: '习得秘籍', current: 3, total: 12 },
-  { name: '悟得秘籍', current: 1, total: 12 },
-];
-
-const CHALLENGES = [
-  { title: '7 日试炼：观察一种植物', due: '剩余 3 天', badge: '新' },
-  { title: '周末武林大会：我的作品', due: '周六 20:00', badge: '热门' },
-  { title: '把今天的发现讲给家人听', due: '今日', badge: '日常' },
-];
+import bgImage from '@/assets/images/home/bg.png';
+import pandaImage from '@/assets/images/home/panda.png';
+import iconSettings from '@/assets/images/home/icon-settings.png';
+import iconTask from '@/assets/images/home/icon-task.png';
+import iconProgress from '@/assets/images/home/icon-progress.png';
+import iconWorks from '@/assets/images/home/icon-works.png';
 
 /**
- * 一级导航：江湖 — 项目首页与学习入口。
- * 对应策划书 §六.1：生活问题推荐、当前任务、学习进度、最新挑战。
+ * 首页(节点 Figma 301:1695) — 阿砚的聊天界面。
+ *
+ * v5 改版:
+ * - 删掉底部 5 个 Tab(江湖/修炼/造物/大会/行囊)
+ * - 新的"一级导航"是右上 4 个快捷键:设置 / 任务 / 进度 / 作品
+ *
+ * 设计 token(基线 412 × 917 dp):
+ *   背景         #FFFFFF(纯白,竹林图做底图)
+ *   文字主色     #000000
+ *   欢迎气泡背景 SVG(bubble-bg.svg)
+ *   提示点: 红色(dot-red.svg) = 有新任务
+ *           灰色(dot-gray.svg) = 无新任务
  */
-export default function JianghuTab() {
+
+const TEXT_DARK = '#000000';
+const BUBBLE_BG_SVG = `<svg width="125" height="74" viewBox="0 0 125 74" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 8C0 3.58 3.58 0 8 0H117C121.42 0 125 3.58 125 8V56C125 60.42 121.42 64 117 64H22L8 74V64C3.58 64 0 60.42 0 56V8Z" fill="white" stroke="#000" stroke-width="0.5"/></svg>`;
+const DOT_RED_SVG = `<svg width="3.34" height="3.34" viewBox="0 0 3.34 3.34" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="1.67" cy="1.67" r="1.67" fill="#FF0000"/></svg>`;
+const DOT_GRAY_SVG = `<svg width="3.34" height="3.34" viewBox="0 0 3.34 3.34" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="1.67" cy="1.67" r="1.67" fill="#999999"/></svg>`;
+const ARROW_SVG = `<svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 2L6 4L3 6" stroke="#000" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+const Fig = {
+  canvasW: 412,
+  canvasH: 917,
+
+  bgLeft: -51,
+  bgTop: 0,
+  bgW: 516,
+  bgH: 917,
+
+  shortcut: { size: 22, top: 71, labelTop: 93, spacing: 40 },
+  bubble: { left: 29, top: 413, w: 125, h: 74 },
+  panda: { left: 111, top: 470, w: 153, h: 312 },
+} as const;
+
+type QuickAction = {
+  key: string;
+  label: string;
+  icon: number;
+  iconX: number;
+  hasDot?: 'red' | 'gray';
+  hasArrow?: boolean;
+};
+
+const ACTIONS: QuickAction[] = [
+  { key: 'settings', label: '设置', icon: iconSettings, iconX: 371 },
+  { key: 'task', label: '任务', icon: iconTask, iconX: 331, hasDot: 'red', hasArrow: true },
+  { key: 'progress', label: '进度', icon: iconProgress, iconX: 290 },
+  { key: 'works', label: '作品', icon: iconWorks, iconX: 250 },
+];
+
+export default function HomeScreen() {
+  const router = useRouter();
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <ThemedText type="subtitle">江湖</ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.tagline}>
-          学一招 AI 心法，造一件自己的江湖作品。
-        </ThemedText>
+    <SafeAreaView edges={['top']} style={styles.root}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.canvas}>
+          {/* 1. 背景(竹林图,延伸出右 104dp) */}
+          <Image
+            source={bgImage}
+            style={styles.bg}
+            resizeMode="cover"
+            // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+            pointerEvents="none"
+          />
 
-        {/* —— 生活问题推荐 —— */}
-        <Section title="今日生活问题" subtitle="Daily Question">
-          <ThemedView type="backgroundElement" style={styles.questionCard}>
-            <ThemedText type="smallBold" themeColor="cinnabar">
-              {LIFE_QUESTION.tags.join(' · ')}
-            </ThemedText>
-            <ThemedText type="default" style={styles.questionTitle}>
-              {LIFE_QUESTION.title}
-            </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.questionBlurb}>
-              {LIFE_QUESTION.blurb}
-            </ThemedText>
-            <View style={styles.tagsRow}>
-              <Tag label="想一想" tone="accent" />
-              <Tag label="写下你的预测" tone="bamboo" />
-            </View>
-          </ThemedView>
-        </Section>
-
-        {/* —— 当前任务 —— */}
-        <Section title="当前任务" subtitle="In Progress">
-          {CURRENT_TASKS.map((t) => (
-            <ThemedView key={t.title} type="backgroundElement" style={styles.taskCard}>
-              <View style={styles.taskHeader}>
-                <ThemedText type="default" style={styles.taskTitle}>
-                  {t.title}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t.unit}
-                </ThemedText>
-              </View>
-              <ProgressBar value={t.progress} />
-            </ThemedView>
+          {/* 2. 4 个右上快捷键 */}
+          {ACTIONS.map((a) => (
+            <QuickActionItem
+              key={a.key}
+              action={a}
+              onPress={() => handleShortcut(a.key, router)}
+            />
           ))}
-        </Section>
 
-        {/* —— 学习进度 —— */}
-        <Section title="学习进度" subtitle="Progress">
-          <ThemedView type="backgroundElement" style={styles.progressCard}>
-            {PROGRESS.map((p) => (
-              <View key={p.name} style={styles.progressRow}>
-                <ThemedText type="default">{p.name}</ThemedText>
-                <View style={styles.progressBarWrap}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${Math.max(8, Math.round((p.current / p.total) * 100))}%`,
-                        backgroundColor:
- p.current >= p.total ? Colors.light.bamboo : Colors.light.accent,
-                      },
-                    ]}
-                  />
-                </View>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {p.current} / {p.total}
-                </ThemedText>
-              </View>
-            ))}
-          </ThemedView>
-        </Section>
+          {/* 3. 欢迎气泡 */}
+          <View style={styles.bubble}>
+            <SvgXml
+              xml={BUBBLE_BG_SVG}
+              width={Fig.bubble.w}
+              height={Fig.bubble.h}
+            />
+            <Text
+              style={styles.bubbleText}
+              maxFontSizeMultiplier={1.4}
+              allowFontScaling>
+              hi，欢迎来到机巧江湖，我是阿砚，在这里，以学识为剑，以思考为途开启你的求知冒险吧！
+            </Text>
+          </View>
 
-        {/* —— 最新挑战 —— */}
-        <Section title="最新挑战" subtitle="Latest Challenges">
-          {CHALLENGES.map((c) => (
-            <ThemedView key={c.title} type="backgroundElement" style={styles.challengeCard}>
-              <View style={styles.challengeHeader}>
-                <ThemedText type="default" style={styles.challengeTitle}>
-                  {c.title}
-                </ThemedText>
-                <Tag label={c.badge} tone={c.badge === '热门' ? 'cinnabar' : 'accent'} />
-              </View>
-              <ThemedText type="small" themeColor="textSecondary">
-                {c.due}
-              </ThemedText>
-            </ThemedView>
-          ))}
-        </Section>
-
-        <ThemedText type="small" style={styles.note}>
-          今日推荐由《百炼识物诀》编辑组与教育专家共同筛选
-        </ThemedText>
+          {/* 4. 熊猫吉祥物 */}
+          <Image
+            source={pandaImage}
+            style={styles.panda}
+            resizeMode="contain"
+            // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+            pointerEvents="none"
+          />
+        </View>
       </ScrollView>
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
-function Section({
-  title,
-  subtitle,
-  children,
+/* —— 快捷键点击处理 —— 路由暂未确定,TODO 接入 —— */
+function handleShortcut(
+  key: string,
+  router: ReturnType<typeof useRouter>
+) {
+  switch (key) {
+    case 'settings':
+      // TODO: 接入 /settings
+      console.log('[home] 打开设置');
+      break;
+    case 'task':
+      // TODO: 接入 /task
+      console.log('[home] 打开任务');
+      break;
+    case 'progress':
+      // TODO: 接入 /progress
+      console.log('[home] 打开进度');
+      break;
+    case 'works':
+      // TODO: 接入 /works
+      console.log('[home] 打开作品');
+      break;
+    default:
+      console.log('[home] unknown shortcut:', key);
+  }
+}
+
+/* —— 单个快捷键(icon + 标签 + 可选 红点/箭头) —— */
+function QuickActionItem({
+  action,
+  onPress,
 }: {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
+  action: QuickAction;
+  onPress: () => void;
 }) {
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <ThemedText type="smallBold">{title}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {subtitle}
-        </ThemedText>
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function Tag({ label, tone }: { label: string; tone: 'accent' | 'bamboo' | 'cinnabar' }) {
-  const colors = Colors.light;
-  const palette = {
-    accent: { bg: colors.accentSoft, fg: colors.text },
-    bamboo: { bg: '#D6E1D0', fg: colors.bamboo },
-    cinnabar: { bg: '#F2D9DB', fg: colors.cinnabar },
-  }[tone];
-  return (
-    <View style={[styles.tag, { backgroundColor: palette.bg }]}>
-      <ThemedText style={[styles.tagText, { color: palette.fg }]}>{label}</ThemedText>
-    </View>
-  );
-}
-
-function ProgressBar({ value }: { value: number }) {
-  const pct = Math.round(value * 100);
-  return (
-    <View style={styles.taskBar}>
-      <View style={[styles.taskBarFill, { width: `${pct}%` }]} />
-    </View>
+    <Pressable
+      onPress={onPress}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={action.label}
+      style={({ pressed }) => [
+        styles.actionItem,
+        { left: action.iconX, top: Fig.shortcut.top },
+        pressed && styles.actionItemPressed,
+      ]}>
+      <Image
+        source={action.icon}
+        style={styles.actionIcon}
+        resizeMode="contain"
+      />
+      <Text
+        style={styles.actionLabel}
+        maxFontSizeMultiplier={1.4}
+        allowFontScaling>
+        {action.label}
+      </Text>
+      {action.hasDot && (
+        <View style={styles.dot}>
+          <SvgXml
+            xml={action.hasDot === 'red' ? DOT_RED_SVG : DOT_GRAY_SVG}
+            width="3.34"
+            height="3.34"
+          />
+        </View>
+      )}
+      {action.hasArrow && (
+        <View style={styles.arrow}>
+          <SvgXml xml={ARROW_SVG} width="8" height="8" />
+        </View>
+      )}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    padding: Spacing.four,
-    gap: Spacing.four,
-    maxWidth: 800,
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flexGrow: 1 },
+  canvas: {
+    width: Fig.canvasW,
+    height: Fig.canvasH,
     alignSelf: 'center',
-  },
-  tagline: { lineHeight: 22 },
-  note: { fontStyle: 'italic', opacity: 0.6 },
-
-  section: { gap: Spacing.two },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+    backgroundColor: 'transparent',
   },
 
-  // —— 生活问题 ——
-  questionCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.two,
+  /* 背景 */
+  bg: {
+    position: 'absolute',
+    left: Fig.bgLeft,
+    top: Fig.bgTop,
+    width: Fig.bgW,
+    height: Fig.bgH,
   },
-  questionTitle: { fontSize: 17, fontWeight: '700', lineHeight: 24 },
-  questionBlurb: { lineHeight: 22 },
-  tagsRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
-  tag: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: 999,
-  },
-  tagText: { fontSize: 12, fontWeight: '600' },
 
-  // —— 当前任务 ——
-  taskCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.two,
-  },
-  taskHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  /* 4 个快捷键 — 绝对定位(每個 iconX 不同) */
+  actionItem: {
+    position: 'absolute',
     alignItems: 'center',
   },
-  taskTitle: { fontWeight: '600', flex: 1, marginRight: Spacing.two },
-  taskBar: {
-    height: 6,
-    backgroundColor: Colors.light.border,
-    borderRadius: 999,
-    overflow: 'hidden',
+  actionItemPressed: { opacity: 0.7 },
+  actionIcon: {
+    width: Fig.shortcut.size,
+    height: Fig.shortcut.size,
   },
-  taskBarFill: {
-    height: '100%',
-    backgroundColor: Colors.light.accent,
-    borderRadius: 999,
+  actionLabel: {
+    marginTop: 2,
+    fontSize: 8,
+    color: TEXT_DARK,
+    fontFamily: 'Microsoft YaHei',
   },
-
-  // —— 学习进度 ——
-  progressCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.three,
+  dot: {
+    position: 'absolute',
+    right: -1,
+    top: 0,
   },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  progressBarWrap: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.light.border,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 999,
+  arrow: {
+    position: 'absolute',
+    right: -3,
+    top: 7,
   },
 
-  // —— 最新挑战 ——
-  challengeCard: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.one,
+  /* 欢迎气泡 */
+  bubble: {
+    position: 'absolute',
+    left: Fig.bubble.left,
+    top: Fig.bubble.top,
+    width: Fig.bubble.w,
+    height: Fig.bubble.h,
   },
-  challengeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: Spacing.two,
+  bubbleText: {
+    position: 'absolute',
+    left: Fig.bubble.left + 12,
+    top: Fig.bubble.top + 8,
+    width: Fig.bubble.w - 24,
+    fontSize: 10,
+    lineHeight: 13,
+    color: TEXT_DARK,
+    fontFamily: 'Microsoft YaHei',
   },
-  challengeTitle: { fontWeight: '600', flex: 1 },
+
+  /* 熊猫 */
+  panda: {
+    position: 'absolute',
+    left: Fig.panda.left,
+    top: Fig.panda.top,
+    width: Fig.panda.w,
+    height: Fig.panda.h,
+  },
 });
