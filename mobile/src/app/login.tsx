@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   Image,
@@ -74,7 +74,6 @@ const Fig = {
   forgot: { left: 59, top: 652 },
   agreement: { left: 90, top: 700 },
   button: { left: 55, top: 716, w: 302, h: 45 },
-  register: { left: 161, top: 768 },
 } as const;
 
 type LoginMode = 'code' | 'password';
@@ -85,6 +84,35 @@ export default function LoginScreen() {
   const [phone, setPhone] = useState('');
   const [secret, setSecret] = useState('');
   const [agreed, setAgreed] = useState(false);
+  /** 验证码冷却倒计时(秒),0 = 未冷却可发送 */
+  const [countdown, setCountdown] = useState(0);
+
+  /**
+   * 倒计时自动递减:每次 countdown > 0 时启动 1s 定时器,
+   * 组件卸载或 countdown 触底时通过 cleanup 自动清除,
+   * 无需手动管理 timer ID。
+   */
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const id = setInterval(() => {
+      setCountdown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [countdown]);
+
+  /**
+   * 触发发送验证码。冷却期内重复点击会被忽略。
+   * 真实场景应:先 POST `/api/sms/send` → 成功后启动倒计时 → 失败给出 toast。
+   */
+  const handleSendCode = () => {
+    if (countdown > 0) return;
+    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
+      console.warn('[login] 发送验证码前请先输入正确手机号');
+      return;
+    }
+    // TODO: 接入短信发送 API
+    setCountdown(60);
+  };
 
   const handleLogin = () => {
     if (!phone.trim()) {
@@ -179,7 +207,7 @@ export default function LoginScreen() {
                   ]}
                   maxFontSizeMultiplier={1.4}
                   allowFontScaling>
-                  密码登录
+                  登录
                 </Text>
               </Pressable>
               <Pressable
@@ -198,7 +226,7 @@ export default function LoginScreen() {
                   ]}
                   maxFontSizeMultiplier={1.4}
                   allowFontScaling>
-                  验证码登录
+                  注册
                 </Text>
               </Pressable>
             </View>
@@ -245,12 +273,25 @@ export default function LoginScreen() {
               {mode === 'code' && (
                 <>
                   <View style={styles.divider} />
-                  <Pressable hitSlop={8} onPress={() => { /* TODO: 触发验证码 */ }}>
+                  <Pressable
+                    hitSlop={8}
+                    disabled={countdown > 0}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: countdown > 0 }}
+                    accessibilityLabel={
+                      countdown > 0
+                        ? `${countdown} 秒后可重新发送验证码`
+                        : '发送验证码'
+                    }
+                    onPress={handleSendCode}>
                     <Text
-                      style={styles.actionText}
+                      style={[
+                        styles.actionText,
+                        countdown > 0 && styles.actionTextDisabled,
+                      ]}
                       maxFontSizeMultiplier={1.6}
                       allowFontScaling>
-                      获取验证码
+                      {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
                     </Text>
                   </Pressable>
                 </>
@@ -318,10 +359,10 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            {/* 登录按钮 */}
+            {/* 登录 / 注册按钮 */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="登录"
+              accessibilityLabel={mode === 'code' ? '注册' : '登录'}
               onPress={handleLogin}
               style={({ pressed }) => [
                 styles.loginBtn,
@@ -334,22 +375,7 @@ export default function LoginScreen() {
                 style={styles.loginBtnText}
                 maxFontSizeMultiplier={1.4}
                 allowFontScaling>
-                登录
-              </Text>
-            </Pressable>
-
-            {/* 注册链接 */}
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel="没有账号 立即注册"
-              onPress={() => router.push('/register')}
-              hitSlop={8}
-              style={styles.registerWrap}>
-              <Text
-                style={styles.linkText}
-                maxFontSizeMultiplier={1.6}
-                allowFontScaling>
-                没有账号?立即注册
+                {mode === 'code' ? '注册' : '登录'}
               </Text>
             </Pressable>
           </View>
@@ -639,6 +665,10 @@ const styles = StyleSheet.create({
     color: '#888888',
     fontFamily: 'Microsoft YaHei',
   },
+  actionTextDisabled: {
+    color: '#BBBBBB',
+    opacity: 0.7,
+  },
 
   /* 忘记密码 */
   forgotWrap: {
@@ -665,15 +695,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Microsoft YaHei',
     fontWeight: '700',
     letterSpacing: 12,
-  },
-
-  /* 注册链接 */
-  registerWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: Fig.register.top - Fig.cardTop,
-    alignItems: 'center',
   },
 
   /* 协议行 */
