@@ -33,7 +33,6 @@ import iconWorks from '@/assets/images/home/icon-works.png';
  */
 
 const TEXT_DARK = '#000000';
-const BUBBLE_BG_SVG = `<svg width="125" height="74" viewBox="0 0 125 74" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 8C0 3.58 3.58 0 8 0H117C121.42 0 125 3.58 125 8V56C125 60.42 121.42 64 117 64H22L8 74V64C3.58 64 0 60.42 0 56V8Z" fill="white" stroke="#000" stroke-width="0.5"/></svg>`;
 const DOT_RED_SVG = `<svg width="3.34" height="3.34" viewBox="0 0 3.34 3.34" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="1.67" cy="1.67" r="1.67" fill="#FF0000"/></svg>`;
 const DOT_GRAY_SVG = `<svg width="3.34" height="3.34" viewBox="0 0 3.34 3.34" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="1.67" cy="1.67" r="1.67" fill="#999999"/></svg>`;
 const ARROW_SVG = `<svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 2L6 4L3 6" stroke="#000" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -95,13 +94,8 @@ export default function HomeScreen() {
             />
           ))}
 
-          {/* 3. 欢迎气泡 */}
+          {/* 3. 欢迎气泡(View 模拟,不用 Image) */}
           <View style={styles.bubble}>
-            <SvgXml
-              xml={BUBBLE_BG_SVG}
-              width={Fig.bubble.w}
-              height={Fig.bubble.h}
-            />
             <Text
               style={styles.bubbleText}
               maxFontSizeMultiplier={1.4}
@@ -245,20 +239,20 @@ const styles = StyleSheet.create({
     top: 7,
   },
 
-  /* 欢迎气泡 */
+  /* 欢迎气泡(View 模拟,不用 Image) */
   bubble: {
     position: 'absolute',
     left: Fig.bubble.left,
     top: Fig.bubble.top,
     width: Fig.bubble.w,
-    height: Fig.bubble.h,
+    minHeight: Fig.bubble.h,
+    backgroundColor: '#F4E6CF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   bubbleText: {
-    position: 'absolute',
-    left: Fig.bubble.left + 12,
-    top: Fig.bubble.top + 8,
-    width: Fig.bubble.w - 24,
-    fontSize: 10,
+    fontSize: 9,
     lineHeight: 13,
     color: TEXT_DARK,
     fontFamily: 'Microsoft YaHei',
