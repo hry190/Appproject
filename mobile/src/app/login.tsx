@@ -53,11 +53,11 @@ const ICON_STROKE_WIDTH = 1.83;
 
 const Fig = {
   canvasW: 412,
-  canvasH: 917,
+  canvasH: 800,
   bgPaperLeft: -124,
   bgPaperTop: 0,
   bgPaperW: 536,
-  bgPaperH: 917,
+  bgPaperH: 817,
   welcomeLeft: 20,
   welcomeTop: 110,
   welcomeW: 278,
@@ -155,7 +155,7 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        {/* 412×917 画布,所有元素绝对定位对应 Figma 坐标 */}
+        {/* 412×800 画布,所有元素绝对定位对应 Figma 坐标 */}
         <View style={styles.canvas}>
           {/* 1. 背景旧纸(PNG) */}
           <Image
