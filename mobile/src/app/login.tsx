@@ -70,10 +70,10 @@ const Fig = {
   cardW: 372,
   cardH: 335,
   phoneInput: { left: 59, top: 547, w: 294, h: 40 },
-  passwordInput: { left: 59, top: 607, w: 294, h: 40 },
+  passwordInput: { left: 59, top: 600, w: 294, h: 40 },
   forgot: { left: 59, top: 652 },
   agreement: { left: 90, top: 700 },
-  button: { left: 55, top: 716, w: 302, h: 45 },
+  button: { left: 55, top: 720, w: 302, h: 50 },
 } as const;
 
 type LoginMode = 'code' | 'password';
@@ -83,6 +83,8 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<LoginMode>('password');
   const [phone, setPhone] = useState('');
   const [secret, setSecret] = useState('');
+  /** 注册模式下,验证码之外还要设置登录密码 */
+  const [registerPassword, setRegisterPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   /** 验证码冷却倒计时(秒),0 = 未冷却可发送 */
   const [countdown, setCountdown] = useState(0);
@@ -133,6 +135,10 @@ export default function LoginScreen() {
     }
     if (mode === 'password' && secret.length < 6) {
       console.warn('[login] 密码至少 6 位');
+      return;
+    }
+    if (mode === 'code' && registerPassword.length < 6) {
+      console.warn('[login] 请设置至少 6 位登录密码');
       return;
     }
     if (!agreed) {
@@ -313,6 +319,24 @@ export default function LoginScreen() {
                   忘记密码?找回密码
                 </Text>
               </Pressable>
+            )}
+
+            {/* 仅注册模式:设置登录密码(占"忘记密码"行的位置) */}
+            {mode === 'code' && (
+              <View style={[styles.inputBox, styles.registerPasswordInput]}>
+                <KeyIcon />
+                <TextInput
+                  style={styles.input}
+                  placeholder="请输入密码"
+                  placeholderTextColor={PLACEHOLDER}
+                  secureTextEntry
+                  maxLength={24}
+                  value={registerPassword}
+                  onChangeText={setRegisterPassword}
+                  maxFontSizeMultiplier={1.4}
+                  allowFontScaling
+                />
+              </View>
             )}
 
             {/* 协议行 */}
@@ -642,6 +666,10 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     top: Fig.passwordInput.top - Fig.cardTop,
+  },
+  /** 注册模式下,验证码下方还要一个密码框,占"忘记密码"那行的位置 */
+  registerPasswordInput: {
+    top: Fig.forgot.top - Fig.cardTop,
   },
   input: {
     flex: 1,
