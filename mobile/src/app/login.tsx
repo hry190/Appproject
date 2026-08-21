@@ -48,8 +48,27 @@ export default function LoginScreen() {
   const [agreed, setAgreed] = useState(false);
 
   const handleLogin = () => {
+    if (!phone.trim()) {
+      console.warn('[login] 请输入手机号');
+      return;
+    }
+    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
+      console.warn('[login] 手机号格式不正确');
+      return;
+    }
+    if (!secret.trim()) {
+      console.warn(`[login] 请输入${mode === 'code' ? '验证码' : '密码'}`);
+      return;
+    }
+    if (mode === 'code' && secret.length !== 6) {
+      console.warn('[login] 验证码需为 6 位');
+      return;
+    }
+    if (mode === 'password' && secret.length < 6) {
+      console.warn('[login] 密码至少 6 位');
+      return;
+    }
     if (!agreed) {
-      // TODO: 弹 toast 提示勾选协议
       console.warn('[login] 未勾选用户协议');
       return;
     }
