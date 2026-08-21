@@ -1,13 +1,13 @@
 ---
 name: figma-to-frontend
-description: Convert a Figma design link into project frontend pages (Expo Router in this repo). Triggers when the user pastes a Figma URL, says "照这个稿子实现", "figma to page", or names a node/frame by name. Coordinates the Framelink Figma MCP (read layout), the project's Expo Router 57 conventions, and visual verification.
+description: Convert a Figma design link into project frontend pages (Expo Router in this repo). Triggers when the user pastes a Figma URL, says "照这个稿子实现", "figma to page", or names a node/frame by name. Coordinates the official Figma MCP (mcp.figma.com/mcp) for read layout, the project's Expo Router 57 conventions, and visual verification.
 ---
 
 # figma-to-frontend
 
 Project: **机巧江湖** — Expo Router 57 / React 19 / RN 0.86 (web + native targets).
 
-Goal: take a Figma frame URL, read its structure via MCP, and emit production Expo Router pages.
+Goal: take a Figma frame URL, read its structure via the official Figma MCP (tool prefix `mcp__figma__*`), and emit production Expo Router pages.
 
 ## When to use
 
@@ -28,16 +28,17 @@ Extract two pieces:
 Example: `https://www.figma.com/design/AbCdEf12345/My-File?node-id=12-34`
 → `fileKey="AbCdEf12345"`, `nodeId="12:34"`.
 
-If the user pastes a screenshot instead of a URL, ask once: "请给我这个稿子的 Figma 链接，或确认我可以用 Framelink MCP 的 `get_screenshot` 截该文件对应 Node。" Don't guess.
+If the user pastes a screenshot instead of a URL, ask once: "请给我这个稿子的 Figma 链接，或确认我可以用官方 Figma MCP 的 `get_screenshot` 截该文件对应 Node。" Don't guess.
 
 ### 2. Pull design data via MCP
 
-Call Framelink MCP tools via the `figmaframelink` server (this repo's MCP name is `figmaframelink`, NOT `figma` — the host env already has the official Figma MCP under `figma` and they collide; we use Framelink for richer parsing). Tool prefix: `mcp__figmaframelink__*`.
+Call the official Figma MCP via the `figma` server (registered globally in `~/.claude.json` for this project, URL `https://mcp.figma.com/mcp`, OAuth-authenticated; the access/refresh tokens are cached in `~/.claude/.credentials.json` and auto-renew). Tool prefix: `mcp__figma__*`. If those tools aren't visible, the user hasn't restarted Claude Code since adding the server entry — say so rather than guessing.
 
-1. `mcp__figmaframelink__get_file` with `{fileKey}` to confirm access and pull the document root. Stop and surface a clear error if the response indicates permission denied — the user needs to be added to the file's seat.
-2. `mcp__figmaframelink__get_node` with `{fileKey, nodeId}` for the chosen frame — gives layout tree, fills, strokes, text, component refs, variables.
-3. If icons or images exist as fills, call `mcp__figmaframelink__get_image` for the relevant nodeIds to grab PNG/SVG assets (set `format` to `svg` for icons, `png` @2x for images).
-4. Optional, but recommended: `mcp__figmaframelink__get_local_variables` and `mcp__figmaframelink__get_styles` to capture the design-token layer (colors, text styles, effect styles) for theme mapping.
+1. `mcp__figma__whoami` — sanity check that the OAuth session is still alive; if it errors with an auth problem, tell the user to re-authenticate (Claude Code will pop a browser flow on the next MCP call). If the user has a `View`-only seat (as opposed to `Editor` / `Dev`), write-side tools like `create_new_file` / `use_figma` / `generate_figma_design` will refuse — that's fine, this skill is read-only by design.
+2. **`mcp__figma__get_design_context` is the primary read tool.** Before calling it, load the `figma:figma-design-to-code` skill (the tool's own description mandates this — it explains the reference-code / screenshot / metadata shape and how to adapt it to the target project). Call `get_design_context` with `{fileKey, nodeId: <chosen frame>}` — it returns reference code, a screenshot, and contextual metadata in one round trip. This is almost always the only call you need.
+3. For non-trivial designs (deep nesting, many sibling frames), follow up with `mcp__figma__get_metadata` using `{fileKey, nodeId: <page or top-level frame>}` to get a cheap XML overview — node IDs, layer types, names, positions, sizes only. The tool's own description says "always prefer `get_design_context`"; use this only as a navigation map.
+4. For design tokens, call `mcp__figma__get_variable_defs` with `{nodeId}` — returns bound color / spacing / typography variables for that subtree. (There is no separate `get_styles` tool — paint / text / effect styles come back inside the `get_design_context` payload.)
+5. For a higher-resolution visual reference than the one `get_design_context` already includes, call `mcp__figma__get_screenshot` with `{fileKey, nodeId, maxDimension}` (PNG only — there is no SVG export path on this MCP; `maxDimension` defaults to 1024, raise it to inspect fine detail).
 
 Read enough to reproduce, but don't dump the whole tree into a single file. Five calls is a reasonable budget; more means the user should narrow the scope.
 
@@ -63,7 +64,7 @@ Constraints — non-negotiable for this repo:
 |---|---|
 | API levels | Pin to Expo 57 APIs. Use docs URL above as source of truth. |
 | Styling | Use `StyleSheet.create` or CSS modules; do **not** pull in Tailwind. |
-| Icons | `expo-symbols` for SF-style names; otherwise use the SVG assets you grabbed via `get_image` and put them in `mobile/assets/images/`. |
+| Icons | `expo-symbols` for SF-style names; otherwise use the SVG assets you grabbed via `get_screenshot` and put them in `mobile/assets/images/`. |
 | Safe areas | Wrap content in `SafeAreaView` from `react-native-safe-area-context`; honour `insets.top`/`bottom`. |
 | Fonts/colors | Pull from the Figma node's bound variables; if absent, fall back to the existing theme tokens used in `themed-text.tsx`/`themed-view.tsx`. |
 | Layout primitive | RN flex defaults. Don't import `styled-components` or `nativewind`. |
@@ -78,7 +79,7 @@ If the design is non-trivial (multi-section screens, custom illustrations):
 
 1. Use the `webapp-testing` skill to boot the Expo web target (`npx expo start --web`).
 2. Capture a Playwright screenshot of the new route.
-3. Pull the Figma render via `get_image` (or the user's screenshot) and compare side by side.
+3. Pull the Figma render via `get_screenshot` (or the user's screenshot) and compare side by side.
 4. Iterate on spacing, color, and typography until it matches within reason.
 
 For trivial screens (a single button, a typo fix) skip this step.
@@ -98,6 +99,8 @@ When done, report:
 
 ## Reference
 
-- Figma MCP package: `figma-developer-mcp` (Framelink) — [GLips/Figma-Context-MCP](https://github.com/GLips/Figma-Context-MCP)
-- Personal access token: Figma → Settings → Personal access tokens
+- Official Figma MCP: `https://mcp.figma.com/mcp` (HTTP, OAuth; access/refresh tokens auto-renew)
+- Where it's registered: `~/.claude.json` → `projects["d:/App/Appproject"].mcpServers.figma`
+- Auth cache: `~/.claude/.credentials.json` (key prefixed `figma|`)
+- Personal access token (only needed if you switch to a self-hosted Figma MCP): Figma → Settings → Personal access tokens
 - This repo's App Router docs: [mobile/app.json](mobile/app.json) and [mobile/AGENTS.md](mobile/AGENTS.md)

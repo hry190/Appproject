@@ -11,6 +11,7 @@ import decor2 from '@/assets/images/login/decor-2.png';
 import decor3 from '@/assets/images/login/decor-3.png';
 import peopleSafe from '@/assets/images/login/People-safe.png';
 import keyIcon from '@/assets/images/login/Key.png';
+import bgImage from '@/assets/images/login/h.png';
 
 /**
  * 注册页 —— flex + ScrollView 适配方案（与登录页一致）。
@@ -55,6 +56,14 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <View style={styles.canvas}>
+        {/* 背景图：竹林 - 最底层 */}
+        <Image
+          source={bgImage}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          pointerEvents="none"
+        />
+
         {/* 装饰层 - 先渲染，在最底层；pointerEvents="none" 让触摸穿透 */}
         <Image
           source={decorSide}
@@ -325,7 +334,7 @@ const glyphStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: CREAM,
+    backgroundColor: 'transparent',
   },
   canvas: {
     flex: 1,

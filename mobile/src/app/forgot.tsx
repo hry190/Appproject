@@ -9,6 +9,7 @@ import pandaThinking from '@/assets/images/login/panda-thinking.png';
 import decorBamboo from '@/assets/images/login/decor-2.png';
 import iconPerson from '@/assets/images/login/icon-person.png';
 import iconSafe from '@/assets/images/login/icon-safe.png';
+import bgImage from '@/assets/images/login/h.png';
 
 /**
  * 忘记密码页 —— 按 Figma 帧 56.png「忘记密码」实现。
@@ -63,6 +64,14 @@ export default function ForgotScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <View style={styles.canvas}>
+        {/* 背景图：竹林 - 最底层 */}
+        <Image
+          source={bgImage}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          pointerEvents="none"
+        />
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -277,7 +286,7 @@ export default function ForgotScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: CREAM,
+    backgroundColor: 'transparent',
   },
   canvas: {
     flex: 1,
