@@ -490,8 +490,8 @@ const styles = StyleSheet.create({
     includeFontPadding: false,   // 去掉 Android 默认字体内边距
   },
 
-  /* Spacer */
-  // 已移除 — 由 card.paddingBottom 60 提供呼吸区
+  /* Spacer:把下面推到卡的下半 */
+  spacer: { flex: 1 },
 
   /* Register Button */
   registerBtn: {

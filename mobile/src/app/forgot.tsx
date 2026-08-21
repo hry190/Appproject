@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   Image,
@@ -12,30 +12,28 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, SvgXml } from 'react-native-svg';
 
+import { SVG_BTN, SVG_CHECKBOX, buildCardFrameSvg } from '@/components/auth/authSvgs';
+import { KeyIcon, PeopleSafeIcon, PhoneIcon } from '@/components/auth/AuthIcons';
+import {
+  ACTION_GRAY,
+  BG_CREAM,
+  DIVIDER_GRAY,
+  ERROR_RED,
+  INPUT_BORDER,
+  LINK_OLIVE,
+  PLACEHOLDER,
+  TEXT_DARK,
+} from '@/components/auth/authColors';
+import { isCode, isPhone } from '@/utils/validators';
+
 import forgotBg from '@/assets/images/login/forgot-bg.png';
 import forgetMascot from '@/assets/images/forget/-15.png';
-import iconPhoneBody from '@/assets/images/login/icon-phone-body.svg';
-import iconPhoneHome from '@/assets/images/login/icon-phone-home.svg';
-import iconPhoneSpeaker from '@/assets/images/login/icon-phone-speaker.svg';
-import iconKeyBody from '@/assets/images/login/icon-key-body.svg';
-import iconKeyBow from '@/assets/images/login/icon-key-bow.svg';
-import iconKeyRing from '@/assets/images/login/icon-key-ring.svg';
-import peopleSafeBody from '@/assets/images/login/icon-people-safe-body.svg';
-import peopleSafeTop from '@/assets/images/login/icon-people-safe-top.svg';
-import peopleSafeMid from '@/assets/images/login/icon-people-safe-mid.svg';
 
 /* —— SVG 字符串常量(复杂 SVG 用 SvgXml 让库解析) —— */
 
-const SVG_CARD_FRAME = `<svg preserveAspectRatio="none" width="408" height="340" viewBox="0 0 408 340" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M17.56 35.94C18.76 19.86 26.57 17.72 30.9 17.72C34.89 5.44 43.68 2.26 47.01 3.14H361.45C371.03 3.14 375.09 13.01 375.92 17.95C384.71 16.68 388.24 26.94 388.9 32.23V308.37C388.1 318.1 379.92 323.71 375.92 325.3C370.73 335.88 364.11 338.17 361.45 337.99H47.01C36.63 335.03 33.03 327.94 32.53 324.77C20.56 321.38 17.56 311.37 17.56 306.78C17.06 223.2 16.36 52.02 17.56 35.94Z" fill="#F2E6D1"/><path d="M17.56 35.94C18.76 19.86 26.57 17.72 30.9 17.72C34.89 5.44 43.68 2.26 47.01 3.14H361.45C371.03 3.14 375.09 13.01 375.92 17.95C384.71 16.68 388.24 26.94 388.9 32.23V308.37C388.1 318.1 379.92 323.71 375.92 325.3C370.73 335.88 364.11 338.17 361.45 337.99H47.01C36.63 335.03 33.03 327.94 32.53 324.77C20.56 321.38 17.56 311.37 17.56 306.78C17.06 223.2 16.36 52.02 17.56 35.94Z" stroke="#E7DCAE" stroke-width="6"/></g><g><path d="M36.49 50.32C37.57 36.01 45.48 34.02 49.36 34.02C51.85 22.52 59.95 20.36 62.93 21.15H345.25C353.86 21.15 357.5 29.93 358.25 34.32C366.14 33.19 369.3 42.32 369.9 47.02V292.64C369.18 301.3 365.4 306.45 359.9 306.45C358.05 317.74 347.64 319.15 345.25 318.99H62.93C53.9 318.99 50.9 318.99 47.86 305.4C37.11 302.39 36.49 295.31 36.49 291.23C36.05 216.89 35.42 64.62 36.49 50.32Z" stroke="#E7DCAE" stroke-width="2"/></g></svg>`;
-
-const SVG_BTN_BG = `<svg preserveAspectRatio="none" width="310" height="54" viewBox="0 0 310 54" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M22.67 0.53C16.21 0.53 14.16 6.47 14.16 8.99C11.51 8.99 4 10.38 4 22.64C4 32.62 10.51 37.29 14.16 37.29C14.16 42.85 19.53 45.01 21.67 45C108.15 44.66 282.02 45 286.11 45C290.98 45 295.63 41.33 295.63 37.93C301.99 37.93 306 32.62 306 21.12C306 11.9 300.49 8.99 295.63 8.99C295.63 3.44 287.97 0.03 284.11 0.03C199.63 -0.14 29.54 0.53 22.67 0.53Z" fill="url(#g0)"/><path d="M27.48 4.44C21.25 4.44 19.27 9.32 19.27 11.4C16.72 11.4 9.48 12.54 9.48 22.61C9.48 30.82 15.76 34.66 19.27 34.66C19.27 39.23 24.44 41.01 26.51 41C109.85 40.72 277.41 41 281.35 41C286.04 41 290.52 37.99 290.52 35.18C296.66 35.18 300.52 30.82 300.52 21.37C300.52 13.78 295.21 11.4 290.52 11.4C290.52 6.83 283.14 4.03 279.42 4.02C198.01 3.88 34.1 4.44 27.48 4.44Z" fill="url(#g1)" stroke="url(#g2)"/></g><defs><linearGradient id="g0" x1="155" y1="0" x2="155" y2="33" gradientUnits="userSpaceOnUse"><stop stop-color="#AACC99"/><stop offset="1" stop-color="#546942"/></linearGradient><linearGradient id="g1" x1="155" y1="41" x2="155" y2="4" gradientUnits="userSpaceOnUse"><stop stop-color="#527F50"/><stop offset="1" stop-color="#92B57A"/></linearGradient><linearGradient id="g2" x1="9.48" y1="22.5" x2="300.52" y2="22.5" gradientUnits="userSpaceOnUse"><stop stop-color="#DCCCA1"/><stop offset="1" stop-color="#FAF4D8"/></linearGradient></defs></svg>`;
-
-const SVG_CHECKBOX = `<svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="4.5" cy="4.5" r="4" stroke="#A7AD8E"/></svg>`;
+const SVG_CARD_FRAME = buildCardFrameSvg(340);
 
 const SVG_BACK_ARROW = `<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 5L8 11L14 17" stroke="#000000" stroke-width="1.83" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-const ICON_STROKE = '#949494';
-const ICON_STROKE_WIDTH = 1.83;
 
 /**
  * 忘记密码页(Figma 节点 413:3377)。
@@ -53,12 +51,7 @@ const ICON_STROKE_WIDTH = 1.83;
  * 校验:手机号正则、验证码 6 位、新密码 ≥ 6 位、两次一致、勾选协议
  */
 
-const BG_CREAM = '#F5E8D4';
-const INPUT_BORDER = '#DCCCA1';
-const LINK_OLIVE = '#A7AD8E';
-const PLACEHOLDER = '#939393';
-const TEXT_DARK = '#000000';
-const ACTION_GRAY = '#888888';
+/* —— 颜色从 components/auth/authColors 引入 —— */
 
 const Fig = {
   canvasW: 412,
@@ -103,6 +96,10 @@ export default function ForgotScreen() {
   const [confirmPwd, setConfirmPwd] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  /** 内联错误提示(发送验证码时反馈) */
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  /** 防止双击 race */
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -113,13 +110,17 @@ export default function ForgotScreen() {
   }, [countdown]);
 
   const handleSendCode = () => {
-    if (countdown > 0) return;
-    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
-      console.warn('[forgot] 发送验证码前请先输入正确手机号');
+    if (countdown > 0 || sendingRef.current) return;
+    if (!isPhone(phone)) {
+      setPhoneError('请输入正确的 11 位手机号');
       return;
     }
+    setPhoneError(null);
     // TODO: 接入短信发送 API
+    sendingRef.current = true;
     setCountdown(60);
+    // API 接入后:try { await sendSms(phone) } finally { sendingRef.current = false }
+    sendingRef.current = false;
   };
 
   const handleSubmit = () => {
@@ -127,23 +128,23 @@ export default function ForgotScreen() {
       console.warn('[forgot] 请输入手机号');
       return;
     }
-    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
+    if (!isPhone(phone)) {
       console.warn('[forgot] 手机号格式不正确');
       return;
     }
-    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    if (code.length !== 6 || !isCode(code)) {
       console.warn('[forgot] 验证码需为 6 位数字');
       return;
     }
-    if (newPwd.length < 6) {
+    if (newPwd.trim().length < 6) {
       console.warn('[forgot] 新密码至少 6 位');
       return;
     }
-    if (confirmPwd.length < 6) {
+    if (confirmPwd.trim().length < 6) {
       console.warn('[forgot] 请确认至少 6 位密码');
       return;
     }
-    if (newPwd !== confirmPwd) {
+    if (newPwd.trim() !== confirmPwd.trim()) {
       console.warn('[forgot] 两次密码不一致');
       return;
     }
@@ -156,8 +157,8 @@ export default function ForgotScreen() {
   };
 
   /** 按钮可用性:所有字段合法 + 勾选协议 */
-  const phoneValid = /^1[3-9]\d{9}$/.test(phone.trim());
-  const codeValid = /^\d{6}$/.test(code);
+  const phoneValid = isPhone(phone);
+  const codeValid = isCode(code);
   const newPwdValid = newPwd.length >= 6;
   const confirmValid = confirmPwd.length >= 6 && newPwd === confirmPwd;
   const canSubmit =
@@ -227,8 +228,17 @@ export default function ForgotScreen() {
                 onChangeText={setPhone}
                 maxFontSizeMultiplier={1.4}
                 allowFontScaling
+                accessibilityLabel="手机号"
+                accessibilityHint="11 位中国大陆手机号"
               />
             </View>
+            {phoneError && (
+              <Text
+                style={styles.errorText}
+                accessibilityLiveRegion="polite">
+                {phoneError}
+              </Text>
+            )}
 
             {/* 验证码 + 获取验证码 */}
             <View style={[styles.inputBox, styles.codeInput]}>
@@ -243,6 +253,8 @@ export default function ForgotScreen() {
                 onChangeText={setCode}
                 maxFontSizeMultiplier={1.4}
                 allowFontScaling
+                accessibilityLabel="验证码"
+                accessibilityHint="6 位数字"
               />
               <View style={styles.divider} />
               <Pressable
@@ -279,6 +291,8 @@ export default function ForgotScreen() {
                 onChangeText={setNewPwd}
                 maxFontSizeMultiplier={1.4}
                 allowFontScaling
+                accessibilityLabel="新密码"
+                accessibilityHint="至少 6 位"
               />
             </View>
 
@@ -295,6 +309,8 @@ export default function ForgotScreen() {
                 onChangeText={setConfirmPwd}
                 maxFontSizeMultiplier={1.4}
                 allowFontScaling
+                accessibilityLabel="确认密码"
+                accessibilityHint="再输入一次新密码"
               />
             </View>
 
@@ -326,17 +342,15 @@ export default function ForgotScreen() {
                 我已阅读并同意
                 <Text
                   style={styles.linkInline}
-                  onPress={() => {
-                    /* TODO: 跳《用户协议》 */
-                  }}>
+                  onPress={() => router.push('/agreement')}
+                  accessibilityRole="link">
                   《用户协议》
                 </Text>
                 和
                 <Text
                   style={styles.linkInline}
-                  onPress={() => {
-                    /* TODO: 跳《隐私条款》 */
-                  }}>
+                  onPress={() => router.push('/privacy')}
+                  accessibilityRole="link">
                   《隐私条款》
                 </Text>
               </Text>
@@ -355,7 +369,7 @@ export default function ForgotScreen() {
                 !canSubmit && styles.btnDisabled,
               ]}>
               <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
-                <SvgXml xml={SVG_BTN_BG} width="100%" height="100%" />
+                <SvgXml xml={SVG_BTN} width="100%" height="100%" />
               </View>
               <Text
                 style={styles.submitBtnText}
@@ -370,155 +384,6 @@ export default function ForgotScreen() {
     </SafeAreaView>
   );
 }
-
-/* —— 图标组件 —— */
-
-function PhoneIcon() {
-  return (
-    <View style={phoneStyles.frame}>
-      <Svg width="15.375" height="22.67" viewBox="0 0 15.375 22.67" style={phoneStyles.body}>
-        <Path
-          d="M12.9 0.92H2.48C1.62 0.92 0.92 1.62 0.92 2.48V20.19C0.92 21.05 1.62 21.75 2.48 21.75H12.9C13.76 21.75 14.46 21.05 14.46 20.19V2.48C14.46 1.62 13.76 0.92 12.9 0.92Z"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          fill="none"
-        />
-      </Svg>
-      <Svg width="3.92" height="1.83" viewBox="0 0 3.92 1.83" style={phoneStyles.speaker}>
-        <Path
-          d="M0.92 0.92H3"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-      <Svg width="6" height="1.83" viewBox="0 0 6 1.83" style={phoneStyles.home}>
-        <Path
-          d="M0.92 0.92H5.08"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-    </View>
-  );
-}
-
-const phoneStyles = StyleSheet.create({
-  frame: { width: 25, height: 25, marginRight: 14 },
-  body: { position: 'absolute', top: 1, left: 4 },
-  speaker: { position: 'absolute', top: 5, left: 10 },
-  home: { position: 'absolute', bottom: 5, left: 9 },
-});
-
-function KeyIcon() {
-  return (
-    <View style={keyStyles.frame}>
-      <Svg width="10.92" height="10.87" viewBox="0 0 10.92 10.87" style={keyStyles.body}>
-        <Path
-          d="M8.65 2.19C9.81 3.33 10.27 5.01 9.85 6.58C9.43 8.16 8.2 9.39 6.61 9.8C5.03 10.22 3.35 9.77 2.2 8.61C0.47 6.83 0.49 3.99 2.25 2.25C4.01 0.49 6.86 0.47 8.65 2.19Z"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-      <Svg width="9.625" height="9.625" viewBox="0 0 9.625 9.625" style={keyStyles.ring}>
-        <Path
-          d="M0.92 8.71L8.71 0.92"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-      <Svg width="7.22" height="7.20" viewBox="0 0 7.22 7.20" style={keyStyles.bow}>
-        <Path
-          d="M0.92 3.80L3.40 6.28L6.31 3.39L3.82 0.92L0.92 3.80Z"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-    </View>
-  );
-}
-
-const keyStyles = StyleSheet.create({
-  frame: { width: 22, height: 22, marginRight: 12 },
-  body: { position: 'absolute', top: 11, right: 10, bottom: 3, left: 3 },
-  ring: { position: 'absolute', top: 3, left: 11, right: 4, bottom: 9 },
-  bow: { position: 'absolute', top: 5, right: 3, bottom: 12, left: 14 },
-});
-
-function PeopleSafeIcon() {
-  return (
-    <View style={peopleSafeStyles.frame}>
-      <Svg width="17" height="17" viewBox="0 0 17 17" style={peopleSafeStyles.body}>
-        <Path
-          d="M1.5 1.5H15.5V15.5H1.5Z"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          fill="none"
-        />
-      </Svg>
-      <Svg width="6" height="2.5" viewBox="0 0 6 2.5" style={peopleSafeStyles.top}>
-        <Path
-          d="M0.5 0.5H5.5"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-      <Svg width="6" height="3" viewBox="0 0 6 3" style={peopleSafeStyles.mid}>
-        <Path
-          d="M0.5 0.5H5.5"
-          stroke={ICON_STROKE}
-          strokeWidth={ICON_STROKE_WIDTH}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </Svg>
-    </View>
-  );
-}
-
-const peopleSafeStyles = StyleSheet.create({
-  frame: { width: 22, height: 22, marginRight: 12 },
-  // Figma inset-[8.33%_12.5%] (top 8.33% ≈ 1.83, left/right 12.5% ≈ 2.75)
-  body: {
-    position: 'absolute',
-    top: 2,
-    left: 3,
-    right: 3,
-    bottom: 2,
-  },
-  // Figma inset-[27.08%_39.58%_52.08%_39.58%] - top stripe
-  top: {
-    position: 'absolute',
-    top: 6,
-    left: 9,
-    right: 9,
-    height: 2.5,
-  },
-  // Figma inset-[47.92%_33.33%_35.42%_33.33%] - mid stripe
-  mid: {
-    position: 'absolute',
-    top: 10.5,
-    left: 7,
-    right: 7,
-    height: 3,
-  },
-});
 
 /* —— 样式 —— */
 
@@ -615,7 +480,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 28,
-    backgroundColor: '#C0C0C0',
+    backgroundColor: DIVIDER_GRAY,
     opacity: 0.6,
     marginHorizontal: 12,
   },
@@ -691,5 +556,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Microsoft YaHei',
     fontWeight: '700',
     letterSpacing: 12,
+  },
+  /* 内联错误提示 */
+  errorText: {
+    position: 'absolute',
+    left: Fig.phoneInput.left - Fig.cardLeft,
+    top: Fig.phoneInput.top - Fig.cardTop + Fig.phoneInput.h + 4,
+    fontSize: 10,
+    color: ERROR_RED,
+    fontFamily: 'Microsoft YaHei',
   },
 });
