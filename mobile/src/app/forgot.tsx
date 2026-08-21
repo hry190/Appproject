@@ -131,12 +131,16 @@ export default function ForgotScreen() {
       console.warn('[forgot] 手机号格式不正确');
       return;
     }
-    if (code.length !== 6) {
-      console.warn('[forgot] 验证码需为 6 位');
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+      console.warn('[forgot] 验证码需为 6 位数字');
       return;
     }
     if (newPwd.length < 6) {
       console.warn('[forgot] 新密码至少 6 位');
+      return;
+    }
+    if (confirmPwd.length < 6) {
+      console.warn('[forgot] 请确认至少 6 位密码');
       return;
     }
     if (newPwd !== confirmPwd) {
@@ -151,6 +155,14 @@ export default function ForgotScreen() {
     router.replace('/login');
   };
 
+  /** 按钮可用性:所有字段合法 + 勾选协议 */
+  const phoneValid = /^1[3-9]\d{9}$/.test(phone.trim());
+  const codeValid = /^\d{6}$/.test(code);
+  const newPwdValid = newPwd.length >= 6;
+  const confirmValid = confirmPwd.length >= 6 && newPwd === confirmPwd;
+  const canSubmit =
+    phoneValid && codeValid && newPwdValid && confirmValid && agreed;
+
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
@@ -162,16 +174,19 @@ export default function ForgotScreen() {
           {/* 1. 背景旧纸 */}
           <Image
             source={forgotBg}
+            // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
+            pointerEvents="none"
             style={styles.bg}
             resizeMode="cover"
-            pointerEvents="none"
           />
 
           {/* 2. 顶部标题区:返回箭头 + 标题 */}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="返回登录"
-            onPress={() => router.back()}
+            onPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/login')
+            }
             hitSlop={12}
             style={styles.backBtn}>
             <SvgXml xml={SVG_BACK_ARROW} width={Fig.backSize} height={Fig.backSize} />
@@ -187,14 +202,15 @@ export default function ForgotScreen() {
           {/* 3. 熊猫(右上) */}
           <Image
             source={forgetMascot}
+            // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
+            pointerEvents="none"
             style={styles.mascot}
             resizeMode="contain"
-            pointerEvents="none"
           />
 
           {/* 4. 卡片 */}
           <View style={styles.card}>
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
               <SvgXml xml={SVG_CARD_FRAME} width="100%" height="100%" />
             </View>
 
@@ -330,12 +346,15 @@ export default function ForgotScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="确定修改"
+              accessibilityState={{ disabled: !canSubmit }}
+              disabled={!canSubmit}
               onPress={handleSubmit}
               style={({ pressed }) => [
                 styles.submitBtn,
                 pressed && styles.btnPressed,
+                !canSubmit && styles.btnDisabled,
               ]}>
-              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
                 <SvgXml xml={SVG_BTN_BG} width="100%" height="100%" />
               </View>
               <Text
@@ -665,6 +684,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   btnPressed: { opacity: 0.85 },
+  btnDisabled: { opacity: 0.5 },
   submitBtnText: {
     fontSize: 20,
     color: '#FFFFFF',

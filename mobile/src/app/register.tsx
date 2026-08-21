@@ -61,6 +61,7 @@ export default function RegisterScreen() {
           source={bgImage}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
+          // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
           pointerEvents="none"
         />
 
@@ -69,18 +70,21 @@ export default function RegisterScreen() {
           source={decorSide}
           style={styles.ipNiang}
           resizeMode="contain"
+          // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
           pointerEvents="none"
         />
         <Image
           source={decor3}
           style={styles.decor3}
           resizeMode="contain"
+          // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
           pointerEvents="none"
         />
         <Image
           source={decor1}
           style={styles.decor1}
           resizeMode="contain"
+          // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
           pointerEvents="none"
         />
 
@@ -119,6 +123,7 @@ export default function RegisterScreen() {
               source={decor2}
               style={styles.cardDecor}
               resizeMode="cover"
+              // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
               pointerEvents="none"
             />
 
@@ -257,6 +262,7 @@ export default function RegisterScreen() {
           source={decorSide}
           style={styles.ipNiang}
           resizeMode="contain"
+          // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
           pointerEvents="none"
         />
 

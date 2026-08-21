@@ -129,8 +129,8 @@ export default function LoginScreen() {
       console.warn(`[login] 请输入${mode === 'code' ? '验证码' : '密码'}`);
       return;
     }
-    if (mode === 'code' && secret.length !== 6) {
-      console.warn('[login] 验证码需为 6 位');
+    if (mode === 'code' && !/^\d{6}$/.test(secret)) {
+      console.warn('[login] 验证码需为 6 位数字');
       return;
     }
     if (mode === 'password' && secret.length < 6) {
@@ -149,6 +149,13 @@ export default function LoginScreen() {
     router.replace('/(tabs)');
   };
 
+  /** 按钮可用性:所有字段合法 + 勾选协议 */
+  const phoneValid = /^1[3-9]\d{9}$/.test(phone.trim());
+  const secretValid =
+    mode === 'code' ? /^\d{6}$/.test(secret) : secret.length >= 6;
+  const registerPwdValid = mode !== 'code' || registerPassword.length >= 6;
+  const canSubmit = phoneValid && secretValid && registerPwdValid && agreed;
+
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
@@ -160,17 +167,19 @@ export default function LoginScreen() {
           {/* 1. 背景旧纸(PNG) */}
           <Image
             source={bgPaper}
+            // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
+            pointerEvents="none"
             style={styles.bgPaper}
             resizeMode="cover"
-            pointerEvents="none"
           />
 
           {/* 2. 熊猫吉祥物(右上,水平翻转) */}
           <Image
             source={mascot}
+            // @ts-expect-error props.pointerEvents 已弃用,但 RN <Image> 的 RegisteredStyle spread 不接受 pointerEvents 字段类型
+            pointerEvents="none"
             style={styles.mascot}
             resizeMode="contain"
-            pointerEvents="none"
           />
 
           {/* 3. WELCOME 标题 */}
@@ -191,7 +200,7 @@ export default function LoginScreen() {
 
           {/* 4. 密码登录卡 */}
           <View style={styles.card}>
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
               <SvgXml xml={SVG_CARD_FRAME} width="100%" height="100%" />
             </View>
 
@@ -387,12 +396,15 @@ export default function LoginScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={mode === 'code' ? '注册' : '登录'}
+              accessibilityState={{ disabled: !canSubmit }}
+              disabled={!canSubmit}
               onPress={handleLogin}
               style={({ pressed }) => [
                 styles.loginBtn,
                 pressed && styles.btnPressed,
+                !canSubmit && styles.btnDisabled,
               ]}>
-              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
                 <SvgXml xml={SVG_BTN_LOGIN} width="100%" height="100%" />
               </View>
               <Text
@@ -717,6 +729,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   btnPressed: { opacity: 0.85 },
+  btnDisabled: { opacity: 0.5 },
   loginBtnText: {
     fontSize: 20,
     color: '#FFFFFF',
