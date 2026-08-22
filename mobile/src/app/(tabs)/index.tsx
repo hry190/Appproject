@@ -49,9 +49,9 @@ const Fig = {
   bgH: 917,
 
   shortcut: { size: 22, top: 71, labelTop: 93, spacing: 40 },
-  bubble: { left: 29, top: 373, w: 195, h: 74 },
+  bubble: { left: 29, top: 363, w: 195, h: 74 },
   /** 对话0/1/2 通用熊猫(默认位置) */
-  panda: { left: 111, top: 470, w: 153, h: 312 },
+  panda: { left: 107, top: 473, w: 200, h: 276 },
   /** 对话3 专属熊猫(Group 17.png,aspect 0.725,新姿态) */
   pandaChat3: { left: 107, top: 473, w: 200, h: 276 },
 } as const;
@@ -139,6 +139,7 @@ export default function HomeScreen() {
           {/* 3. 欢迎气泡(View 模拟)— 仅在 chatStep > 0 时显示;放在熊猫之后 z-order 更高 */}
           {chatStep > 0 && CHAT_STEPS[chatStep] && (
             <View style={styles.bubble}>
+              <View style={styles.bubbleTail} />
               <Text
                 style={styles.bubbleText}
                 maxFontSizeMultiplier={1.4}
@@ -283,8 +284,24 @@ const styles = StyleSheet.create({
     minHeight: Fig.bubble.h,
     backgroundColor: '#F4E6CF',
     borderRadius: 12,
+    /* 右下角保持小圆角,让尾巴(下方绝对定位)看起来贴得自然 */
+    borderBottomRightRadius: 4,
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  /* 气泡尾巴 — 用 border 三角技巧,右下角朝下 */
+  bubbleTail: {
+    position: 'absolute',
+    bottom: -7,
+    right: 14,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#F4E6CF',
   },
   bubbleText: {
     fontSize: 9,
