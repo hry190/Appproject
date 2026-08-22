@@ -14,6 +14,7 @@ import Svg, { SvgXml } from 'react-native-svg';
 import bgImage from '@/assets/images/home/bg.png';
 import pandaImage from '@/assets/images/home/panda.png';
 import pandaChat3Image from '@/assets/images/home/Group 17.png';
+import pandaDecoImage from '@/assets/images/home/-1 50.png';
 import iconSettings from '@/assets/images/home/icon-settings.png';
 import iconTask from '@/assets/images/home/icon-task.png';
 import iconProgress from '@/assets/images/home/icon-progress.png';
@@ -26,7 +27,7 @@ import iconWorks from '@/assets/images/home/icon-works.png';
  * - 删掉底部 5 个 Tab(江湖/修炼/造物/大会/行囊)
  * - 新的"一级导航"是右上 4 个快捷键:设置 / 任务 / 进度 / 作品
  *
- * 设计 token(基线 412 × 917 dp):
+ * 设计 token(基线 412 × 800 dp):
  *   背景         #FFFFFF(纯白,竹林图做底图)
  *   文字主色     #000000
  *   欢迎气泡背景 SVG(bubble-bg.svg)
@@ -41,12 +42,12 @@ const ARROW_SVG = `<svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns
 
 const Fig = {
   canvasW: 412,
-  canvasH: 917,
+  canvasH: 800,
 
   bgLeft: -51,
   bgTop: 0,
   bgW: 516,
-  bgH: 917,
+  bgH: 800,
 
   shortcut: { size: 22, top: 71, labelTop: 93, spacing: 40 },
   bubble: { left: 29, top: 363, w: 195, h: 74 },
@@ -54,6 +55,8 @@ const Fig = {
   panda: { left: 107, top: 473, w: 200, h: 276 },
   /** 对话3 专属熊猫(Group 17.png,aspect 0.725,新姿态) */
   pandaChat3: { left: 107, top: 473, w: 200, h: 276 },
+  /** 熊猫左侧装饰图(33×69,小图标)— 在熊猫左边的空地 */
+  pandaDeco: { left: 30, top: 510, w: 33, h: 69 },
 } as const;
 
 /** 3 段对话的内容 — 文字在 Figma 节点里直接抓 */
@@ -131,6 +134,21 @@ export default function HomeScreen() {
                   }
                 : styles.panda
             }
+            resizeMode="contain"
+            // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+            pointerEvents="none"
+          />
+
+          {/* 4b. 熊猫左侧装饰图(始终显示) */}
+          <Image
+            source={pandaDecoImage}
+            style={{
+              position: 'absolute',
+              left: Fig.pandaDeco.left,
+              top: Fig.pandaDeco.top,
+              width: Fig.pandaDeco.w,
+              height: Fig.pandaDeco.h,
+            }}
             resizeMode="contain"
             // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
             pointerEvents="none"
