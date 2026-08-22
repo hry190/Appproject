@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   Image,
+  type ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +15,10 @@ import Svg, { SvgXml } from 'react-native-svg';
 import bgImage from '@/assets/images/home/bg.png';
 import pandaImage from '@/assets/images/home/panda.png';
 import pandaChat3Image from '@/assets/images/home/Group 17.png';
-import pandaDecoImage from '@/assets/images/home/-1 50.png';
+import image1 from '@/assets/images/home/1.png';
+import image2 from '@/assets/images/home/2.png';
+import image3 from '@/assets/images/home/3.png';
+import image4 from '@/assets/images/home/4.png';
 import iconSettings from '@/assets/images/home/icon-settings.png';
 import iconTask from '@/assets/images/home/icon-task.png';
 import iconProgress from '@/assets/images/home/icon-progress.png';
@@ -42,12 +46,12 @@ const ARROW_SVG = `<svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns
 
 const Fig = {
   canvasW: 412,
-  canvasH: 800,
+  canvasH: 810,
 
   bgLeft: -51,
   bgTop: 0,
-  bgW: 516,
-  bgH: 800,
+  bgW: 500,
+  bgH: 900,
 
   shortcut: { size: 22, top: 71, labelTop: 93, spacing: 40 },
   bubble: { left: 29, top: 363, w: 195, h: 74 },
@@ -55,11 +59,14 @@ const Fig = {
   panda: { left: 107, top: 473, w: 200, h: 276 },
   /** 对话3 专属熊猫(Group 17.png,aspect 0.725,新姿态) */
   pandaChat3: { left: 107, top: 473, w: 200, h: 276 },
-  /** 熊猫左侧装饰图(33×69,小图标)— 在熊猫左边的空地 */
-  pandaDeco: { left: 30, top: 510, w: 33, h: 69 },
+  /** 4 张小图(从原 Figma 任务页 home2 拿的)— 都用 33×69 装饰图,按 Figma 位置放 */
+  image1: { left: 120, top: 613, w: 40, h: 90 },
+  image2: { left: 82, top: 275, w: 40, h: 90 },
+  image3: { left: 176, top: 381, w: 40, h: 90 },
+  image4: { left: 308, top: 381, w: 40, h: 90 },
 } as const;
 
-/** 3 段对话的内容 — 文字在 Figma 节点里直接抓 */
+/** 4 段对话的内容 — 文字在 Figma 节点里直接抓 */
 const CHAT_STEPS = [
   /* 0 — 初始(进首页时),不显示任何气泡 */
   null,
@@ -67,7 +74,27 @@ const CHAT_STEPS = [
   'hi，欢迎来到机巧江湖，我是阿砚，在这里，以学识为剑，以思考为途开启你的求知冒险吧！',
   /* 2 — 首页对话3:阿砚介绍身后的去处 */
   '在我身后有三个奇妙去处哦!\n修炼场,可以完成互动试炼,解锁神秘秘籍;\n大会,同伴互评空间,锻炼思考能力;\n作品创作,辅助学生进行AI创作;\n哦差点忘了,行囊,可以查看收获的成果哦。\n聪明的你,已经迫不及待准备出发了吧,我们\n一起开始冒险吧!',
+  /* 3 — 对话3 之后:气泡消失,只留装饰图 */
+  null,
 ] as const;
+
+/** 4 张装饰横幅 + 各自的竖排中文标题
+ *  关键:文字不是烧进 PNG 的,而是用 <Text> 在图片上方运行时叠加,
+ *  这样字号、颜色、阴影都能在 TS 里调,不用重画图片。
+ */
+const DECOR_BANNERS = [
+  { key: 'luggage',    src: image1, pos: Fig.image1, chars: ['行', '囊'] },
+  { key: 'cultivate',  src: image2, pos: Fig.image2, chars: ['修', '炼'] },
+  { key: 'conference', src: image3, pos: Fig.image3, chars: ['大', '会'] },
+  { key: 'create',     src: image4, pos: Fig.image4, chars: ['作', '品', '创', '作'] },
+] as const;
+
+/** 装饰横幅文字样式 token — 跟气泡色调统一 */
+const DECOR_TEXT_COLOR = '#F4E6CF';     // 米黄(跟气泡同色)
+const DECOR_SHADOW = 'rgba(20,30,20,0.85)'; // 深绿阴影
+const DECOR_FONT_SIZE = 13;
+/** 文字相对图片中心的水平偏移:负数偏左,正数偏右。0 = 居中。 */
+const DECOR_TEXT_OFFSET_X = -5;
 
 type QuickAction = {
   key: string;
@@ -139,23 +166,24 @@ export default function HomeScreen() {
             pointerEvents="none"
           />
 
-          {/* 4b. 熊猫左侧装饰图(始终显示) */}
-          <Image
-            source={pandaDecoImage}
-            style={{
-              position: 'absolute',
-              left: Fig.pandaDeco.left,
-              top: Fig.pandaDeco.top,
-              width: Fig.pandaDeco.w,
-              height: Fig.pandaDeco.h,
-            }}
-            resizeMode="contain"
-            // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
-            pointerEvents="none"
-          />
+          {/* 4b. 4 张小图 + 各自的中文标题(<Text> 运行时叠加,不烧进 PNG)
+            仅在对话 3 结束(气泡消失)后才显示 — chatStep >= 3
+            之前(0/1/2)保持页面干净,只在最后阶段揭示四个去处 */}
+          {chatStep >= 3 &&
+            DECOR_BANNERS.map((b) => (
+              <DecorBanner
+                key={b.key}
+                src={b.src}
+                left={b.pos.left}
+                top={b.pos.top}
+                w={b.pos.w}
+                h={b.pos.h}
+                chars={b.chars}
+              />
+            ))}
 
-          {/* 3. 欢迎气泡(View 模拟)— 仅在 chatStep > 0 时显示;放在熊猫之后 z-order 更高 */}
-          {chatStep > 0 && CHAT_STEPS[chatStep] && (
+          {/* 3. 欢迎气泡(View 模拟)— 仅在对话 2/3 显示(对话 4+ 不显示);放在熊猫之后 z-order 更高 */}
+          {chatStep > 0 && chatStep < 3 && CHAT_STEPS[chatStep] && (
             <View style={styles.bubble}>
               <View style={styles.bubbleTail} />
               <Text
@@ -244,6 +272,76 @@ function QuickActionItem({
         </View>
       )}
     </Pressable>
+  );
+}
+
+/* —— 装饰横幅:装饰图(底层) + 竖排中文(顶层叠加,运行时渲染,不是烧进 PNG) —— */
+function DecorBanner({
+  src,
+  left,
+  top,
+  w,
+  h,
+  chars,
+}: {
+  src: ImageSourcePropType;
+  left: number;
+  top: number;
+  w: number;
+  h: number;
+  chars: readonly string[];
+}) {
+  const lineH = DECOR_FONT_SIZE;
+  const blockH = chars.length * lineH;
+  // 文字块在容器内垂直居中
+  const padTop = Math.max(0, (h - blockH) / 3);
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        left,
+        top,
+        width: w,
+        height: h,
+      }}
+      pointerEvents="none">
+      {/* 底层装饰图 */}
+      <Image
+        source={src}
+        style={StyleSheet.absoluteFill}
+        resizeMode="contain"
+        // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+        pointerEvents="none"
+      />
+      {/* 顶层竖排文字:每个字一个 <Text>,垂直堆叠 */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: padTop,
+          transform: [{ translateX: DECOR_TEXT_OFFSET_X }],
+        }}>
+        {chars.map((c, i) => (
+          <Text
+            key={i}
+            style={{
+              fontSize: DECOR_FONT_SIZE,
+              lineHeight: lineH,
+              color: DECOR_TEXT_COLOR,
+              fontFamily: 'Microsoft YaHei',
+              textAlign: 'center',
+              textShadowColor: DECOR_SHADOW,
+              textShadowOffset: { width: 1, height: 1 },
+              textShadowRadius: 0,
+            }}
+            maxFontSizeMultiplier={1.4}
+            allowFontScaling>
+            {c}
+          </Text>
+        ))}
+      </View>
+    </View>
   );
 }
 
