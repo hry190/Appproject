@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   Image,
@@ -12,6 +13,7 @@ import Svg, { SvgXml } from 'react-native-svg';
 
 import bgImage from '@/assets/images/home/bg.png';
 import pandaImage from '@/assets/images/home/panda.png';
+import pandaChat3Image from '@/assets/images/home/Group 17.png';
 import iconSettings from '@/assets/images/home/icon-settings.png';
 import iconTask from '@/assets/images/home/icon-task.png';
 import iconProgress from '@/assets/images/home/icon-progress.png';
@@ -47,9 +49,22 @@ const Fig = {
   bgH: 917,
 
   shortcut: { size: 22, top: 71, labelTop: 93, spacing: 40 },
-  bubble: { left: 29, top: 413, w: 125, h: 74 },
+  bubble: { left: 29, top: 373, w: 195, h: 74 },
+  /** 对话0/1/2 通用熊猫(默认位置) */
   panda: { left: 111, top: 470, w: 153, h: 312 },
+  /** 对话3 专属熊猫(Group 17.png,aspect 0.725,新姿态) */
+  pandaChat3: { left: 107, top: 473, w: 200, h: 276 },
 } as const;
+
+/** 3 段对话的内容 — 文字在 Figma 节点里直接抓 */
+const CHAT_STEPS = [
+  /* 0 — 初始(进首页时),不显示任何气泡 */
+  null,
+  /* 1 — 首页对话2:阿砚的欢迎词 */
+  'hi，欢迎来到机巧江湖，我是阿砚，在这里，以学识为剑，以思考为途开启你的求知冒险吧！',
+  /* 2 — 首页对话3:阿砚介绍身后的去处 */
+  '在我身后有三个奇妙去处哦!\n修炼场,可以完成互动试炼,解锁神秘秘籍;\n大会,同伴互评空间,锻炼思考能力;\n作品创作,辅助学生进行AI创作;\n哦差点忘了,行囊,可以查看收获的成果哦。\n聪明的你,已经迫不及待准备出发了吧,我们\n一起开始冒险吧!',
+] as const;
 
 type QuickAction = {
   key: string;
@@ -69,13 +84,21 @@ const ACTIONS: QuickAction[] = [
 
 export default function HomeScreen() {
   const router = useRouter();
+  /** 点击屏幕推进对话;0 = 静默, 1 = 对话2, 2 = 对话3 */
+  const [chatStep, setChatStep] = useState(0);
+  const advance = () => setChatStep((s) => Math.min(s + 1, CHAT_STEPS.length - 1));
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <View style={styles.canvas}>
+        {/* 整个画布接 tap 推进对话;用 View 不用 Pressable 避免和内部快捷键按钮嵌套 */}
+        <View
+          style={styles.canvas}
+          onStartShouldSetResponder={() => true}
+          onResponderRelease={advance}
+          accessibilityLabel="点击推进对话">
           {/* 1. 背景(竹林图,延伸出右 104dp) */}
           <Image
             source={bgImage}
@@ -94,24 +117,36 @@ export default function HomeScreen() {
             />
           ))}
 
-          {/* 3. 欢迎气泡(View 模拟,不用 Image) */}
-          <View style={styles.bubble}>
-            <Text
-              style={styles.bubbleText}
-              maxFontSizeMultiplier={1.4}
-              allowFontScaling>
-              hi，欢迎来到机巧江湖，我是阿砚，在这里，以学识为剑，以思考为途开启你的求知冒险吧！
-            </Text>
-          </View>
-
-          {/* 4. 熊猫吉祥物 */}
+          {/* 4. 熊猫吉祥物 — 对话 0/1/2 用默认图,对话 3 切到 Group 17 */}
           <Image
-            source={pandaImage}
-            style={styles.panda}
+            source={chatStep >= 2 ? pandaChat3Image : pandaImage}
+            style={
+              chatStep >= 2
+                ? {
+                    position: 'absolute',
+                    left: Fig.pandaChat3.left,
+                    top: Fig.pandaChat3.top,
+                    width: Fig.pandaChat3.w,
+                    height: Fig.pandaChat3.h,
+                  }
+                : styles.panda
+            }
             resizeMode="contain"
             // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
             pointerEvents="none"
           />
+
+          {/* 3. 欢迎气泡(View 模拟)— 仅在 chatStep > 0 时显示;放在熊猫之后 z-order 更高 */}
+          {chatStep > 0 && CHAT_STEPS[chatStep] && (
+            <View style={styles.bubble}>
+              <Text
+                style={styles.bubbleText}
+                maxFontSizeMultiplier={1.4}
+                allowFontScaling>
+                {CHAT_STEPS[chatStep]}
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
