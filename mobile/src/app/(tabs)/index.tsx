@@ -817,7 +817,7 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
         行囊
       </Text>
 
-      {/* 行李卡片(米黄底,跟气泡同色) */}
+      {/* 行李卡片 — 底图 image 14.png 撑满,米黄底色兜底防透明 */}
       <View
         style={{
           position: 'absolute',
@@ -827,15 +827,23 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
           height: 750,
           backgroundColor: '#F4E6CF',
           borderRadius: 12,
-          padding: 16,
+          overflow: 'hidden',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.2,
           shadowRadius: 6,
           elevation: 4,
         }}>
-        {/* 内容容器(整体内边距)— 所有子元素都包在这里 */}
-        <View style={{ flex: 1 }}>
+        {/* 底图(image 14.png)撑满 */}
+        <Image
+          source={luggageCardBg}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+          pointerEvents="none"
+        />
+        {/* 内容容器 — 在底图上方 */}
+        <View style={{ flex: 1, padding: 16 }}>
           {/* 头像 + 名字/班级/ID 行 */}
           <View
             style={{
@@ -969,9 +977,10 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
           }
         />
 
-        {/* 我的错题 区 */}
+        {/* 我的错题 区 — 背景色 #8E9A75 */}
         <Section
           title="我的错题:"
+          bgColor="#8E9A75"
           content={
             <Text
               style={{
@@ -1006,17 +1015,20 @@ function Section({
   title,
   content,
   defaultOpen = false,
+  bgColor = 'rgba(127,169,136,0.18)', // 默认浅绿
 }: {
   title: string;
   content: React.ReactNode;
   defaultOpen?: boolean;
+  /** 自定义背景色,缺省 = 浅绿 */
+  bgColor?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <View
       style={{
         marginTop: 14,
-        backgroundColor: 'rgba(127,169,136,0.18)',
+        backgroundColor: bgColor,
         borderRadius: 8,
         overflow: 'hidden',
       }}>
