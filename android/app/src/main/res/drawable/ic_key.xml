@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Key icon — matches AuthIcons.tsx KeyIcon (~24x24 viewBox).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- key bow (circle) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#949494"
+        android:strokeWidth="1.83"
+        android:pathData="M9,6 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <!-- key shaft -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#949494"
+        android:strokeWidth="1.83"
+        android:pathData="M9,6 L9,18 L13,18 L13,15 L17,15 L17,12 L20,12" />
+    <!-- inner ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#949494"
+        android:strokeWidth="1.83"
+        android:pathData="M9,6 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0" />
+</vector>
