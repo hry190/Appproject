@@ -31,6 +31,12 @@ import dailyPandaImage from '@/assets/images/home/hbuyy.png'; // 每日问题场
 import luggageCardBg from '@/assets/images/home/image 14.png'; // 行囊页的卡片底图(Figma 397:2400)
 import luggageAvatarBg from '@/assets/images/home/Ellipse 25.png'; // 行囊页头像的圆框底图
 import levelBadgeBg from '@/assets/images/home/terw.png'; // 行囊页"见习弟子"勋章背景框
+import book1Image from '@/assets/images/home/17.png'; // 秘籍 1《拆招心法》封面
+import book2Image from '@/assets/images/home/21.png'; // 秘籍 2《识机真诀》封面
+import book3Image from '@/assets/images/home/54.png'; // 秘籍 3《百炼识物诀》封面
+import work1Image from '@/assets/images/home/Group 158.png'; // 作品 1 封面
+import work2Image from '@/assets/images/home/image 18.png'; // 作品 2 封面
+import luggagePanda from '@/assets/images/home/Group 164.png'; // 行囊页右下角熊猫角色(Figma 397:2400)
 
 /**
  * 首页(节点 Figma 301:1695) — 阿砚的聊天界面。
@@ -782,6 +788,15 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
         resizeMode="cover"
       />
 
+      {/* 4 个右上快捷键(图标 + 文字)— 跟首页同样的设计 */}
+      {ACTIONS.map((a) => (
+        <QuickActionItem
+          key={`luggage-${a.key}`}
+          action={a}
+          onPress={() => console.log('[luggage] quick action:', a.key)}
+        />
+      ))}
+
       {/* 关闭按钮 × — 最顶层 */}
       <Pressable
         onPress={onClose}
@@ -789,7 +804,7 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
         style={({ pressed }) => ({
           position: 'absolute',
           left: 28,
-          top: 95,
+          top: 125,
           width: 32,
           height: 32,
           alignItems: 'center',
@@ -822,9 +837,9 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
         style={{
           position: 'absolute',
           left: 20,
-          top: 117,
+          top: 115,
           width: 372,
-          height: 750,
+          height: 670,
           backgroundColor: '#F4E6CF',
           borderRadius: 12,
           overflow: 'hidden',
@@ -970,17 +985,16 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
           defaultOpen
           content={
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              <ManualItem name="《拆招心法》" />
-              <ManualItem name="《识机真诀》" />
-              <ManualItem name="《百炼识物诀》" />
+              <ManualItem name="《拆招心法》" cover={book1Image} />
+              <ManualItem name="《识机真诀》" cover={book2Image} />
+              <ManualItem name="《百炼识物诀》" cover={book3Image} />
             </View>
           }
         />
 
-        {/* 我的错题 区 — 背景色 #8E9A75 */}
+        {/* 我的错题 区(背景沿用 Section 默认 #EBDCC3) */}
         <Section
           title="我的错题:"
-          bgColor="#8E9A75"
           content={
             <Text
               style={{
@@ -999,12 +1013,27 @@ function LuggagePage({ onClose }: { onClose: () => void }) {
           title="我的作品:"
           content={
             <View style={{ flexDirection: 'row' }}>
-              <WorkItem label="作品 1" />
-              <WorkItem label="作品 2" />
+              <WorkItem label="作品 1" cover={work1Image} />
+              <WorkItem label="作品 2" cover={work2Image} />
             </View>
           }
         />
         </View>
+
+        {/* 右下角熊猫角色(Group 164.png,绝对定位在卡片右下)— 不挡关闭按钮 */}
+        <Image
+          source={luggagePanda}
+          style={{
+            position: 'absolute',
+            left: 257,
+            top: 459,
+            width: 120,
+            height: 233,
+          }}
+          resizeMode="contain"
+          // @ts-expect-error RN 此版本的 ImageStyle 类型不含 pointerEvents
+          pointerEvents="none"
+        />
       </View>
     </View>
   );
@@ -1015,7 +1044,7 @@ function Section({
   title,
   content,
   defaultOpen = false,
-  bgColor = 'rgba(127,169,136,0.18)', // 默认浅绿
+  bgColor = '#EBDCC3', // 默认米色(跟行囊页卡片协调)
 }: {
   title: string;
   content: React.ReactNode;
@@ -1073,18 +1102,20 @@ function Section({
 }
 
 /* —— 秘籍格子(占位图 + 书名)—— */
-function ManualItem({ name }: { name: string }) {
+function ManualItem({
+  name,
+  cover,
+}: {
+  name: string;
+  cover: ImageSourcePropType;
+}) {
   return (
     <View style={{ alignItems: 'center', marginRight: 14, marginBottom: 6 }}>
-      <View
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 4,
-          backgroundColor: '#D9A86C',
-          borderWidth: 1,
-          borderColor: 'rgba(0,0,0,0.15)',
-        }}
+      {/* 直接放封面图,无外框 */}
+      <Image
+        source={cover}
+        style={{ width: 44, height: 44, borderRadius: 4 }}
+        resizeMode="cover"
       />
       <Text
         style={{
@@ -1100,18 +1131,20 @@ function ManualItem({ name }: { name: string }) {
 }
 
 /* —— 作品格子(占位图 + 名称)—— */
-function WorkItem({ label }: { label: string }) {
+function WorkItem({
+  label,
+  cover,
+}: {
+  label: string;
+  cover: ImageSourcePropType;
+}) {
   return (
     <View style={{ alignItems: 'center', marginRight: 14 }}>
-      <View
-        style={{
-          width: 60,
-          height: 80,
-          borderRadius: 4,
-          backgroundColor: '#7FA988',
-          borderWidth: 1,
-          borderColor: 'rgba(0,0,0,0.15)',
-        }}
+      {/* 直接放封面图,无外框无底色 */}
+      <Image
+        source={cover}
+        style={{ width: 60, height: 80, borderRadius: 4 }}
+        resizeMode="cover"
       />
       <Text
         style={{
