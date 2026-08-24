@@ -43,7 +43,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.data.Validators
 import com.jueqiao.jianghu.ui.components.AuthCheckbox
@@ -61,19 +60,6 @@ import kotlinx.coroutines.delay
  * Login screen — dual mode (password / SMS code), 412x800 fixed canvas.
  * Mirrors RN login.tsx structure.
  */
-@Preview(showBackground = true, widthDp = 412, heightDp = 800)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen(
-        onLogin = {},
-        onOpenForgot = {},
-        onOpenRegister = {},
-        onOpenAgreement = {},
-        onOpenPrivacy = {},
-        onBack = {},
-    )
-}
-
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit,
@@ -132,7 +118,7 @@ fun LoginScreen(
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = (-12).dp, y = 230.dp)
+                        .offset(x = (-12).dp, y = 233.dp)
                         .size(width = 200.dp, height = 240.dp)
                         .graphicsLayerScaleX(-1f),
                     contentScale = ContentScale.Fit,

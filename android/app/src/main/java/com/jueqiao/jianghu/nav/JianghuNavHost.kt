@@ -23,7 +23,7 @@ fun JianghuNavHost(
 ) {
     NavHost(
         navController    = navController,
-        startDestination = Routes.Login,
+        startDestination = Routes.Splash,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
