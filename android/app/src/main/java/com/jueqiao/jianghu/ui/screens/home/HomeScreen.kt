@@ -181,7 +181,9 @@ fun HomeScreen() {
                             R.drawable.img_bubble_chat1_bg
                         else
                             R.drawable.img_bubble_chat2_bg,
-                        cornerRadius = 24.dp,
+                        // 气泡2：图片下半部分是透明的,需要实心米色背景才能显示圆角
+                        bubbleColor = if (chatStep == 2) Color(0xFFC3BCA5) else Color.Transparent,
+                        cornerRadius = if (chatStep == 1) 24.dp else 40.dp,
                         imageColorFilter = if (chatStep == 2) removeBlackFilter else null,
                         modifier = if (chatStep == 2)
                             Modifier
