@@ -49,7 +49,9 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * Mirrors RN (tabs)/index.tsx.
  */
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onOpenHome1: () -> Unit = {},
+) {
     var chatStep by remember { mutableStateOf(0) }
     var taskExpanded by remember { mutableStateOf(false) }
     var progressOpen by remember { mutableStateOf(false) }
@@ -161,14 +163,15 @@ fun HomeScreen() {
 
                 // Welcome speech bubble (chatStep 1..2)
                 if (chatStep in 1..2) {
-                    // 去掉气泡2 图片的黑色轮廓:alpha = R(0→透明,1→不透明)
+                    // 更激进的滤镜：只保留非常浅的米色（亮度 > 0.85），
+                    // 把深米色"箭头"、黑色描边等都变透明
                     val removeBlackFilter = ColorFilter.colorMatrix(
                         ColorMatrix(
                             floatArrayOf(
-                                1f, 0f, 0f, 0f, 0f,  // R 保持
-                                0f, 1f, 0f, 0f, 0f,  // G 保持
-                                0f, 0f, 1f, 0f, 0f,  // B 保持
-                                1f, 0f, 0f, 0f, 0f,  // A = R
+                                1f, 0f, 0f, 0f, 0f,         // R 保持
+                                0f, 1f, 0f, 0f, 0f,         // G 保持
+                                0f, 0f, 1f, 0f, 0f,         // B 保持
+                                0f, 0f, 0f, 0f, 0.85f,      // A = 0.85（几乎全透明，仅最浅色保留）
                             )
                         )
                     )
@@ -181,14 +184,13 @@ fun HomeScreen() {
                             R.drawable.img_bubble_chat1_bg
                         else
                             R.drawable.img_bubble_chat2_bg,
-                        // 气泡2：图片下半部分是透明的,需要实心米色背景才能显示圆角
                         bubbleColor = if (chatStep == 2) Color(0xFFC3BCA5) else Color.Transparent,
                         cornerRadius = if (chatStep == 1) 24.dp else 40.dp,
                         imageColorFilter = if (chatStep == 2) removeBlackFilter else null,
                         modifier = if (chatStep == 2)
                             Modifier
-                                .offset(x = 16.dp, y = 230.dp)
-                                .size(width = 380.dp, height = 280.dp)
+                                .offset(x = 16.dp, y = 240.dp)
+                                .size(width = 380.dp, height = 200.dp)
                         else
                             Modifier
                                 .offset(x = 29.dp, y = 363.dp)
@@ -225,7 +227,12 @@ fun HomeScreen() {
                         modifier = Modifier
                             .fillMaxSize()
                             .clickable {
-                                chatStep = (chatStep + 1).coerceAtMost(3)
+                                if (chatStep < 2) {
+                                    chatStep = (chatStep + 1).coerceAtMost(2)
+                                } else {
+                                    // 聊天气泡播完(chatStep == 2),点击跳转 Home1
+                                    onOpenHome1()
+                                }
                             },
                     )
                 }

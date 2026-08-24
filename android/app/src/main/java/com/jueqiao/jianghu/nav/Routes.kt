@@ -12,6 +12,7 @@ object Routes {
     const val Agreement = "agreement"
     const val Privacy   = "privacy"
     const val Home      = "home"
+    const val Home1     = "home1"
     const val Xiulian   = "xiulian"
     const val Xingnang  = "xingnang"
     const val Zaowu     = "zaowu"

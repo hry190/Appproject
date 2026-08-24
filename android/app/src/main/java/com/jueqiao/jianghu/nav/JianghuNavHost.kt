@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
+import com.jueqiao.jianghu.ui.screens.home.Home1Screen
 import com.jueqiao.jianghu.ui.screens.home.HomeScreen
 import com.jueqiao.jianghu.ui.screens.login.LoginScreen
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
@@ -99,7 +100,20 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Home) {
-            HomeScreen()
+            HomeScreen(
+                onOpenHome1 = { navController.navigate(Routes.Home1) },
+            )
+        }
+
+        composable(Routes.Home1) {
+            Home1Screen(
+                onOpenXiulian  = { navController.navigate(Routes.Xiulian) },
+                onOpenXingnang = { navController.navigate(Routes.Xingnang) },
+                onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
+                onOpenDahui    = { navController.navigate(Routes.Dahui) },
+                onOpenProgress = { /* TODO:进度弹窗或页面 */ },
+                onBack         = { navController.popBackStack() },
+            )
         }
 
         composable(Routes.Xiulian)  { XiulianScreen(onBack = { navController.popBackStack() }) }
