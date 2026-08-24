@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -60,12 +61,20 @@ fun ProgressModal(
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 80.dp, start = 20.dp, end = 20.dp)
+                .padding(top = 130.dp, start = 20.dp, end = 20.dp)
                 .fillMaxWidth()
                 .height(660.dp)
-                .background(Color.White, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White)
                 .clickable(enabled = false) { /* swallow */ },
         ) {
+            // 背景图(image 13.png — 372x579)
+            Image(
+                painter = painterResource(R.drawable.img_progress_modal_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
             Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
                 Image(
                     painter = painterResource(R.drawable.ic_close),
@@ -157,17 +166,20 @@ fun ProgressModal(
                         )
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .offset(x = 20.dp, y = 30.dp)
-                        .size(width = 223.dp, height = 244.dp),
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_corner_decor),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+            }
+            // 竹叶贴图：放在 Column 之外，渲染在最上层
+            Box(
+                modifier = Modifier
+                    .offset(x = 169.dp, y = 435.dp)
+                    .size(width = 262.dp, height = 244.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_corner_decor),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().alpha(0.3f),
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.BottomCenter,
+                )
             }
         }
     }

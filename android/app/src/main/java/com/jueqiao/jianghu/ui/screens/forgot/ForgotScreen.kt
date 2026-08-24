@@ -37,6 +37,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -49,6 +50,7 @@ import com.jueqiao.jianghu.ui.components.PhoneIcon
 import com.jueqiao.jianghu.ui.components.PrimaryButton
 import com.jueqiao.jianghu.ui.theme.AuthDimens
 import com.jueqiao.jianghu.ui.theme.AuthPalette
+import com.jueqiao.jianghu.ui.theme.JianghuTheme
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 
@@ -121,7 +123,7 @@ fun ForgotScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 32.sp,
                     ),
-                    modifier = Modifier.offset(x = 47.dp, y = 110.dp),
+                    modifier = Modifier.offset(x = 47.dp, y = 50.dp),
                 )
                 // Mascot
                 Image(
@@ -129,7 +131,7 @@ fun ForgotScreen(
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = (-12).dp, y = 80.dp)
+                        .offset(x = (-12).dp, y = 110.dp)
                         .size(width = 200.dp, height = 240.dp),
                     contentScale = ContentScale.Fit,
                 )
@@ -137,11 +139,12 @@ fun ForgotScreen(
                 // Card
                 Box(
                     modifier = Modifier
-                        .offset(x = 20.dp, y = 349.dp)
-                        .size(width = AuthDimens.canvasW - 40.dp, height = 400.dp),
+                        .offset(x = 20.dp, y = 330.dp)
+                        .size(width = AuthDimens.canvasW - 40.dp, height = 430.dp),
                 ) {
                     CardFrame(modifier = Modifier.fillMaxSize(), height = 400.dp)
                     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                        Spacer(modifier = Modifier.height(20.dp))
                         ForgotField(
                             value = phone,
                             onValueChange = { phone = it.filter { c -> c.isDigit() }.take(11); phoneError = null },
@@ -207,7 +210,11 @@ fun ForgotScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             AuthCheckbox(checked = agreed, onCheckedChange = { agreed = it })
                             Spacer(modifier = Modifier.width(8.dp))
                             ForgotAgreementText(
@@ -220,6 +227,9 @@ fun ForgotScreen(
                             text = "确定修改",
                             onClick = onSubmitted,
                             enabled = canSubmit,
+                            modifier = Modifier
+                                .width(300.dp)
+                                .align(Alignment.CenterHorizontally),
                         )
                     }
                 }
@@ -284,6 +294,7 @@ private fun ForgotField(
     }
 }
 
+
 @Composable
 private fun ForgotAgreementText(
     onOpenAgreement: () -> Unit,
@@ -311,6 +322,19 @@ private fun ForgotAgreementText(
             color = AuthPalette.LinkOlive,
             style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
             modifier = Modifier.clickable { onOpenPrivacy() },
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 800)
+@Composable
+fun ForgotScreenPreview() {
+    JianghuTheme {
+        ForgotScreen(
+            onSubmitted = {},
+            onOpenAgreement = {},
+            onOpenPrivacy = {},
+            onBack = {},
         )
     }
 }

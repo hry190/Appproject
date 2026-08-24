@@ -39,7 +39,7 @@ fun DecorBanner(
             painter = painterResource(imageRes),
             contentDescription = text,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
         )
         Box(
             modifier = Modifier

@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -36,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.DecorBanner
 import com.jueqiao.jianghu.ui.components.QuickActionItem
 import com.jueqiao.jianghu.ui.components.SpeechBubble
 import com.jueqiao.jianghu.ui.theme.AuthDimens
@@ -48,12 +49,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * Mirrors RN (tabs)/index.tsx.
  */
 @Composable
-fun HomeScreen(
-    onOpenXiulian: () -> Unit,
-    onOpenXingnang: () -> Unit,
-    onOpenZaowu: () -> Unit,
-    onOpenDahui: () -> Unit,
-) {
+fun HomeScreen() {
     var chatStep by remember { mutableStateOf(0) }
     var taskExpanded by remember { mutableStateOf(false) }
     var progressOpen by remember { mutableStateOf(false) }
@@ -161,28 +157,40 @@ fun HomeScreen(
                 )
 
                 // 4 Banners (only when chatStep >= 3 and not in modal/luggage)
-                if (chatStep >= 3 && !progressOpen && !luggageOpen) {
-                    BannerRow(
-                        onOpenXingnang = { luggageOpen = true },
-                        onOpenXiulian = onOpenXiulian,
-                        onOpenDahui = onOpenDahui,
-                        onOpenZaowu = onOpenZaowu,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .offset(y = (-24).dp),
-                    )
-                }
+                // BannerRow removed — no decorative banners on home page
 
                 // Welcome speech bubble (chatStep 1..2)
                 if (chatStep in 1..2) {
+                    // 去掉气泡2 图片的黑色轮廓:alpha = R(0→透明,1→不透明)
+                    val removeBlackFilter = ColorFilter.colorMatrix(
+                        ColorMatrix(
+                            floatArrayOf(
+                                1f, 0f, 0f, 0f, 0f,  // R 保持
+                                0f, 1f, 0f, 0f, 0f,  // G 保持
+                                0f, 0f, 1f, 0f, 0f,  // B 保持
+                                1f, 0f, 0f, 0f, 0f,  // A = R
+                            )
+                        )
+                    )
                     SpeechBubble(
                         text = if (chatStep == 1)
                             "hi，欢迎来到机巧江湖"
                         else
-                            "在我身后有三个奇妙去处，先跟我聊聊你今天想做什么？",
-                        modifier = Modifier
-                            .offset(x = 29.dp, y = 363.dp)
-                            .size(width = 195.dp, height = 74.dp),
+                            "在我身后有三个奇妙去处哦！\n修炼场，可以完成互动试炼，解锁神秘秘籍；\n大会，同伴互评空间，锻炼思考能力；\n作品创作，辅助学生进行 AI 创作；\n哦差点忘了，行囊，可以查看收获的成果哦。\n聪明的你，已经迫不及待准备出发了吧，我们一起开始冒险吧！",
+                        bubbleImageRes = if (chatStep == 1)
+                            R.drawable.img_bubble_chat1_bg
+                        else
+                            R.drawable.img_bubble_chat2_bg,
+                        cornerRadius = 24.dp,
+                        imageColorFilter = if (chatStep == 2) removeBlackFilter else null,
+                        modifier = if (chatStep == 2)
+                            Modifier
+                                .offset(x = 16.dp, y = 230.dp)
+                                .size(width = 380.dp, height = 280.dp)
+                        else
+                            Modifier
+                                .offset(x = 29.dp, y = 363.dp)
+                                .size(width = 195.dp, height = 74.dp),
                     )
                 }
 
@@ -233,42 +241,5 @@ fun HomeScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BannerRow(
-    onOpenXingnang: () -> Unit,
-    onOpenXiulian: () -> Unit,
-    onOpenDahui: () -> Unit,
-    onOpenZaowu: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        DecorBanner(
-            imageRes = R.drawable.img_decor_xingnang,
-            text = "行囊",
-            onClick = onOpenXingnang,
-        )
-        DecorBanner(
-            imageRes = R.drawable.img_decor_xiulian,
-            text = "修炼",
-            onClick = onOpenXiulian,
-        )
-        DecorBanner(
-            imageRes = R.drawable.img_decor_dahui,
-            text = "大会",
-            onClick = onOpenDahui,
-        )
-        DecorBanner(
-            imageRes = R.drawable.img_decor_zaowu,
-            text = "造物",
-            onClick = onOpenZaowu,
-        )
     }
 }

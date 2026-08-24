@@ -169,18 +169,18 @@ fun LoginScreen(
                 // Login card
                 Box(
                     modifier = Modifier
-                        .offset(x = 10.dp, y = 455.dp)
-                        .size(width = AuthDimens.canvasW - 40.dp, height = 380.dp),
+                        .offset(x = 0.dp, y = 455.dp)
+                        .size(width = 390.dp, height = 380.dp),
                 ) {
                     CardFrame(
                         modifier = Modifier.fillMaxSize(),
-                        height = 380.dp,
+                        height = 300.dp,
                     )
                     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                         // Mode toggle tabs
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(0.dp),
+                            horizontalArrangement = Arrangement.Center,
                         ) {
                             ModeTab(
                                 label = "登录",
@@ -244,7 +244,12 @@ fun LoginScreen(
                         // Forgot link (password mode only)
                         if (mode == "password") {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = 30.dp),
+                                contentAlignment = Alignment.CenterEnd,
+                            ) {
                                 Text(
                                     text = "忘记密码",
                                     color = AuthPalette.ActionGray,
@@ -267,7 +272,11 @@ fun LoginScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         // Agreement row
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             AuthCheckbox(checked = agreed, onCheckedChange = { agreed = it })
                             Spacer(modifier = Modifier.width(8.dp))
                             AgreementText(
@@ -280,6 +289,9 @@ fun LoginScreen(
                             text = if (mode == "password") "登录" else "注册",
                             onClick = onLogin,
                             enabled = canSubmit,
+                            modifier = Modifier
+                                .width(300.dp)
+                                .align(Alignment.CenterHorizontally),
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         // 跳转注册
@@ -310,8 +322,8 @@ fun LoginScreen(
 private fun ModeTab(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .height(36.dp)
-            .width(96.dp)
+            .height(28.dp)
+            .width(100.dp)
             .background(
                 color = if (selected) AuthPalette.LinkOlive else Color.Transparent,
                 shape = RoundedCornerShape(18.dp),

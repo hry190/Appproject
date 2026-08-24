@@ -19,5 +19,5 @@ object AuthDimens {
 
     val canvasW     = 412.dp
     val canvasH     = 900.dp
-    val homeCanvasH = 810.dp
+    val homeCanvasH = 900.dp
 }

@@ -23,7 +23,7 @@ fun JianghuNavHost(
 ) {
     NavHost(
         navController    = navController,
-        startDestination = Routes.Splash,
+        startDestination = Routes.Home,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
@@ -99,12 +99,7 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Home) {
-            HomeScreen(
-                onOpenXiulian  = { navController.navigate(Routes.Xiulian) },
-                onOpenXingnang = { navController.navigate(Routes.Xingnang) },
-                onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
-                onOpenDahui    = { navController.navigate(Routes.Dahui) },
-            )
+            HomeScreen()
         }
 
         composable(Routes.Xiulian)  { XiulianScreen(onBack = { navController.popBackStack() }) }
