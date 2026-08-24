@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.data.Validators
 import com.jueqiao.jianghu.ui.components.AuthCheckbox
@@ -53,6 +54,7 @@ import com.jueqiao.jianghu.ui.components.PhoneIcon
 import com.jueqiao.jianghu.ui.components.PrimaryButton
 import com.jueqiao.jianghu.ui.theme.AuthDimens
 import com.jueqiao.jianghu.ui.theme.AuthPalette
+import com.jueqiao.jianghu.ui.theme.JianghuTheme
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 
@@ -60,6 +62,21 @@ import kotlinx.coroutines.delay
  * Login screen — dual mode (password / SMS code), 412x800 fixed canvas.
  * Mirrors RN login.tsx structure.
  */
+@Preview(showBackground = true, widthDp = 412, heightDp = 800)
+@Composable
+fun LoginScreenPreview() {
+    JianghuTheme {
+        LoginScreen(
+            onLogin = {},
+            onOpenForgot = {},
+            onOpenRegister = {},
+            onOpenAgreement = {},
+            onOpenPrivacy = {},
+            onBack = {},
+        )
+    }
+}
+
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit,
@@ -152,7 +169,7 @@ fun LoginScreen(
                 // Login card
                 Box(
                     modifier = Modifier
-                        .offset(x = 20.dp, y = 455.dp)
+                        .offset(x = 10.dp, y = 455.dp)
                         .size(width = AuthDimens.canvasW - 40.dp, height = 380.dp),
                 ) {
                     CardFrame(
@@ -264,6 +281,24 @@ fun LoginScreen(
                             onClick = onLogin,
                             enabled = canSubmit,
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        // 跳转注册
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = "没有账号？",
+                                color = AuthPalette.TextDark,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
+                            )
+                            Text(
+                                text = "立即注册",
+                                color = AuthPalette.LinkOlive,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
+                                modifier = Modifier.clickable { onOpenRegister() },
+                            )
+                        }
                     }
                 }
             }
