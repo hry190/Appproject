@@ -13,6 +13,7 @@ object Routes {
     const val Privacy   = "privacy"
     const val Home      = "home"
     const val Home1     = "home1"
+    const val Xiulian   = "xiulian"
     const val Luggage   = "luggage"
     const val Settings  = "settings"
     const val Challenge = "challenge"
