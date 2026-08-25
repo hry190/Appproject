@@ -1,1 +1,10 @@
 # 全局 .gitignore 的最小内容，或根据需要自行维护
+local.properties
+*.iml
+.gradle/
+.idea/
+build/
+.kotlin/
+captures/
+.externalNativeBuild
+.cxx

@@ -51,13 +51,13 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun HomeScreen(
     onOpenHome1: () -> Unit = {},
+    onOpenLuggage: () -> Unit = {},
 ) {
     var chatStep by remember { mutableStateOf(0) }
     var taskExpanded by remember { mutableStateOf(false) }
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen by remember { mutableStateOf(false) }
     var dailyStep by remember { mutableStateOf(1) }
-    var luggageOpen by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Canvas (412 x 810)
@@ -83,9 +83,14 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     QuickActionItem(
-                        iconRes = R.drawable.img_icon_settings,
-                        label = "设置",
+                        iconRes = R.drawable.img_icon_works,
+                        label = "作品",
                         onClick = { /* TODO */ },
+                    )
+                    QuickActionItem(
+                        iconRes = R.drawable.img_icon_progress,
+                        label = "进度",
+                        onClick = { progressOpen = true },
                     )
                     QuickActionItem(
                         iconRes = R.drawable.img_icon_task,
@@ -94,13 +99,8 @@ fun HomeScreen(
                         showDot = true,
                     )
                     QuickActionItem(
-                        iconRes = R.drawable.img_icon_progress,
-                        label = "进度",
-                        onClick = { progressOpen = true },
-                    )
-                    QuickActionItem(
-                        iconRes = R.drawable.img_icon_works,
-                        label = "作品",
+                        iconRes = R.drawable.img_icon_settings,
+                        label = "设置",
                         onClick = { /* TODO */ },
                     )
                 }
@@ -242,11 +242,8 @@ fun HomeScreen(
                     ProgressModal(
                         onClose = { progressOpen = false },
                         onOpenDaily = { dailyOpen = true; progressOpen = false },
-                        onOpenLuggage = { luggageOpen = true; progressOpen = false },
+                        onOpenLuggage = onOpenLuggage,
                     )
-                }
-                if (luggageOpen) {
-                    LuggagePage(onClose = { luggageOpen = false })
                 }
             }
         }

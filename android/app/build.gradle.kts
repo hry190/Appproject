@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+// 从 local.properties 读取敏感配置（不在 git 仓库中）
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+}
+val minimaxBaseUrl: String = localProps.getProperty("MINIMAX_BASE_URL", "https://api.MiniMax.cn/v1")
+val minimaxApiKey:  String = localProps.getProperty("MINIMAX_API_KEY",  "")
 
 android {
     namespace  = "com.jueqiao.jianghu"
@@ -13,12 +23,12 @@ android {
         minSdk        = 24
         targetSdk     = 35
         versionCode   = 1
-        versionName   = "1.0.0"
+        versionName   = "1.0"
         vectorDrawables { useSupportLibrary = true }
 
-        // MiniMax API 配置（占位，正式接入时替换或通过 CI 注入）
-        buildConfigField("String", "MINIMAX_BASE_URL", "\"https://api.MiniMax.chat\"")
-        buildConfigField("String", "MINIMAX_API_KEY",  "\"PLACEHOLDER_API_KEY\"")
+        // Minimax API 配置（从 local.properties 注入,生产环境不要再硬编码）
+        buildConfigField("String", "MINIMAX_BASE_URL", "\"$minimaxBaseUrl\"")
+        buildConfigField("String", "MINIMAX_API_KEY",  "\"$minimaxApiKey\"")
     }
 
     buildTypes {
