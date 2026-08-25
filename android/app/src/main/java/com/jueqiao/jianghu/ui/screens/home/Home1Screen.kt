@@ -45,7 +45,6 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  */
 @Composable
 fun Home1Screen(
-    onOpenXiulian: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
@@ -169,7 +168,7 @@ fun Home1Screen(
             text = "修炼",
             x = 83.dp, y = 234.dp,
             width = 55.dp, height = 90.dp,
-            onClick = onOpenXiulian,
+            onClick = { /* TODO: 跳转修炼页(暂未实现) */ },
         )
 
         // 大会 (3.png)

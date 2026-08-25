@@ -39,7 +39,6 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun ChallengeScreen(
     onBack: () -> Unit = {},
-    onOpenXiulian: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},

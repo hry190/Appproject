@@ -17,7 +17,6 @@ import com.jueqiao.jianghu.ui.screens.login.LoginScreen
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
-import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 
 @Composable
@@ -110,7 +109,6 @@ fun JianghuNavHost(
 
         composable(Routes.Home1) {
             Home1Screen(
-                onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
                 onOpenLuggage   = { navController.navigate(Routes.Luggage) },
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
                 onOpenDahui     = { navController.navigate(Routes.Dahui) },
@@ -119,7 +117,6 @@ fun JianghuNavHost(
             )
         }
 
-        composable(Routes.Xiulian)  { XiulianScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
 
@@ -127,7 +124,6 @@ fun JianghuNavHost(
         composable(Routes.Luggage) {
             LuggageScreen(
                 onBack         = { navController.popBackStack() },
-                onOpenXiulian  = { navController.navigate(Routes.Xiulian) },
                 onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
                 onOpenDahui    = { navController.navigate(Routes.Dahui) },
             )

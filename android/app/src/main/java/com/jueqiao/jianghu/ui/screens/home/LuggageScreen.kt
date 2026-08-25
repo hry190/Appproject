@@ -83,7 +83,6 @@ private val BookTitleStyle = TextStyle(fontFamily = YaHei, fontSize = 10.sp, col
 @Composable
 fun LuggageScreen(
     onBack: () -> Unit = {},
-    onOpenXiulian: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
     onOpenProgress: () -> Unit = {},
