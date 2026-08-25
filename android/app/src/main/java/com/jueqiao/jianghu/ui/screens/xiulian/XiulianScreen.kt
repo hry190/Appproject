@@ -8,16 +8,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
  * 修炼页 — 基于 Figma 节点 301-1242。
@@ -55,15 +61,28 @@ fun XiulianScreen(
             contentScale = ContentScale.Fit,
         )
 
-        // 6.png(118, 453, 175×79)
-        Image(
-            painter = painterResource(R.drawable.img_xiulian_6),
-            contentDescription = null,
+        // 6.png 作为气泡背景(118, 453, 175×79)
+        Box(
             modifier = Modifier
                 .offset(x = 118.dp, y = 453.dp)
                 .size(width = 175.dp, height = 79.dp),
-            contentScale = ContentScale.Fit,
-        )
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_xiulian_6),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 气泡文本
+            Text(
+                text = "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
+                color = Color.Black,
+                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
+        }
 
         // 顶部右侧 4 个快捷图标
         Row(
