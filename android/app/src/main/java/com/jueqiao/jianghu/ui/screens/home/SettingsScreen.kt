@@ -122,12 +122,12 @@ fun SettingsScreen(
                         .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // 关闭按钮(方案 A:加大尺寸 + 浅绿色圆形背景)
+                    // 关闭按钮(方案 A 第二轮:背景更淡一些,Figma 截图里几乎透明)
                     Box(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(Color(0xFFAACC99).copy(alpha = 0.3f))
+                            .background(Color(0xFFAACC99).copy(alpha = 0.2f))
                             .clickable(onClick = onBack),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -161,7 +161,12 @@ fun SettingsScreen(
                 SettingsMenuItem("通用设置", onClick = onOpenGeneral)
                 SettingsMenuItem("声音调节", onClick = onOpenSound)
 
-                // 分组标题
+                // 隐私分组(带上下分隔线)
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
+                    thickness = 0.5.dp,
+                    color = Color(0xFFD8D2C2),
+                )
                 Text(
                     text = "隐私",
                     color = Color(0xFF9A9882),
@@ -169,7 +174,7 @@ fun SettingsScreen(
                         fontFamily = YaHei,
                         fontSize = 16.sp,
                     ),
-                    modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 5.dp),
+                    modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 5.dp),
                 )
 
                 // 第二组
@@ -218,7 +223,7 @@ private fun SettingsMenuItem(
                 modifier = Modifier.weight(1f),
                 style = TextStyle(
                     fontFamily = YaHei,
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,  // 微调:16sp → 17sp
                 ),
             )
             if (subtitle != null) {
