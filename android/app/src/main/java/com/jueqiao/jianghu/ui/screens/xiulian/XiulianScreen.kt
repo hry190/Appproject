@@ -2,25 +2,18 @@ package com.jueqiao.jianghu.ui.screens.xiulian
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,244 +21,221 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.data.ManualState
-import com.jueqiao.jianghu.data.StaticData
+import com.jueqiao.jianghu.ui.components.QuickActionItem
 import com.jueqiao.jianghu.ui.theme.YaHei
 
+/**
+ * 修炼页 — 基于 Figma 节点 301-1242。
+ * 布局:竹林背景 + 左上返回 + 中央"修 炼"竖排标签 + 左侧熊猫 +
+ *      中央对话气泡 + 底部 4 个菜单(学习/试炼/秘籍/试炼)。
+ */
 @Composable
-fun XiulianScreen(onBack: () -> Unit) {
+fun XiulianScreen(
+    onBack: () -> Unit = {},
+    onOpenLuggage: () -> Unit = {},
+    onOpenZaowu: () -> Unit = {},
+    onOpenDahui: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.statusBars),
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        Column(
+        // 竹林背景
+        Image(
+            painter = painterResource(R.drawable.img_home_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+
+        // 顶部右侧 4 个快捷图标
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .align(Alignment.TopEnd)
+                .offset(x = (-12).dp, y = 71.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_back_arrow),
-                    contentDescription = "返回",
-                    modifier = Modifier.size(28.dp).clickable(onClick = onBack),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "修炼",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Text(
-                        text = "读漫画 → 做预测 → 闯试炼 → 解锁秘籍",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SectionTitle("当前章节 / Now Reading")
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = StaticData.chapterTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Tag(
-                            text = "进行中",
-                            bg = MaterialTheme.colorScheme.primaryContainer,
-                            fg = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = StaticData.chapterMeta,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = StaticData.chapterBlurb,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "继续阅读 →",
-                        color = MaterialTheme.colorScheme.tertiary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SectionTitle("秘籍三态 / Three Stages")
-            StaticData.manualStates.forEach { state ->
-                StateCard(state)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SectionTitle("预测题 / Predict")
-            StaticData.predictions.forEach { p ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                        .padding(12.dp),
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = p.type,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Tag(
-                                text = p.status,
-                                bg = MaterialTheme.colorScheme.primaryContainer,
-                                fg = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = p.question, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SectionTitle("试炼 / Trials")
-            StaticData.trials.forEach { t ->
-                TrialCard(t)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "每次「习得」与「悟得」都会在你的「行囊」中永久留下记录",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 8.dp),
+            QuickActionItem(
+                iconRes = R.drawable.img_icon_works,
+                label = "作品",
+                onClick = onOpenZaowu,
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            QuickActionItem(
+                iconRes = R.drawable.img_icon_progress,
+                label = "进度",
+                onClick = { /* TODO: 进度 */ },
+            )
+            QuickActionItem(
+                iconRes = R.drawable.img_icon_task,
+                label = "任务",
+                onClick = { /* TODO: 任务 */ },
+            )
+            QuickActionItem(
+                iconRes = R.drawable.img_icon_settings,
+                label = "设置",
+                onClick = onOpenSettings,
+            )
         }
-    }
-}
 
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(vertical = 8.dp),
-    )
-}
-
-@Composable
-private fun Tag(text: String, bg: Color, fg: Color) {
-    Box(
-        modifier = Modifier
-            .background(bg, RoundedCornerShape(999.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-    ) {
-        Text(text = text, color = fg, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun StateCard(s: ManualState) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-            .padding(12.dp),
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = s.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                val (bg, fg) = when (s.tone) {
-                    "accent"   -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-                    "bamboo"   -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondary
-                    "cinnabar" -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
-                    else       -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
-                }
-                Tag(text = "${s.achieved}/${s.total}", bg = bg, fg = fg)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = s.desc, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
+        // 左上角:返回按钮(白色圆形)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 16.dp, y = 50.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFF5E8D4).copy(alpha = 0.85f))
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            // ↩ 返回箭头(可以用 ic_back_arrow 资源)
             Text(
-                text = s.example,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
+                text = "←",
+                color = Color.Black,
+                style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold),
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+        }
+
+        // 中央:竖排"修 炼"标签(右上)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(x = (-50).dp, y = 110.dp)
+                .size(width = 55.dp, height = 100.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_decor_xiulian),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 竖排文字"修 炼"
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(fraction = (s.achieved.toFloat() / s.total).coerceIn(0.08f, 1f))
-                        .height(6.dp)
-                        .background(MaterialTheme.colorScheme.primary),
+                Text(
+                    text = "修",
+                    color = Color(0xFFF4E6CF),
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = Color(0xCC141E14),
+                            blurRadius = 6f,
+                        ),
+                    ),
+                )
+                Text(
+                    text = "炼",
+                    color = Color(0xFFF4E6CF),
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        shadow = androidx.compose.ui.graphics.Shadow(
+                            color = Color(0xCC141E14),
+                            blurRadius = 6f,
+                        ),
+                    ),
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun TrialCard(t: com.jueqiao.jianghu.data.Trial) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-            .background(
-                if (t.locked) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f) else MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(12.dp),
-            )
-            .padding(12.dp),
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = t.title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                Tag(
-                    text = t.status,
-                    bg = if (t.locked) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer,
-                    fg = if (t.locked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = t.desc, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
+        // 中间:对话气泡(空白,等待填充)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(x = 0.dp, y = 250.dp)
+                .size(width = 220.dp, height = 80.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFFAF0DA).copy(alpha = 0.92f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            // TODO: 填入对话内容
+        }
+
+        // 左侧:熊猫角色
+        Image(
+            painter = painterResource(R.drawable.img_home1_panda),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .offset(x = 20.dp, y = 80.dp)
+                .size(width = 200.dp, height = 276.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        // 底部:4 个菜单项
+        // 布局:左下"秘籍"、右中"学习"、右下"试炼"、右下角小圆按钮
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(start = 30.dp, end = 30.dp, bottom = 30.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            // 左:秘籍
             Text(
-                text = t.xp,
-                color = MaterialTheme.colorScheme.primary,
-                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                text = "秘籍",
+                color = Color(0xFFF4E6CF),
+                style = TextStyle(
+                    fontFamily = YaHei,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                        color = Color(0xCC141E14),
+                        blurRadius = 8f,
+                    ),
+                ),
+                modifier = Modifier
+                    .clickable(onClick = onOpenLuggage)
+                    .padding(8.dp),
+            )
+            // 中:学习
+            Text(
+                text = "学习",
+                color = Color(0xFFF4E6CF),
+                style = TextStyle(
+                    fontFamily = YaHei,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                        color = Color(0xCC141E14),
+                        blurRadius = 8f,
+                    ),
+                ),
+                modifier = Modifier
+                    .clickable { /* TODO: 学习 */ }
+                    .padding(8.dp),
+            )
+            // 右:试炼
+            Text(
+                text = "试炼",
+                color = Color(0xFFF4E6CF),
+                style = TextStyle(
+                    fontFamily = YaHei,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                        color = Color(0xCC141E14),
+                        blurRadius = 8f,
+                    ),
+                ),
+                modifier = Modifier
+                    .clickable(onClick = onOpenDahui)
+                    .padding(8.dp),
             )
         }
     }
