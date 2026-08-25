@@ -40,6 +40,11 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 /**
  * 设置页 — Figma node-id 413:3244。
  * 竹林背景 + 米色圆角卡片 + 13 个菜单项 + 底部两个药丸按钮（切换账号/退出登录）。
+ * —— 方案 A 改动 (设置页-方案A-实验 分支) ——
+ *   1. 顶部 ✕ 按钮:加大尺寸 + 加绿色圆形背景,Figma里是圆形按钮
+ *   2. 标题"设 置"增加水平 padding 让居中更准
+ *   3. 关闭按钮可点击区域扩大
+ *   4. 卡片顶部 padding 微调
  */
 @Composable
 fun SettingsScreen(
@@ -114,19 +119,29 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 10.dp),
+                        .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_close),
-                        contentDescription = "关闭",
+                    // 关闭按钮(方案 A 第二轮:背景更淡一些,Figma 截图里几乎透明)
+                    Box(
                         modifier = Modifier
-                            .size(15.dp)
+                            .size(28.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(Color(0xFFAACC99).copy(alpha = 0.2f))
                             .clickable(onClick = onBack),
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_close),
+                            contentDescription = "关闭",
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                     Text(
                         text = "设 置",
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 10.dp, end = 10.dp),
                         textAlign = TextAlign.Center,
                         style = TextStyle(
                             fontFamily = YaHei,
@@ -134,7 +149,8 @@ fun SettingsScreen(
                             letterSpacing = 12.sp,
                         ),
                     )
-                    Spacer(modifier = Modifier.size(15.dp))
+                    // 占位与关闭按钮等宽(保证标题居中)
+                    Spacer(modifier = Modifier.size(28.dp))
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -145,7 +161,12 @@ fun SettingsScreen(
                 SettingsMenuItem("通用设置", onClick = onOpenGeneral)
                 SettingsMenuItem("声音调节", onClick = onOpenSound)
 
-                // 分组标题
+                // 隐私分组(带上下分隔线)
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
+                    thickness = 0.5.dp,
+                    color = Color(0xFFD8D2C2),
+                )
                 Text(
                     text = "隐私",
                     color = Color(0xFF9A9882),
@@ -153,7 +174,7 @@ fun SettingsScreen(
                         fontFamily = YaHei,
                         fontSize = 16.sp,
                     ),
-                    modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 5.dp),
+                    modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 5.dp),
                 )
 
                 // 第二组
@@ -202,7 +223,7 @@ private fun SettingsMenuItem(
                 modifier = Modifier.weight(1f),
                 style = TextStyle(
                     fontFamily = YaHei,
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,  // 微调:16sp → 17sp
                 ),
             )
             if (subtitle != null) {
@@ -217,9 +238,9 @@ private fun SettingsMenuItem(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Image(
-                painter = painterResource(R.drawable.ic_chevron_right),
+                painter = painterResource(R.drawable.img_chevron_right),
                 contentDescription = null,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(14.dp),
             )
         }
         HorizontalDivider(
@@ -242,13 +263,21 @@ private fun PillButton(
             .padding(horizontal = 31.dp)
             .height(45.dp)
             .clip(RoundedCornerShape(22.dp))
-            .border(1.dp, Color(0xFF5A7A5A), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
+        // 药丸按钮背景图(iew.png)平铺填充
+        Image(
+            painter = painterResource(R.drawable.img_pill_btn_bg),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(22.dp)),
+            contentScale = ContentScale.FillBounds,
+        )
         Text(
             text = text,
-            color = if (isDestructive) Color(0xFFD93F3F) else Color.Black,
+            color = if (isDestructive) Color(0xFFE53935) else Color.Black,  // 退出登录更红
             style = TextStyle(
                 fontFamily = YaHei,
                 fontSize = 20.sp,
