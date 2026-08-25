@@ -55,6 +55,16 @@ fun XiulianScreen(
             contentScale = ContentScale.Fit,
         )
 
+        // 6.png(118, 453, 175×79)
+        Image(
+            painter = painterResource(R.drawable.img_xiulian_6),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 118.dp, y = 453.dp)
+                .size(width = 175.dp, height = 79.dp),
+            contentScale = ContentScale.Fit,
+        )
+
         // 顶部右侧 4 个快捷图标
         Row(
             modifier = Modifier
