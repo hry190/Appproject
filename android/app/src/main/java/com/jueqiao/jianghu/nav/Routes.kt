@@ -14,7 +14,6 @@ object Routes {
     const val Home      = "home"
     const val Home1     = "home1"
     const val Xiulian   = "xiulian"
-    const val Xingnang  = "xingnang"
     const val Luggage   = "luggage"
     const val Settings  = "settings"
     const val Challenge = "challenge"

@@ -17,7 +17,6 @@ import com.jueqiao.jianghu.ui.screens.login.LoginScreen
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
-import com.jueqiao.jianghu.ui.screens.xingnang.XingnangScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 
@@ -121,7 +120,6 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Xiulian)  { XiulianScreen(onBack = { navController.popBackStack() }) }
-        composable(Routes.Xingnang) { XingnangScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
 
