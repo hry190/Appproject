@@ -238,9 +238,9 @@ private fun SettingsMenuItem(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Image(
-                painter = painterResource(R.drawable.ic_chevron_right),
+                painter = painterResource(R.drawable.img_chevron_right),
                 contentDescription = null,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(14.dp),
             )
         }
         HorizontalDivider(
@@ -263,13 +263,19 @@ private fun PillButton(
             .padding(horizontal = 31.dp)
             .height(45.dp)
             .clip(RoundedCornerShape(22.dp))
+            // 药丸按钮背景图(iew.png)
+            .background(
+                painter = painterResource(R.drawable.img_pill_btn_bg),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 绿色边框(保留,因为 Figma 截图里也有)
             .border(1.dp, Color(0xFF5A7A5A), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            color = if (isDestructive) Color(0xFFD93F3F) else Color.Black,
+            color = if (isDestructive) Color(0xFFE53935) else Color.Black,  // 退出登录更红
             style = TextStyle(
                 fontFamily = YaHei,
                 fontSize = 20.sp,
