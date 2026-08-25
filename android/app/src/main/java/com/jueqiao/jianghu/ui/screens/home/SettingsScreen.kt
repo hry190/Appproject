@@ -263,7 +263,6 @@ private fun PillButton(
             .padding(horizontal = 31.dp)
             .height(45.dp)
             .clip(RoundedCornerShape(22.dp))
-            .border(1.dp, Color(0xFF5A7A5A), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
