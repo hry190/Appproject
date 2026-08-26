@@ -122,6 +122,7 @@ fun JianghuNavHost(
         composable(Routes.Xiulian)  {
             XiulianScreen(
                 onBack         = { navController.popBackStack() },
+                onOpenLuggage  = { navController.navigate(Routes.Luggage) },
                 onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
                 onOpenDahui    = { navController.navigate(Routes.Dahui) },
                 onOpenSettings = { navController.navigate(Routes.Settings) },

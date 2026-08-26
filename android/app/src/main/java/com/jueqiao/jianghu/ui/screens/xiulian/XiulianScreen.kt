@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +47,8 @@ fun XiulianScreen(
     onOpenTask: () -> Unit = {},
 ) {
     var progressOpen by remember { mutableStateOf(false) }
+    var dailyOpen    by remember { mutableStateOf(false) }
+    var dailyStep    by remember { androidx.compose.runtime.mutableIntStateOf(1) }
 
     Box(
         modifier = Modifier
@@ -143,8 +146,32 @@ fun XiulianScreen(
     if (progressOpen) {
         ProgressModal(
             onClose       = { progressOpen = false },
-            onOpenDaily   = { /* TODO:每日问题 */ },
-            onOpenLuggage = { /* TODO:行囊 */ },
+            onOpenDaily   = { dailyOpen = true; progressOpen = false },
+            onOpenLuggage = onOpenLuggage,
         )
+    }
+
+    // 每日问题气泡(支持 2 步切换,第3 次点击关闭)
+    if (dailyOpen) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable {
+                    if (dailyStep == 1) dailyStep = 2 else dailyOpen = false
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = if (dailyStep == 1)
+                    "...去找找秘籍，看看有没有答案"
+                else
+                    "生活问题推荐:\n机器人为什么会认错物体?",
+                color = Color.Black,
+                modifier = Modifier
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(20.dp),
+            )
+        }
     }
 }
