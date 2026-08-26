@@ -36,6 +36,16 @@ fun DahuiScreen(
             contentScale = ContentScale.Crop,
         )
 
+        // 熊猫角色(Group 127.png,X=150, Y=597, 241×285)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_panda),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 150.dp, y = 597.dp)
+                .size(width = 241.dp, height = 285.dp),
+            contentScale = ContentScale.Fit,
+        )
+
         // 左上角返回按钮
         Box(
             modifier = Modifier
