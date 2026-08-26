@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
+import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -114,6 +115,7 @@ fun JianghuNavHost(
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
+                onOpenDahui     = { navController.navigate(Routes.Dahui) },
             )
         }
 
@@ -127,6 +129,7 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {

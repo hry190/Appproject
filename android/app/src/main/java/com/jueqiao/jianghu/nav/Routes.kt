@@ -18,4 +18,5 @@ object Routes {
     const val Settings  = "settings"
     const val Challenge = "challenge"
     const val Zaowu     = "zaowu"
+    const val Dahui     = "dahui"
 }
