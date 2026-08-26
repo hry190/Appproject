@@ -95,12 +95,13 @@ fun XiulianScreen(
             )
         }
 
-        // 角色插画(未标题-1 56.png,X=230, Y=550, W=176, H=271)
+        // 角色插画(未标题-1 56.png, 屏幕右下角,W=176, H=271)
         Image(
             painter = painterResource(R.drawable.img_xiulian_figure),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 230.dp, y = 550.dp)
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 24.dp)
                 .size(width = 176.dp, height = 271.dp),
             contentScale = ContentScale.Fit,
         )
