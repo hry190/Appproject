@@ -95,6 +95,16 @@ fun XiulianScreen(
             )
         }
 
+        // 角色插画(未标题-1 56.png,X=230, Y=550, W=176, H=271)
+        Image(
+            painter = painterResource(R.drawable.img_xiulian_figure),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 230.dp, y = 550.dp)
+                .size(width = 176.dp, height = 271.dp),
+            contentScale = ContentScale.Fit,
+        )
+
         // 左上角:返回按钮(Return.png,点击回到首页1)
         Box(
             modifier = Modifier
