@@ -57,15 +57,15 @@ fun DahuiScreen(
         // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)
         Column(
             modifier = Modifier
-                .offset(x = 98.dp, y = 510.dp)
+                .offset(x = 89.dp, y = 480.dp)
                 .size(width = 15.dp, height = 45.dp)
                 .clickable { /* TODO: 演武场点击交互 */ },
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("演", color = Color.Black, style = TextStyle(fontSize = 11.sp))
-            Text("武", color = Color.Black, style = TextStyle(fontSize = 11.sp))
-            Text("场", color = Color.Black, style = TextStyle(fontSize = 11.sp))
+            Text("演", color = Color.White, style = TextStyle(fontSize = 11.sp))
+            Text("武", color = Color.White, style = TextStyle(fontSize = 11.sp))
+            Text("场", color = Color.White, style = TextStyle(fontSize = 11.sp))
         }
 
         // 对话气泡(Rectangle 186.png,X=56, Y=563, 158×80)
