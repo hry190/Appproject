@@ -25,7 +25,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 大会页 — 简单版(用 hygu.png 作全屏背景 + 演武场竖排文字 + 对话气泡 + 熊猫 + 返回按钮)。
+ * 大会页 — 简单版(用大会.png 作全屏背景 + 演武场竖排文字 + 对话气泡 + 返回按钮)。
  */
 @Composable
 fun DahuiScreen(
@@ -42,16 +42,6 @@ fun DahuiScreen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-        )
-
-        // 熊猫角色(Group 127.png,X=150, Y=597, 241×285)
-        Image(
-            painter = painterResource(R.drawable.img_dahui_panda),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 150.dp, y = 597.dp)
-                .size(width = 241.dp, height = 285.dp),
-            contentScale = ContentScale.Fit,
         )
 
         // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)
