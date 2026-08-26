@@ -3,7 +3,9 @@ package com.jueqiao.jianghu.ui.screens.dahui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -23,7 +25,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 大会页 — 简单版(用 hygu.png 作全屏背景 + 左上返回按钮)。
+ * 大会页 — 简单版(用 hygu.png 作全屏背景 + 演武场竖排文字 + 对话气泡 + 熊猫 + 返回按钮)。
  */
 @Composable
 fun DahuiScreen(
@@ -34,7 +36,7 @@ fun DahuiScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(hygu.png)
+        // 全屏背景图(大会.png)
         Image(
             painter = painterResource(R.drawable.img_dahui_bg),
             contentDescription = null,
@@ -51,6 +53,20 @@ fun DahuiScreen(
                 .size(width = 241.dp, height = 285.dp),
             contentScale = ContentScale.Fit,
         )
+
+        // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)
+        Column(
+            modifier = Modifier
+                .offset(x = 98.dp, y = 510.dp)
+                .size(width = 15.dp, height = 45.dp)
+                .clickable { /* TODO: 演武场点击交互 */ },
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("演", color = Color.Black, style = TextStyle(fontSize = 11.sp))
+            Text("武", color = Color.Black, style = TextStyle(fontSize = 11.sp))
+            Text("场", color = Color.Black, style = TextStyle(fontSize = 11.sp))
+        }
 
         // 对话气泡(Rectangle 186.png,X=56, Y=563, 158×80)
         Box(
