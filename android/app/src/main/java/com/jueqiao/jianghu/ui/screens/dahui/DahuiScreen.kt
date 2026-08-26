@@ -46,6 +46,16 @@ fun DahuiScreen(
             contentScale = ContentScale.Fit,
         )
 
+        // 对话气泡(Rectangle 186.png,X=56, Y=563, 158×80)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_speech_bubble),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 56.dp, y = 563.dp)
+                .size(width = 158.dp, height = 80.dp),
+            contentScale = ContentScale.FillBounds,
+        )
+
         // 左上角返回按钮
         Box(
             modifier = Modifier
