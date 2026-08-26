@@ -6,15 +6,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
  * 大会页 — 简单版(用 hygu.png 作全屏背景 + 左上返回按钮)。
@@ -47,14 +53,30 @@ fun DahuiScreen(
         )
 
         // 对话气泡(Rectangle 186.png,X=56, Y=563, 158×80)
-        Image(
-            painter = painterResource(R.drawable.img_dahui_speech_bubble),
-            contentDescription = null,
+        Box(
             modifier = Modifier
                 .offset(x = 56.dp, y = 563.dp)
                 .size(width = 158.dp, height = 80.dp),
-            contentScale = ContentScale.FillBounds,
-        )
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_dahui_speech_bubble),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 气泡文本
+            Text(
+                text = "前面就是演武场!准备好,\n就来一展你的本领吧。",
+                color = Color.Black,
+                style = TextStyle(
+                    fontFamily = YaHei,
+                    fontSize = 12.sp,
+                ),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
+            )
+        }
 
         // 左上角返回按钮
         Box(
