@@ -41,7 +41,6 @@ fun XiulianScreen(
     onBack: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
-    onOpenDahui: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenProgress: () -> Unit = {},
     onOpenTask: () -> Unit = {},

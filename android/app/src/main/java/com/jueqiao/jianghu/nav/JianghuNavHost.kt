@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
-import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -113,7 +112,6 @@ fun JianghuNavHost(
                 onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
                 onOpenLuggage   = { navController.navigate(Routes.Luggage) },
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
-                onOpenDahui     = { navController.navigate(Routes.Dahui) },
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
             )
@@ -124,20 +122,17 @@ fun JianghuNavHost(
                 onBack         = { navController.popBackStack() },
                 onOpenLuggage  = { navController.navigate(Routes.Luggage) },
                 onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
-                onOpenDahui    = { navController.navigate(Routes.Dahui) },
                 onOpenSettings = { navController.navigate(Routes.Settings) },
                 onOpenTask     = { /* TODO:任务页 */ },
             )
         }
         composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
-        composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {
             LuggageScreen(
                 onBack         = { navController.popBackStack() },
                 onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
-                onOpenDahui    = { navController.navigate(Routes.Dahui) },
             )
         }
 
@@ -170,7 +165,6 @@ fun JianghuNavHost(
             ChallengeScreen(
                 onBack        = { navController.popBackStack() },
                 onOpenZaowu   = { navController.navigate(Routes.Zaowu) },
-                onOpenDahui   = { navController.navigate(Routes.Dahui) },
                 onOpenProgress = { /* TODO:进度弹窗或页面 */ },
             )
         }

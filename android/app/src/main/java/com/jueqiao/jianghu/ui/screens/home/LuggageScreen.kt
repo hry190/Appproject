@@ -84,7 +84,6 @@ private val BookTitleStyle = TextStyle(fontFamily = YaHei, fontSize = 10.sp, col
 fun LuggageScreen(
     onBack: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
-    onOpenDahui: () -> Unit = {},
     onOpenProgress: () -> Unit = {},
 ) {
     var booksOpen  by remember { mutableStateOf(true) }
