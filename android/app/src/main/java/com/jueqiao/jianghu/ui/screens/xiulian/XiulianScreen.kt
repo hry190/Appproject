@@ -37,6 +37,8 @@ fun XiulianScreen(
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenProgress: () -> Unit = {},
+    onOpenTask: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -115,12 +117,12 @@ fun XiulianScreen(
             QuickActionItem(
                 iconRes = R.drawable.img_icon_progress,
                 label = "进度",
-                onClick = { /* TODO: 进度 */ },
+                onClick = onOpenProgress,
             )
             QuickActionItem(
                 iconRes = R.drawable.img_icon_task,
                 label = "任务",
-                onClick = { /* TODO: 任务 */ },
+                onClick = onOpenTask,
             )
             QuickActionItem(
                 iconRes = R.drawable.img_icon_settings,

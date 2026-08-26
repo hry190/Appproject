@@ -119,7 +119,16 @@ fun JianghuNavHost(
             )
         }
 
-        composable(Routes.Xiulian)  { XiulianScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Xiulian)  {
+            XiulianScreen(
+                onBack         = { navController.popBackStack() },
+                onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
+                onOpenDahui    = { navController.navigate(Routes.Dahui) },
+                onOpenSettings = { navController.navigate(Routes.Settings) },
+                onOpenProgress = { /* TODO:进度弹窗或页面 */ },
+                onOpenTask     = { /* TODO:任务页 */ },
+            )
+        }
         composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
 
