@@ -84,6 +84,22 @@ fun XiulianScreen(
             )
         }
 
+        // 左上角:返回按钮(Return.png,点击回到首页1)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 16.dp, y = 50.dp)
+                .size(32.dp)
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_xiulian_return),
+                contentDescription = "返回",
+                modifier = Modifier.size(24.dp),
+            )
+        }
+
         // 顶部右侧 4 个快捷图标
         Row(
             modifier = Modifier
