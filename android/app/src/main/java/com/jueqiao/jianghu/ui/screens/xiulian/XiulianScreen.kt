@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.screens.home.ProgressModal
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -40,6 +45,8 @@ fun XiulianScreen(
     onOpenProgress: () -> Unit = {},
     onOpenTask: () -> Unit = {},
 ) {
+    var progressOpen by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -117,7 +124,7 @@ fun XiulianScreen(
             QuickActionItem(
                 iconRes = R.drawable.img_icon_progress,
                 label = "进度",
-                onClick = onOpenProgress,
+                onClick = { progressOpen = true },
             )
             QuickActionItem(
                 iconRes = R.drawable.img_icon_task,

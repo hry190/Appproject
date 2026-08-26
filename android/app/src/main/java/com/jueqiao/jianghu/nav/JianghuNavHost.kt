@@ -125,7 +125,6 @@ fun JianghuNavHost(
                 onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
                 onOpenDahui    = { navController.navigate(Routes.Dahui) },
                 onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenProgress = { /* TODO:进度弹窗或页面 */ },
                 onOpenTask     = { /* TODO:任务页 */ },
             )
         }
