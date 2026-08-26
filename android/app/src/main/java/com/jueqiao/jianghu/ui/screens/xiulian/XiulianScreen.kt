@@ -138,4 +138,13 @@ fun XiulianScreen(
             )
         }
     }
+
+    // 学习进度弹窗(由"进度"图标触发)
+    if (progressOpen) {
+        ProgressModal(
+            onClose       = { progressOpen = false },
+            onOpenDaily   = { /* TODO:每日问题 */ },
+            onOpenLuggage = { /* TODO:行囊 */ },
+        )
+    }
 }
