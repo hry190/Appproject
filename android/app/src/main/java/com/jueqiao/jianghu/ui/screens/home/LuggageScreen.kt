@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -103,6 +106,12 @@ fun LuggageScreen(
             contentScale       = ContentScale.Crop,
         )
 
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
         // 2. 顶部右侧 4 个快捷图标
         Row(
             modifier = Modifier
@@ -245,6 +254,7 @@ fun LuggageScreen(
                     .size(width = 112.dp, height = 233.dp),
                 contentScale       = ContentScale.Fit,
             )
+        }
         }
     }
 }

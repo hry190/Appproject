@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +39,7 @@ fun DahuiScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(大会.png)
+        // 全屏背景图(大会.png)— 延伸到屏幕底部
         Image(
             painter = painterResource(R.drawable.img_dahui_bg),
             contentDescription = null,
@@ -44,7 +47,23 @@ fun DahuiScreen(
             contentScale = ContentScale.Crop,
         )
 
-        // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
+        // o.png 图标(X=70, Y=458, W=55, H=90)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_o),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 72.5.dp, y = 458.dp)
+                .size(width = 55.dp, height = 90.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)— 在 o.png 之上
         Column(
             modifier = Modifier
                 .offset(x = 89.dp, y = 480.dp)
@@ -109,5 +128,6 @@ fun DahuiScreen(
                 .size(width = 241.dp, height = 285.dp),
             contentScale = ContentScale.Fit,
         )
+        }
     }
 }

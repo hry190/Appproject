@@ -27,7 +27,7 @@ fun JianghuNavHost(
 ) {
     NavHost(
         navController    = navController,
-        startDestination = Routes.Splash,
+        startDestination = Routes.Home1,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
@@ -117,6 +117,13 @@ fun JianghuNavHost(
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
                 onOpenDahui     = { navController.navigate(Routes.Dahui) },
+                onPandaClick    = {
+                    // 跳 Home 并重置状态,保证 chatStep 从 1 开始
+                    navController.navigate(Routes.Home) {
+                        popUpTo(Routes.Home) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
 

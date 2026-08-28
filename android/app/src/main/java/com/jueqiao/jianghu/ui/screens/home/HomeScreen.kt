@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -75,6 +78,12 @@ fun HomeScreen(
                     contentScale = ContentScale.Crop,
                 )
 
+                // 内容层(避开系统导航条)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.navigationBars),
+                ) {
                 // 4 Quick actions (top right)
                 Row(
                     modifier = Modifier
@@ -244,6 +253,7 @@ fun HomeScreen(
                         onOpenDaily = { dailyOpen = true; progressOpen = false },
                         onOpenLuggage = onOpenLuggage,
                     )
+                }
                 }
             }
         }

@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +61,12 @@ fun ChallengeScreen(
             contentScale = ContentScale.Crop,
         )
 
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
         // 顶部右侧 4 个快捷图标(从左到右:作品/进度/任务/设置)
         Row(
             modifier = Modifier
@@ -182,5 +191,6 @@ fun ChallengeScreen(
                 .size(width = 200.dp, height = 334.dp),
             contentScale = ContentScale.Fit,
         )
+        }
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.EdgeToEdgeScreen
 import com.jueqiao.jianghu.ui.components.QuickActionItem
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -51,6 +52,7 @@ fun Home1Screen(
     onOpenDahui: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenChallenge: () -> Unit = {},
+    onPandaClick: () -> Unit = {},
 ) {
     // 进度弹窗相关状态
     var progressOpen by remember { mutableStateOf(false) }
@@ -58,19 +60,18 @@ fun Home1Screen(
     var dailyStep by remember { androidx.compose.runtime.mutableIntStateOf(1) }
     var taskExpanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+    EdgeToEdgeScreen(
+        background = {
+            Image(
+                painter = painterResource(R.drawable.img_home_bg),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentScale = ContentScale.Crop,
+            )
+        },
     ) {
-        // 背景
-        Image(
-            painter = painterResource(R.drawable.img_home_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
-
         // 顶部右侧 4 个快捷图标(从左到右:作品/进度/任务/设置)
         Row(
             modifier = Modifier
@@ -143,15 +144,20 @@ fun Home1Screen(
             }
         }
 
-        // 熊猫(mobile 高清资源,同位置/尺寸)
-        Image(
-            painter = painterResource(R.drawable.img_home1_panda),
-            contentDescription = null,
+        // 熊猫(点击 → 重置 Home 对话流程并跳到 Routes.Home)
+        Box(
             modifier = Modifier
                 .offset(x = 107.dp, y = 473.dp)
-                .size(width = 200.dp, height = 276.dp),
-            contentScale = ContentScale.Fit,
-        )
+                .size(width = 200.dp, height = 276.dp)
+                .clickable(onClick = onPandaClick),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_home1_panda),
+                contentDescription = "点击回到首页对话",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+            )
+        }
 
         // 装饰横幅按钮:贴图 + 竖排文字(点击区为 Box)
         // 行囊 (1.png)

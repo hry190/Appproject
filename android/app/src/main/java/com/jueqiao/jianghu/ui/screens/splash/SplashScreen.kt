@@ -5,8 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +55,7 @@ fun SplashScreen(onTap: () -> Unit) {
             style      = MaterialTheme.typography.bodyMedium,
             color      = MaterialTheme.colorScheme.onBackground,
             modifier   = Modifier
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(bottom = 48.dp)
                 .padding(horizontal = 24.dp),
         )

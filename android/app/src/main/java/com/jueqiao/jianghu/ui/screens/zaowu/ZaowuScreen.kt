@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +38,7 @@ fun ZaowuScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(作品创作.png)
+        // 全屏背景图(作品创作.png)— 延伸到屏幕底部
         Image(
             painter = painterResource(R.drawable.img_zaowu_bg),
             contentDescription = null,
@@ -43,6 +46,12 @@ fun ZaowuScreen(
             contentScale = ContentScale.Crop,
         )
 
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
         // 左上角返回按钮
         Box(
             modifier = Modifier
@@ -73,15 +82,15 @@ fun ZaowuScreen(
         Box(
             modifier = Modifier
                 .offset(x = 55.dp, y = 510.dp)
-                .size(width = 50.dp, height = 75.dp)
+                .size(width = 55.dp, height = 90.dp)
                 .clickable(onClick = onOpenGongfang),
         ) {
             Image(
                 painter = painterResource(R.drawable.img_zaowu_51),
                 contentDescription = "工坊",
                 modifier = Modifier
-                    .offset(x = 5.dp, y = 4.dp)
-                    .size(width = 36.dp, height = 65.dp),
+                    .offset(x = -4.dp, y = 1.dp)
+                    .size(width = 55.dp, height = 90.dp),
                 contentScale = ContentScale.Fit,
             )
             Text(
@@ -113,6 +122,7 @@ fun ZaowuScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp, vertical = 6.dp),
             )
+        }
         }
     }
 }

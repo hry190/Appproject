@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,7 +41,7 @@ fun GongfangScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(作品创作.png)
+        // 全屏背景图(作品创作.png)— 延伸到屏幕底部
         Image(
             painter = painterResource(R.drawable.img_gongfang_bg),
             contentDescription = null,
@@ -46,6 +49,12 @@ fun GongfangScreen(
             contentScale = ContentScale.Crop,
         )
 
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
         // 返回按钮(Return.png,与作品创作页一致:X=20, Y=76, W=32, H=32,内部图标 24×24)
         Box(
             modifier = Modifier
@@ -186,6 +195,27 @@ fun GongfangScreen(
                     .fillMaxSize()
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
+        }
+
+        // 2.png 底部"创建作品"大按钮(X=20, Y=829, W=372, H=47)
+        Image(
+            painter = painterResource(R.drawable.img_zaowu_2),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 20.dp, y = 759.dp)
+                .size(width = 372.dp, height = 47.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        // "创建作品" 按钮文字(X=166, Y=840, W=80, H=20,字号 20,白色)
+        Text(
+            text = "创建作品",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+            modifier = Modifier
+                .offset(x = 166.dp, y = 765.dp)
+                .size(width = 80.dp, height = 30.dp),
+        )
         }
     }
 }
