@@ -19,6 +19,7 @@ import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
+import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 
 @Composable
 fun JianghuNavHost(
@@ -26,12 +27,12 @@ fun JianghuNavHost(
 ) {
     NavHost(
         navController    = navController,
-        startDestination = Routes.Home1,
+        startDestination = Routes.Splash,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
                 onTap = {
-                    navController.navigate(Routes.Home1) {
+                    navController.navigate(Routes.Login) {
                         popUpTo(Routes.Splash) { inclusive = true }
                     }
                 },
@@ -128,8 +129,16 @@ fun JianghuNavHost(
                 onOpenTask     = { /* TODO:任务页 */ },
             )
         }
-        composable(Routes.Zaowu)    { ZaowuScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Zaowu)    {
+            ZaowuScreen(
+                onBack         = { navController.popBackStack() },
+                onOpenGongfang = { navController.navigate(Routes.Gongfang) },
+            )
+        }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Gongfang) {
+            GongfangScreen(onBack = { navController.popBackStack() })
+        }
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {

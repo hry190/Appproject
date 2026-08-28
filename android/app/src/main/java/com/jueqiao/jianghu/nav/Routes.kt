@@ -19,4 +19,5 @@ object Routes {
     const val Challenge = "challenge"
     const val Zaowu     = "zaowu"
     const val Dahui     = "dahui"
+    const val Gongfang  = "gongfang"
 }

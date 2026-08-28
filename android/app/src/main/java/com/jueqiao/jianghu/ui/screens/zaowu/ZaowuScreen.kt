@@ -28,6 +28,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun ZaowuScreen(
     onBack: () -> Unit = {},
+    onOpenGongfang: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -68,15 +69,28 @@ fun ZaowuScreen(
             contentScale = ContentScale.Fit,
         )
 
-        // 未标题-1 51.png(X=61, Y=574, W=30, H=65)
-        Image(
-            painter = painterResource(R.drawable.img_zaowu_51),
-            contentDescription = null,
+        // 工坊按钮(未标题-1 51.png + "工\n坊" 文字),点击进入工坊页
+        Box(
             modifier = Modifier
-                .offset(x = 60.dp, y = 514.dp)
-                .size(width = 36.dp, height = 65.dp),
-            contentScale = ContentScale.Fit,
-        )
+                .offset(x = 55.dp, y = 510.dp)
+                .size(width = 50.dp, height = 75.dp)
+                .clickable(onClick = onOpenGongfang),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_zaowu_51),
+                contentDescription = "工坊",
+                modifier = Modifier
+                    .offset(x = 5.dp, y = 4.dp)
+                    .size(width = 36.dp, height = 65.dp),
+                contentScale = ContentScale.Fit,
+            )
+            Text(
+                text = "工\n坊",
+                color = Color.White,
+                style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                modifier = Modifier.offset(x = 14.dp, y = 20.dp),
+            )
+        }
 
         // Rectangle 186.png 作为气泡背景(X=149, Y=479, W=144, H=81)
         Box(
@@ -100,13 +114,5 @@ fun ZaowuScreen(
                     .padding(horizontal = 8.dp, vertical = 6.dp),
             )
         }
-
-        // 标签文字"工\n坊"(X=61, Y=514, 字号 12) — 显示在图标之上
-        Text(
-            text = "工\n坊",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-            modifier = Modifier.offset(x = 69.dp, y = 524.dp),
-        )
     }
 }

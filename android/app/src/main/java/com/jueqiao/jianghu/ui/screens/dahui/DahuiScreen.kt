@@ -99,5 +99,15 @@ fun DahuiScreen(
                 contentScale = ContentScale.Fit,
             )
         }
+
+        // 角色插画 Group 127.png(X=150, Y=597, W=241, H=285)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_group127),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 150.dp, y = 597.dp)
+                .size(width = 241.dp, height = 285.dp),
+            contentScale = ContentScale.Fit,
+        )
     }
 }
