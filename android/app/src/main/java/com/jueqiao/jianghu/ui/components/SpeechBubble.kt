@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.ui.theme.YaHei
@@ -36,6 +37,7 @@ fun SpeechBubble(
     @DrawableRes bubbleImageRes: Int? = null,
     imageScale: ContentScale = ContentScale.Crop,
     imageColorFilter: ColorFilter? = null,
+    fontSize: TextUnit = 14.sp,
 ) {
     Box(
         modifier = modifier
@@ -59,7 +61,7 @@ fun SpeechBubble(
             style = TextStyle(
                 fontFamily = YaHei,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = fontSize,
                 color = Color(0xFF1A1A2E),
             ),
         )

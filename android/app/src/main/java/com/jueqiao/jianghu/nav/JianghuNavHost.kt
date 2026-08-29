@@ -2,10 +2,13 @@ package com.jueqiao.jianghu.nav
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
+import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
@@ -144,7 +147,38 @@ fun JianghuNavHost(
         }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Gongfang) {
-            GongfangScreen(onBack = { navController.popBackStack() })
+            GongfangScreen(
+                onBack   = { navController.popBackStack() },
+                onSearch = { query ->
+                    if (query.isNotBlank()) {
+                        navController.navigate(Routes.chatResult(query))
+                    }
+                },
+                onContinueWork = { workId ->
+                    // TODO: 后续补 EditWorkScreen 时改成
+                    //   navController.navigate(Routes.editWork(workId))
+                },
+            )
+        }
+
+        composable(
+            Routes.ChatResultPattern,
+            arguments = listOf(navArgument("query") { type = NavType.StringType }),
+        ) { entry ->
+            val encoded = entry.arguments?.getString("query") ?: ""
+            val query = java.net.URLDecoder.decode(encoded, Charsets.UTF_8.name())
+            ChatResultScreen(
+                query = query,
+                onBack = { navController.popBackStack() },
+                onSearch = { newQuery ->
+                    if (newQuery.isNotBlank()) {
+                        navController.navigate(Routes.chatResult(newQuery))
+                    }
+                },
+                onContinueWork = { workId ->
+                    // TODO: 后续接 EditWorkScreen
+                },
+            )
         }
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转

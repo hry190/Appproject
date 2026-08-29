@@ -20,4 +20,16 @@ object Routes {
     const val Zaowu     = "zaowu"
     const val Dahui     = "dahui"
     const val Gongfang  = "gongfang"
+    // 参数化路由:工坊里 3 个"继续创作"按钮跳过去
+    const val EditWork         = "edit_work"
+    const val EditWorkPattern  = "edit_work/{workId}"
+    fun editWork(workId: String): String = "edit_work/$workId"
+    // 参数化路由:工坊"确定"提交后,跳到聊天结果页
+    const val ChatResult         = "chat_result"
+    const val ChatResultPattern  = "chat_result/{query}"
+    fun chatResult(query: String): String {
+        // query 走 URL 编码,避免中文/特殊字符把路由破坏
+        val encoded = java.net.URLEncoder.encode(query, Charsets.UTF_8.name())
+        return "chat_result/$encoded"
+    }
 }

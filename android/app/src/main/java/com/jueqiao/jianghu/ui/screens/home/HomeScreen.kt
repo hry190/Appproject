@@ -196,10 +196,11 @@ fun HomeScreen(
                         bubbleColor = if (chatStep == 2) Color(0xFFC3BCA5) else Color.Transparent,
                         cornerRadius = if (chatStep == 1) 24.dp else 40.dp,
                         imageColorFilter = if (chatStep == 2) removeBlackFilter else null,
+                        fontSize = 12.sp,
                         modifier = if (chatStep == 2)
                             Modifier
-                                .offset(x = 16.dp, y = 240.dp)
-                                .size(width = 380.dp, height = 200.dp)
+                                .offset(x = 16.dp, y = 250.dp)
+                                .size(width = 320.dp, height = 170.dp)
                         else
                             Modifier
                                 .offset(x = 29.dp, y = 363.dp)
