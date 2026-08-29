@@ -23,6 +23,8 @@ import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
+import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
+import com.jueqiao.jianghu.ui.screens.picture.PictureScreen
 
 @Composable
 fun JianghuNavHost(
@@ -30,7 +32,7 @@ fun JianghuNavHost(
 ) {
     NavHost(
         navController    = navController,
-        startDestination = Routes.Home1,
+        startDestination = Routes.ChatResultPattern,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
@@ -141,14 +143,24 @@ fun JianghuNavHost(
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
-                onBack         = { navController.popBackStack() },
+                onBack         = {
+                    // 直接跳到首页1
+                    navController.navigate(Routes.Home1) {
+                        popUpTo(Routes.Zaowu) { inclusive = true }
+                    }
+                },
                 onOpenGongfang = { navController.navigate(Routes.Gongfang) },
             )
         }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
         composable(Routes.Gongfang) {
             GongfangScreen(
-                onBack   = { navController.popBackStack() },
+                onBack   = {
+                    // 直接跳到作品创作页
+                    navController.navigate(Routes.Zaowu) {
+                        popUpTo(Routes.Gongfang) { inclusive = true }
+                    }
+                },
                 onSearch = { query ->
                     if (query.isNotBlank()) {
                         navController.navigate(Routes.chatResult(query))
@@ -163,13 +175,21 @@ fun JianghuNavHost(
 
         composable(
             Routes.ChatResultPattern,
-            arguments = listOf(navArgument("query") { type = NavType.StringType }),
+            arguments = listOf(navArgument("query") {
+                type = NavType.StringType
+                defaultValue = ""
+            }),
         ) { entry ->
             val encoded = entry.arguments?.getString("query") ?: ""
             val query = java.net.URLDecoder.decode(encoded, Charsets.UTF_8.name())
             ChatResultScreen(
                 query = query,
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    // 直接跳到工坊页(避开 popBackStack 在 startDestination 上的不可靠行为)
+                    navController.navigate(Routes.Gongfang) {
+                        popUpTo(Routes.ChatResultPattern) { inclusive = true }
+                    }
+                },
                 onSearch = { newQuery ->
                     if (newQuery.isNotBlank()) {
                         navController.navigate(Routes.chatResult(newQuery))
@@ -178,6 +198,31 @@ fun JianghuNavHost(
                 onContinueWork = { workId ->
                     // TODO: 后续接 EditWorkScreen
                 },
+                onCreateWork = { navController.navigate(Routes.Shengtu) },
+            )
+        }
+
+        composable(Routes.Shengtu) {
+            ShengtuScreen(
+                onBack      = {
+                    android.util.Log.d("Shengtu", "onBack called, popping")
+                    val popped = navController.popBackStack()
+                    android.util.Log.d("Shengtu", "popBackStack returned: $popped")
+                    if (!popped) {
+                        android.util.Log.w("Shengtu", "Stack empty, navigating to ChatResult manually")
+                        navController.navigate(Routes.chatResult("")) {
+                            popUpTo(Routes.Shengtu) { inclusive = true }
+                        }
+                    }
+                },
+                onCreateWork = { navController.navigate(Routes.Picture) },
+            )
+        }
+
+        composable(Routes.Picture) {
+            PictureScreen(
+                onBack      = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 保存作品 */ },
             )
         }
 

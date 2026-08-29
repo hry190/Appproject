@@ -1,5 +1,6 @@
 package com.jueqiao.jianghu.ui.screens.chatresult
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -48,7 +50,13 @@ fun ChatResultScreen(
     onBack: () -> Unit = {},
     onSearch: (String) -> Unit = {},
     onContinueWork: (String) -> Unit = {},
+    onCreateWork: () -> Unit = {},
 ) {
+    // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(跳工坊页)
+    BackHandler(enabled = true) {
+        onBack()
+    }
+
     var inputText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -75,7 +83,7 @@ fun ChatResultScreen(
             // 返回按钮
             Box(
                 modifier = Modifier
-                    .offset(x = 20.dp, y = 51.dp)
+                    .offset(x = 20.dp, y = 41.dp)
                     .size(32.dp)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
@@ -87,6 +95,26 @@ fun ChatResultScreen(
                     contentScale = ContentScale.Fit,
                 )
             }
+
+            // 未标题-2 23.png(X=57, Y=29, W=160, H=58)
+            Image(
+                painter = painterResource(R.drawable.img_gongfang_23),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 57.dp, y = 29.dp)
+                    .size(width = 160.dp, height = 58.dp),
+                contentScale = ContentScale.Fit,
+            )
+
+            // 未标题-2 24.png(X=265, Y=35, W=127, H=46)
+            Image(
+                painter = painterResource(R.drawable.img_gongfang_24),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 265.dp, y = 35.dp)
+                    .size(width = 127.dp, height = 46.dp),
+                contentScale = ContentScale.Fit,
+            )
 
             // 教练辅助 标签
             Text(
@@ -115,7 +143,7 @@ fun ChatResultScreen(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = (-115).dp)
-                    .size(width = 392.dp, height = 432.dp)
+                    .size(width = 398.dp, height = 432.dp)
                     .alpha(1.0f)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Fit,
@@ -216,6 +244,30 @@ fun ChatResultScreen(
                 contentScale = ContentScale.Fit,
             )
 
+            // Rectangle 220.png(X=160, Y=201, W=171, H=31)
+            Box(
+                modifier = Modifier
+                    .offset(x = 160.dp, y = 201.dp)
+                    .size(width = 171.dp, height = 31.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_chatresult_rect220),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+                Text(
+                    text = "帮我提供一些机械熊猫生成要素。",
+                    color = Color.Black,
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Normal,
+                    ),
+                )
+            }
+
             // Group 213 图标(X=40, Y=247, W=30.35, H=25.5)
             Image(
                 painter = painterResource(R.drawable.group_213),
@@ -225,6 +277,31 @@ fun ChatResultScreen(
                     .size(width = 30.35.dp, height = 25.5.dp),
                 contentScale = ContentScale.Fit,
             )
+
+            // Rectangle 221.png(X=77, Y=244, W=265, H=31)
+            Box(
+                modifier = Modifier
+                    .offset(x = 77.dp, y = 244.dp)
+                    .size(width = 265.dp, height = 31.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_chatresult_rect221),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+                Text(
+                    text = "半机械武侠熊猫，古铜机甲，墨绿劲装，发光眼，立绘",
+                    color = Color.Black,
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Normal,
+                    ),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
 
             // 创作作品列表
             Box(
@@ -252,25 +329,27 @@ fun ChatResultScreen(
                 )
             }
 
-            // 创建作品按钮
-            Image(
-                painter = painterResource(R.drawable.img_zaowu_2),
-                contentDescription = null,
+            // 创建作品按钮 — 点击跳转到 ShengtuScreen(生图页)
+            Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = 393.dp)
-                    .size(width = 372.dp, height = 47.dp),
-                contentScale = ContentScale.Fit,
-            )
-            Text(
-                text = "创建作品",
-                color = Color.White,
-                style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = 390.dp)
-                    .size(width = 80.dp, height = 30.dp),
-            )
+                    .size(width = 372.dp, height = 47.dp)
+                    .clickable(onClick = onCreateWork),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_zaowu_2),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    text = "创建作品",
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+                )
+            }
         }
     }
 }

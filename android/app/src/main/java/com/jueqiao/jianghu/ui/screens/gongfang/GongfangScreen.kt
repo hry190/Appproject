@@ -1,5 +1,6 @@
 package com.jueqiao.jianghu.ui.screens.gongfang
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +49,11 @@ fun GongfangScreen(
     onSearch: (String) -> Unit = {},
     onContinueWork: (String) -> Unit = {},
 ) {
+    // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(跳作品创作页)
+    BackHandler(enabled = true) {
+        onBack()
+    }
+
     var inputText by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -70,10 +76,10 @@ fun GongfangScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-        // 返回按钮(Return.png,与作品创作页一致:X=20, Y=76, W=32, H=32,内部图标 24×24)
+        // 返回按钮(Return.png,X=20, Y=41, W=32, H=32,内部图标 24×24)
         Box(
             modifier = Modifier
-                .offset(x = 20.dp, y = 51.dp)
+                .offset(x = 20.dp, y = 41.dp)
                 .size(32.dp)
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,

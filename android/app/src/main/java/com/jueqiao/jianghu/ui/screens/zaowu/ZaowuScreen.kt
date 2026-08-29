@@ -1,5 +1,6 @@
 package com.jueqiao.jianghu.ui.screens.zaowu
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,11 @@ fun ZaowuScreen(
     onBack: () -> Unit = {},
     onOpenGongfang: () -> Unit = {},
 ) {
+    // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(跳首页1)
+    BackHandler(enabled = true) {
+        onBack()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -55,7 +61,7 @@ fun ZaowuScreen(
         // 左上角返回按钮
         Box(
             modifier = Modifier
-                .offset(x = 20.dp, y = 76.dp)
+                .offset(x = 20.dp, y = 41.dp)
                 .size(32.dp)
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
