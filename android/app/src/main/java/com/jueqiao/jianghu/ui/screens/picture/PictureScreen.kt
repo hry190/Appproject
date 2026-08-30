@@ -47,6 +47,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun PictureScreen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
+    onOpenChuangzuodangan: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -107,7 +108,8 @@ fun PictureScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 265.dp, y = 35.dp)
-                    .size(width = 127.dp, height = 46.dp),
+                    .size(width = 127.dp, height = 46.dp)
+                    .clickable(onClick = onOpenChuangzuodangan),
                 contentScale = ContentScale.Fit,
             )
 
@@ -128,7 +130,8 @@ fun PictureScreen(
                 style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                 modifier = Modifier
                     .offset(x = 287.dp, y = 46.dp)
-                    .size(width = 76.dp, height = 25.dp),
+                    .size(width = 76.dp, height = 25.dp)
+                    .clickable(onClick = onOpenChuangzuodangan),
             )
 
             // Group 212.png(W=372, H=679)— 主内容区,水平居中 + 垂直上移 2

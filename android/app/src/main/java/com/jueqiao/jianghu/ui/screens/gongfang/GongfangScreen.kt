@@ -48,6 +48,7 @@ fun GongfangScreen(
     onBack: () -> Unit = {},
     onSearch: (String) -> Unit = {},
     onContinueWork: (String) -> Unit = {},
+    onOpenChuangzuodangan: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(跳作品创作页)
     BackHandler(enabled = true) {
@@ -108,7 +109,8 @@ fun GongfangScreen(
             contentDescription = null,
             modifier = Modifier
                 .offset(x = 265.dp, y = 35.dp)
-                .size(width = 127.dp, height = 46.dp),
+                .size(width = 127.dp, height = 46.dp)
+                .clickable(onClick = onOpenChuangzuodangan),
             contentScale = ContentScale.Fit,
         )
 
@@ -129,7 +131,8 @@ fun GongfangScreen(
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
             modifier = Modifier
                 .offset(x = 287.dp, y = 46.dp)
-                .size(width = 76.dp, height = 25.dp),
+                .size(width = 76.dp, height = 25.dp)
+                .clickable(onClick = onOpenChuangzuodangan),
         )
 
         // 框.png(屏幕水平居中,垂直位置可调:W=372, H=462, opacity 100%, corner radius 8)

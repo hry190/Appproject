@@ -51,6 +51,7 @@ fun ChatResultScreen(
     onSearch: (String) -> Unit = {},
     onContinueWork: (String) -> Unit = {},
     onCreateWork: () -> Unit = {},
+    onOpenChuangzuodangan: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(跳工坊页)
     BackHandler(enabled = true) {
@@ -112,7 +113,8 @@ fun ChatResultScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 265.dp, y = 35.dp)
-                    .size(width = 127.dp, height = 46.dp),
+                    .size(width = 127.dp, height = 46.dp)
+                    .clickable(onClick = onOpenChuangzuodangan),
                 contentScale = ContentScale.Fit,
             )
 
@@ -133,7 +135,8 @@ fun ChatResultScreen(
                 style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                 modifier = Modifier
                     .offset(x = 287.dp, y = 46.dp)
-                    .size(width = 76.dp, height = 25.dp),
+                    .size(width = 76.dp, height = 25.dp)
+                    .clickable(onClick = onOpenChuangzuodangan),
             )
 
             // 中央卡片框

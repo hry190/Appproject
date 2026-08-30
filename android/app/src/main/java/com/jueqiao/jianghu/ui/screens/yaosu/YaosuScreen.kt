@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.shengtu
+package com.jueqiao.jianghu.ui.screens.yaosu
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -40,19 +40,17 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 生图页面 — 从 ChatResultScreen 复制了返回按钮 + 顶部装饰图/标签 + 底部"创建作品"按钮。
- * 背景图改为 img_shengtu_bg.png(原 D:\图\创作.png)。
- * 后续接生图逻辑时,把图片展示 / 生成进度等加在这里。
+ * 要素页面 — 从 PictureScreen 完整复制,初始元素与图片页一致。
+ * 后续会按需修改元素布局 / 图片 / 文案等。
  */
 @Composable
-fun ShengtuScreen(
+fun YaosuScreen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
-        android.util.Log.d("Shengtu", "BackHandler triggered")
         onBack()
     }
 
@@ -78,7 +76,7 @@ fun ShengtuScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)— 上移 10)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 41.dp)
@@ -136,7 +134,7 @@ fun ShengtuScreen(
                     .clickable(onClick = onOpenChuangzuodangan),
             )
 
-            // Group 212.png(W=372, H=679)— 主内容区,水平居中 + 垂直上移 25(原 Center 上移)
+            // Group 212.png(W=372, H=679)— 主内容区,水平居中 + 垂直上移 2
             Image(
                 painter = painterResource(R.drawable.img_shengtu_group212),
                 contentDescription = null,
@@ -147,7 +145,7 @@ fun ShengtuScreen(
                 contentScale = ContentScale.Fit,
             )
 
-            // Group 253.png(X=291, Y=125, W=65, H=23)— @1x,放 drawable-xxhdpi/
+            // Group 253.png(X=291, Y=125, W=65, H=23)
             Image(
                 painter = painterResource(R.drawable.img_shengtu_group253),
                 contentDescription = null,
@@ -157,7 +155,17 @@ fun ShengtuScreen(
                 contentScale = ContentScale.Fit,
             )
 
-            // Rectangle 228.png(W=300, H=450)— X 轴居中(@2x,放 drawable-xxhdpi/)
+            // Vector 611.png(X=10, Y=55, W=372, H=598)
+            Image(
+                painter = painterResource(R.drawable.img_picture_vector611),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 10.dp, y = 55.dp)
+                    .size(width = 372.dp, height = 598.dp),
+                contentScale = ContentScale.Fit,
+            )
+
+            // image 38.png(W=300, H=450)— 原 Rectangle 228 位置,水平居中 + Y=152(@1x,放 drawable/)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -165,24 +173,9 @@ fun ShengtuScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_shengtu_rect228),
+                    painter = painterResource(R.drawable.img_picture_image38),
                     contentDescription = null,
                     modifier = Modifier.size(width = 300.dp, height = 450.dp),
-                    contentScale = ContentScale.Fit,
-                )
-            }
-
-            // 加载 1.png(W=63, H=63)— 水平居中,Y=345(@1x 63×63,放 drawable-xxhdpi/)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = 345.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shengtu_loading1),
-                    contentDescription = null,
-                    modifier = Modifier.size(width = 63.dp, height = 63.dp),
                     contentScale = ContentScale.Fit,
                 )
             }
@@ -212,52 +205,24 @@ fun ShengtuScreen(
                         .size(width = 180.dp, height = 16.dp),
                 )
             }
-            // 未标题-1 41.png(X=310, Y=605, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
-            Image(
-                painter = painterResource(R.drawable.img_shengtu_untitled41),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 300.dp, y = 605.dp)
-                    .size(width = 92.dp, height = 143.dp),
-                contentScale = ContentScale.Fit,
-            )
-
-            // 9 个点:15字 × 12sp ≈ 180dp,Box 放宽让文字自然展开
-            Text(
-                text = "正在生成图片.........",
-                color = Color(0xFF50553D),
-                style = TextStyle(
-                    fontFamily = YaHei,        // YaHei(项目通用字体)
-                    fontWeight = FontWeight.Normal, // Regular
-                    fontSize = 12.sp,
-                ),
-                modifier = Modifier
-                    .offset(x = 56.dp, y = 130.dp),
-                // 不强制 size:让 Text 自己按文字宽度展开,避免被裁
-            )
 
             // 局部状态:输入框文字
             var rect227Text by remember { mutableStateOf("") }
-            // 别名,FocusRequester 在外层声明了
             val focusRequester = rect227FocusRequester
 
-            // Rectangle 227.png(X=38, Y=708, W=256, H=20)—真输入框
-            // 采用 BasicTextField + Text 叠加结构,
-            // 避开 Material3 TextField 的 padding/placeholder 边訧问题
+            // Rectangle 227.png(X=38, Y=708, W=256, H=20)— 真输入框
             Box(
                 modifier = Modifier
                     .offset(x = 38.dp, y = 708.dp)
                     .size(width = 256.dp, height = 20.dp)
                     .background(Color.Transparent),
             ) {
-                // 底层:背景图
                 Image(
                     painter = painterResource(R.drawable.img_shengtu_rect227),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
-                // 中层:placeholder 文本 (空值时显示)
                 if (rect227Text.isEmpty()) {
                     Text(
                         text = "请输入创作的作品内容",
@@ -272,7 +237,6 @@ fun ShengtuScreen(
                             .padding(start = 8.dp),
                     )
                 } else {
-                    // 中层:输入文本 (有值时显示)
                     Text(
                         text = rect227Text,
                         color = Color.Black,
@@ -286,7 +250,6 @@ fun ShengtuScreen(
                             .padding(start = 8.dp),
                     )
                 }
-                // 顶层:BasicTextField 接管输入 + 弹键盘
                 BasicTextField(
                     value = rect227Text,
                     onValueChange = { rect227Text = it },
@@ -295,7 +258,7 @@ fun ShengtuScreen(
                     textStyle = TextStyle(
                         fontFamily = YaHei,
                         fontSize = 10.sp,
-                        color = Color.Transparent, // 文本透明,由中层 Text 渲染
+                        color = Color.Transparent,
                     ),
                     modifier = Modifier
                         .fillMaxSize()
@@ -303,6 +266,7 @@ fun ShengtuScreen(
                         .padding(start = 8.dp),
                 )
             }
+
             // "保存作品" 按钮(Group 196.png + "保存作品" 文字,屏幕水平居中,下移 393)
             Box(
                 modifier = Modifier

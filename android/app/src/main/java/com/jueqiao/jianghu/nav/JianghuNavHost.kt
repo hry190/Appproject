@@ -25,6 +25,8 @@ import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.picture.PictureScreen
+import com.jueqiao.jianghu.ui.screens.yaosu.YaosuScreen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 
 @Composable
 fun JianghuNavHost(
@@ -170,6 +172,7 @@ fun JianghuNavHost(
                     // TODO: 后续补 EditWorkScreen 时改成
                     //   navController.navigate(Routes.editWork(workId))
                 },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
             )
         }
 
@@ -199,6 +202,7 @@ fun JianghuNavHost(
                     // TODO: 后续接 EditWorkScreen
                 },
                 onCreateWork = { navController.navigate(Routes.Shengtu) },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
             )
         }
 
@@ -216,13 +220,30 @@ fun JianghuNavHost(
                     }
                 },
                 onCreateWork = { navController.navigate(Routes.Picture) },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
             )
         }
 
         composable(Routes.Picture) {
             PictureScreen(
                 onBack      = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 保存作品 */ },
+                onCreateWork = { navController.navigate(Routes.Yaosu) },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+            )
+        }
+
+        composable(Routes.Yaosu) {
+            YaosuScreen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+            )
+        }
+
+        composable(Routes.Chuangzuodangan) {
+            ChuangzuodanganScreen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
             )
         }
 
