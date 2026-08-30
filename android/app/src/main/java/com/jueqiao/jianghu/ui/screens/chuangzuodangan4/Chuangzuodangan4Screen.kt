@@ -286,12 +286,11 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本整组可点击跳 Chuangzuodangan4
+// 雾气+文本(仅展示,不可点击)
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 55.dp)
-        .clickable(onClick = onOpenChuangzuodangan4),
+        .offset(y = 55.dp),
 ) {
     // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
     Image(
@@ -317,13 +316,13 @@ Box(
     }
 }
 
-// image 64.png(X=204, Y=687, W=190, H=212)— 熊猫图
+// image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
 Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
+    painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
     contentDescription = null,
     modifier = Modifier
-        .offset(x = 204.dp, y = 667.dp)
-        .size(width = 200.dp, height = 222.dp),
+        .offset(x = 174.dp, y = 667.dp)
+        .size(width = 204.dp, height = 219.dp),
     contentScale = ContentScale.Fit,
 )
 
@@ -346,29 +345,6 @@ Image(
         .size(width = 214.dp, height = 172.dp),
     contentScale = ContentScale.Fit,
 )
-
-// Rectangle 16.png(X=279, Y=622, W=128, H=68)— 气泡
-Box(
-    modifier = Modifier
-        .offset(x = 269.dp, y = 622.dp)
-        .size(width = 128.dp, height = 68.dp),
-) {
-    Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan3_rect16),
-        contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.FillBounds,
-    )
-    // 气泡文字,居中:101×36
-    Text(
-        text = "可以试试点击荷花查看详情",
-        color = Color.Black,
-        style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-        modifier = Modifier
-            .offset(x = 13.5.dp, y = 12.dp)
-            .size(width = 101.dp, height = 40.dp),
-    )
-}
         }
     }
 }
