@@ -1,0 +1,138 @@
+package com.jueqiao.jianghu.ui.screens.dahui
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.theme.YaHei
+
+/**
+ * 大会页 — 简单版(用大会.png 作全屏背景 + 演武场竖排文字 + 对话气泡 + 返回按钮)。
+ */
+@Composable
+fun DahuiScreen(
+    onBack: () -> Unit = {},
+    onOpenYanwuchang: () -> Unit = {},
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        // 全屏背景图(大会.png)— 延伸到屏幕底部
+        Image(
+            painter = painterResource(R.drawable.img_dahui_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+
+        // 内容层(避开系统导航条)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
+        // o.png 图标(X=70, Y=458, W=55, H=90)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_o),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 72.5.dp, y = 458.dp)
+                .size(width = 55.dp, height = 90.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)— 在 o.png 之上,点击进入演武场首页
+        Column(
+            modifier = Modifier
+                .offset(x = 89.dp, y = 480.dp)
+                .size(width = 15.dp, height = 45.dp)
+                .clickable(onClick = onOpenYanwuchang),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("演", color = Color.White, style = TextStyle(fontSize = 11.sp))
+            Text("武", color = Color.White, style = TextStyle(fontSize = 11.sp))
+            Text("场", color = Color.White, style = TextStyle(fontSize = 11.sp))
+        }
+
+        // 对话气泡(Rectangle 186.png,X=56, Y=563, 158×79)
+        Box(
+            modifier = Modifier
+                .offset(x = 56.dp, y = 563.dp)
+                .size(width = 158.dp, height = 79.dp),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_dahui_speech_bubble),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 气泡文本(Text, X=73, Y=576, 123×54, 14px, #000000, 不透明度 100%, weight=1 → Regular)
+            //   容器内坐标:相对气泡 Box(56, 563)= offset(17, 13)
+            //   lineHeight = 18.sp:3 行 = 54dp,正好贴合容器高度
+            Text(
+                text = "前面就是演武场！准备好，就来一展你的本领吧。",
+                color = Color.Black,
+                style = TextStyle(
+                    fontFamily = YaHei,
+                    fontSize   = 14.sp,
+                    lineHeight = 18.sp,
+                    fontWeight = FontWeight.Normal,
+                ),
+                modifier = Modifier
+                    .offset(x = 17.dp, y = 13.dp)
+                    .size(width = 123.dp, height = 54.dp),
+                softWrap = true,
+                overflow = TextOverflow.Visible,
+            )
+        }
+
+        // 左上角返回按钮(Return.png,X=20, Y=76, 24×24, 白色, 不透明度 100%)
+        Image(
+            painter = painterResource(R.drawable.ic_dahui_return),
+            contentDescription = "返回",
+            modifier = Modifier
+                .offset(x = 20.dp, y = 76.dp)
+                .size(24.dp)
+                .clickable(onClick = onBack),
+            contentScale = ContentScale.Fit,
+            alpha = 1f,
+        )
+
+        // 角色插画 Group 127.png(X=150, Y=597, W=241, H=285)
+        Image(
+            painter = painterResource(R.drawable.img_dahui_group127),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 150.dp, y = 597.dp)
+                .size(width = 241.dp, height = 285.dp),
+            contentScale = ContentScale.Fit,
+        )
+        }
+    }
+}

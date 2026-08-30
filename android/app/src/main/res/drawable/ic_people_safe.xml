@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  People-safe icon (shield) — matches AuthIcons.tsx PeopleSafeIcon.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="24dp"
+    android:viewportWidth="22"
+    android:viewportHeight="24">
+    <!-- shield outline -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#949494"
+        android:strokeWidth="1.83"
+        android:pathData="M11,1 L20,4 L20,11 C20,17 16,21 11,23 C6,21 2,17 2,11 L2,4 Z" />
+    <!-- two horizontal bars (people) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#949494"
+        android:strokeWidth="1.83"
+        android:pathData="M5.5,11 L16.5,11 M6.5,14.5 L15.5,14.5" />
+</vector>
