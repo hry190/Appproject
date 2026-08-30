@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.chuangzuodangan
+package com.jueqiao.jianghu.ui.screens.chuangzuodangan2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -27,10 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -40,15 +44,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * 创作档案页面 — 背景为 D:\图\创作档案.png。
- * 元素仅保留:背景 / 返回 / 教练辅助组 / 创作档案组,与 Shengtu/Picture/Yaoosu/ChatResult 顶部三组同款。
- * 创作档案组不做可点击,避免自跳死循环。
+ * 创作档案2页面 — 从 ChuangzuodanganScreen 完整复制,另加 Group 709.png(占位原 Group 273 的位置)。
  */
 @Composable
-fun ChuangzuodanganScreen(
+fun Chuangzuodangan2Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
-    onOpenChuangzuodangan2: () -> Unit = {},
     onOpenChuangzuodangan3: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
@@ -61,7 +62,7 @@ fun ChuangzuodanganScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案.png)— 不再点击,改成点气泡跳转
+        // 全屏背景(D:\图\创作档案.png,与 ChuangzuodanganScreen 同款)
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan_bg),
             contentDescription = null,
@@ -307,29 +308,64 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// 气泡(整体可点击跳 Chuangzuodangan2)— Rectangle 186.png(X=138, Y=555, W=132, H=69)+ 文字
-Box(
+// Rectangle 186.png(X=138, Y=555, W=132, H=69)— 气泡
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan_rect186),
+    contentDescription = null,
     modifier = Modifier
         .offset(x = 138.dp, y = 555.dp)
-        .size(width = 132.dp, height = 69.dp)
-        .clickable(onClick = onOpenChuangzuodangan2),
-) {
-    Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan_rect186),
-        contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.FillBounds,
-    )
-    // 气泡上的文字(X=151, Y=566, W=116, H=40)—"点击花苞查看的经历哦!"
-    Text(
-        text = "点击花苞查看的经历哦!",
-        color = Color.Black,
-        style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-        modifier = Modifier
-            .offset(x = 13.dp, y = 11.dp)  // 相对气泡左上(X=151-138=13, Y=566-555=11)
-            .size(width = 116.dp, height = 40.dp),
-    )
+        .size(width = 132.dp, height = 69.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// 气泡上的文字(X=151, Y=566, W=116, H=40)—"点击花苞查看的经历哦!"
+Text(
+    text = "点击花苞查看的经历哦!",
+    color = Color.Black,
+    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+    modifier = Modifier
+        .offset(x = 151.dp, y = 566.dp)
+        .size(width = 116.dp, height = 40.dp),
+)
+
+// Group 709.png(X=55, Y=210, W=316.9, H=31.5)— 沿用 Group 273 的位置/尺寸信息
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan2_group709),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 55.dp, y = 210.dp)
+        .size(width = 316.9.dp, height = 31.5.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// Vector.png(X=80, Y=219, W=12, H=6)— 浮在 Group 709 之上
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan2_vector),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 80.dp, y = 223.dp)
+        .size(width = 12.dp, height = 6.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// Group 709 之上的文字(X=106, Y=228, W=298, H=17,字号 12, YaHei)
+// "|" 颜色 #365B36,其他文字颜色 #3D4522
+val c2TitleText = buildAnnotatedString {
+    withStyle(SpanStyle(color = Color(0xFF3D4522))) { append("《熊猫AI绘画》") }
+    withStyle(SpanStyle(color = Color(0xFF365B36))) { append("|") }
+    withStyle(SpanStyle(color = Color(0xFF3D4522))) { append("  无标题  ") }
+    withStyle(SpanStyle(color = Color(0xFF365B36))) { append("|") }
+    withStyle(SpanStyle(color = Color(0xFF3D4522))) { append("《手抄报绘画》") }
+    withStyle(SpanStyle(color = Color(0xFF365B36))) { append("|") }
+    withStyle(SpanStyle(color = Color(0xFF3D4522))) { append(" 视") }
 }
+Text(
+    text = c2TitleText,
+    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+    modifier = Modifier
+        .offset(x = 106.dp, y = 218.dp)
+        .size(width = 298.dp, height = 17.dp),
+)
         }
     }
 }

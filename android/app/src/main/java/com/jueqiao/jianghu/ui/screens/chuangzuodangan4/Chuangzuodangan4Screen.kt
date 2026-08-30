@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.chuangzuodangan
+package com.jueqiao.jianghu.ui.screens.chuangzuodangan4
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -40,16 +41,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * 创作档案页面 — 背景为 D:\图\创作档案.png。
- * 元素仅保留:背景 / 返回 / 教练辅助组 / 创作档案组,与 Shengtu/Picture/Yaoosu/ChatResult 顶部三组同款。
- * 创作档案组不做可点击,避免自跳死循环。
+ * 创作档案4页面 — 从 Chuangzuodangan3Screen 完整复制,雾气文本 Y 改为 277。
  */
 @Composable
-fun ChuangzuodanganScreen(
+fun Chuangzuodangan4Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
-    onOpenChuangzuodangan2: () -> Unit = {},
-    onOpenChuangzuodangan3: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -61,9 +58,9 @@ fun ChuangzuodanganScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案.png)— 不再点击,改成点气泡跳转
+        // 全屏背景(D:\图\创作档案3.png)
         Image(
-            painter = painterResource(R.drawable.img_chuangzuodangan_bg),
+            painter = painterResource(R.drawable.img_chuangzuodangan3_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -241,7 +238,7 @@ for (i in 0 until xuanzeN) {
     )
 }
 
-// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3
+// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3(创作档案3 也保留作为导航目标之一)
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -289,45 +286,87 @@ for (i in 0 until aiN) {
     )
 }
 
-// AI 教练辅助记录透明点击覆盖层(48-167, 692-752)— 接 Chuangzuodangan3
+// 雾气+文本整组可点击跳 Chuangzuodangan4
 Box(
     modifier = Modifier
-        .offset(x = 48.dp, y = 692.dp)
-        .size(width = 119.dp, height = 60.dp)
-        .clickable(onClick = onOpenChuangzuodangan3),
-)
+        .fillMaxWidth()
+        .offset(y = 55.dp)
+        .clickable(onClick = onOpenChuangzuodangan4),
+) {
+    // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
+    Image(
+        painter = painterResource(R.drawable.img_chuangzuodangan3_rect245),
+        contentDescription = null,
+        modifier = Modifier.fillMaxWidth(),
+        contentScale = ContentScale.FillWidth,
+    )
 
-// 未标题-1 72.png(X=201, Y=614, W=212, H=245)
+    // 雾气上的文本(X居中, Y=346, W=189, H=58, 14sp, 黑色)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = 222.dp),  // 277-55=222,相对雾气 Box 顶部
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "9点39分36秒，提示确认主题\n9点45分32秒，提出构图建议\n9点50分01秒，引导修改细节",
+            color = Color.Black,
+            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+            modifier = Modifier.size(width = 189.dp, height = 58.dp),
+        )
+    }
+}
+
+// image 64.png(X=204, Y=687, W=190, H=212)— 熊猫图
 Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
     contentDescription = null,
     modifier = Modifier
-        .offset(x = 201.dp, y = 584.dp)
-        .size(width = 212.dp, height = 245.dp),
+        .offset(x = 204.dp, y = 667.dp)
+        .size(width = 200.dp, height = 222.dp),
     contentScale = ContentScale.Fit,
 )
 
-// 气泡(整体可点击跳 Chuangzuodangan2)— Rectangle 186.png(X=138, Y=555, W=132, H=69)+ 文字
+// image 61.png(X=35, Y=484, W=193, H=203)— 飘雾
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 35.dp, y = 434.dp)
+        .size(width = 193.dp, height = 203.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// image 52.png(X=14, Y=596, W=214, H=172)— 莲花图
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 8.dp, y = 556.dp)
+        .size(width = 214.dp, height = 172.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// Rectangle 16.png(X=279, Y=622, W=128, H=68)— 气泡
 Box(
     modifier = Modifier
-        .offset(x = 138.dp, y = 555.dp)
-        .size(width = 132.dp, height = 69.dp)
-        .clickable(onClick = onOpenChuangzuodangan2),
+        .offset(x = 269.dp, y = 622.dp)
+        .size(width = 128.dp, height = 68.dp),
 ) {
     Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan_rect186),
+        painter = painterResource(R.drawable.img_chuangzuodangan3_rect16),
         contentDescription = null,
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.FillBounds,
     )
-    // 气泡上的文字(X=151, Y=566, W=116, H=40)—"点击花苞查看的经历哦!"
+    // 气泡文字,居中:101×36
     Text(
-        text = "点击花苞查看的经历哦!",
+        text = "可以试试点击荷花查看详情",
         color = Color.Black,
         style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
         modifier = Modifier
-            .offset(x = 13.dp, y = 11.dp)  // 相对气泡左上(X=151-138=13, Y=566-555=11)
-            .size(width = 116.dp, height = 40.dp),
+            .offset(x = 13.5.dp, y = 12.dp)
+            .size(width = 101.dp, height = 40.dp),
     )
 }
         }

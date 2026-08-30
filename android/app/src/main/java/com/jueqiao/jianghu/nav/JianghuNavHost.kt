@@ -27,6 +27,9 @@ import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.picture.PictureScreen
 import com.jueqiao.jianghu.ui.screens.yaosu.YaosuScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
 
 @Composable
 fun JianghuNavHost(
@@ -242,6 +245,31 @@ fun JianghuNavHost(
 
         composable(Routes.Chuangzuodangan) {
             ChuangzuodanganScreen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+                onOpenChuangzuodangan2 = { navController.navigate(Routes.Chuangzuodangan2) },
+                onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+            )
+        }
+
+        composable(Routes.Chuangzuodangan2) {
+            Chuangzuodangan2Screen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+                onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+            )
+        }
+
+        composable(Routes.Chuangzuodangan3) {
+            Chuangzuodangan3Screen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+                onOpenChuangzuodangan4 = { navController.navigate(Routes.Chuangzuodangan4) },
+            )
+        }
+
+        composable(Routes.Chuangzuodangan4) {
+            Chuangzuodangan4Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
             )

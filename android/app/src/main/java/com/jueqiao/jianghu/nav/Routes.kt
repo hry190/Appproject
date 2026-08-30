@@ -24,6 +24,9 @@ object Routes {
     const val Picture   = "picture"
     const val Yaosu     = "yaosu"
     const val Chuangzuodangan = "chuangzuodangan"
+    const val Chuangzuodangan2 = "chuangzuodangan2"
+    const val Chuangzuodangan3 = "chuangzuodangan3"
+    const val Chuangzuodangan4 = "chuangzuodangan4"
     // 参数化路由:工坊里 3 个"继续创作"按钮跳过去
     const val EditWork         = "edit_work"
     const val EditWorkPattern  = "edit_work/{workId}"
