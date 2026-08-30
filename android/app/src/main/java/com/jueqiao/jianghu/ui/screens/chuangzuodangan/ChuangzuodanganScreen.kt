@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -135,8 +136,8 @@ val arcN = arcText.length
 for (i in 0 until arcN) {
     val t = i.toFloat() / (arcN - 1).toFloat()
     val arcAngleRad = (200.0 - 90.0 * t) * PI / 180.0
-    val charX = (226.0 + 60.235 + 60.5 * cos(arcAngleRad)).toFloat()
-    val charY = (384.5 + 69.4 + 60.5 * sin(arcAngleRad)).toFloat()
+    val charX = (276.0 + 60.235 + 60.5 * cos(arcAngleRad)).toFloat()
+    val charY = (325.5 + 69.4 + 60.5 * sin(arcAngleRad)).toFloat()
     // 单字旋转:不跟弧度,首字 51° CW,末字 0°,每字向逆时针递减 51°/5 = 10.2°
     val rot = 51f * (arcN - 1 - i) / (arcN - 1).toFloat()
 
@@ -168,10 +169,10 @@ val chuangyuanAnglesDeg = listOf(90f, 70f, 50f, 25f)
 val chuangyuanFirstRot = 0f
 val chuangyuanLastRot = -45f
 val chuangyuanColors = listOf(
-    Color(0xFFB7E4B7),  // 浅绿
-    Color(0xFF74C476),
-    Color(0xFF41AB5D),
-    Color(0xFF238B45),  // 深绿
+    Color(0xFFB7E4B7),  // 浅绿(原)
+    Color(0xFFA8DDA8),  // 第二字,再浅一些(创)
+    Color(0xFF41AB5D),  // 中绿(记)
+    Color(0xFF238B45),  // 深绿(录)
 )
 for (i in 0 until chuangyuanN) {
     val t = i.toFloat() / (chuangyuanN - 1).toFloat()
@@ -192,6 +193,118 @@ for (i in 0 until chuangyuanN) {
             .rotate(rot),
     )
 }
+
+// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
+// 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
+val xuanzeText = "选择作品查看"
+val xuanzeN = xuanzeText.length
+val xuanzeBaseX = -2f                // "选" 的 X
+val xuanzeBaseY = 143f               // "选" 的 Y
+val xuanzeCenterX = xuanzeBaseX      // -2 — 圆心 X(直接在"选"正下方)
+val xuanzeCenterY = xuanzeBaseY + 50f  // 193 — 圆心 Y
+val xuanzeRadius = 50f               // 半径(让"选"在弧顶)
+val xuanzeFirstRot = 25f             // 首字 25° CW
+val xuanzeLastRot = 80f              // 末字 80° CW
+val xuanzeColor = Color(0xFF62704E)
+for (i in 0 until xuanzeN) {
+    val t = i.toFloat() / (xuanzeN - 1).toFloat()
+    // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
+    val arcAngleDeg = -90f + 90f * t
+    val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
+    val charX = (xuanzeCenterX + xuanzeRadius * cos(arcAngleRad)).toFloat()
+    val charY = (xuanzeCenterY + xuanzeRadius * sin(arcAngleRad)).toFloat()
+    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * t
+
+    Text(
+        text = xuanzeText[i].toString(),
+        color = xuanzeColor,
+        style = TextStyle(
+            fontFamily = YaHei,
+            fontSize = 12.sp,
+        ),
+        modifier = Modifier
+            .offset(x = charX.dp, y = charY.dp)
+            .rotate(rot),
+    )
+}
+
+// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)
+// 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
+// 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
+val aiText = "AI教练辅助记录"
+val aiN = aiText.length
+val aiBaseX = 75f                  // "助" 的 X
+val aiBaseY = 750f                 // "助" 的 Y
+val aiCenterX = aiBaseX            // 75 — 圆心 X(直接在"助"正上方)
+val aiCenterY = aiBaseY - 70f      // 680 — 圆心 Y("助"上方 70)
+val aiRadius = 70f                 // 半径(让"助"在弧底)
+// 8 字角度分布:从 A(155° 左侧)→ 助(90° 底)→ 录(60° 右侧)
+val aiAnglesDeg = listOf(155f, 145f, 135f, 120f, 105f, 90f, 75f, 60f)
+// 旋转:前两字同 75°(原 51°),中间 4 字线性到 0°,后两字线性到 -20°
+val aiRotations = listOf(75f, 75f, 56.25f, 37.5f, 18.75f, 0f, -10f, -20f)
+val aiGradientStart = Color(0xFF4A5D3A)  // 墨绿 dark olive green
+val aiGradientEnd = Color(0xFF3D8A4A)    // 翠绿 emerald green
+for (i in 0 until aiN) {
+    val arcAngleRad = aiAnglesDeg[i].toDouble() * PI / 180.0
+    val charX = (aiCenterX + aiRadius * cos(arcAngleRad)).toFloat()
+    val charY = (aiCenterY + aiRadius * sin(arcAngleRad)).toFloat()
+    val rot = aiRotations[i]
+    // 每字内部水平渐变:取该字在整体渐变中的"切片"(左 t 到右 t)
+    val leftT = i.toFloat() / (aiN - 1).toFloat()
+    val rightT = (i + 1).toFloat() / (aiN - 1).toFloat()
+    fun lerpColor(start: Color, end: Color, t: Float) = Color(
+        red   = start.red   + (end.red   - start.red)   * t,
+        green = start.green + (end.green - start.green) * t,
+        blue  = start.blue  + (end.blue  - start.blue)  * t,
+        alpha = 1f,
+    )
+    val brush = Brush.horizontalGradient(
+        colors = listOf(lerpColor(aiGradientStart, aiGradientEnd, leftT),
+                        lerpColor(aiGradientStart, aiGradientEnd, rightT)),
+    )
+
+    Text(
+        text = aiText[i].toString(),
+        style = TextStyle(
+            fontFamily = YaHei,
+            fontSize = 16.sp,
+            brush = brush,
+        ),
+        modifier = Modifier
+            .offset(x = charX.dp, y = charY.dp)
+            .rotate(rot),
+    )
+}
+
+// 未标题-1 72.png(X=201, Y=614, W=212, H=245)
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 201.dp, y = 584.dp)
+        .size(width = 212.dp, height = 245.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// Rectangle 186.png(X=138, Y=555, W=132, H=69)— 气泡
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan_rect186),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 138.dp, y = 555.dp)
+        .size(width = 132.dp, height = 69.dp),
+    contentScale = ContentScale.Fit,
+)
+
+// 气泡上的文字(X=151, Y=566, W=116, H=40)—"点击花苞查看的经历哦!"
+Text(
+    text = "点击花苞查看的经历哦!",
+    color = Color.Black,
+    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+    modifier = Modifier
+        .offset(x = 151.dp, y = 566.dp)
+        .size(width = 116.dp, height = 40.dp),
+)
         }
     }
 }
