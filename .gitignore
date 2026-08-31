@@ -28,3 +28,10 @@ release.keystore
 # JVM crash & replay logs (contain local machine info)
 hs_err_pid*.log
 replay_pid*.log
+
+# Android build intermediates
+android/app/build/
+android/java_pid*.hprof
+*.hprof
+*.apk
+*.ap_
