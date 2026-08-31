@@ -110,7 +110,7 @@ fun LoginScreen(
                     contentDescription = "机巧江湖熊猫引路人",
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = (-12).dp, y = 260.dp)
+                        .offset(x = (-12).dp, y = 263.dp)
                         .size(width = 185.dp, height = 220.dp)
                         .graphicsLayer(scaleX = -1f),
                     contentScale = ContentScale.Fit,

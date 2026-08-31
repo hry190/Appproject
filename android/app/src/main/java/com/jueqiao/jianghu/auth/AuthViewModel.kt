@@ -35,6 +35,14 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         if (_uiState.value.errorMessage != null) _uiState.value = AuthUiState()
     }
 
+    fun logout(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            repository.logout()
+            _uiState.value = AuthUiState()
+            onComplete()
+        }
+    }
+
     fun bootstrap(onComplete: (Boolean) -> Unit) {
         if (_uiState.value.operation != null) return
         viewModelScope.launch {

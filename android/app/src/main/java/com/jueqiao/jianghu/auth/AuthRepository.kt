@@ -86,6 +86,12 @@ class AuthRepository(
         tokenStore.clear()
     }
 
+    suspend fun logout() {
+        val refreshToken = tokenStore.readRefreshToken() ?: return
+        runCatching { api.logout(refreshToken) }
+        clearSession()
+    }
+
     private fun saveTokens(tokens: TokenPairDto) {
         accessToken = tokens.accessToken
         tokenStore.saveRefreshToken(tokens.refreshToken)

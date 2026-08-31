@@ -385,7 +385,14 @@ fun JianghuNavHost(
                 onOpenAbout        = { /* TODO: 关于 */ },
                 onOpenDataRecovery = { /* TODO: 数据恢复 */ },
                 onSwitchAccount    = { /* TODO: 切换账号 */ },
-                onLogout           = { /* TODO: 退出登录 */ },
+                onLogout           = {
+                    authViewModel.logout {
+                        navController.navigate(Routes.Login) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
             )
         }
 

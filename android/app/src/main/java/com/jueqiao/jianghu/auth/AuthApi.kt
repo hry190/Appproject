@@ -70,6 +70,27 @@ class AuthApi(
         responseType = TokenPairDto::class.java,
     )
 
+    suspend fun logout(refreshToken: String) {
+        val request = Request.Builder()
+            .url(root + "/v1/auth/logout")
+            .header("Accept", "application/json")
+            .header("X-Request-ID", UUID.randomUUID().toString())
+            .post(gson.toJson(LogoutRequest(refreshToken)).toRequestBody(jsonMediaType))
+            .build()
+        val response = try {
+            client.newCall(request).execute()
+        } catch (error: IOException) {
+            throw AuthApiException(
+                statusCode = 0,
+                code = "NETWORK_UNAVAILABLE",
+                message = "暂时无法连接江湖驿站，请检查网络后重试",
+            )
+        }
+        response.use {
+            if (!it.isSuccessful) throw parseApiError(it.code, it.body?.string().orEmpty())
+        }
+    }
+
     private suspend fun <T : Any> post(
         path: String,
         payload: Any,

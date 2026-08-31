@@ -177,7 +177,7 @@ fun RegisterScreen(
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = (-10).dp, y = 260.dp)
+                        .offset(x = (-200).dp, y = 223.dp)
                         .size(width = 178.dp, height = 210.dp),
                     contentScale = ContentScale.Fit,
                 )

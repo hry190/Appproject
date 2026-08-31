@@ -71,6 +71,10 @@ data class RefreshRequest(
     @SerializedName("device_name") val deviceName: String = "Android",
 )
 
+data class LogoutRequest(
+    @SerializedName("refresh_token") val refreshToken: String,
+)
+
 data class UserDto(
     val id: String,
     val nickname: String,
