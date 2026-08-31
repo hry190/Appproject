@@ -12,7 +12,6 @@ import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
-import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoCategoryScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -169,56 +168,77 @@ fun JianghuNavHost(
                 onOpenYanwuchangVideo   = { navController.navigate(Routes.YanwuchangVideo) },
             )
         }
+        // 演武场视频 5 个页面(推荐 / 艺术 / 科学 / 数学 / 语文)
+        //   - 5 个页面布局与内容完全相同,只是 [selectedCategory] 不同
+        //   - 顶部 5 个 Tab(艺术/科学/数学/语文/推荐)与返回键同一行(横向中轴 Y=92 对齐)
+        //   - 当前页 Tab:20sp,容器 56×28dp(4 个学科) / 40×21dp(推荐),文字背景 62×47dp
+        //   - 其它 Tab:14sp, 29×21dp,无背景
+        //   - 5 个 Tab 互相跳转(launchSingleTop 避免栈堆积)
+        val popToRecommend: () -> Unit = {
+            if (!navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)) {
+                navController.navigate(Routes.YanwuchangVideo) {
+                    popUpTo(Routes.YanwuchangVideo) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+        }
+        val goToCategory: (String) -> () -> Unit = { route ->
+            { navController.navigate(route) { launchSingleTop = true } }
+        }
         composable(Routes.YanwuchangVideo) {
+            // 主入口页:"推荐" Tab 高亮
             YanwuchangVideoScreen(
-                onBack = { navController.popBackStack() },
-                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt) },
-                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) },
-                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath) },
-                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) },
+                selectedCategory = "推荐",
+                onBack          = { navController.popBackStack() },
+                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
+                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
+                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
+                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
+                onOpenRecommend = { /* 已在推荐页,无操作 */ },
             )
         }
-        // 4 个学科分类页 — 内容/布局与 YanwuchangVideoScreen 一致,仅顶部"推荐"标签替换为当前学科名
-        //   - 顶部 Tab 选中态:字号 20sp,容器 56×28dp,文字背景图 62×47dp
-        //   - 4 个 Tab 互相跳转,左上角 / 系统返回键回退到 YanwuchangVideoScreen
         composable(Routes.YanwuchangVideoArt) {
-            YanwuchangVideoCategoryScreen(
-                category    = "艺术",
-                onBack      = { navController.popBackStack() },
-                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
-                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
-                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
-                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            YanwuchangVideoScreen(
+                selectedCategory = "艺术",
+                onBack          = { navController.popBackStack() },
+                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
+                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
+                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
+                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
+                onOpenRecommend = popToRecommend,
             )
         }
         composable(Routes.YanwuchangVideoScience) {
-            YanwuchangVideoCategoryScreen(
-                category    = "科学",
-                onBack      = { navController.popBackStack() },
-                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
-                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
-                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
-                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            YanwuchangVideoScreen(
+                selectedCategory = "科学",
+                onBack          = { navController.popBackStack() },
+                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
+                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
+                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
+                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
+                onOpenRecommend = popToRecommend,
             )
         }
         composable(Routes.YanwuchangVideoMath) {
-            YanwuchangVideoCategoryScreen(
-                category    = "数学",
-                onBack      = { navController.popBackStack() },
-                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
-                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
-                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
-                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            YanwuchangVideoScreen(
+                selectedCategory = "数学",
+                onBack          = { navController.popBackStack() },
+                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
+                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
+                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
+                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
+                onOpenRecommend = popToRecommend,
             )
         }
         composable(Routes.YanwuchangVideoChinese) {
-            YanwuchangVideoCategoryScreen(
-                category    = "语文",
-                onBack      = { navController.popBackStack() },
-                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
-                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
-                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
-                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            YanwuchangVideoScreen(
+                selectedCategory = "语文",
+                onBack          = { navController.popBackStack() },
+                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
+                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
+                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
+                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
+                onOpenRecommend = popToRecommend,
             )
         }
         composable(Routes.Gongfang) {

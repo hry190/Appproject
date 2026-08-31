@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!--
+  API 24~28 主题(默认)
+  - 不引用 enforceStatusBarContrast / enforceNavigationBarContrast
+    这两个属性需要 API 29+,在 values-v29/themes.xml 中单独配置
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Jianghu" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- 透明系统栏,实现真正的全屏/边缘到边缘(Edge-to-Edge) -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <!-- 异形屏(如刘海/挖孔)延伸到状态栏区域 -->
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- 关闭系统自动加 contrast scrim(Android 10+/API 29+) -->
-        <item name="android:enforceStatusBarContrast">false</item>
-        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
     <style name="Theme.Jianghu.Splash" parent="Theme.SplashScreen">
@@ -18,3 +20,4 @@
         <item name="postSplashScreenTheme">@style/Theme.Jianghu</item>
     </style>
 </resources>
+

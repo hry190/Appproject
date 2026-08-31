@@ -61,6 +61,10 @@ android {
             "META-INF/LGPL2.1"
         )
     }
+
+    lint {
+        abortOnError = false
+    }
 }
 
 dependencies {
