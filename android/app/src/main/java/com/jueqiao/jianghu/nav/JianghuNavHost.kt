@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -187,13 +188,32 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Home) {
-            HomeScreen(
-                onOpenHome1   = { navController.navigate(Routes.Home1) },
-                onOpenLuggage = { navController.navigate(Routes.Luggage) },
-            )
+            val app = LocalContext.current.applicationContext as JianghuApp
+            if (app.tutorialComplete) {
+                // 跳过教程,直接进首页1
+                HomeScreen(
+                    onOpenHome1   = { },
+                    onOpenLuggage = { navController.navigate(Routes.Luggage) },
+                    onDialogueComplete = { },
+                )
+                LaunchedEffect(Unit) {
+                    navController.navigate(Routes.Home1) {
+                        popUpTo(Routes.Home) { inclusive = true }
+                    }
+                }
+            } else {
+                HomeScreen(
+                    onOpenHome1   = { navController.navigate(Routes.Home1) },
+                    onOpenLuggage = { navController.navigate(Routes.Luggage) },
+                    onDialogueComplete = {
+                        app.tutorialComplete = true
+                    },
+                )
+            }
         }
 
         composable(Routes.Home1) {
+            val app = LocalContext.current.applicationContext as JianghuApp
             Home1Screen(
                 onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
                 onOpenLuggage   = { navController.navigate(Routes.Luggage) },
@@ -202,7 +222,8 @@ fun JianghuNavHost(
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
                 onOpenDahui     = { navController.navigate(Routes.Dahui) },
                 onPandaClick    = {
-                    // 跳 Home 并重置状态,保证 chatStep 从 1 开始
+                    // 重置教程标记,跳 Home 触发对话流程
+                    app.tutorialComplete = false
                     navController.navigate(Routes.Home) {
                         popUpTo(Routes.Home) { inclusive = true }
                         launchSingleTop = true

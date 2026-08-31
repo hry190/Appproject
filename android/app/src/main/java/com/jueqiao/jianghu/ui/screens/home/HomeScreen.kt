@@ -55,6 +55,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun HomeScreen(
     onOpenHome1: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
+    onDialogueComplete: () -> Unit = {},
 ) {
     var chatStep by remember { mutableStateOf(0) }
     var taskExpanded by remember { mutableStateOf(false) }
@@ -242,6 +243,7 @@ fun HomeScreen(
                                 } else {
                                     // 聊天气泡播完(chatStep == 2),点击跳转 Home1
                                     onOpenHome1()
+                                    onDialogueComplete()
                                 }
                             },
                     )

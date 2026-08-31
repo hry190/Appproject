@@ -152,7 +152,7 @@ fun Home1Screen(
                 .clickable(onClick = onPandaClick),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_home1_panda),
+                painter = painterResource(R.drawable.img_home1_group280),
                 contentDescription = "点击回到首页对话",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
