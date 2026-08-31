@@ -88,9 +88,9 @@ fun LoginScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(AuthDimens.canvasH)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Image(
-                    painter = painterResource(R.drawable.img_auth_bg_paper),
+                    painter = painterResource(R.drawable.img_auth_bg),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().alpha(0.85f),
                     contentScale = ContentScale.Crop,

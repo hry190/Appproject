@@ -40,7 +40,7 @@ fun AgreementScreen(onBack: () -> Unit) {
             .navigationBarsPadding(),
     ) {
         Image(
-            painter = painterResource(R.drawable.img_auth_bg_paper),
+            painter = painterResource(R.drawable.img_auth_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,

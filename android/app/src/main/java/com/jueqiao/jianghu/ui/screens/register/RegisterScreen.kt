@@ -145,9 +145,9 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(AuthDimens.canvasH)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Image(
-                    painter = painterResource(R.drawable.img_register_bg),
+                    painter = painterResource(R.drawable.img_auth_bg),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().alpha(0.92f),
                     contentScale = ContentScale.Crop,
@@ -184,7 +184,7 @@ fun RegisterScreen(
 
                 Box(
                     modifier = Modifier
-                        .offset(x = 10.dp, y = 420.dp)
+                        .offset(x = 10.dp, y = 390.dp)
                         .size(width = 392.dp, height = 430.dp),
                 ) {
                     CardFrame(modifier = Modifier.fillMaxSize(), height = 430.dp)
