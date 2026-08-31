@@ -164,7 +164,7 @@ fun RegisterScreen(
                     painter = painterResource(R.drawable.ic_back_arrow),
                     contentDescription = "返回",
                     modifier = Modifier
-                        .offset(x = 18.dp, y = 58.dp)
+                        .offset(x = 18.dp, y = 112.dp)
                         .size(32.dp)
                         .clickable(enabled = !isBusy) {
                             if (guardianStep) guardianStep = false else onBack()
