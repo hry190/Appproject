@@ -8,3 +8,15 @@ build/
 captures/
 .externalNativeBuild
 .cxx
+
+# Keystore & 本地签名
+*.jks
+*.keystore
+release.keystore
+
+# 日志/崩溃文件（JVM 崩溃时生成的 hs_err_*.log、replay_*.log 包含本机信息）
+hs_err_pid*.log
+replay_pid*.log
+
+# 用户专属的 Gradle/Maven 缓存索引
+.kotlin/
