@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.chuangzuodangan4
+package com.jueqiao.jianghu.ui.screens.chuangzuodangan5
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -41,10 +40,10 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * 创作档案4页面 — 从 Chuangzuodangan3Screen 完整复制,雾气文本 Y 改为 277。
+ * 创作档案5页面 — 从 Chuangzuodangan4Screen 复制,但移除莲花(image 52)、飘雾(image 61)、雾气(Rectangle 245 + 文本)。
  */
 @Composable
-fun Chuangzuodangan4Screen(
+fun Chuangzuodangan5Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
 ) {
@@ -238,7 +237,7 @@ for (i in 0 until xuanzeN) {
     )
 }
 
-// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3(创作档案3 也保留作为导航目标之一)
+// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -286,36 +285,6 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本(仅展示,不可点击)
-Box(
-    modifier = Modifier
-        .fillMaxWidth()
-        .offset(y = 55.dp),
-) {
-    // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
-    Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan3_rect245),
-        contentDescription = null,
-        modifier = Modifier.fillMaxWidth(),
-        contentScale = ContentScale.FillWidth,
-    )
-
-    // 雾气上的文本(X居中, Y=346, W=189, H=58, 14sp, 黑色)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(y = 222.dp),  // 277-55=222,相对雾气 Box 顶部
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "9点39分36秒，提示确认主题\n9点45分32秒，提出构图建议\n9点50分01秒，引导修改细节",
-            color = Color.Black,
-            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier.size(width = 189.dp, height = 58.dp),
-        )
-    }
-}
-
 // image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
@@ -323,26 +292,6 @@ Image(
     modifier = Modifier
         .offset(x = 174.dp, y = 646.dp)
         .size(width = 204.dp, height = 219.dp),
-    contentScale = ContentScale.Fit,
-)
-
-// image 61.png(X=35, Y=484, W=193, H=203)— 飘雾
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = 35.dp, y = 434.dp)
-        .size(width = 193.dp, height = 203.dp),
-    contentScale = ContentScale.Fit,
-)
-
-// image 52.png(X=14, Y=596, W=214, H=172)— 莲花图
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = 8.dp, y = 556.dp)
-        .size(width = 214.dp, height = 172.dp),
     contentScale = ContentScale.Fit,
 )
         }

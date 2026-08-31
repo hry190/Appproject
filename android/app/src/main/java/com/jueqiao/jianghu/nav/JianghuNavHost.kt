@@ -30,6 +30,7 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
 
 @Composable
 fun JianghuNavHost(
@@ -270,6 +271,13 @@ fun JianghuNavHost(
 
         composable(Routes.Chuangzuodangan4) {
             Chuangzuodangan4Screen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+            )
+        }
+
+        composable(Routes.Chuangzuodangan5) {
+            Chuangzuodangan5Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
             )
