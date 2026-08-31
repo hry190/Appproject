@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -80,6 +81,7 @@ fun Chuangzuodangan3Screen(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 41.dp)
                     .size(32.dp)
+                    .zIndex(1f)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
             ) {

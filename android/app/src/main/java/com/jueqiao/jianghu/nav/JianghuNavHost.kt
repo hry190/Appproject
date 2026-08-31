@@ -59,12 +59,16 @@ fun JianghuNavHost(
         startDestination = Routes.Splash,
     ) {
         composable(Routes.Splash) {
+            val app = LocalContext.current.applicationContext as JianghuApp
             SplashScreen(
                 onTap = {
                     authViewModel.bootstrap { authenticated ->
-                        navController.navigate(
-                            if (authenticated) Routes.Home else Routes.Login
-                        ) {
+                        val target = when {
+                            !authenticated -> Routes.Login
+                            app.tutorialComplete -> Routes.Home1
+                            else -> Routes.Home
+                        }
+                        navController.navigate(target) {
                             popUpTo(Routes.Splash) { inclusive = true }
                         }
                     }
@@ -344,6 +348,7 @@ fun JianghuNavHost(
                 onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan2 = { navController.navigate(Routes.Chuangzuodangan2) },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 
@@ -352,6 +357,7 @@ fun JianghuNavHost(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 
@@ -367,7 +373,6 @@ fun JianghuNavHost(
             Chuangzuodangan4Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
-                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 

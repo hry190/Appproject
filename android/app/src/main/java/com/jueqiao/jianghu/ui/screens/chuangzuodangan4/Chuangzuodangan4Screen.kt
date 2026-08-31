@@ -287,12 +287,11 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本(整体可点击跳 Chuangzuodangan5)
+// 雾气+文本(仅展示,不点击跳转)
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 55.dp)
-        .clickable(onClick = onOpenChuangzuodangan5),
+        .offset(y = 55.dp),
 ) {
     // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
     Image(
