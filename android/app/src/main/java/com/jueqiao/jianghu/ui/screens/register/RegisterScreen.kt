@@ -192,8 +192,8 @@ fun RegisterScreen(
 
                 Box(
                     modifier = Modifier
-                        .offset(x = 10.dp, y = 390.dp)
-                        .size(width = 392.dp, height = 430.dp),
+                        .offset(y = 390.dp)
+                                .size(width = 392.dp, height = 430.dp),
                 ) {
                     CardFrame(modifier = Modifier.fillMaxSize(), height = 430.dp)
                     if (guardianStep) {

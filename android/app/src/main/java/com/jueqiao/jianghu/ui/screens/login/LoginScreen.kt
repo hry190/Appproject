@@ -235,8 +235,8 @@ fun LoginScreen(
                         }
                     }
                 }
+                }
             }
-        }
         }
     }
 }
