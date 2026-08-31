@@ -21,6 +21,11 @@ object Routes {
     const val Dahui     = "dahui"
     const val Yanwuchang = "yanwuchang"
     const val YanwuchangVideo = "yanwuchang_video"
+    // 演武场视频 — 顶部 4 个学科 Tab 各自独立路由(艺术/科学/数学/语文)
+    const val YanwuchangVideoArt     = "yanwuchang_video_art"
+    const val YanwuchangVideoScience = "yanwuchang_video_science"
+    const val YanwuchangVideoMath    = "yanwuchang_video_math"
+    const val YanwuchangVideoChinese = "yanwuchang_video_chinese"
     const val Gongfang  = "gongfang"
     const val Shengtu   = "shengtu"
     const val Picture   = "picture"

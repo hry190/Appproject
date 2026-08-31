@@ -41,6 +41,10 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun YanwuchangVideoScreen(
     onBack: () -> Unit = {},
+    onOpenArt:     () -> Unit = {},
+    onOpenScience: () -> Unit = {},
+    onOpenMath:    () -> Unit = {},
+    onOpenChinese: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到演武场首页)
     BackHandler(enabled = true) {
@@ -86,14 +90,19 @@ fun YanwuchangVideoScreen(
 
             // 顶部导航栏标题(与返回键图像中心 Y=92 视觉对齐)
             //   - 14sp 项 Y=82:容器 21dp,文本中心约 Y=92.5,与返回键图像中心 Y=92 对齐
+            //   - 点击"艺术/科学/数学/语文"分别跳转到对应学科分类页
             Text("艺术", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier.offset(x = 69.dp, y = 74.dp).size(width = 29.dp, height = 21.dp))
+                modifier = Modifier.offset(x = 69.dp, y = 74.dp).size(width = 29.dp, height = 21.dp)
+                    .clickable(onClick = onOpenArt))
             Text("科学", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier.offset(x = 134.dp, y = 74.dp).size(width = 29.dp, height = 21.dp))
+                modifier = Modifier.offset(x = 134.dp, y = 74.dp).size(width = 29.dp, height = 21.dp)
+                    .clickable(onClick = onOpenScience))
             Text("数学", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier.offset(x = 199.dp, y = 74.dp).size(width = 29.dp, height = 21.dp))
+                modifier = Modifier.offset(x = 199.dp, y = 74.dp).size(width = 29.dp, height = 21.dp)
+                    .clickable(onClick = onOpenMath))
             Text("语文", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier.offset(x = 264.dp, y = 74.dp).size(width = 29.dp, height = 21.dp))
+                modifier = Modifier.offset(x = 264.dp, y = 74.dp).size(width = 29.dp, height = 21.dp)
+                    .clickable(onClick = onOpenChinese))
             // "推荐"装饰背景徽章(未标题-1 50 (2).png, X=312, Y=57, 62×47 横向放置, 不透明度 70%)
             //   - Y=57(规格 Y=56 +1):背景底沿 57+47=104,刚好包含"推荐"文字底沿 76+28=104
             //   - 宽 62 vs 文字 50:左右各留 6dp 边距

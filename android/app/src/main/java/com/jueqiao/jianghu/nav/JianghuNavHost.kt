@@ -12,6 +12,7 @@ import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoCategoryScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -171,6 +172,53 @@ fun JianghuNavHost(
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
                 onBack = { navController.popBackStack() },
+                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt) },
+                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) },
+                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath) },
+                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) },
+            )
+        }
+        // 4 个学科分类页 — 内容/布局与 YanwuchangVideoScreen 一致,仅顶部"推荐"标签替换为当前学科名
+        //   - 顶部 Tab 选中态:字号 20sp,容器 56×28dp,文字背景图 62×47dp
+        //   - 4 个 Tab 互相跳转,左上角 / 系统返回键回退到 YanwuchangVideoScreen
+        composable(Routes.YanwuchangVideoArt) {
+            YanwuchangVideoCategoryScreen(
+                category    = "艺术",
+                onBack      = { navController.popBackStack() },
+                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
+                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
+                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
+                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            )
+        }
+        composable(Routes.YanwuchangVideoScience) {
+            YanwuchangVideoCategoryScreen(
+                category    = "科学",
+                onBack      = { navController.popBackStack() },
+                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
+                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
+                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
+                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            )
+        }
+        composable(Routes.YanwuchangVideoMath) {
+            YanwuchangVideoCategoryScreen(
+                category    = "数学",
+                onBack      = { navController.popBackStack() },
+                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
+                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
+                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
+                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
+            )
+        }
+        composable(Routes.YanwuchangVideoChinese) {
+            YanwuchangVideoCategoryScreen(
+                category    = "语文",
+                onBack      = { navController.popBackStack() },
+                onOpenArt     = { navController.navigate(Routes.YanwuchangVideoArt)     { launchSingleTop = true } },
+                onOpenScience = { navController.navigate(Routes.YanwuchangVideoScience) { launchSingleTop = true } },
+                onOpenMath    = { navController.navigate(Routes.YanwuchangVideoMath)    { launchSingleTop = true } },
+                onOpenChinese = { navController.navigate(Routes.YanwuchangVideoChinese) { launchSingleTop = true } },
             )
         }
         composable(Routes.Gongfang) {
