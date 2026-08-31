@@ -240,7 +240,7 @@ fun RegisterScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 28.dp, vertical = 24.dp),
+                                .padding(horizontal = 28.dp, vertical = 49.dp),
                         ) {
                             Text(
                                 text = "第一步 · 填写少侠资料",
