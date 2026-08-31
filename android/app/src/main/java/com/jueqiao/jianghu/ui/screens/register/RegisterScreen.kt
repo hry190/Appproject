@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -136,22 +138,28 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .imePadding()
-            .navigationBarsPadding(),
+            .background(MaterialTheme.colorScheme.background),
     ) {
+        // 背景图全屏
+        Image(
+            painter = painterResource(R.drawable.img_auth_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().alpha(0.92f),
+            contentScale = ContentScale.Crop,
+        )
+        // 内容层(避开系统导航栏)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                Image(
-                    painter = painterResource(R.drawable.img_auth_bg),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().alpha(0.92f),
-                    contentScale = ContentScale.Crop,
-                )
                 Image(
                     painter = painterResource(R.drawable.ic_back_arrow),
                     contentDescription = "返回",
@@ -386,6 +394,7 @@ fun RegisterScreen(
                     }
                 }
             }
+        }
         }
     }
 }
