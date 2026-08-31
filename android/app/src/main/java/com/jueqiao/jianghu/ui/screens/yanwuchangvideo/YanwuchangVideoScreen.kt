@@ -176,25 +176,5 @@ fun YanwuchangVideoScreen(
                     .size(width = 28.dp, height = 18.dp),
             )
         }
-    // 进度条(Group 177.png, X=20, Y=830, 372×8,圆角 5dp)
-        //   - 底图为右侧灰条(#BEBEBE 渐变,整条 372×8)
-        //   - 上叠左半进度(#FFFFFF,151×8,spacing=-2:右端伸出 2dp 覆盖接缝)
-        // 渲染顺序:在底部导航栏之后绘制,确保不被遮挡
-        Image(
-            painter = painterResource(R.drawable.img_yanwuchang_video_progress_bg),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 20.dp, y = 828.dp)
-                .size(width = 372.dp, height = 8.dp)
-                .clip(RoundedCornerShape(5.dp)),
-            contentScale = ContentScale.Fit,
-        )
-        Box(
-            modifier = Modifier
-                .offset(x = 20.dp, y = 828.dp)
-                .size(width = 153.dp, height = 8.dp)
-                .clip(RoundedCornerShape(5.dp))
-                .background(Color(0xFFFFFFFF)),
-        )
     }
 }
