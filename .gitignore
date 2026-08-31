@@ -1,0 +1,30 @@
+# Local Claude Code config — must never be committed (contains Figma PAT)
+.mcp.json
+.mcp.local.json
+.claude/
+
+# Gradle cache & build artifacts
+.gradle/
+**/.gradle/
+app/build/
+**/build/
+android/app/build/
+android/build/
+captures/
+.cxx/
+.kotlin/
+
+# IDE / Editor — machine specific
+.idea/
+**/.idea/
+*.iml
+.vscode/
+
+# Keystore & local signing
+*.jks
+*.keystore
+release.keystore
+
+# JVM crash & replay logs (contain local machine info)
+hs_err_pid*.log
+replay_pid*.log
