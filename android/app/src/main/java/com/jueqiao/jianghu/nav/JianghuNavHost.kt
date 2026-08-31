@@ -273,6 +273,7 @@ fun JianghuNavHost(
             Chuangzuodangan4Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
+                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 

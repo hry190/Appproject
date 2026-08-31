@@ -57,9 +57,9 @@ fun Chuangzuodangan5Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案3.png)
+        // 全屏背景(D:\图\创作档案5.png)
         Image(
-            painter = painterResource(R.drawable.img_chuangzuodangan3_bg),
+            painter = painterResource(R.drawable.img_chuangzuodangan5_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -284,6 +284,27 @@ for (i in 0 until aiN) {
             .rotate(rot),
     )
 }
+
+// image 52.png(X=278, Y=365, W=124, H=100)— 莲花,逆时针旋转 10°
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan5_image52),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 278.dp, y = 365.dp)
+        .size(width = 124.dp, height = 100.dp)
+        .rotate(-10f),
+    contentScale = ContentScale.Fit,
+)
+
+// image 59.png(X=124, Y=369, W=276, H=102)
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan5_image59),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 124.dp, y = 369.dp)
+        .size(width = 276.dp, height = 102.dp),
+    contentScale = ContentScale.Fit,
+)
 
 // image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
 Image(

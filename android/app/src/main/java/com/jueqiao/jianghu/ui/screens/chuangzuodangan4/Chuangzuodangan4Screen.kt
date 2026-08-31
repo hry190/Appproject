@@ -47,6 +47,7 @@ import kotlin.math.sin
 fun Chuangzuodangan4Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
+    onOpenChuangzuodangan5: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -286,11 +287,12 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本(仅展示,不可点击)
+// 雾气+文本(整体可点击跳 Chuangzuodangan5)
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 55.dp),
+        .offset(y = 55.dp)
+        .clickable(onClick = onOpenChuangzuodangan5),
 ) {
     // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
     Image(
