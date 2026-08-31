@@ -125,8 +125,12 @@ fun LoginScreen(
                 )
 
                 Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                Box(
                     modifier = Modifier
-                        .offset(x = 10.dp, y = 470.dp)
+                        .offset(y = 470.dp)
                         .size(width = 392.dp, height = 350.dp),
                 ) {
                     CardFrame(modifier = Modifier.fillMaxSize(), height = 350.dp)
@@ -239,6 +243,7 @@ fun LoginScreen(
             }
         }
     }
+}
 }
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 900)
