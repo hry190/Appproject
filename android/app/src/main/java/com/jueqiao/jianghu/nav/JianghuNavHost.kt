@@ -1,12 +1,22 @@
 package com.jueqiao.jianghu.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.jueqiao.jianghu.JianghuApp
+import com.jueqiao.jianghu.auth.AuthOperation
+import com.jueqiao.jianghu.auth.AuthViewModel
+import com.jueqiao.jianghu.auth.AuthViewModelFactory
+import com.jueqiao.jianghu.auth.VerificationPurpose
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
 import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
@@ -36,15 +46,26 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
 fun JianghuNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
+    val application = LocalContext.current.applicationContext as JianghuApp
+    val authFactory = remember(application) {
+        AuthViewModelFactory(application.authRepository)
+    }
+    val authViewModel: AuthViewModel = viewModel(factory = authFactory)
+    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+
     NavHost(
         navController    = navController,
-        startDestination = Routes.ChatResultPattern,
+        startDestination = Routes.Splash,
     ) {
         composable(Routes.Splash) {
             SplashScreen(
                 onTap = {
-                    navController.navigate(Routes.Login) {
-                        popUpTo(Routes.Splash) { inclusive = true }
+                    authViewModel.bootstrap { authenticated ->
+                        navController.navigate(
+                            if (authenticated) Routes.Home else Routes.Login
+                        ) {
+                            popUpTo(Routes.Splash) { inclusive = true }
+                        }
                     }
                 },
             )
@@ -52,40 +73,92 @@ fun JianghuNavHost(
 
         composable(Routes.Login) {
             LoginScreen(
-                onLogin         = {
-                    navController.navigate(Routes.Home) {
-                        popUpTo(Routes.Login) { inclusive = true }
+                onLogin         = { phone, password ->
+                    authViewModel.login(phone, password) {
+                        navController.navigate(Routes.Home) {
+                            popUpTo(Routes.Login) { inclusive = true }
+                        }
                     }
                 },
-                onOpenForgot    = { navController.navigate(Routes.Forgot) },
-                onOpenRegister  = { navController.navigate(Routes.Register) },
+                onOpenForgot    = {
+                    authViewModel.clearFeedback()
+                    navController.navigate(Routes.Forgot)
+                },
+                onOpenRegister  = {
+                    authViewModel.clearFeedback()
+                    navController.navigate(Routes.Register)
+                },
                 onOpenAgreement = { navController.navigate(Routes.Agreement) },
                 onOpenPrivacy   = { navController.navigate(Routes.Privacy) },
-                onBack          = { navController.popBackStack() },
+                onBack          = {
+                    authViewModel.clearFeedback()
+                    navController.popBackStack()
+                },
+                isSubmitting    = authState.operation == AuthOperation.Login,
+                errorMessage    = authState.errorMessage,
+                onClearError    = authViewModel::clearFeedback,
             )
         }
 
         composable(Routes.Register) {
             RegisterScreen(
-                onRegistered    = { navController.popBackStack(Routes.Login, inclusive = false) },
+                onRequestCode   = { phone, purpose, onCooldown ->
+                    authViewModel.requestCode(phone, purpose, onCooldown)
+                },
+                onVerifyGuardian = { childPhone, guardianPhone, code, onVerified ->
+                    authViewModel.verifyGuardianConsent(
+                        childPhone,
+                        guardianPhone,
+                        code,
+                        onVerified,
+                    )
+                },
+                onRegister      = { phone, code, password, ageBand, guardianToken ->
+                    authViewModel.register(
+                        phone,
+                        code,
+                        password,
+                        ageBand,
+                        guardianToken,
+                    ) {
+                        navController.navigate(Routes.Home) {
+                            popUpTo(Routes.Login) { inclusive = true }
+                        }
+                    }
+                },
                 onOpenAgreement = { navController.navigate(Routes.Agreement) },
                 onOpenPrivacy   = { navController.navigate(Routes.Privacy) },
                 onBack          = { navController.popBackStack() },
+                operation       = authState.operation,
+                errorMessage    = authState.errorMessage,
+                onClearError    = authViewModel::clearFeedback,
             )
         }
 
         composable(Routes.Forgot) {
             ForgotScreen(
                 onSubmitted     = { navController.popBackStack(Routes.Login, inclusive = false) },
-                onOpenAgreement = { navController.navigate(Routes.Agreement) },
-                onOpenPrivacy   = { navController.navigate(Routes.Privacy) },
+                onRequestCode   = { phone, onCooldown ->
+                    authViewModel.requestCode(
+                        phone,
+                        VerificationPurpose.RESET_PASSWORD,
+                        onCooldown,
+                    )
+                },
+                onResetPassword = { phone, code, newPassword, onSuccess ->
+                    authViewModel.resetPassword(phone, code, newPassword, onSuccess)
+                },
                 onBack          = {
+                    authViewModel.clearFeedback()
                     if (!navController.popBackStack()) {
                         navController.navigate(Routes.Login) {
                             popUpTo(Routes.Login) { inclusive = true }
                         }
                     }
                 },
+                operation       = authState.operation,
+                errorMessage    = authState.errorMessage,
+                onClearError    = authViewModel::clearFeedback,
             )
         }
 

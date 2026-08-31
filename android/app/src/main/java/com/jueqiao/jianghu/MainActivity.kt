@@ -1,7 +1,6 @@
 package com.jueqiao.jianghu
 
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -24,11 +23,6 @@ class MainActivity : ComponentActivity() {
                 Color.TRANSPARENT, Color.TRANSPARENT
             ),
         )
-        // API 29+: 强制关闭系统的 contrast scrim(底部灰条的真正来源)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isStatusBarContrastEnforced = false
-            window.isNavigationBarContrastEnforced = false
-        }
         setContent {
             JianghuTheme {
                 JianghuNavHost()

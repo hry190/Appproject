@@ -7,3 +7,11 @@
 **/.gradle/
 app/build/
 **/build/
+
+# Python API local state
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.coverage
+**/*.db
+services/api/.env

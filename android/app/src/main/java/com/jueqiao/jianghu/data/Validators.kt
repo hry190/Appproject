@@ -10,6 +10,6 @@ object Validators {
     fun isPhone(raw: String): Boolean = phoneRegex.matches(raw.trim())
     fun isCode(raw: String): Boolean  = codeRegex.matches(raw.trim())
 
-    /** Password 6-24 chars, matching the inline check in RN login.tsx / forgot.tsx. */
-    fun isPassword(raw: String): Boolean = raw.length in 6..24
+    /** Passwords are passed through exactly as entered; never trim secret values. */
+    fun isPassword(raw: String): Boolean = raw.length in 8..64
 }

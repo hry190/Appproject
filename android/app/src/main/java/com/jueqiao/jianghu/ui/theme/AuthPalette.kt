@@ -14,6 +14,10 @@ object AuthPalette {
     val TextDark     = Color(0xFF000000)
     val ActionGray   = Color(0xFF888888)
     val ErrorRed     = Color(0xFFB8323A)
+    val ErrorSoft    = Color(0xFFF4E1D8)
+    val SuccessGreen = Color(0xFF617A52)
+    val SuccessSoft  = Color(0xFFE4ECD9)
+    val WarningSoft  = Color(0xFFF4E8C8)
     val DividerGray  = Color(0xFFC0C0C0)
     val ModeTabOlive = Color(0xFF9DA27F) // register page card bg
     val CreamBtn     = Color(0xFFF7ECDA) // register submit button

@@ -13,6 +13,11 @@ val localProps = Properties().apply {
 }
 val minimaxBaseUrl: String = localProps.getProperty("MINIMAX_BASE_URL", "https://api.MiniMax.cn/v1")
 val minimaxApiKey:  String = localProps.getProperty("MINIMAX_API_KEY",  "")
+val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://10.0.2.2:8000/")
+val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-08")
+val privacyVersion: String = localProps.getProperty("PRIVACY_VERSION", "2026-08")
+
+fun String.asBuildConfigString(): String = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 android {
     namespace  = "com.jueqiao.jianghu"
@@ -29,6 +34,9 @@ android {
         // Minimax API 配置（从 local.properties 注入,生产环境不要再硬编码）
         buildConfigField("String", "MINIMAX_BASE_URL", "\"$minimaxBaseUrl\"")
         buildConfigField("String", "MINIMAX_API_KEY",  "\"$minimaxApiKey\"")
+        buildConfigField("String", "AUTH_BASE_URL", authBaseUrl.asBuildConfigString())
+        buildConfigField("String", "TERMS_VERSION", termsVersion.asBuildConfigString())
+        buildConfigField("String", "PRIVACY_VERSION", privacyVersion.asBuildConfigString())
     }
 
     buildTypes {
@@ -66,6 +74,9 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

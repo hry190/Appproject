@@ -1,0 +1,11 @@
+# Copy this file to local.properties and replace only local machine values.
+# Never commit local.properties or real API keys.
+sdk.dir=C\:\\Users\\your-name\\AppData\\Local\\Android\\Sdk
+
+MINIMAX_BASE_URL=https://api.MiniMax.cn/v1
+MINIMAX_API_KEY=replace-with-your-local-key
+
+# Android emulator -> authentication API running on the host machine.
+AUTH_BASE_URL=http://10.0.2.2:8010/
+TERMS_VERSION=2026-08
+PRIVACY_VERSION=2026-08

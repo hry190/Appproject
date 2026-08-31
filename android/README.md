@@ -5,6 +5,9 @@
 技术栈：
 - **Kotlin 2.0.21** + **Jetpack Compose** + **Material 3**
 - **Navigation Compose** 路由
+- **Lifecycle ViewModel + StateFlow** 认证状态管理
+- **OkHttp + Gson** 对接 FastAPI 认证接口
+- **Android Keystore + AES/GCM** 加密保存刷新令牌
 - **Coil** 异步图片
 - **Noto Sans SC** 中文字体
 
@@ -19,12 +22,13 @@ android/
 │   │   ├── java/com/jueqiao/jianghu/
 │   │   │   ├── JianghuApp.kt
 │   │   │   ├── MainActivity.kt
+│   │   │   ├── auth/             # API、Repository、ViewModel、令牌加密存储、认证模型
 │   │   │   ├── nav/
 │   │   │   │   ├── Routes.kt
 │   │   │   │   └── JianghuNavHost.kt
 │   │   │   ├── ui/
 │   │   │   │   ├── theme/        # 7 个文件（Color / Type / Shape / Dimens / AuthDimens / AuthPalette / Theme）
-│   │   │   │   ├── components/   # AuthIcons / CardFrame / ButtonFrame / Checkbox / SpeechBubble / QuickActionItem / DecorBanner
+│   │   │   │   ├── components/   # 认证表单、状态反馈、江湖风图标、按钮与卡片
 │   │   │   │   └── screens/
 │   │   │   │       ├── splash/SplashScreen.kt
 │   │   │   │       ├── login/LoginScreen.kt
@@ -77,6 +81,20 @@ cd android
 # 产物：app/build/outputs/apk/debug/app-debug.apk
 ```
 
+### 认证接口配置
+
+在 `android/local.properties` 中按运行环境覆盖以下值：
+
+```properties
+# Android 模拟器访问电脑本机 FastAPI
+AUTH_BASE_URL=http://10.0.2.2:8010/
+TERMS_VERSION=2026-08
+PRIVACY_VERSION=2026-08
+```
+
+Debug 构建允许访问本机 HTTP 服务；Release 构建关闭明文网络，正式地址必须使用 HTTPS。
+后端启动、迁移和固定开发验证码说明见 `../services/api/README.md`。
+
 ### 安装到设备/模拟器
 
 ```bash
@@ -124,8 +142,8 @@ Release 已启用 R8 (`isMinifyEnabled = true` + `isShrinkResources = true`)。
 
 - **无 iOS 支持** — 仅 Android（RN 原项目 iOS + Web 同步支持）
 - **无热更新 / OTA** — 通过 Play Store / 手动 APK 分发
-- **状态管理** — 纯 `remember` + `mutableStateOf`，无 Redux/Zustand 等
-- **数据** — `data/StaticData.kt` 中保留原 RN 硬编码数据；接入真实 API 时替换
+- **状态管理** — 认证流程使用 `ViewModel + StateFlow`，页面内短生命周期输入使用 `rememberSaveable`
+- **数据** — 认证页已接入 FastAPI；其他业务模块仍使用 `data/StaticData.kt` 中的演示数据
 
 ## 字体说明
 
@@ -139,5 +157,5 @@ Release 已启用 R8 (`isMinifyEnabled = true` + `isShrinkResources = true`)。
 
 - 启用 `Compose Compiler Metrics` 查看重组次数
 - 添加 `Baseline Profiles` 提升冷启动性能
-- 接入真实 API（替换 `StaticData.kt` 为 Retrofit / Ktor 客户端）
+- 将作品、秘籍、短视频和 Agent 模块从 `StaticData.kt` 迁移到真实 API
 - 添加单元测试与 Compose UI 测试
