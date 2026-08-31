@@ -61,14 +61,6 @@ android {
             "META-INF/LGPL2.1"
         )
     }
-
-    // 跳过 lintVitalAnalyzeRelease 任务 — 该任务要从 dl.google.com 下载 lint-gradle
-    // 在 ~/.gradle/gradle.properties 设了失效代理的机器上会断网失败。
-    // lint 检查不参与构建产物,跳过对 APK 没影响。
-    lint {
-        checkReleaseBuilds = false
-        abortOnError = false
-    }
 }
 
 dependencies {
