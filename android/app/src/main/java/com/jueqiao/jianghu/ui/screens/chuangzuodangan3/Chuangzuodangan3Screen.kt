@@ -184,15 +184,15 @@ for (i in 0 until chuangyuanN) {
 }
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
-// 位置 8 槽位(每字独立) + 旋转 5 槽位(《/熊、AI、画/》 各共享一个旋转)
-// 90° 弧 7 间隔均分(位置),旋转 55° 4 间隔均分
+// 位置 7 槽位(AI A-I 间距压缩 50%) + 旋转 5 槽位(《/熊、AI、画/》 各共享)
+// 90° 弧 6 间隔均分(其中 AI 之间 0.5 间距)
 val xuanzeText = "《熊猫AI绘画》"
 val xuanzeN = xuanzeText.length
-// 位置映射(8 字 → 8 槽位):每字独立,AI A 和 I 各占一格
+// 位置映射(8 字 → 7 槽位,AI A-I 间距压缩):
 //   i=0 《→ 0, i=1 熊 → 1, i=2 猫 → 2, i=3 A → 3,
-//   i=4 I → 4, i=5 绘 → 5, i=6 画 → 6, i=7 》→ 7
-val xuanzePosSlots = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7)
-val xuanzePosN = 8
+//   i=4 I → 3.5(A 与 I 半间距), i=5 绘 → 4, i=6 画 → 5, i=7 》→ 6
+val xuanzePosSlots = floatArrayOf(0f, 1f, 2f, 3f, 3.5f, 4f, 5f, 6f)
+val xuanzePosN = 7
 // 旋转映射(8 字 → 5 槽位):《/熊、AI、画/》 各共享一个旋转角度
 //   i=0 《 → rot 0(同 熊)
 //   i=1 熊 → rot 0(同 《)
@@ -214,7 +214,7 @@ val xuanzeLastRot = 80f              // 末字 80° CW
 val xuanzeColor = Color.Black
 for (i in 0 until xuanzeN) {
     // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
-    val tPos = xuanzePosSlots[i].toFloat() / (xuanzePosN - 1).toFloat()
+    val tPos = xuanzePosSlots[i] / (xuanzePosN - 1).toFloat()
     val tRot = xuanzeRotSlots[i].toFloat() / (xuanzeRotN - 1).toFloat()
     val arcAngleDeg = -90f + 90f * tPos
     val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
