@@ -186,6 +186,36 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
+// Rectangle 24.png — 雾气(D:\图\Rectangle 24.png)
+// 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
+//   本页 Y = 345.32, 文本绝对 Y = 480(内 Box offset 134.68)
+Box(
+    modifier = Modifier
+        .fillMaxWidth()
+        .offset(y = 345.32.dp),
+) {
+    Image(
+        painter = painterResource(R.drawable.img_chuangzuodangan6_rect24),
+        contentDescription = null,
+        modifier = Modifier.fillMaxWidth(),
+        contentScale = ContentScale.FillWidth,
+    )
+    // 雾气上的文本(X居中, Y=480 绝对 = 345.32 + 134.68, 14sp, 黑色)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = 134.68.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "时间:9点41分25秒
+内容:绘画一只在做手表的技巧熊猫",
+            color = Color.Black,
+            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+        )
+    }
+}
+
 // image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
