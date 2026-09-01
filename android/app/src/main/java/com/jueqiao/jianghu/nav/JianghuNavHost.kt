@@ -180,7 +180,9 @@ fun JianghuNavHost(
         }
         // 演武场视频 — 评论页(背景图:室内家园要求 1.png)
         composable(Routes.YanwuchangVideoComment) {
-            YanwuchangVideoCommentScreen()
+            YanwuchangVideoCommentScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(Routes.Gongfang) {
             GongfangScreen(

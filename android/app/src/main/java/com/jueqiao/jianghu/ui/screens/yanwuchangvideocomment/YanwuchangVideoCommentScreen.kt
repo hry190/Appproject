@@ -1,5 +1,10 @@
 package com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlinx.coroutines.delay
 import kotlin.math.PI
 
 /**
@@ -50,26 +57,68 @@ import kotlin.math.PI
  *
  * 布局(Figma 设计稿 412×917 基准):
  *   - 全屏背景:室内家园要求 1.png(img_yanwuchang_bg, 412×917, ContentScale.Crop)
- *   - 视频缩略图:视频.png(img_yanwuchang_video_comment_thumb)
+ *   - 视频缩略图:image 24.png(img_yanwuchang_video_comment_image24, 198×347)
  *       位置 (107, 56),尺寸 198×347dp
- *       外围装饰边框:count=3, weight=5dp, round line-cap, mixed corner radius
- *       (顶左/底右为圆角,顶右/底左为直角)
+ *       关闭动画中会从 198×347 放大到 412×917 (铺满全屏)
  *   - 评论框:评论框.png(img_yanwuchang_video_comment_box)
- *       位置 (0, 394),尺寸 417×523dp
+ *       位置 (0, 394),尺寸 417×523dp — 关闭动画中向下缩消失
  *   - 顶部两个图标(可点击):
- *       Group 141.png @ (17, 419), 17×17dp
+ *       Group 141.png @ (17, 419), 17×17dp — 点击关闭本页(下缩动画)
  *       放大缩小.png @ (54, 419), 17×17dp
  *   - 评论区(Y=440 起到评论框底 Y=917):可上下滑动的评论列表
  *       每条评论右侧爱心可点击:
  *         - 未点赞:空心 ic_like_outline
  *         - 已点赞:实心 ic_like_filled,填充色 #6D8470, 不透明度 100%
  *         - 数字 +1 / -1 同步
- *   - 无返回键
+ *   - 无可见返回键(点 Group 141 触发下缩关闭动画)
+ *
+ * 关闭动画:
+ *   1. 点击 Group 141 → isDismissing = true
+ *   2. 评论框 / 列表 / 装饰圆 / 顶部图标 = AnimatedVisibility 向下 fadeOut + slideOutVertically
+ *   3. 视频缩略图同时从 (107,56)/198×347 动画到 (0,0)/412×917(放大成视频首页全屏)
+ *   4. 动画结束后(450ms)调用 onBack() 真正 popBackStack 到演武场视频首页
+ *
+ * @param onBack 动画结束后调用 — 触发 NavController.popBackStack()
  */
 @Composable
-fun YanwuchangVideoCommentScreen() {
+fun YanwuchangVideoCommentScreen(
+    onBack: () -> Unit = {},
+) {
     // 评论数据 — 待接入后端接口
     var comments by remember { mutableStateOf<List<CommentItem>>(emptyList()) }
+
+    // 关闭动画状态
+    var isDismissing by remember { mutableStateOf(false) }
+
+    // 视频缩略图放大动画:从 (107, 56)/198×347 → (0, 0)/412×917
+    val videoOffsetX by animateDpAsState(
+        targetValue = if (isDismissing) 0.dp else 107.dp,
+        animationSpec = tween(durationMillis = 450),
+        label = "videoOffsetX",
+    )
+    val videoOffsetY by animateDpAsState(
+        targetValue = if (isDismissing) 0.dp else 56.dp,
+        animationSpec = tween(durationMillis = 450),
+        label = "videoOffsetY",
+    )
+    val videoWidth by animateDpAsState(
+        targetValue = if (isDismissing) 412.dp else 198.dp,
+        animationSpec = tween(durationMillis = 450),
+        label = "videoWidth",
+    )
+    val videoHeight by animateDpAsState(
+        targetValue = if (isDismissing) 917.dp else 347.dp,
+        animationSpec = tween(durationMillis = 450),
+        label = "videoHeight",
+    )
+
+    // 动画结束后真正返回
+    LaunchedEffect(isDismissing) {
+        if (isDismissing) {
+            delay(450)
+            onBack()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -90,79 +139,120 @@ fun YanwuchangVideoCommentScreen() {
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 视频缩略图(视频.png, X=107, Y=56, 198×347dp)
-            //   外围加一圈装饰虚线边框(count=3, weight=5, round cap, mixed corner radius)
+            // 视频缩略图(image 24.png)— 默认 (107,56)/198×347;关闭时放大成全屏
             Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_comment_thumb),
+                painter = painterResource(R.drawable.img_yanwuchang_video_comment_image24),
                 contentDescription = "视频缩略图",
                 modifier = Modifier
-                    .offset(x = 107.dp, y = 56.dp)
-                    .size(width = 198.dp, height = 347.dp)
-                    .dashedBorderMixedCorners(
-                        color        = Color(0xFF81A084),
-                        width        = 5.dp,
-                        cornerRadius = 12.dp,
-                    ),
+                    .offset(x = videoOffsetX, y = videoOffsetY)
+                    .size(width = videoWidth, height = videoHeight),
                 contentScale = ContentScale.Crop,
             )
 
-            // 评论框背景(评论框.png, X=0, Y=394, 417×523dp)
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_comment_box),
-                contentDescription = "评论框",
-                modifier = Modifier
-                    .offset(x = 0.dp, y = 394.dp)
-                    .size(width = 417.dp, height = 523.dp),
-                contentScale = ContentScale.Fit,
-            )
-
-            // 评论列表(Y=440 起到评论框底 Y=917,宽 417dp,可上下滑动)
-            //   顶部留 46dp 空间给上方两个图标(17dp 图标 + 4dp 上间距 + 余量)
-            LazyColumn(
-                modifier = Modifier
-                    .offset(x = 0.dp, y = 440.dp)
-                    .size(width = 417.dp, height = 477.dp)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            // === 关闭时被隐藏的全部评论 UI(评论框 / 列表 / 装饰圆 / 顶部图标) ===
+            //   用 Box 而非 Column:保持各元素用 offset() 绝对定位的原始布局
+            AnimatedVisibility(
+                visible = !isDismissing,
+                exit = slideOutVertically(
+                    targetOffsetY = { it },        // 从当前位置滑到底部外
+                    animationSpec = tween(450),
+                ) + fadeOut(animationSpec = tween(450)),
             ) {
-                items(comments, key = { it.id }) { comment ->
-                    CommentRow(
-                        comment = comment,
-                        onLikeToggle = {
-                            comments = comments.map { c ->
-                                if (c.id == comment.id) {
-                                    c.copy(
-                                        isLiked   = !c.isLiked,
-                                        likeCount = c.likeCount + if (!c.isLiked) 1 else -1,
-                                    )
-                                } else c
-                            }
-                        },
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // 中心装饰圆形(Ellipse 30.png, X=187.93, Y=194.63, 35×35dp)
+                    //   填充 #D9D9D9,不透明度 54%
+                    Image(
+                        painter = painterResource(R.drawable.ellipse_30),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 187.93.dp, y = 194.63.dp)
+                            .size(width = 35.dp, height = 35.dp),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFD9D9D9), BlendMode.SrcIn),
+                        alpha = 0.54f,
                     )
+
+                    // 播放三角形(Polygon 3.png, X=195, Y=201, 21×20dp)
+                    //   等边三角形,corner radius 3,count 3(3 边 / 3 角)
+                    //   填充 #F6F6F6,不透明度 100%
+                    Image(
+                        painter = painterResource(R.drawable.polygon_3),
+                        contentDescription = "播放",
+                        modifier = Modifier
+                            .offset(x = 195.dp, y = 201.dp)
+                            .size(width = 21.dp, height = 20.dp),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFF6F6F6), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+
+                    // 评论框背景(评论框.png, X=0, Y=394, 417×523dp)
+                    Image(
+                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_box),
+                        contentDescription = "评论框",
+                        modifier = Modifier
+                            .offset(x = 0.dp, y = 394.dp)
+                            .size(width = 417.dp, height = 523.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+
+                    // 评论列表(Y=440 起到评论框底 Y=917,宽 417dp,可上下滑动)
+                    LazyColumn(
+                        modifier = Modifier
+                            .offset(x = 0.dp, y = 440.dp)
+                            .size(width = 417.dp, height = 477.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(comments, key = { it.id }) { comment ->
+                            CommentRow(
+                                comment = comment,
+                                onLikeToggle = {
+                                    comments = comments.map { c ->
+                                        if (c.id == comment.id) {
+                                            c.copy(
+                                                isLiked   = !c.isLiked,
+                                                likeCount = c.likeCount + if (!c.isLiked) 1 else -1,
+                                            )
+                                        } else c
+                                    }
+                                },
+                            )
+                        }
+                    }
+
+                    // Group 141.png(X=17, Y=419, 17×17dp)— 可点击(触摸区域扩大到 44×44dp 居中包裹图标,符合 Material 最小点击规范)
+                    //   点击 → 触发 isDismissing → 评论框下缩消失 + 视频图放大
+                    Box(
+                        modifier = Modifier
+                            .offset(x = 17.dp - (44.dp - 17.dp) / 2, y = 419.dp - (44.dp - 17.dp) / 2)
+                            .size(width = 44.dp, height = 44.dp)
+                            .clickable { isDismissing = true },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.img_yanwuchang_video_comment_group141),
+                            contentDescription = "关闭评论",
+                            modifier = Modifier.size(width = 17.dp, height = 17.dp),
+                        )
+                    }
+
+                    // 放大缩小.png(X=54, Y=419, 17×17dp)— 可点击(触摸区域扩大)
+                    Box(
+                        modifier = Modifier
+                            .offset(x = 54.dp - (44.dp - 17.dp) / 2, y = 419.dp - (44.dp - 17.dp) / 2)
+                            .size(width = 44.dp, height = 44.dp)
+                            .clickable { /* TODO: 视频缩略图展开 / 收起 */ },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.img_yanwuchang_video_comment_zoom),
+                            contentDescription = "放大缩小",
+                            modifier = Modifier.size(width = 17.dp, height = 17.dp),
+                        )
+                    }
                 }
             }
-
-            // Group 141.png(X=17, Y=419, 17×17dp)— 可点击
-            //   暂未指定行为,留 TODO;后续可关联输入/搜索等功能
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_comment_group141),
-                contentDescription = "评论输入",
-                modifier = Modifier
-                    .offset(x = 17.dp, y = 419.dp)
-                    .size(width = 17.dp, height = 17.dp)
-                    .clickable { /* TODO: 输入 / 搜索 */ },
-            )
-
-            // 放大缩小.png(X=54, Y=419, 17×17dp)— 可点击
-            //   暂未指定行为,留 TODO;后续可关联视频缩略图的展开切换
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_comment_zoom),
-                contentDescription = "放大缩小",
-                modifier = Modifier
-                    .offset(x = 54.dp, y = 419.dp)
-                    .size(width = 17.dp, height = 17.dp)
-                    .clickable { /* TODO: 视频缩略图展开 / 收起 */ },
-            )
         }
     }
 }
@@ -252,11 +342,6 @@ private data class CommentItem(
  *  - width:线宽(dp)
  *  - color:线色
  *  - cap:线帽(默认 Round,与 Figma start/end point: round 一致)
- *
- * 实现思路:
- *   1) 用 Path 画出矩形外周(顶左圆角、底右圆角,顶右/底左直角)
- *   2) PathEffect.dashPathEffect 把整圈切成 dash + gap 重复,目标 dash 数 = dashCount
- *   3) 用 Stroke 描边,line cap = Round
  */
 private fun Modifier.dashedBorderMixedCorners(
     color: Color,
@@ -270,7 +355,6 @@ private fun Modifier.dashedBorderMixedCorners(
         val w = size.width
         val h = size.height
 
-        // 1) 外周路径(顶左 + 底右 圆角,顶右 + 底左 直角)
         val path = Path().apply {
             moveTo(rPx, 0f)
             lineTo(w, 0f)
@@ -292,7 +376,6 @@ private fun Modifier.dashedBorderMixedCorners(
             close()
         }
 
-        // 2) 估算路径长度(直线 + 两段 1/4 圆弧)
         val straightLen = 2 * (w + h) - 4 * rPx
         val arcLen = (PI / 2).toFloat() * rPx * 2f
         val totalLen = straightLen + arcLen
