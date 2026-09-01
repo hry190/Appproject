@@ -23,9 +23,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -54,8 +61,8 @@ fun SettingsScreen(
     onBack: () -> Unit = {},
     // 顶部 4 个快捷键
     onOpenWorks: () -> Unit = {},
-    onOpenProgress: () -> Unit = {},
     onOpenTask: () -> Unit = {},
+    onOpenLuggage: () -> Unit = {},
     // 菜单项
     onOpenAccount: () -> Unit = {},
     onOpenMessage: () -> Unit = {},
@@ -73,6 +80,9 @@ fun SettingsScreen(
     onSwitchAccount: () -> Unit = {},
     onLogout: () -> Unit = {},
 ) {
+    var progressOpen by rememberSaveable { mutableStateOf(false) }
+    var pendingSessionAction by rememberSaveable { mutableStateOf<SessionAction?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -101,25 +111,18 @@ fun SettingsScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             QuickActionItem(iconRes = R.drawable.img_icon_works,    label = "作品", onClick = onOpenWorks)
-            QuickActionItem(iconRes = R.drawable.img_icon_progress, label = "进度", onClick = onOpenProgress)
+            QuickActionItem(iconRes = R.drawable.img_icon_progress, label = "进度", onClick = { progressOpen = true })
             QuickActionItem(iconRes = R.drawable.img_icon_task,     label = "任务", onClick = onOpenTask)
             QuickActionItem(iconRes = R.drawable.img_icon_settings, label = "设置", onClick = { /* 当前页 */ })
         }
 
-        // 主卡片（米色半透明,顶部圆角,内容可滚动）
-        Box(
+        // 主卡片（仿古纸张纹理,顶部圆角,内容可滚动）
+        SettingsPaperSurface(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 118.dp)
-                .size(width = 372.dp, height = 998.dp)
-                .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp)),
+                .size(width = 372.dp, height = 998.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFF5E8D4).copy(alpha = 0.92f)),
-            )
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -200,16 +203,74 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // 底部两个药丸按钮
-                PillButton("切换账号", onClick = onSwitchAccount)
+                PillButton("切换账号", onClick = { pendingSessionAction = SessionAction.SwitchAccount })
                 Spacer(modifier = Modifier.height(10.dp))
-                PillButton("退出登录", onClick = onLogout, isDestructive = true)
+                PillButton("退出登录", onClick = { pendingSessionAction = SessionAction.Logout }, isDestructive = true)
 
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
         }
     }
+
+    if (progressOpen) {
+        ProgressModal(
+            onClose = { progressOpen = false },
+            onOpenDaily = {
+                progressOpen = false
+                onOpenTask()
+            },
+            onOpenLuggage = {
+                progressOpen = false
+                onOpenLuggage()
+            },
+        )
+    }
+
+    pendingSessionAction?.let { action ->
+        AlertDialog(
+            onDismissRequest = { pendingSessionAction = null },
+            title = {
+                Text(
+                    text = if (action == SessionAction.SwitchAccount) "切换账号？" else "退出登录？",
+                    fontFamily = YaHei,
+                )
+            },
+            text = {
+                Text(
+                    text = if (action == SessionAction.SwitchAccount) {
+                        "将清除本机登录状态并返回登录页，你可以登录其他账号。"
+                    } else {
+                        "将清除本机通行令并返回登录页。未同步的本地草稿会保留。"
+                    },
+                    fontFamily = YaHei,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingSessionAction = null
+                        if (action == SessionAction.SwitchAccount) onSwitchAccount() else onLogout()
+                    },
+                ) {
+                    Text(
+                        text = if (action == SessionAction.SwitchAccount) "确认切换" else "退出登录",
+                        color = if (action == SessionAction.Logout) Color(0xFFE53935) else Color(0xFF70986B),
+                        fontFamily = YaHei,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingSessionAction = null }) {
+                    Text("取消", color = Color(0xFF747361), fontFamily = YaHei)
+                }
+            },
+            containerColor = Color(0xFFF5E8D4),
+        )
+    }
 }
+
+private enum class SessionAction { SwitchAccount, Logout }
 
 @Composable
 private fun SettingsMenuItem(

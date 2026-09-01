@@ -66,6 +66,8 @@ fun LoginScreen(
     onOpenPrivacy: () -> Unit,
     onBack: () -> Unit,
     isSubmitting: Boolean = false,
+    isTransitioning: Boolean = false,
+    contentAlpha: Float = 1f,
     errorMessage: String? = null,
     onClearError: () -> Unit = {},
 ) {
@@ -76,7 +78,8 @@ fun LoginScreen(
 
     val phoneValid = Validators.isPhone(phone)
     val passwordValid = Validators.isPassword(password)
-    val canSubmit = phoneValid && passwordValid && agreed && !isSubmitting
+    val interactionEnabled = !isSubmitting && !isTransitioning
+    val canSubmit = phoneValid && passwordValid && agreed && interactionEnabled
 
     Box(
         modifier = Modifier
@@ -102,7 +105,12 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxWidth().height(AuthDimens.canvasH)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(contentAlpha.coerceIn(0f, 1f)),
+                ) {
                 Text(
                     text = "欢迎来到机巧江湖",
                     style = TextStyle(
@@ -147,7 +155,7 @@ fun LoginScreen(
                             },
                             placeholder = "请输入手机号",
                             keyboardType = KeyboardType.Phone,
-                            enabled = !isSubmitting,
+                            enabled = interactionEnabled,
                             leading = {
                                 PhoneIcon(
                                     modifier = Modifier.size(18.dp, 22.dp),
@@ -169,7 +177,7 @@ fun LoginScreen(
                             } else {
                                 PasswordVisualTransformation()
                             },
-                            enabled = !isSubmitting,
+                            enabled = interactionEnabled,
                             leading = {
                                 KeyIcon(
                                     modifier = Modifier.size(22.dp),
@@ -193,7 +201,7 @@ fun LoginScreen(
                                 color = AuthPalette.ActionGray,
                                 style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                                 modifier = Modifier.clickable(
-                                    enabled = !isSubmitting,
+                                    enabled = interactionEnabled,
                                     onClick = onOpenForgot,
                                 ),
                             )
@@ -202,9 +210,9 @@ fun LoginScreen(
                         Spacer(Modifier.height(if (errorMessage == null) 8.dp else 6.dp))
                         AgreementRow(
                             checked = agreed,
-                            onCheckedChange = { agreed = it },
-                            onOpenAgreement = onOpenAgreement,
-                            onOpenPrivacy = onOpenPrivacy,
+                            onCheckedChange = { if (interactionEnabled) agreed = it },
+                            onOpenAgreement = { if (interactionEnabled) onOpenAgreement() },
+                            onOpenPrivacy = { if (interactionEnabled) onOpenPrivacy() },
                         )
                         Spacer(Modifier.height(10.dp))
                         PrimaryButton(
@@ -232,7 +240,7 @@ fun LoginScreen(
                                 color = AuthPalette.LinkOlive,
                                 style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                                 modifier = Modifier.clickable(
-                                    enabled = !isSubmitting,
+                                    enabled = interactionEnabled,
                                     onClick = onOpenRegister,
                                 ),
                             )
@@ -243,6 +251,7 @@ fun LoginScreen(
             }
         }
     }
+}
 }
 }
 

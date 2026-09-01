@@ -51,7 +51,6 @@ fun Chuangzuodangan2Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan3: () -> Unit = {},
-    onOpenChuangzuodangan5: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -157,14 +156,6 @@ for (i in 0 until arcN) {
             .rotate(rot),
     )
 }
-
-// 透明点击层,覆盖修复版本记录文字位置(共 6 字,大约 X:260-360, Y:340-480)
-Box(
-    modifier = Modifier
-        .offset(x = 260.dp, y = 340.dp)
-        .size(width = 100.dp, height = 140.dp)
-        .clickable(onClick = onOpenChuangzuodangan5),
-) {}
 
 // 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布

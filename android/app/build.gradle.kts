@@ -27,8 +27,8 @@ android {
         applicationId = "com.jueqiao.jianghu"
         minSdk        = 24
         targetSdk     = 35
-        versionCode   = 1
-        versionName   = "1.0"
+        versionCode   = 2
+        versionName   = "2.0"
         vectorDrawables { useSupportLibrary = true }
 
         // Minimax API 配置（从 local.properties 注入,生产环境不要再硬编码）

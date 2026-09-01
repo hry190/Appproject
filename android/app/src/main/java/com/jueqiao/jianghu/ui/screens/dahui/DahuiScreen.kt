@@ -33,7 +33,6 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun DahuiScreen(
     onBack: () -> Unit = {},
-    onOpenYanwuchang: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -69,7 +68,7 @@ fun DahuiScreen(
             modifier = Modifier
                 .offset(x = 89.dp, y = 480.dp)
                 .size(width = 15.dp, height = 45.dp)
-                .clickable(onClick = onOpenYanwuchang),
+                .clickable { /* TODO: 演武场点击交互 */ },
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

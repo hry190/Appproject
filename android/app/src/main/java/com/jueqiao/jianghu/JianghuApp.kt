@@ -14,14 +14,6 @@ class JianghuApp : Application() {
     lateinit var settingsRepository: SettingsRepository
         private set
 
-    private val prefs by lazy {
-        getSharedPreferences("jianghu_tutorial", MODE_PRIVATE)
-    }
-
-    var tutorialComplete: Boolean
-        get() = prefs.getBoolean("tutorial_complete", false)
-        set(value) = prefs.edit().putBoolean("tutorial_complete", value).apply()
-
     override fun onCreate() {
         super.onCreate()
         authRepository = AuthRepository(

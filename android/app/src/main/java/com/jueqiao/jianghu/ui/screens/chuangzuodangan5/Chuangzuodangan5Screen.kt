@@ -46,7 +46,6 @@ import kotlin.math.sin
 fun Chuangzuodangan5Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
-    onOpenChuangzuodangan5: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -285,26 +284,6 @@ for (i in 0 until aiN) {
             .rotate(rot),
     )
 }
-
-// Rectangle 25.png 雾气(X=-14, Y=171, W=420, H=387, 铺大屏宽保持比例)
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan5_rect25),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = (-14).dp, y = 171.dp)
-        .size(width = 420.dp, height = 387.dp),
-    contentScale = ContentScale.Fit,
-)
-
-// Rectangle 25.png 雾气(X=-14, Y=171, W=420, H=387, 铺大屏宽保持比例)
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan5_rect25),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = (-14).dp, y = 171.dp)
-        .size(width = 420.dp, height = 387.dp),
-    contentScale = ContentScale.Fit,
-)
 
 // image 52.png(X=278, Y=365, W=124, H=100)— 莲花,逆时针旋转 10°
 Image(
