@@ -48,28 +48,24 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - "推荐" Tab 默认即选中态(主入口页)
  *   - 4 个学科 Tab 互相跳转;"推荐" 回到主入口
  *
- * @param selectedCategory   当前页所属 Tab 名称("推荐" / "艺术" / "科学" / "数学" / "语文")
  * @param onBack             左上角返回 / 系统返回键回调
- * @param onOpenArt          顶部"艺术" Tab 点击回调
- * @param onOpenScience      顶部"科学" Tab 点击回调
- * @param onOpenMath         顶部"数学" Tab 点击回调
- * @param onOpenChinese      顶部"语文" Tab 点击回调
- * @param onOpenRecommend    顶部"推荐" Tab 点击回调
+ *
+ * 注意:5 个 Tab 共享同一个 Composable 实例,Tab 切换通过内部状态完成,
+ *      不调用 NavController.navigate,避免页面重建和明显的切换动画。
+ *      这也意味着 isLiked/isFavorited 等状态在 Tab 切换时不会丢失。
  */
 @Composable
 fun YanwuchangVideoScreen(
-    selectedCategory: String = "推荐",
-    onBack:          () -> Unit = {},
-    onOpenArt:       () -> Unit = {},
-    onOpenScience:   () -> Unit = {},
-    onOpenMath:      () -> Unit = {},
-    onOpenChinese:   () -> Unit = {},
-    onOpenRecommend: () -> Unit = {},
+    onBack: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到演武场首页)
     BackHandler(enabled = true) {
         onBack()
     }
+
+    // 顶部 5 个 Tab 的选中状态 — 在 Composable 内部维护,避免 Tab 切换时重建页面
+    //   可选值:"推荐" / "艺术" / "科学" / "数学" / "语文",默认 "推荐"
+    var selectedCategory by remember { mutableStateOf("推荐") }
 
     // 点赞状态:false = 空心(原 img_yanwuchang_video_like),true = 实心(ic_like_filled)
     // 计数:点赞后 +1(500 → 501)
@@ -133,41 +129,41 @@ fun YanwuchangVideoScreen(
 
             // "艺术" Tab
             CategoryTab(
-                text         = "艺术",
-                x            = 69.dp,
-                isSelected   = selectedCategory == "艺术",
-                onClick      = onOpenArt,
+                text       = "艺术",
+                x          = 69.dp,
+                isSelected = selectedCategory == "艺术",
+                onClick    = { selectedCategory = "艺术" },
             )
             // "科学" Tab
             CategoryTab(
-                text         = "科学",
-                x            = 134.dp,
-                isSelected   = selectedCategory == "科学",
-                onClick      = onOpenScience,
+                text       = "科学",
+                x          = 134.dp,
+                isSelected = selectedCategory == "科学",
+                onClick    = { selectedCategory = "科学" },
             )
             // "数学" Tab
             CategoryTab(
-                text         = "数学",
-                x            = 199.dp,
-                isSelected   = selectedCategory == "数学",
-                onClick      = onOpenMath,
+                text       = "数学",
+                x          = 199.dp,
+                isSelected = selectedCategory == "数学",
+                onClick    = { selectedCategory = "数学" },
             )
             // "语文" Tab
             CategoryTab(
-                text         = "语文",
-                x            = 264.dp,
-                isSelected   = selectedCategory == "语文",
-                onClick      = onOpenChinese,
+                text       = "语文",
+                x          = 264.dp,
+                isSelected = selectedCategory == "语文",
+                onClick    = { selectedCategory = "语文" },
             )
             // "推荐" Tab — 与 4 个学科 Tab 共用同一渲染逻辑(默认态 / 选中态)
             //   - 选中态:文字 40×21, 20sp,带 62×47dp 背景
             //   - 默认态:文字 29×21, 14sp,无背景
             CategoryTab(
-                text         = "推荐",
-                x            = 329.dp,
-                isSelected   = selectedCategory == "推荐",
-                onClick      = onOpenRecommend,
-                isRecommend  = true,
+                text        = "推荐",
+                x           = 329.dp,
+                isSelected  = selectedCategory == "推荐",
+                onClick     = { selectedCategory = "推荐" },
+                isRecommend = true,
             )
 
             // 搜索图标(19×19dp, Y=83 让 19dp 容器中心 Y=92.5,与返回键图标中心 Y=92 对齐)

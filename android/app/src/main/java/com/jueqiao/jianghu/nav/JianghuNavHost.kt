@@ -168,77 +168,12 @@ fun JianghuNavHost(
                 onOpenYanwuchangVideo   = { navController.navigate(Routes.YanwuchangVideo) },
             )
         }
-        // 演武场视频 5 个页面(推荐 / 艺术 / 科学 / 数学 / 语文)
-        //   - 5 个页面布局与内容完全相同,只是 [selectedCategory] 不同
-        //   - 顶部 5 个 Tab(艺术/科学/数学/语文/推荐)与返回键同一行(横向中轴 Y=92 对齐)
-        //   - 当前页 Tab:20sp,容器 56×28dp(4 个学科) / 40×21dp(推荐),文字背景 62×47dp
-        //   - 其它 Tab:14sp, 29×21dp,无背景
-        //   - 5 个 Tab 互相跳转(launchSingleTop 避免栈堆积)
-        val popToRecommend: () -> Unit = {
-            if (!navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)) {
-                navController.navigate(Routes.YanwuchangVideo) {
-                    popUpTo(Routes.YanwuchangVideo) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
-        }
-        val goToCategory: (String) -> () -> Unit = { route ->
-            { navController.navigate(route) { launchSingleTop = true } }
-        }
+        // 演武场视频首页 — 5 个 Tab(推荐/艺术/科学/数学/语文)在同一个 Composable 内
+        //   切换 Tab 不调用 NavController.navigate,避免页面重建和明显的切换动画
+        //   Tab 选中态、点赞/收藏状态都在屏幕内部 remember 中,跨 Tab 不丢失
         composable(Routes.YanwuchangVideo) {
-            // 主入口页:"推荐" Tab 高亮
             YanwuchangVideoScreen(
-                selectedCategory = "推荐",
-                onBack          = { navController.popBackStack() },
-                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
-                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
-                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
-                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
-                onOpenRecommend = { /* 已在推荐页,无操作 */ },
-            )
-        }
-        composable(Routes.YanwuchangVideoArt) {
-            YanwuchangVideoScreen(
-                selectedCategory = "艺术",
-                onBack          = { navController.popBackStack() },
-                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
-                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
-                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
-                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
-                onOpenRecommend = popToRecommend,
-            )
-        }
-        composable(Routes.YanwuchangVideoScience) {
-            YanwuchangVideoScreen(
-                selectedCategory = "科学",
-                onBack          = { navController.popBackStack() },
-                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
-                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
-                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
-                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
-                onOpenRecommend = popToRecommend,
-            )
-        }
-        composable(Routes.YanwuchangVideoMath) {
-            YanwuchangVideoScreen(
-                selectedCategory = "数学",
-                onBack          = { navController.popBackStack() },
-                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
-                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
-                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
-                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
-                onOpenRecommend = popToRecommend,
-            )
-        }
-        composable(Routes.YanwuchangVideoChinese) {
-            YanwuchangVideoScreen(
-                selectedCategory = "语文",
-                onBack          = { navController.popBackStack() },
-                onOpenArt       = goToCategory(Routes.YanwuchangVideoArt),
-                onOpenScience   = goToCategory(Routes.YanwuchangVideoScience),
-                onOpenMath      = goToCategory(Routes.YanwuchangVideoMath),
-                onOpenChinese   = goToCategory(Routes.YanwuchangVideoChinese),
-                onOpenRecommend = popToRecommend,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.Gongfang) {
