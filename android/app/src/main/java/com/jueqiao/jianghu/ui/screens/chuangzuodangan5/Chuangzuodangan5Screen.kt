@@ -256,7 +256,7 @@ Image(
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 171.dp),
+        .offset(y = 111.dp),
 ) {
     Image(
         painter = painterResource(R.drawable.img_chuangzuodangan5_rect25),
@@ -264,9 +264,22 @@ Box(
         modifier = Modifier.fillMaxWidth(),
         contentScale = ContentScale.FillWidth,
     )
+    // 雾气上的文本(X居中, Y=274 绝对 = 171 + 103, 14sp, 黑色)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = 103.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "草稿1草稿1草稿1草稿1草稿1草稿1草稿1",
+            color = Color.Black,
+            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+        )
+    }
 }
 
-// image 59.png(X=124, Y=369, W=276, H=102)— 飘雾
+// image 59.png(X=124, Y=369, W=276, H=102)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan5_image59),
     contentDescription = null,
