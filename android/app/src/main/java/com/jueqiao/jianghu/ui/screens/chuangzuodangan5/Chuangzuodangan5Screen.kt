@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -295,6 +296,22 @@ Image(
         .rotate(-10f),
     contentScale = ContentScale.Fit,
 )
+
+// Rectangle 25.png — 雾气(D:\图\Rectangle 25.png)
+// 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
+//   本页 Y = 171(其他页多在 55,本屏需要下移)
+Box(
+    modifier = Modifier
+        .fillMaxWidth()
+        .offset(y = 171.dp),
+) {
+    Image(
+        painter = painterResource(R.drawable.img_chuangzuodangan5_rect25),
+        contentDescription = null,
+        modifier = Modifier.fillMaxWidth(),
+        contentScale = ContentScale.FillWidth,
+    )
+}
 
 // image 59.png(X=124, Y=369, W=276, H=102)
 Image(
