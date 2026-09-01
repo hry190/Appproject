@@ -205,9 +205,18 @@ for (i in 0 until chuangyuanN) {
 }
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
-// 8 字绕圆心排布,圆心在原\"选\"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针(同原"选择作品查看")
+// 8 字但只 5 个视觉位置:《+熊共享、猫、AI 单字、绘、画+》共享
+// 90° 弧 5 段均分,首字 25° CW → 末字 80° CW(同原"选择作品查看")
 val xuanzeText = "《熊猫AI绘画》"
 val xuanzeN = xuanzeText.length
+// 字符位置映射:8 字 → 5 槽位
+//   i=0 《, i=1 熊 → slot 0(共享)
+//   i=2 猫             → slot 1
+//   i=3 A,  i=4 I      → slot 2(AI 整体占一格)
+//   i=5 绘             → slot 3
+//   i=6 画, i=7 》     → slot 4(共享)
+val xuanzeSlots = intArrayOf(0, 0, 1, 2, 2, 3, 4, 4)
+val xuanzeSlotN = 5
 val xuanzeBaseX = 45f                // "选" 的 X
 val xuanzeBaseY = 137f               // "选" 的 Y
 val xuanzeCenterX = xuanzeBaseX      // -2 — 圆心 X(直接在"选"正下方)
@@ -217,8 +226,8 @@ val xuanzeFirstRot = 25f             // 首字 25° CW
 val xuanzeLastRot = 80f              // 末字 80° CW
 val xuanzeColor = Color.Black
 for (i in 0 until xuanzeN) {
-    val t = i.toFloat() / (xuanzeN - 1).toFloat()
     // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
+    val t = xuanzeSlots[i].toFloat() / (xuanzeSlotN - 1).toFloat()
     val arcAngleDeg = -90f + 90f * t
     val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
     val charX = (xuanzeCenterX + xuanzeRadius * cos(arcAngleRad)).toFloat()
