@@ -49,7 +49,7 @@ private val MistBands = listOf(
         coveredY = (-8).dp,
         endY = (-58).dp,
         delay = 0.10f,
-        tone = Color(0xFFC2CEC5),
+        tone = Color(0xFFF1F4ED),
         blur = 32.dp,
     ),
     MistBandSpec(
@@ -62,7 +62,7 @@ private val MistBands = listOf(
         coveredY = (-10).dp,
         endY = (-70).dp,
         delay = 0.02f,
-        tone = Color(0xFFAEBEB2),
+        tone = Color(0xFFE5ECE3),
         blur = 36.dp,
     ),
     MistBandSpec(
@@ -75,7 +75,7 @@ private val MistBands = listOf(
         coveredY = (-12).dp,
         endY = (-76).dp,
         delay = 0.15f,
-        tone = Color(0xFFBECAC1),
+        tone = Color(0xFFF4F5EA),
         blur = 30.dp,
     ),
     MistBandSpec(
@@ -88,7 +88,7 @@ private val MistBands = listOf(
         coveredY = (-14).dp,
         endY = (-86).dp,
         delay = 0.06f,
-        tone = Color(0xFFA8BAAD),
+        tone = Color(0xFFE2EAE1),
         blur = 34.dp,
     ),
     MistBandSpec(
@@ -101,7 +101,7 @@ private val MistBands = listOf(
         coveredY = (-18).dp,
         endY = (-108).dp,
         delay = 0f,
-        tone = Color(0xFFB7C5BA),
+        tone = Color(0xFFEDF1E8),
         blur = 28.dp,
     ),
 )
@@ -118,19 +118,19 @@ internal fun LoginMistTransition(
     if (phase <= 0f || phase >= 2f) return
 
     val coverage = if (phase <= 1f) phase else 2f - phase
-    val softenedCoverage = coverage.coerceIn(0f, 1f).pow(0.72f)
+    val softenedCoverage = coverage.coerceIn(0f, 1f).pow(0.58f)
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer(alpha = 0.93f * softenedCoverage)
+                .graphicsLayer(alpha = softenedCoverage)
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xFF9FB1A4),
-                            Color(0xFFB9C7BD),
-                            Color(0xFFA4B7A9),
+                            Color(0xFFE8EFE6),
+                            Color(0xFFF4F3E8),
+                            Color(0xFFE2EBE2),
                         )
                     )
                 ),
@@ -165,7 +165,7 @@ internal fun LoginMistTransition(
                     )
                     .width(maxWidth * 1.84f)
                     .height(maxHeight * spec.heightFraction)
-                    .graphicsLayer(alpha = (0.92f + index * 0.012f) * bandCoverage),
+                    .graphicsLayer(alpha = (0.96f + index * 0.008f) * bandCoverage),
             )
         }
     }
@@ -186,8 +186,8 @@ private fun MistBand(
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0x73506457),
-                            Color(0x3F435548),
+                            Color(0x3D627265),
+                            Color(0x24586B5D),
                             Color.Transparent,
                         )
                     ),
@@ -201,9 +201,9 @@ private fun MistBand(
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            tone.copy(alpha = 0.96f),
-                            tone.copy(alpha = 0.78f),
-                            tone.copy(alpha = 0.34f),
+                            tone.copy(alpha = 0.99f),
+                            tone.copy(alpha = 0.90f),
+                            tone.copy(alpha = 0.52f),
                             Color.Transparent,
                         )
                     ),
