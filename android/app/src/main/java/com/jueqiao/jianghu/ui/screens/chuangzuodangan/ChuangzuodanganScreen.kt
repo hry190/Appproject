@@ -221,11 +221,11 @@ for (i in 0 until chuangyuanN) {
 
 // 透明可点击 Box:覆盖"原创记录"4 字的实际渲染区域
 //   charX 范围 55 ~ 100.32,charY 范围 321.19 ~ 350.055
-//   用 (48, 312) size (62, 48) — 紧贴字符外接矩形 + padding
+//   用 (48, 312) size (70, 53) — 紧贴字符外接矩形 + padding(宽度 +8,高度 +5)
 Box(
     modifier = Modifier
         .offset(x = 48.dp, y = 312.dp)
-        .size(width = 62.dp, height = 48.dp)
+        .size(width = 70.dp, height = 53.dp)
         .clickable(onClick = onOpenChuangzuodangan6),
 )
 
