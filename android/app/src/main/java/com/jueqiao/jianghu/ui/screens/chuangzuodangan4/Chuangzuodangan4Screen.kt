@@ -131,14 +131,6 @@ fun Chuangzuodangan4Screen(
 
             // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
-// 整组可点击跳 Chuangzuodangan5 — 包在 clickable Box 里
-//   Box 范围 (275, 334) ~ (397, 456),size 122×122,覆盖 6 字弧形区域
-Box(
-    modifier = Modifier
-        .offset(x = 275.dp, y = 334.dp)
-        .size(width = 122.dp, height = 122.dp)
-        .clickable(onClick = onOpenChuangzuodangan5),
-) {
 val arcText = "修改版本记录"
 val arcN = arcText.length
 for (i in 0 until arcN) {
@@ -161,7 +153,16 @@ for (i in 0 until arcN) {
             .rotate(rot),
     )
 }
-}
+
+// 透明可点击 Box:覆盖"修改版本记录"6 字的实际渲染区域
+//   charX 范围 275.735 ~ 396.735,charY 范围 334.4 ~ 455.4
+//   用 (275, 334) size (122, 122) — 紧贴字符外接矩形
+Box(
+    modifier = Modifier
+        .offset(x = 275.dp, y = 334.dp)
+        .size(width = 122.dp, height = 122.dp)
+        .clickable(onClick = onOpenChuangzuodangan5),
+)
 
 // 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
