@@ -128,30 +128,6 @@ fun Chuangzuodangan6Screen(
                     .size(width = 76.dp, height = 25.dp),
             )
 
-            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
-// 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
-val arcText = "修改版本记录"
-val arcN = arcText.length
-for (i in 0 until arcN) {
-    val t = i.toFloat() / (arcN - 1).toFloat()
-    val arcAngleRad = (200.0 - 90.0 * t) * PI / 180.0
-    val charX = (276.0 + 60.235 + 60.5 * cos(arcAngleRad)).toFloat()
-    val charY = (325.5 + 69.4 + 60.5 * sin(arcAngleRad)).toFloat()
-    // 单字旋转:不跟弧度,首字 51° CW,末字 0°,每字向逆时针递减 51°/5 = 10.2°
-    val rot = 51f * (arcN - 1 - i) / (arcN - 1).toFloat()
-
-    Text(
-        text = arcText[i].toString(),
-        color = Color(0xFF437349),
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 16.sp,
-        ),
-        modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
-    )
-}
 
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101)
@@ -189,27 +165,6 @@ for (i in 0 until xuanzeN) {
 }
 
 
-// image 52.png(X=278, Y=365, W=124, H=100)— 莲花,逆时针旋转 10°
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan5_image52),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = 278.dp, y = 365.dp)
-        .size(width = 124.dp, height = 100.dp)
-        .rotate(-10f),
-    contentScale = ContentScale.Fit,
-)
-
-
-// image 59.png(X=124, Y=369, W=276, H=102)
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan5_image59),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = 124.dp, y = 369.dp)
-        .size(width = 276.dp, height = 102.dp),
-    contentScale = ContentScale.Fit,
-)
 
 // image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
 Image(
