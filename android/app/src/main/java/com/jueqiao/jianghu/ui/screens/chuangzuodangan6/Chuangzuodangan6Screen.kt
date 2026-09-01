@@ -200,35 +200,6 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Rectangle 25.png — 雾气(D:\图\Rectangle 25.png)
-// 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
-//   本页 Y = 171(其他页多在 55,本屏需要下移)
-Box(
-    modifier = Modifier
-        .fillMaxWidth()
-        .offset(y = 111.dp),
-) {
-    Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan5_rect25),
-        contentDescription = null,
-        modifier = Modifier.fillMaxWidth(),
-        contentScale = ContentScale.FillWidth,
-    )
-    // 雾气上的文本(X居中, Y=274 绝对 = 171 + 103, 14sp, 黑色)
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(y = 103.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "草稿1草稿1草稿1草稿1\n草稿1草稿1草稿1",
-            color = Color.Black,
-            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier.size(width = 145.dp, height = 40.dp),
-        )
-    }
-}
 
 // image 59.png(X=124, Y=369, W=276, H=102)
 Image(
