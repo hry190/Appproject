@@ -51,6 +51,7 @@ fun Chuangzuodangan2Screen(
     onBack: () -> Unit = {},
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan3: () -> Unit = {},
+    onOpenChuangzuodangan5: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -156,6 +157,16 @@ for (i in 0 until arcN) {
             .rotate(rot),
     )
 }
+
+// 透明可点击 Box:覆盖"修改版本记录"6 字的实际渲染区域
+//   charX 范围 275.735 ~ 396.735,charY 范围 334.4 ~ 455.4
+//   用 (275, 334) size (122, 122) — 紧贴字符外接矩形
+Box(
+    modifier = Modifier
+        .offset(x = 275.dp, y = 334.dp)
+        .size(width = 122.dp, height = 122.dp)
+        .clickable(onClick = onOpenChuangzuodangan5),
+)
 
 // 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布

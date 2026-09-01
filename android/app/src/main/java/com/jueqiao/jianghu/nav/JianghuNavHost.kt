@@ -412,6 +412,7 @@ fun JianghuNavHost(
                 onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan2 = { navController.navigate(Routes.Chuangzuodangan2) },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 
@@ -420,6 +421,7 @@ fun JianghuNavHost(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
+                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 
@@ -435,7 +437,6 @@ fun JianghuNavHost(
             Chuangzuodangan4Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
-                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
             )
         }
 
