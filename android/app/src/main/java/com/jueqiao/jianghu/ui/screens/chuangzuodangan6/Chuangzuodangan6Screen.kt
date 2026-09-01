@@ -208,8 +208,7 @@ Box(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "时间:9点41分25秒
-内容:绘画一只在做手表的技巧熊猫",
+            text = "时间:9点41分25秒\n内容:绘画一只在做手表的技巧熊猫",
             color = Color.Black,
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
         )
