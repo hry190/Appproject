@@ -226,7 +226,7 @@ fun JianghuNavHost(
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
-                onOpenDahui     = { navController.navigate(Routes.Yanwuchang) },
+                onOpenDahui     = { /* 大会 button 不再跳,由演武场 text 触发 */ },
                 onPandaClick    = {
                     // 重置教程标记,跳 Home 触发对话流程
                     app.tutorialComplete = false
