@@ -205,18 +205,32 @@ for (i in 0 until chuangyuanN) {
 }
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
-// 8 字但只 5 个视觉位置:《+熊共享、猫、AI 单字、绘、画+》共享
-// 90° 弧 5 段均分,首字 25° CW → 末字 80° CW(同原"选择作品查看")
+// 位置 7 槽位(AI 共享)+ 旋转 5 槽位(《/熊、AI、画/》 各共享)
+// 90° 弧 6 间隔均分(位置),旋转 55° 4 间隔均分
 val xuanzeText = "《熊猫AI绘画》"
 val xuanzeN = xuanzeText.length
-// 字符位置映射:8 字 → 5 槽位
-//   i=0 《, i=1 熊 → slot 0(共享)
-//   i=2 猫             → slot 1
-//   i=3 A,  i=4 I      → slot 2(AI 整体占一格)
-//   i=5 绘             → slot 3
-//   i=6 画, i=7 》     → slot 4(共享)
-val xuanzeSlots = intArrayOf(0, 0, 1, 2, 2, 3, 4, 4)
-val xuanzeSlotN = 5
+// 位置映射(8 字 → 7 槽位):AI 共享一个位置,其它字独立
+//   i=0 《 → pos 0
+//   i=1 熊 → pos 1(独立位置)
+//   i=2 猫 → pos 2
+//   i=3 A  → pos 3(同 I,AI 整体占一格)
+//   i=4 I  → pos 3
+//   i=5 绘 → pos 4
+//   i=6 画 → pos 5
+//   i=7 》→ pos 6
+val xuanzePosSlots = intArrayOf(0, 1, 2, 3, 3, 4, 5, 6)
+val xuanzePosN = 7
+// 旋转映射(8 字 → 5 槽位):《/熊、AI、画/》 各共享一个旋转角度
+//   i=0 《 → rot 0(同 熊)
+//   i=1 熊 → rot 0(同 《)
+//   i=2 猫 → rot 1
+//   i=3 A  → rot 2(同 I)
+//   i=4 I  → rot 2
+//   i=5 绘 → rot 3
+//   i=6 画 → rot 4(同 》)
+//   i=7 》→ rot 4
+val xuanzeRotSlots = intArrayOf(0, 0, 1, 2, 2, 3, 4, 4)
+val xuanzeRotN = 5
 val xuanzeBaseX = 45f                // "选" 的 X
 val xuanzeBaseY = 137f               // "选" 的 Y
 val xuanzeCenterX = xuanzeBaseX      // -2 — 圆心 X(直接在"选"正下方)
@@ -227,12 +241,13 @@ val xuanzeLastRot = 80f              // 末字 80° CW
 val xuanzeColor = Color.Black
 for (i in 0 until xuanzeN) {
     // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
-    val t = xuanzeSlots[i].toFloat() / (xuanzeSlotN - 1).toFloat()
-    val arcAngleDeg = -90f + 90f * t
+    val tPos = xuanzePosSlots[i].toFloat() / (xuanzePosN - 1).toFloat()
+    val tRot = xuanzeRotSlots[i].toFloat() / (xuanzeRotN - 1).toFloat()
+    val arcAngleDeg = -90f + 90f * tPos
     val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
     val charX = (xuanzeCenterX + xuanzeRadius * cos(arcAngleRad)).toFloat()
     val charY = (xuanzeCenterY + xuanzeRadius * sin(arcAngleRad)).toFloat()
-    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * t
+    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * tRot
 
     Text(
         text = xuanzeText[i].toString(),
