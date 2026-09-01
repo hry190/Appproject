@@ -60,6 +60,7 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan6.Chuangzuodangan6Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -413,6 +414,7 @@ fun JianghuNavHost(
                 onOpenChuangzuodangan2 = { navController.navigate(Routes.Chuangzuodangan2) },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
                 onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
+                onOpenChuangzuodangan6 = { navController.navigate(Routes.Chuangzuodangan6) },
             )
         }
 
@@ -422,6 +424,7 @@ fun JianghuNavHost(
                 onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
                 onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
+                onOpenChuangzuodangan6 = { navController.navigate(Routes.Chuangzuodangan6) },
             )
         }
 
@@ -442,6 +445,12 @@ fun JianghuNavHost(
 
         composable(Routes.Chuangzuodangan5) {
             Chuangzuodangan5Screen(
+                onBack = { navController.popBackStack() },
+                onCreateWork = { /* TODO: 后续 */ },
+            )
+        }
+        composable(Routes.Chuangzuodangan6) {
+            Chuangzuodangan6Screen(
                 onBack = { navController.popBackStack() },
                 onCreateWork = { /* TODO: 后续 */ },
             )

@@ -38,6 +38,7 @@ object Routes {
     const val Chuangzuodangan3 = "chuangzuodangan3"
     const val Chuangzuodangan4 = "chuangzuodangan4"
     const val Chuangzuodangan5 = "chuangzuodangan5"
+    const val Chuangzuodangan6 = "chuangzuodangan6"
     // 参数化路由:工坊里 3 个"继续创作"按钮跳过去
     const val Yanwuchang = "yanwuchang"
     const val YanwuchangVideo = "yanwuchangvideo"

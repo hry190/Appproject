@@ -51,6 +51,7 @@ fun ChuangzuodanganScreen(
     onOpenChuangzuodangan2: () -> Unit = {},
     onOpenChuangzuodangan3: () -> Unit = {},
     onOpenChuangzuodangan5: () -> Unit = {},
+    onOpenChuangzuodangan6: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
@@ -217,6 +218,16 @@ for (i in 0 until chuangyuanN) {
             .rotate(rot),
     )
 }
+
+// 透明可点击 Box:覆盖"原创记录"4 字的实际渲染区域
+//   charX 范围 55 ~ 100.32,charY 范围 321.19 ~ 350.055
+//   用 (48, 312) size (62, 48) — 紧贴字符外接矩形 + padding
+Box(
+    modifier = Modifier
+        .offset(x = 48.dp, y = 312.dp)
+        .size(width = 62.dp, height = 48.dp)
+        .clickable(onClick = onOpenChuangzuodangan6),
+)
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101)
 // 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
