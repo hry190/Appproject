@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -305,57 +304,6 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 头像下方装饰条 — Rectangle 199 / 200 / 201 / 202
-        //   位置按 Figma 坐标左上角定位;尺寸与原 PNG 像素比例一致(已乘以 1dp/px)
-        //   填充 #EEC4B9,不透明度 100%,带旋转角度
-        // Rectangle 199: 位置 (368, 505), 3×7.98dp,旋转 -49.73°
-        Image(
-            painter = painterResource(R.drawable.rectangle_199),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 368.dp, y = 505.dp)
-                .size(width = 3.dp, height = 7.98.dp)
-                .rotate(-49.73f),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-            alpha = 1f,
-        )
-        // Rectangle 200: 位置 (376, 497), 3×7.98dp,旋转 -32.48°
-        Image(
-            painter = painterResource(R.drawable.rectangle_200),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 376.dp, y = 497.dp)
-                .size(width = 3.dp, height = 7.98.dp)
-                .rotate(-32.48f),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-            alpha = 1f,
-        )
-        // Rectangle 201: 位置 (394, 497), 3×7.98dp,旋转 -35.96°
-        Image(
-            painter = painterResource(R.drawable.rectangle_201),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 394.dp, y = 497.dp)
-                .size(width = 3.dp, height = 7.98.dp)
-                .rotate(-35.96f),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-            alpha = 1f,
-        )
-        // Rectangle 202: 位置 (401, 506), 3×7.98dp,旋转 -69.34°
-        Image(
-            painter = painterResource(R.drawable.rectangle_202),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 401.dp, y = 506.dp)
-                .size(width = 3.dp, height = 7.98.dp)
-                .rotate(-69.34f),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-            alpha = 1f,
-        )
         // 点赞 — 点击切换空心/实心,数字同步 +1/-1
         //   容器固定 30×28dp;空心和实心都使用 ColorFilter.tint(#81A084) 保持视觉一致
         //   实心时整体 100% 不透明,填充色统一为 #81A084
@@ -376,19 +324,15 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 点赞 — 数字 (500.png / 501.png, 22×16dp, #FFFFFF, 不透明度 100%)
-        Image(
-            painter = painterResource(
-                if (likeCount >= 501) R.drawable.text_501
-                else R.drawable.text_500
-            ),
-            contentDescription = "点赞数",
+        // 点赞 — 数字 (500 / 501, 22×16dp 容器, 12sp 白色, 不透明度 100%)
+        //   使用 Compose Text 而非 PNG,字号/位置/尺寸完全由 style 决定,数字变化时零缩放
+        Text(
+            text  = likeCount.toString(),
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
             modifier = Modifier
                 .offset(x = 378.dp, y = 532.dp)
                 .size(width = 22.dp, height = 16.dp),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-            alpha = 1f,
         )
         // 评论
         Image(
@@ -400,16 +344,14 @@ fun YanwuchangVideoScreen(
             contentScale = ContentScale.Fit,
             alpha = 1f,
         )
-        // 评论 — 数字 "500" (500.png, 22×16dp, #FFFFFF, 不透明度 100%)
-        Image(
-            painter = painterResource(R.drawable.text_500),
-            contentDescription = "评论数",
+        // 评论 — 数字 "500" (Text 渲染, 12sp 白色, 22×16dp 容器, 不透明度 100%)
+        Text(
+            text  = "500",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
             modifier = Modifier
                 .offset(x = 378.dp, y = 603.dp)
                 .size(width = 22.dp, height = 16.dp),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-            alpha = 1f,
         )
         // 收藏 — 点击在图标中央叠加 Vector 600 标记,数字同步 +1/-1
         //   容器固定 34×34dp;始终显示空心星 img_yanwuchang_video_favorite(#81A084)
@@ -442,21 +384,15 @@ fun YanwuchangVideoScreen(
                 alpha = 1f,
             )
         }
-        // 收藏 — 数字 (500.png / 501.png, 22×16dp, #FFFFFF, 不透明度 100%)
-        //   text_500.png 和 text_501.png 像素尺寸完全一致(20×10),在 22×16dp 容器中
-        //   以 ContentScale.Fit 等比渲染,切换时视觉大小不变
-        Image(
-            painter = painterResource(
-                if (favoriteCount >= 501) R.drawable.text_501
-                else R.drawable.text_500
-            ),
-            contentDescription = "收藏数",
+        // 收藏 — 数字 (500 / 501, 22×16dp 容器, 12sp 白色, 不透明度 100%)
+        //   使用 Compose Text 而非 PNG,字号/位置/尺寸完全由 style 决定,数字变化时零缩放
+        Text(
+            text  = favoriteCount.toString(),
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
             modifier = Modifier
                 .offset(x = 378.dp, y = 674.dp)
                 .size(width = 22.dp, height = 16.dp),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-            alpha = 1f,
         )
         // 分享
         Image(
@@ -469,16 +405,14 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFF7FA889), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 分享 — 数字 "500" (500.png, 22×16dp, #FFFFFF, 不透明度 100%)
-        Image(
-            painter = painterResource(R.drawable.text_500),
-            contentDescription = "分享数",
+        // 分享 — 数字 "500" (Text 渲染, 12sp 白色, 22×16dp 容器, 不透明度 100%)
+        Text(
+            text  = "500",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
             modifier = Modifier
                 .offset(x = 378.dp, y = 745.dp)
                 .size(width = 22.dp, height = 16.dp),
-            contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-            alpha = 1f,
         )
         // 中心装饰圆形 + 播放按钮
         Image(
