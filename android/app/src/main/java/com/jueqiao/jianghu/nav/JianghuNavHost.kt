@@ -48,6 +48,8 @@ import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
@@ -301,7 +303,24 @@ fun JianghuNavHost(
                 onOpenGongfang = { navController.navigate(Routes.Gongfang) },
             )
         }
-        composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Dahui) {
+            DahuiScreen(
+                onBack = { navController.popBackStack() },
+                onOpenYanwuchang = { navController.navigate(Routes.Yanwuchang) },
+            )
+        }
+        // 演武场首页(从大会页"演武场"文字进入) + 演武场视频(从演武场"作品"进入)
+        composable(Routes.Yanwuchang) {
+            YanwuchangScreen(
+                onBack = { navController.popBackStack() },
+                onOpenYanwuchangVideo = { navController.navigate(Routes.YanwuchangVideo) },
+            )
+        }
+        composable(Routes.YanwuchangVideo) {
+            YanwuchangVideoScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(Routes.Gongfang) {
             GongfangScreen(
                 onBack   = {

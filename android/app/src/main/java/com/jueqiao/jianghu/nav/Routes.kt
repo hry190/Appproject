@@ -39,6 +39,8 @@ object Routes {
     const val Chuangzuodangan4 = "chuangzuodangan4"
     const val Chuangzuodangan5 = "chuangzuodangan5"
     // 参数化路由:工坊里 3 个"继续创作"按钮跳过去
+    const val Yanwuchang = "yanwuchang"
+    const val YanwuchangVideo = "yanwuchangvideo"
     const val EditWork         = "edit_work"
     const val EditWorkPattern  = "edit_work/{workId}"
     fun editWork(workId: String): String = "edit_work/$workId"
