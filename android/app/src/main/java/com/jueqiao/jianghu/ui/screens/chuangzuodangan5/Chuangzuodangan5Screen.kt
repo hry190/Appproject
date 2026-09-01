@@ -266,7 +266,7 @@ Box(
     )
 }
 
-// image 59.png(X=124, Y=369, W=276, H=102)
+// image 59.png(X=124, Y=369, W=276, H=102)— 飘雾
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan5_image59),
     contentDescription = null,
