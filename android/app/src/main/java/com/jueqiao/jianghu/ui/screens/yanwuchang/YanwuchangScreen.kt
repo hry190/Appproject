@@ -137,24 +137,24 @@ fun YanwuchangScreen(
                 Text("品", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp))
             }
 
-            // 底部装饰气泡(Rectangle 199.png, X=8, Y=564, 132×70,
-            //   区域填充 #F4E6CF, 不透明度 62%,玻璃态。
-            //   Figma 里的 glass 效果(light -45°/80%, refraction 80, depth 20,
-            //   dispersion 50, frost 4)在 Compose 里没有直接对应,源 PNG 已自带
-            //   米色玻璃气泡外观,这里只应用位置 / 尺寸 / 整体不透明度。)
+            // 底部装饰气泡(与"大会"页面气泡同款填充色:
+            //   R.drawable.img_dahui_speech_bubble,
+            //   X=8, Y=564, 132×70, 不透明度 100%, ContentScale.FillBounds
+            //   原本使用的 img_yanwuchang_rect199(米色玻璃 62%)与大会气泡颜色不一致,
+            //   故改为与大会同源的图片,保持视觉统一)
             Box(
                 modifier = Modifier
                     .offset(x = 8.dp, y = 564.dp)
                     .size(width = 132.dp, height = 70.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_rect199),
+                    painter = painterResource(R.drawable.img_dahui_speech_bubble),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    alpha = 0.62f,
+                    contentScale = ContentScale.FillBounds,
+                    alpha = 1f,
                 )
-                // 气泡内文案(Text, X=22, Y=568, 104×54, 14px, #000000, 不透明度 100%, weight=1 → Regular)
+                // 气泡内文案(Text, 相对气泡 Box 偏移 (14, 4), 104×54, 14px, #000000, 不透明度 100%, weight=1 → Regular)
                 //   - lineHeight = 16.sp:3 行 ≈ 48dp,稳妥落在 54dp 容器内
                 //   - softWrap = true + overflow = Visible:不裁字、允许自动换行不超界
                 //   - 容器内左右各留 2dp padding,字符不会贴边
@@ -168,7 +168,7 @@ fun YanwuchangScreen(
                         fontWeight = FontWeight.Normal,
                     ),
                     modifier = Modifier
-                        .offset(x = 14.dp, y = 4.dp)  // 22-8=14, 568-564=4(相对气泡 Box)
+                        .offset(x = 14.dp, y = 4.dp)
                         .size(width = 104.dp, height = 54.dp)
                         .padding(horizontal = 2.dp),
                     softWrap = true,
