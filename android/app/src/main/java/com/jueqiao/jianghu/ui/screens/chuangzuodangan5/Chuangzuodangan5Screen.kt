@@ -153,56 +153,6 @@ for (i in 0 until arcN) {
     )
 }
 
-// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
-// 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
-// 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
-// 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
-val chuangyuanText = "原创记录"
-val chuangyuanN = chuangyuanText.length
-val chuangyuanBaseX = 48f + 12f          // 55 — "原" 的 X
-val chuangyuanBaseY = 303f + 47.055f     // 350.055 — "原" 的 Y
-val chuangyuanCenterX = chuangyuanBaseX  // 55 — 圆心 X(直接在"原"上方)
-val chuangyuanCenterY = chuangyuanBaseY - 50f  // 300.055 — 圆心 Y
-val chuangyuanRadius = 50f               // 半径(正好让"原"在弧底)
-// 4 字角度分布(math 度):90°, 70°, 50°, 25°(从"原"顺时针往上排)
-val chuangyuanAnglesDeg = listOf(90f, 70f, 50f, 25f)
-val chuangyuanFirstRot = 0f
-val chuangyuanLastRot = -45f
-val chuangyuanGradientStart = Color(0xFFB8D878)  // 浅黄绿 light yellow-green
-val chuangyuanGradientEnd   = Color(0xFF5A8A3A)  // 深草绿 dark grass green
-for (i in 0 until chuangyuanN) {
-    val t = i.toFloat() / (chuangyuanN - 1).toFloat()
-    val arcAngleRad = chuangyuanAnglesDeg[i].toDouble() * PI / 180.0
-    val charX = (chuangyuanCenterX + chuangyuanRadius * cos(arcAngleRad)).toFloat()
-    val charY = (chuangyuanCenterY + chuangyuanRadius * sin(arcAngleRad)).toFloat()
-    val rot = chuangyuanFirstRot + (chuangyuanLastRot - chuangyuanFirstRot) * t
-    // 每字内部水平渐变:取该字在整体渐变中的"切片"(左 t 到右 t)
-    val rightT = (i + 1).toFloat() / (chuangyuanN - 1).toFloat()
-    fun lerpColor(start: Color, end: Color, tt: Float) = Color(
-        red   = start.red   + (end.red   - start.red)   * tt,
-        green = start.green + (end.green - start.green) * tt,
-        blue  = start.blue  + (end.blue  - start.blue)  * tt,
-        alpha = 1f,
-    )
-    val brush = Brush.horizontalGradient(
-        colors = listOf(
-            lerpColor(chuangyuanGradientStart, chuangyuanGradientEnd, t),
-            lerpColor(chuangyuanGradientStart, chuangyuanGradientEnd, rightT),
-        ),
-    )
-
-    Text(
-        text = chuangyuanText[i].toString(),
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 16.sp,
-            brush = brush,
-        ),
-        modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
-    )
-}
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101)
 // 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
