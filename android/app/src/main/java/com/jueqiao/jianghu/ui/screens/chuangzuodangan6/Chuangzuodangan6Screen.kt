@@ -167,6 +167,16 @@ for (i in 0 until xuanzeN) {
 
 
 // image 54.png(X=12, Y=274, W=132, H=106)— 莲花(D:\图\image 54.png)
+// image 57.png(X=16, Y=243, W=282, H=173)— 飘雾(D:\图\image 57.png)
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan6_image57),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 16.dp, y = 243.dp)
+        .size(width = 282.dp, height = 173.dp),
+    contentScale = ContentScale.Fit,
+)
+
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan6_image54),
     contentDescription = null,
