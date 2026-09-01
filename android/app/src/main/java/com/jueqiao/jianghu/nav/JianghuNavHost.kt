@@ -258,7 +258,7 @@ fun JianghuNavHost(
                 onOpenGongfang = { navController.navigate(Routes.Gongfang) },
             )
         }
-        composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }, onOpenYanwuchang = { navController.navigate(Routes.Yanwuchang) }) }
         composable(Routes.Yanwuchang) {
             YanwuchangScreen(
                 onBack = { navController.popBackStack() },
