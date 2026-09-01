@@ -50,6 +50,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 4 个学科 Tab 互相跳转;"推荐" 回到主入口
  *
  * @param onBack             左上角返回 / 系统返回键回调
+ * @param onOpenComment      点击"评论"图标 — 跳转至演武场视频评论页
  *
  * 注意:5 个 Tab 共享同一个 Composable 实例,Tab 切换通过内部状态完成,
  *      不调用 NavController.navigate,避免页面重建和明显的切换动画。
@@ -58,6 +59,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun YanwuchangVideoScreen(
     onBack: () -> Unit = {},
+    onOpenComment: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到演武场首页)
     BackHandler(enabled = true) {
@@ -72,6 +74,12 @@ fun YanwuchangVideoScreen(
     // 计数:点赞后 +1(500 → 501)
     var isLiked by remember { mutableStateOf(false) }
     var likeCount by remember { mutableStateOf(500) }
+
+    // 小爱心状态 — Like (喜欢).png @ (356, 560)
+    //   未点赞:Like (喜欢).png 原色;已点赞:填充 #6D8470, 不透明度 100%
+    //   计数默认 50,点击 +1 / -1 同步
+    var isSmallHeartLiked by remember { mutableStateOf(false) }
+    var smallHeartCount by remember { mutableStateOf(50) }
 
     // 收藏状态:false = 仅空心星,true = 空心星 + Vector 600 中心叠加(视觉实心)
     // 计数:收藏后 +1(500 → 501)
@@ -386,13 +394,43 @@ fun YanwuchangVideoScreen(
                 .offset(x = 378.dp, y = 532.dp)
                 .size(width = 22.dp, height = 16.dp),
         )
-        // 评论
+        // 小爱心 — Like (喜欢).png @ (356, 560), 16.58×16dp
+        //   未点赞:Like (喜欢).png 原色;已点赞:填充 #6D8470, 不透明度 100%
+        //   点击切换:爱心 + 数字同步 +1 / -1
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_heart_small),
+            contentDescription = if (isSmallHeartLiked) "已点赞" else "点赞",
+            modifier = Modifier
+                .offset(x = 356.dp, y = 560.dp)
+                .size(width = 16.58.dp, height = 16.dp)
+                .clickable {
+                    isSmallHeartLiked = !isSmallHeartLiked
+                    smallHeartCount += if (isSmallHeartLiked) 1 else -1
+                },
+            contentScale = ContentScale.Fit,
+            colorFilter = if (isSmallHeartLiked) {
+                ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn)
+            } else null,
+            alpha = 1f,
+        )
+        // 小爱心 — 数字 (默认 50, 15.54×16dp 容器, 12sp #000000, 不透明度 100%)
+        //   使用 Compose Text 而非 PNG,数字与爱心同步变化
+        Text(
+            text  = smallHeartCount.toString(),
+            color = Color(0xFF000000),
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier
+                .offset(x = 377.dp, y = 560.dp)
+                .size(width = 15.54.dp, height = 16.dp),
+        )
+        // 评论 — 点击跳转到演武场视频评论页
         Image(
             painter = painterResource(R.drawable.img_yanwuchang_video_comment),
             contentDescription = "评论",
             modifier = Modifier
                 .offset(x = 374.dp, y = 571.dp)
-                .size(width = 31.dp, height = 31.dp),
+                .size(width = 31.dp, height = 31.dp)
+                .clickable(onClick = onOpenComment),
             contentScale = ContentScale.Fit,
             alpha = 1f,
         )

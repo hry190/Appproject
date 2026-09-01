@@ -12,6 +12,7 @@ import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoCommentScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -173,8 +174,13 @@ fun JianghuNavHost(
         //   Tab 选中态、点赞/收藏状态都在屏幕内部 remember 中,跨 Tab 不丢失
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
-                onBack = { navController.popBackStack() },
+                onBack         = { navController.popBackStack() },
+                onOpenComment  = { navController.navigate(Routes.YanwuchangVideoComment) },
             )
+        }
+        // 演武场视频 — 评论页(背景图:室内家园要求 1.png)
+        composable(Routes.YanwuchangVideoComment) {
+            YanwuchangVideoCommentScreen()
         }
         composable(Routes.Gongfang) {
             GongfangScreen(
