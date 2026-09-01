@@ -204,9 +204,9 @@ for (i in 0 until chuangyuanN) {
     )
 }
 
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
-// 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
-val xuanzeText = "选择作品查看"
+// 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
+// 8 字绕圆心排布,圆心在原\"选\"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针(同原"选择作品查看")
+val xuanzeText = "《熊猫AI绘画》"
 val xuanzeN = xuanzeText.length
 val xuanzeBaseX = 45f                // "选" 的 X
 val xuanzeBaseY = 137f               // "选" 的 Y
@@ -215,7 +215,7 @@ val xuanzeCenterY = xuanzeBaseY + 50f  // 193 — 圆心 Y
 val xuanzeRadius = 50f               // 半径(让"选"在弧顶)
 val xuanzeFirstRot = 25f             // 首字 25° CW
 val xuanzeLastRot = 80f              // 末字 80° CW
-val xuanzeColor = Color(0xFF62704E)
+val xuanzeColor = Color.Black
 for (i in 0 until xuanzeN) {
     val t = i.toFloat() / (xuanzeN - 1).toFloat()
     // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
