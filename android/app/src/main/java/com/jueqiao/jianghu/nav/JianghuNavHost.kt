@@ -21,6 +21,8 @@ import com.jueqiao.jianghu.auth.VerificationPurpose
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
 import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -224,7 +226,7 @@ fun JianghuNavHost(
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
                 onOpenChallenge = { navController.navigate(Routes.Challenge) },
-                onOpenDahui     = { navController.navigate(Routes.Dahui) },
+                onOpenDahui     = { navController.navigate(Routes.Yanwuchang) },
                 onPandaClick    = {
                     // 重置教程标记,跳 Home 触发对话流程
                     app.tutorialComplete = false
@@ -257,6 +259,17 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Dahui)    { DahuiScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.Yanwuchang) {
+            YanwuchangScreen(
+                onBack = { navController.popBackStack() },
+                onOpenYanwuchangVideo = { navController.navigate(Routes.YanwuchangVideo) },
+            )
+        }
+        composable(Routes.YanwuchangVideo) {
+            YanwuchangVideoScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(Routes.Gongfang) {
             GongfangScreen(
                 onBack   = {
