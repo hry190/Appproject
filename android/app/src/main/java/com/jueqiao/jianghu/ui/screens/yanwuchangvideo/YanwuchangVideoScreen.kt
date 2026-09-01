@@ -324,7 +324,7 @@ fun YanwuchangVideoScreen(
             alpha = 1f,
         )
         // 点赞 — 已点赞(实心)时,在图标周围显示 4 根装饰线
-        //   容器 3×7.98dp,corner radius 3(原 PNG 预渲染)
+        //   容器 6×7.98dp,corner radius 3(原 PNG 预渲染)
         //   填充 #EEC4B9,不透明度 100%,各自带旋转角度
         if (isLiked) {
             // Rectangle 199: 位置 (368, 505),旋转 -49.73°
@@ -333,7 +333,7 @@ fun YanwuchangVideoScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 368.dp, y = 505.dp)
-                    .size(width = 3.dp, height = 7.98.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
                     .rotate(-49.73f),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
@@ -345,7 +345,7 @@ fun YanwuchangVideoScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 376.dp, y = 497.dp)
-                    .size(width = 3.dp, height = 7.98.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
                     .rotate(-32.48f),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
@@ -357,7 +357,7 @@ fun YanwuchangVideoScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 394.dp, y = 497.dp)
-                    .size(width = 3.dp, height = 7.98.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
                     .rotate(-35.96f),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
@@ -369,7 +369,7 @@ fun YanwuchangVideoScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 401.dp, y = 506.dp)
-                    .size(width = 3.dp, height = 7.98.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
                     .rotate(-69.34f),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
