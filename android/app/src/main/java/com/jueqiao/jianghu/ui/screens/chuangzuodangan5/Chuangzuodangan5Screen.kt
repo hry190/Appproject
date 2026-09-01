@@ -225,7 +225,7 @@ Box(
             text = "草稿1草稿1草稿1草稿1\n草稿1草稿1草稿1",
             color = Color.Black,
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier.size(width = 145.dp, height = 36.dp),
+            modifier = Modifier.size(width = 145.dp, height = 40.dp),
         )
     }
 }

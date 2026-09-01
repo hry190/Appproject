@@ -163,7 +163,7 @@ for (i in 0 until arcN) {
 //   用 (275, 334) size (122, 122) — 紧贴字符外接矩形
 Box(
     modifier = Modifier
-        .offset(x = 275.dp, y = 379.dp)
+        .offset(x = 275.dp, y = 372.dp)
         .size(width = 122.dp, height = 122.dp)
         .clickable(onClick = onOpenChuangzuodangan5),
 )
