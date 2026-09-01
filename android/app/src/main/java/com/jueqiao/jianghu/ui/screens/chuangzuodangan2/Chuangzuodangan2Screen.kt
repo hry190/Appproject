@@ -225,7 +225,7 @@ for (i in 0 until chuangyuanN) {
 //   用 (48, 312) size (70, 53) — 紧贴字符外接矩形 + padding(宽度 +8,高度 +5)
 Box(
     modifier = Modifier
-        .offset(x = 48.dp, y = 312.dp)
+        .offset(x = 43.dp, y = 320.dp)
         .size(width = 70.dp, height = 53.dp)
         .clickable(onClick = onOpenChuangzuodangan6),
 )
