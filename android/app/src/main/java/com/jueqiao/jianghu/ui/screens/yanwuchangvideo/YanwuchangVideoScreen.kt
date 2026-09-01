@@ -19,6 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,6 +80,14 @@ fun YanwuchangVideoScreen(
     BackHandler(enabled = true) {
         onBack()
     }
+
+    // 点赞状态(参考 cai 分支:false = 空心, true = 实心 + 计数 +1)
+    var isLiked by remember { mutableStateOf(false) }
+    var likeCount by remember { mutableStateOf(500) }
+
+    // 收藏状态(参考 cai 分支:false = 仅空心星, true = 中心叠加 Vector 600 标记 + 计数 +1)
+    var isFavorited by remember { mutableStateOf(false) }
+    var favoriteCount by remember { mutableStateOf(500) }
 
     Box(
         modifier = Modifier
@@ -249,26 +261,33 @@ fun YanwuchangVideoScreen(
                     alpha = 1f,
                 )
                 // 点赞图标(原 X=374, Y=500, 30×28)— Box 内 (7, 56)
+                //   空心 = ic_like_outline;已点赞 = ic_like_filled;点击切换状态,计数 +1 / -1
                 Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_like),
-                    contentDescription = "点赞",
+                    painter = painterResource(
+                        if (isLiked) R.drawable.ic_like_filled
+                        else R.drawable.ic_like_outline
+                    ),
+                    contentDescription = if (isLiked) "已点赞" else "点赞",
                     modifier = Modifier
                         .offset(x = 7.dp, y = 56.dp)
-                        .size(width = 30.dp, height = 28.dp),
+                        .size(width = 30.dp, height = 28.dp)
+                        .clickable {
+                            isLiked = !isLiked
+                            likeCount += if (isLiked) 1 else -1
+                        },
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
                     alpha = 1f,
                 )
                 // 点赞数(原 X=378, Y=532, 22×16)— Box 内 (11, 88)
-                Image(
-                    painter = painterResource(R.drawable.text_500),
-                    contentDescription = "点赞数",
+                //   Compose Text 驱动(初值 500,点赞后 501),数字变化零缩放
+                Text(
+                    text  = likeCount.toString(),
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                     modifier = Modifier
                         .offset(x = 11.dp, y = 88.dp)
                         .size(width = 22.dp, height = 16.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
                 )
                 // 评论图标(原 X=374, Y=571, 31×31)— Box 内 (7, 127)
                 Image(
@@ -292,25 +311,45 @@ fun YanwuchangVideoScreen(
                     alpha = 1f,
                 )
                 // 收藏图标(原 X=372, Y=640, 34×34)— Box 内 (5, 196)
+                //   点击切换状态,已收藏时计数 +1(500 → 501)
                 Image(
                     painter = painterResource(R.drawable.img_yanwuchang_video_favorite),
-                    contentDescription = "收藏",
+                    contentDescription = if (isFavorited) "已收藏" else "收藏",
                     modifier = Modifier
                         .offset(x = 5.dp, y = 196.dp)
-                        .size(width = 34.dp, height = 34.dp),
+                        .size(width = 34.dp, height = 34.dp)
+                        .clickable {
+                            isFavorited = !isFavorited
+                            favoriteCount += if (isFavorited) 1 else -1
+                        },
                     contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
                     alpha = 1f,
                 )
+                // 收藏 — 已收藏时,Vector 600 标记叠加在图标中心(16×15dp)— Box 内 (14, 205.5)
+                //   收藏图标在 Box 内 (5, 196) size 34×34,中心 (22, 213)
+                //   叠加层 size 16×15,中心对齐图标中心 → top-left (14, 205.5)
+                if (isFavorited) {
+                    Image(
+                        painter = painterResource(R.drawable.vector_600),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 14.dp, y = 205.5.dp)
+                            .size(width = 16.dp, height = 15.dp),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+                }
                 // 收藏数(原 X=378, Y=674, 22×16)— Box 内 (11, 230)
-                Image(
-                    painter = painterResource(R.drawable.text_500),
-                    contentDescription = "收藏数",
+                //   Compose Text 驱动(初值 500,收藏后 501),数字变化零缩放
+                Text(
+                    text  = favoriteCount.toString(),
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                     modifier = Modifier
                         .offset(x = 11.dp, y = 230.dp)
                         .size(width = 22.dp, height = 16.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
                 )
                 // 分享图标(原 X=374, Y=713, 32×28)— Box 内 (7, 269)
                 Image(
