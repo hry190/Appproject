@@ -16,6 +16,8 @@ enum class AuthOperation {
     GuardianConsent,
     Register,
     ResetPassword,
+    RefreshAccount,
+    Logout,
 }
 
 data class AuthUiState(
@@ -30,17 +32,10 @@ data class AuthUiState(
 class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+    val currentUser: StateFlow<UserDto?> = repository.currentUser
 
     fun clearFeedback() {
         if (_uiState.value.errorMessage != null) _uiState.value = AuthUiState()
-    }
-
-    fun logout(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            repository.logout()
-            _uiState.value = AuthUiState()
-            onComplete()
-        }
     }
 
     fun bootstrap(onComplete: (Boolean) -> Unit) {
@@ -60,8 +55,14 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun login(phone: String, password: String, onSuccess: () -> Unit) {
-        launch(AuthOperation.Login, onSuccess) { repository.login(phone, password) }
+    fun login(
+        phone: String,
+        password: String,
+        onSuccess: (AuthResponseDto) -> Unit,
+    ) {
+        launchResult(AuthOperation.Login, onSuccess) {
+            repository.login(phone, password)
+        }
     }
 
     fun requestCode(
@@ -144,6 +145,30 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun refreshAccount() {
+        launch(AuthOperation.RefreshAccount, onSuccess = {}) {
+            repository.refreshCurrentUser()
+        }
+    }
+
+    fun logout(onComplete: () -> Unit) {
+        if (_uiState.value.operation != null) return
+        viewModelScope.launch {
+            _uiState.value = AuthUiState(operation = AuthOperation.Logout)
+            try {
+                repository.logoutCurrent()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                // Local credentials are cleared in a finally block by the repository.
+                // Leaving the device signed out takes precedence over a network error.
+            } finally {
+                _uiState.value = AuthUiState()
+                onComplete()
+            }
+        }
+    }
+
     private fun launch(
         operation: AuthOperation,
         onSuccess: () -> Unit,
@@ -156,6 +181,28 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 block()
                 _uiState.value = AuthUiState()
                 onSuccess()
+            } catch (error: AuthApiException) {
+                setError(error)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                setUnexpectedError()
+            }
+        }
+    }
+
+    private fun <T> launchResult(
+        operation: AuthOperation,
+        onSuccess: (T) -> Unit,
+        block: suspend () -> T,
+    ) {
+        if (_uiState.value.operation != null) return
+        viewModelScope.launch {
+            _uiState.value = AuthUiState(operation = operation)
+            try {
+                val result = block()
+                _uiState.value = AuthUiState()
+                onSuccess(result)
             } catch (error: AuthApiException) {
                 setError(error)
             } catch (error: CancellationException) {

@@ -66,13 +66,13 @@ data class PasswordResetRequest(
 
 data class PasswordResetResponse(val status: String)
 
+data class LogoutRequest(
+    @SerializedName("refresh_token") val refreshToken: String,
+)
+
 data class RefreshRequest(
     @SerializedName("refresh_token") val refreshToken: String,
     @SerializedName("device_name") val deviceName: String = "Android",
-)
-
-data class LogoutRequest(
-    @SerializedName("refresh_token") val refreshToken: String,
 )
 
 data class UserDto(
@@ -96,6 +96,74 @@ data class AuthResponseDto(
     val user: UserDto,
     val tokens: TokenPairDto,
     @SerializedName("next_action") val nextAction: String,
+)
+
+data class UserSettingsDto(
+    @SerializedName("message_enabled") val messageEnabled: Boolean,
+    @SerializedName("learning_reminder") val learningReminder: Boolean,
+    @SerializedName("work_updates") val workUpdates: Boolean,
+    @SerializedName("service_messages") val serviceMessages: Boolean,
+    @SerializedName("quiet_hours") val quietHours: Boolean,
+    @SerializedName("auto_save") val autoSave: Boolean,
+    @SerializedName("wifi_only") val wifiOnly: Boolean,
+    @SerializedName("haptic_feedback") val hapticFeedback: Boolean,
+    @SerializedName("large_text") val largeText: Boolean,
+    @SerializedName("sound_enabled") val soundEnabled: Boolean,
+    @SerializedName("music_volume") val musicVolume: Float,
+    @SerializedName("effect_volume") val effectVolume: Float,
+    @SerializedName("high_contrast") val highContrast: Boolean,
+    @SerializedName("read_aloud") val readAloud: Boolean,
+    @SerializedName("subtitles_enabled") val subtitlesEnabled: Boolean,
+    @SerializedName("personalization_enabled") val personalizationEnabled: Boolean,
+    @SerializedName("rest_reminder") val restReminder: Boolean,
+    @SerializedName("updated_at") val updatedAt: String,
+)
+
+data class UserSettingsPatchDto(
+    @SerializedName("message_enabled") val messageEnabled: Boolean? = null,
+    @SerializedName("learning_reminder") val learningReminder: Boolean? = null,
+    @SerializedName("work_updates") val workUpdates: Boolean? = null,
+    @SerializedName("service_messages") val serviceMessages: Boolean? = null,
+    @SerializedName("quiet_hours") val quietHours: Boolean? = null,
+    @SerializedName("auto_save") val autoSave: Boolean? = null,
+    @SerializedName("wifi_only") val wifiOnly: Boolean? = null,
+    @SerializedName("haptic_feedback") val hapticFeedback: Boolean? = null,
+    @SerializedName("large_text") val largeText: Boolean? = null,
+    @SerializedName("sound_enabled") val soundEnabled: Boolean? = null,
+    @SerializedName("music_volume") val musicVolume: Float? = null,
+    @SerializedName("effect_volume") val effectVolume: Float? = null,
+    @SerializedName("high_contrast") val highContrast: Boolean? = null,
+    @SerializedName("read_aloud") val readAloud: Boolean? = null,
+    @SerializedName("subtitles_enabled") val subtitlesEnabled: Boolean? = null,
+    @SerializedName("personalization_enabled") val personalizationEnabled: Boolean? = null,
+    @SerializedName("rest_reminder") val restReminder: Boolean? = null,
+)
+
+data class FeedbackRequestDto(
+    val category: String = "GENERAL",
+    val message: String,
+)
+
+data class FeedbackResponseDto(
+    val id: String,
+    val category: String,
+    val message: String,
+    val status: String,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class BlacklistEntryDto(
+    @SerializedName("user_id") val userId: String,
+    val nickname: String,
+    @SerializedName("blocked_at") val blockedAt: String,
+)
+
+data class SessionDto(
+    val id: String,
+    @SerializedName("device_name") val deviceName: String,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("last_seen_at") val lastSeenAt: String,
+    @SerializedName("expires_at") val expiresAt: String,
 )
 
 internal data class ApiErrorBody(

@@ -32,6 +32,8 @@ import com.jueqiao.jianghu.ui.screens.home.SettingsScreen
 import com.jueqiao.jianghu.ui.screens.login.LoginScreen
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
+import com.jueqiao.jianghu.ui.screens.settings.SettingsDetailScreen
+import com.jueqiao.jianghu.ui.screens.settings.SettingsPage
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
@@ -81,7 +83,7 @@ fun JianghuNavHost(
         composable(Routes.Login) {
             LoginScreen(
                 onLogin         = { phone, password ->
-                    authViewModel.login(phone, password) {
+                    authViewModel.login(phone, password) { _ ->
                         navController.navigate(Routes.Home) {
                             popUpTo(Routes.Login) { inclusive = true }
                         }
@@ -411,19 +413,26 @@ fun JianghuNavHost(
                 onOpenWorks        = { /* TODO: 作品页 */ },
                 onOpenProgress     = { /* TODO: 进度页/弹窗 */ },
                 onOpenTask         = { /* TODO: 任务页 */ },
-                onOpenAccount      = { /* TODO: 账号管理 */ },
-                onOpenMessage      = { /* TODO: 消息设置 */ },
-                onOpenGeneral      = { /* TODO: 通用设置 */ },
-                onOpenSound        = { /* TODO: 声音调节 */ },
-                onOpenBlacklist    = { /* TODO: 黑名单管理 */ },
+                onOpenAccount      = { navController.navigate(Routes.SettingsAccount) },
+                onOpenMessage      = { navController.navigate(Routes.SettingsMessage) },
+                onOpenGeneral      = { navController.navigate(Routes.SettingsGeneral) },
+                onOpenSound        = { navController.navigate(Routes.SettingsSound) },
+                onOpenBlacklist    = { navController.navigate(Routes.SettingsBlacklist) },
                 onOpenPrivacy      = { navController.navigate(Routes.Privacy) },
                 onOpenAgreement    = { navController.navigate(Routes.Agreement) },
-                onOpenCollection   = { /* TODO: 个人信息收集清单 */ },
-                onOpenSharing      = { /* TODO: 第三方信息共享清单 */ },
-                onOpenHelp         = { /* TODO: 帮助中心 */ },
-                onOpenAbout        = { /* TODO: 关于 */ },
-                onOpenDataRecovery = { /* TODO: 数据恢复 */ },
-                onSwitchAccount    = { /* TODO: 切换账号 */ },
+                onOpenCollection   = { navController.navigate(Routes.SettingsCollection) },
+                onOpenSharing      = { navController.navigate(Routes.SettingsSharing) },
+                onOpenHelp         = { navController.navigate(Routes.SettingsHelp) },
+                onOpenAbout        = { navController.navigate(Routes.SettingsAbout) },
+                onOpenDataRecovery = { navController.navigate(Routes.SettingsDataRecovery) },
+                onSwitchAccount    = {
+                    authViewModel.logout {
+                        navController.navigate(Routes.Login) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 onLogout           = {
                     authViewModel.logout {
                         navController.navigate(Routes.Login) {
@@ -434,6 +443,31 @@ fun JianghuNavHost(
                 },
             )
         }
+
+        // ===== 设置子页面(10 个)— 来自 origin/feature/authentication-foundation =====
+        composable(Routes.SettingsAccount) {
+            SettingsDetailScreen(
+                page              = SettingsPage.Account,
+                onBack            = { navController.popBackStack() },
+                onChangePassword  = { navController.navigate(Routes.Forgot) },
+            )
+        }
+        composable(Routes.SettingsMessage)     { SettingsDetailScreen(SettingsPage.Message, onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsGeneral)     { SettingsDetailScreen(SettingsPage.General, onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsSound)       { SettingsDetailScreen(SettingsPage.Sound,   onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsBlacklist)   { SettingsDetailScreen(SettingsPage.Blacklist, onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsCollection)  { SettingsDetailScreen(SettingsPage.Collection, onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsSharing)     { SettingsDetailScreen(SettingsPage.Sharing, onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsHelp)        { SettingsDetailScreen(SettingsPage.Help,    onBack = { navController.popBackStack() }) }
+        composable(Routes.SettingsAbout) {
+            SettingsDetailScreen(
+                page            = SettingsPage.About,
+                onBack          = { navController.popBackStack() },
+                onOpenPrivacy   = { navController.navigate(Routes.Privacy) },
+                onOpenAgreement = { navController.navigate(Routes.Agreement) },
+            )
+        }
+        composable(Routes.SettingsDataRecovery) { SettingsDetailScreen(SettingsPage.DataRecovery, onBack = { navController.popBackStack() }) }
 
         // 首页挑战页(Figma 设计) — 点击"任务"展开栏的"挑战"文本跳转
         composable(Routes.Challenge) {
