@@ -15,9 +15,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -66,6 +71,16 @@ fun YanwuchangVideoScreen(
     BackHandler(enabled = true) {
         onBack()
     }
+
+    // 点赞状态:false = 空心(原 img_yanwuchang_video_like),true = 实心(ic_like_filled)
+    // 计数:点赞后 +1(500 → 501)
+    var isLiked by remember { mutableStateOf(false) }
+    var likeCount by remember { mutableStateOf(500) }
+
+    // 收藏状态:false = 空心(img_yanwuchang_video_favorite),true = 实心(ic_favorite_filled)
+    // 计数:收藏后 +1(500 → 501)
+    var isFavorited by remember { mutableStateOf(false) }
+    var favoriteCount by remember { mutableStateOf(500) }
 
     Box(
         modifier = Modifier
@@ -290,20 +305,83 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 点赞
+        // 头像下方装饰条 — Rectangle 199 / 200 / 201 / 202
+        //   位置按 Figma 坐标左上角定位;尺寸与原 PNG 像素比例一致(已乘以 1dp/px)
+        //   填充 #EEC4B9,不透明度 100%,带旋转角度
+        // Rectangle 199: 位置 (368, 505), 3×7.98dp,旋转 -49.73°
         Image(
-            painter = painterResource(R.drawable.img_yanwuchang_video_like),
-            contentDescription = "点赞",
+            painter = painterResource(R.drawable.rectangle_199),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 368.dp, y = 505.dp)
+                .size(width = 3.dp, height = 7.98.dp)
+                .rotate(-49.73f),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // Rectangle 200: 位置 (376, 497), 3×7.98dp,旋转 -32.48°
+        Image(
+            painter = painterResource(R.drawable.rectangle_200),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 376.dp, y = 497.dp)
+                .size(width = 3.dp, height = 7.98.dp)
+                .rotate(-32.48f),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // Rectangle 201: 位置 (394, 497), 2.86×7.98dp,旋转 -35.96°
+        Image(
+            painter = painterResource(R.drawable.rectangle_201),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 394.dp, y = 497.dp)
+                .size(width = 2.86.dp, height = 7.98.dp)
+                .rotate(-35.96f),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // Rectangle 202: 位置 (401, 506), 2.86×7.98dp,旋转 -69.34°
+        Image(
+            painter = painterResource(R.drawable.rectangle_202),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 401.dp, y = 506.dp)
+                .size(width = 2.86.dp, height = 7.98.dp)
+                .rotate(-69.34f),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 点赞 — 点击切换空心/实心,数字同步 +1/-1
+        //   容器固定 30×28dp;空心和实心都使用 ColorFilter.tint(#81A084) 保持视觉一致
+        //   实心时整体 100% 不透明,填充色统一为 #81A084
+        Image(
+            painter = painterResource(
+                if (isLiked) R.drawable.ic_like_filled
+                else R.drawable.img_yanwuchang_video_like
+            ),
+            contentDescription = if (isLiked) "已点赞" else "点赞",
             modifier = Modifier
                 .offset(x = 374.dp, y = 500.dp)
-                .size(width = 30.dp, height = 28.dp),
+                .size(width = 30.dp, height = 28.dp)
+                .clickable {
+                    isLiked = !isLiked
+                    likeCount += if (isLiked) 1 else -1
+                },
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 点赞 — 数字 "500" (500.png, 22×16dp, #FFFFFF, 不透明度 100%)
+        // 点赞 — 数字 (500.png / 501.png, 22×16dp, #FFFFFF, 不透明度 100%)
         Image(
-            painter = painterResource(R.drawable.text_500),
+            painter = painterResource(
+                if (likeCount >= 501) R.drawable.text_501
+                else R.drawable.text_500
+            ),
             contentDescription = "点赞数",
             modifier = Modifier
                 .offset(x = 378.dp, y = 532.dp)
@@ -333,19 +411,32 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 收藏
+        // 收藏 — 点击切换空心/实心,数字同步 +1/-1
+        //   容器固定 34×34dp;空心和实心都使用 ColorFilter.tint(#81A084) 保持视觉一致
+        //   实心时整体 100% 不透明,填充色统一为 #81A084
         Image(
-            painter = painterResource(R.drawable.img_yanwuchang_video_favorite),
-            contentDescription = "收藏",
+            painter = painterResource(
+                if (isFavorited) R.drawable.ic_favorite_filled
+                else R.drawable.img_yanwuchang_video_favorite
+            ),
+            contentDescription = if (isFavorited) "已收藏" else "收藏",
             modifier = Modifier
                 .offset(x = 372.dp, y = 640.dp)
-                .size(width = 34.dp, height = 34.dp),
+                .size(width = 34.dp, height = 34.dp)
+                .clickable {
+                    isFavorited = !isFavorited
+                    favoriteCount += if (isFavorited) 1 else -1
+                },
             contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 收藏 — 数字 "500" (500.png, 22×16dp, #FFFFFF, 不透明度 100%)
+        // 收藏 — 数字 (500.png / 501.png, 22×16dp, #FFFFFF, 不透明度 100%)
         Image(
-            painter = painterResource(R.drawable.text_500),
+            painter = painterResource(
+                if (favoriteCount >= 501) R.drawable.text_501
+                else R.drawable.text_500
+            ),
             contentDescription = "收藏数",
             modifier = Modifier
                 .offset(x = 378.dp, y = 674.dp)
