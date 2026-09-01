@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -279,6 +280,57 @@ fun YanwuchangVideoScreen(
                     colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
                     alpha = 1f,
                 )
+                // 点赞 — 已点赞(实心)时,在图标周围显示 4 根装饰线
+                //   容器 6×7.98dp,corner radius 3(原 PNG 预渲染)
+                //   填充 #EEC4B9,不透明度 100%,各自带旋转角度
+                //   Box 相对坐标(由 cai 绝对坐标 (368,505)/(376,497)/(394,497)/(401,506)
+                //     减去图标中心 (389, 514) + 我们的图标中心 (22, 70))
+                if (isLiked) {
+                    Image(
+                        painter = painterResource(R.drawable.rectangle_199),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 1.dp, y = 61.dp)
+                            .size(width = 6.dp, height = 7.98.dp)
+                            .rotate(-49.73f),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.rectangle_200),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 9.dp, y = 53.dp)
+                            .size(width = 6.dp, height = 7.98.dp)
+                            .rotate(-32.48f),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.rectangle_201),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 27.dp, y = 53.dp)
+                            .size(width = 6.dp, height = 7.98.dp)
+                            .rotate(-35.96f),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.rectangle_202),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(x = 34.dp, y = 62.dp)
+                            .size(width = 6.dp, height = 7.98.dp)
+                            .rotate(-69.34f),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                        alpha = 1f,
+                    )
+                }
                 // 点赞数(原 X=378, Y=532, 22×16)— Box 内 (11, 88)
                 //   Compose Text 驱动(初值 500,点赞后 501),数字变化零缩放
                 Text(
