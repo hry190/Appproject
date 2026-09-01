@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,12 +32,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.screens.settings.CreationDraftStore
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -58,6 +61,11 @@ fun ShengtuScreen(
 
     // 输入框焦点管理
     val rect227FocusRequester = remember { FocusRequester() }
+    val context = LocalContext.current
+    val draftStore = remember(context) { CreationDraftStore(context) }
+    var rect227Text by rememberSaveable {
+        mutableStateOf(draftStore.read(CreationDraftStore.Keys.ImagePrompt))
+    }
 
     Box(
         modifier = Modifier
@@ -236,8 +244,6 @@ fun ShengtuScreen(
                 // 不强制 size:让 Text 自己按文字宽度展开,避免被裁
             )
 
-            // 局部状态:输入框文字
-            var rect227Text by remember { mutableStateOf("") }
             // 别名,FocusRequester 在外层声明了
             val focusRequester = rect227FocusRequester
 
@@ -289,7 +295,10 @@ fun ShengtuScreen(
                 // 顶层:BasicTextField 接管输入 + 弹键盘
                 BasicTextField(
                     value = rect227Text,
-                    onValueChange = { rect227Text = it },
+                    onValueChange = {
+                        rect227Text = it
+                        draftStore.saveIfEnabled(CreationDraftStore.Keys.ImagePrompt, it)
+                    },
                     singleLine = true,
                     cursorBrush = SolidColor(Color.Black),
                     textStyle = TextStyle(
@@ -309,7 +318,10 @@ fun ShengtuScreen(
                     .align(Alignment.Center)
                     .offset(y = 393.dp)
                     .size(width = 372.dp, height = 55.dp)
-                    .clickable(onClick = onCreateWork),
+                    .clickable {
+                        draftStore.clear(CreationDraftStore.Keys.ImagePrompt)
+                        onCreateWork()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Image(

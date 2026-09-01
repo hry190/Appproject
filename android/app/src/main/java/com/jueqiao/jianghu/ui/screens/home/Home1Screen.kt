@@ -14,8 +14,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +37,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.EdgeToEdgeScreen
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.components.HomeQuickActions
+import com.jueqiao.jianghu.ui.components.HomeQuickActionsLayout
 import com.jueqiao.jianghu.ui.theme.YaHei
+
+internal object HomePandaLayout {
+    val X = 107.dp
+    val Y = 478.dp
+    val Width = 200.dp
+    val Height = 256.dp
+}
 
 /**
  * 首页1 — 点击首页后跳转的次页。
@@ -59,50 +69,32 @@ fun Home1Screen(
     var dailyOpen by remember { mutableStateOf(false) }
     var dailyStep by remember { androidx.compose.runtime.mutableIntStateOf(1) }
     var taskExpanded by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val statusBarTop = with(density) {
+        WindowInsets.statusBars.getTop(density).toDp()
+    }
 
     EdgeToEdgeScreen(
         background = {
-            Image(
-                painter = painterResource(R.drawable.img_home_bg),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentScale = ContentScale.Crop,
+            HomeWindBackground(
+                modifier = Modifier.fillMaxSize(),
             )
         },
     ) {
-        // 顶部右侧 4 个快捷图标(从左到右:作品/进度/任务/设置)
-        Row(
+        // 与三个引导状态共用同一个快捷入口组件；抵消父容器已经添加的状态栏顶部内边距。
+        HomeQuickActions(
+            taskExpanded = taskExpanded,
+            onOpenWorks = { /* TODO */ },
+            onOpenProgress = { progressOpen = true },
+            onToggleTask = { taskExpanded = !taskExpanded },
+            onOpenSettings = onOpenSettings,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = (-12).dp, y = 71.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            QuickActionItem(
-                iconRes = com.jueqiao.jianghu.R.drawable.img_icon_works,
-                label = "作品",
-                onClick = { /* TODO */ },
-            )
-            QuickActionItem(
-                iconRes = com.jueqiao.jianghu.R.drawable.img_icon_progress,
-                label = "进度",
-                onClick = { progressOpen = true },
-            )
-            // 任务(图标右侧带箭头,根据 taskExpanded 状态切换方向)
-            QuickActionItemWithArrow(
-                iconRes = com.jueqiao.jianghu.R.drawable.img_icon_task,
-                label = "任务",
-                arrowDown = taskExpanded,
-                onClick = { taskExpanded = !taskExpanded },
-                showDot = true,  // 始终显示红点
-            )
-            QuickActionItem(
-                iconRes = com.jueqiao.jianghu.R.drawable.img_icon_settings,
-                label = "设置",
-                onClick = onOpenSettings,
-            )
-        }
+                .offset(
+                    x = HomeQuickActionsLayout.EndOffset,
+                    y = HomeQuickActionsLayout.TopOffset - statusBarTop,
+                ),
+        )
 
         // 任务展开栏(Rectangle 187.png 背景 + "挑战"选项)
         if (taskExpanded) {
@@ -144,23 +136,27 @@ fun Home1Screen(
             }
         }
 
-        // 熊猫(点击 → 重置 Home 对话流程并跳到 Routes.Home)
+        // 用户提供的无行囊叉腰熊猫；行囊继续使用下方独立组件。
         Box(
             modifier = Modifier
-                .offset(x = 107.dp, y = 473.dp)
-                .size(width = 200.dp, height = 276.dp)
-                .clickable(onClick = onPandaClick),
+                .offset(x = HomePandaLayout.X, y = HomePandaLayout.Y)
+                .size(width = HomePandaLayout.Width, height = HomePandaLayout.Height),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_home1_panda),
-                contentDescription = "点击回到首页对话",
+                painter = painterResource(R.drawable.img_home1_panda_waist),
+                contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
+            Box(
+                modifier = Modifier
+                    .offset(x = 25.dp)
+                    .size(width = 150.dp, height = HomePandaLayout.Height)
+                    .clickable(onClick = onPandaClick),
+            )
         }
 
-        // 装饰横幅按钮:贴图 + 竖排文字(点击区为 Box)
-        // 行囊 (1.png)
+        // 行囊与另外三个入口复用相同组件、宽高和文字样式。
         DecorButton(
             imageRes = R.drawable.img_home1_btn1,
             text = "行囊",
@@ -168,6 +164,8 @@ fun Home1Screen(
             width = 55.dp, height = 90.dp,
             onClick = onOpenLuggage,
         )
+
+        // 其余装饰横幅按钮:贴图 + 竖排文字(点击区为 Box)
 
         // 修炼 (2.png)
         DecorButton(
@@ -281,66 +279,6 @@ private fun DecorButton(
                     ),
                 )
             }
-        }
-    }
-}
-
-/**
- * 带箭头的快捷图标项(类似 QuickActionItem,但 label 右侧带黑色箭头)
- * @param arrowDown false=右箭头 chevron_right,true=下箭头 chevron_down
- * @param showDot true=显示右上角红点
- */
-@Composable
-private fun QuickActionItemWithArrow(
-    iconRes: Int,
-    label: String,
-    arrowDown: Boolean,
-    onClick: () -> Unit,
-    showDot: Boolean = false,
-) {
-    Column(
-        modifier = Modifier.clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(modifier = Modifier.size(22.dp)) {
-            Image(
-                painter = painterResource(iconRes),
-                contentDescription = label,
-                modifier = Modifier.size(22.dp),
-            )
-            // 右上角红点(始终显示,直到用户点击任务)
-            if (showDot) {
-                Image(
-                    painter = painterResource(com.jueqiao.jianghu.R.drawable.ic_dot_red),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(8.dp),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = label,
-                color = Color.Black,
-                style = TextStyle(
-                    fontFamily = YaHei,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 9.sp,
-                ),
-            )
-            Image(
-                painter = painterResource(
-                    if (arrowDown) R.drawable.ic_chevron_down
-                    else R.drawable.ic_chevron_right
-                ),
-                contentDescription = if (arrowDown) "收起" else "展开",
-                modifier = Modifier.size(12.dp),
-            )
         }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,12 +32,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.screens.settings.CreationDraftStore
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -56,6 +59,11 @@ fun YaosuScreen(
 
     // 输入框焦点管理
     val rect227FocusRequester = remember { FocusRequester() }
+    val context = LocalContext.current
+    val draftStore = remember(context) { CreationDraftStore(context) }
+    var rect227Text by rememberSaveable {
+        mutableStateOf(draftStore.read(CreationDraftStore.Keys.ElementPrompt))
+    }
 
     Box(
         modifier = Modifier
@@ -206,8 +214,6 @@ fun YaosuScreen(
                 )
             }
 
-            // 局部状态:输入框文字
-            var rect227Text by remember { mutableStateOf("") }
             val focusRequester = rect227FocusRequester
 
             // Rectangle 227.png(X=38, Y=708, W=256, H=20)— 真输入框
@@ -252,7 +258,10 @@ fun YaosuScreen(
                 }
                 BasicTextField(
                     value = rect227Text,
-                    onValueChange = { rect227Text = it },
+                    onValueChange = {
+                        rect227Text = it
+                        draftStore.saveIfEnabled(CreationDraftStore.Keys.ElementPrompt, it)
+                    },
                     singleLine = true,
                     cursorBrush = SolidColor(Color.Black),
                     textStyle = TextStyle(
@@ -273,7 +282,10 @@ fun YaosuScreen(
                     .align(Alignment.Center)
                     .offset(y = 393.dp)
                     .size(width = 372.dp, height = 55.dp)
-                    .clickable(onClick = onCreateWork),
+                    .clickable {
+                        draftStore.clear(CreationDraftStore.Keys.ElementPrompt)
+                        onCreateWork()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Image(

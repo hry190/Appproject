@@ -2,6 +2,11 @@ package com.jueqiao.jianghu.auth
 
 import com.jueqiao.jianghu.BuildConfig
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class AuthRepository(
     private val api: AuthApi,
@@ -9,6 +14,9 @@ class AuthRepository(
 ) {
     @Volatile
     private var accessToken: String? = null
+    private val refreshMutex = Mutex()
+    private val _currentUser = MutableStateFlow<UserDto?>(null)
+    val currentUser: StateFlow<UserDto?> = _currentUser.asStateFlow()
 
     fun hasStoredSession(): Boolean = tokenStore.readRefreshToken() != null
 
@@ -16,6 +24,7 @@ class AuthRepository(
         val refreshToken = tokenStore.readRefreshToken() ?: return false
         return try {
             saveTokens(api.refresh(refreshToken))
+            _currentUser.value = api.currentUser(requireAccessToken())
             true
         } catch (error: AuthApiException) {
             if (error.statusCode == 401) clearSession()
@@ -24,7 +33,10 @@ class AuthRepository(
     }
 
     suspend fun login(phone: String, password: String): AuthResponseDto {
-        return api.login(phone, password).also { saveTokens(it.tokens) }
+        return api.login(phone, password).also {
+            saveTokens(it.tokens)
+            _currentUser.value = it.user
+        }
     }
 
     suspend fun register(
@@ -47,6 +59,7 @@ class AuthRepository(
             )
         )
         saveTokens(response.tokens)
+        _currentUser.value = response.user
         return response
     }
 
@@ -81,19 +94,88 @@ class AuthRepository(
         return response
     }
 
-    fun clearSession() {
-        accessToken = null
-        tokenStore.clear()
+    suspend fun refreshCurrentUser(): UserDto = authorized { token ->
+        api.currentUser(token).also { _currentUser.value = it }
     }
 
-    suspend fun logout() {
-        val refreshToken = tokenStore.readRefreshToken() ?: return
-        runCatching { api.logout(refreshToken) }
-        clearSession()
+    suspend fun getSettings(): UserSettingsDto = authorized(api::getSettings)
+
+    suspend fun updateSettings(patch: UserSettingsPatchDto): UserSettingsDto =
+        authorized { token -> api.updateSettings(token, patch) }
+
+    suspend fun submitFeedback(message: String): FeedbackResponseDto =
+        authorized { token -> api.submitFeedback(token, message) }
+
+    suspend fun getBlacklist(): List<BlacklistEntryDto> =
+        authorized(api::getBlacklist)
+
+    suspend fun removeFromBlacklist(userId: String) {
+        authorized<Unit> { token -> api.removeFromBlacklist(token, userId) }
+    }
+
+    suspend fun getSessions(): List<SessionDto> = authorized(api::getSessions)
+
+    suspend fun logoutCurrent() {
+        val refreshToken = tokenStore.readRefreshToken()
+        try {
+            if (refreshToken != null) api.logout(refreshToken)
+        } finally {
+            clearSession()
+        }
+    }
+
+    suspend fun logoutAll() {
+        try {
+            authorized<Unit>(api::logoutAll)
+        } finally {
+            clearSession()
+        }
+    }
+
+    fun clearSession() {
+        accessToken = null
+        _currentUser.value = null
+        tokenStore.clear()
     }
 
     private fun saveTokens(tokens: TokenPairDto) {
         accessToken = tokens.accessToken
         tokenStore.saveRefreshToken(tokens.refreshToken)
+    }
+
+    private fun requireAccessToken(): String = accessToken ?: throw AuthApiException(
+        statusCode = 401,
+        code = "AUTHENTICATION_REQUIRED",
+        message = "请先登录",
+    )
+
+    private suspend fun <T> authorized(block: suspend (String) -> T): T {
+        var token = accessToken
+        if (token == null) {
+            token = refreshAccessToken()
+        }
+        return try {
+            block(token)
+        } catch (error: AuthApiException) {
+            if (error.statusCode != 401) throw error
+            if (accessToken == token) accessToken = null
+            block(refreshAccessToken())
+        }
+    }
+
+    private suspend fun refreshAccessToken(): String = refreshMutex.withLock {
+        accessToken?.let { return@withLock it }
+        val refreshToken = tokenStore.readRefreshToken() ?: throw AuthApiException(
+            statusCode = 401,
+            code = "AUTHENTICATION_REQUIRED",
+            message = "请先登录",
+        )
+        try {
+            saveTokens(api.refresh(refreshToken))
+            requireAccessToken()
+        } catch (error: AuthApiException) {
+            if (error.statusCode == 401) clearSession()
+            throw error
+        }
     }
 }

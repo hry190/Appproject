@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.security import utcnow
@@ -39,6 +39,37 @@ class ConsentSubject(str, enum.Enum):
     GUARDIAN = "GUARDIAN"
 
 
+class ContentLevel(str, enum.Enum):
+    CHILD = "CHILD"
+    TEEN = "TEEN"
+    STANDARD = "STANDARD"
+
+
+class FeedbackCategory(str, enum.Enum):
+    GENERAL = "GENERAL"
+    BUG = "BUG"
+    CONTENT_SAFETY = "CONTENT_SAFETY"
+    ACCOUNT = "ACCOUNT"
+
+
+class TicketStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    PROCESSING = "PROCESSING"
+    RESOLVED = "RESOLVED"
+
+
+class DataRequestType(str, enum.Enum):
+    ACCOUNT_DELETION = "ACCOUNT_DELETION"
+    CONSENT_WITHDRAWAL = "CONSENT_WITHDRAWAL"
+
+
+class DataRequestStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    REJECTED = "REJECTED"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -67,6 +98,12 @@ class User(Base):
     )
     sessions: Mapped[list[AuthSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+    preferences: Mapped[UserPreference | None] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
+    guardian_controls: Mapped[GuardianControl | None] = relationship(
+        back_populates="child", cascade="all, delete-orphan", uselist=False
     )
 
 
@@ -149,6 +186,119 @@ class AuthAuditEvent(Base):
     result: Mapped[str] = mapped_column(String(20), nullable=False)
     request_id: Mapped[str] = mapped_column(String(64), nullable=False)
     network_key: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class UserPreference(Base):
+    __tablename__ = "user_preferences"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    message_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    learning_reminder: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    work_updates: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    service_messages: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    quiet_hours: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    auto_save: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    wifi_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    haptic_feedback: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    large_text: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sound_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    music_volume: Mapped[float] = mapped_column(Float, default=0.65, nullable=False)
+    effect_volume: Mapped[float] = mapped_column(Float, default=0.8, nullable=False)
+
+    # Reserved for the settings entries that will be added by the frontend later.
+    high_contrast: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    read_aloud: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    subtitles_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    personalization_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    rest_reminder: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+    user: Mapped[User] = relationship(back_populates="preferences")
+
+
+class GuardianControl(Base):
+    __tablename__ = "guardian_controls"
+
+    child_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    daily_limit_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    creation_allowed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    content_level: Mapped[ContentLevel] = mapped_column(
+        Enum(ContentLevel, native_enum=False, length=16),
+        default=ContentLevel.CHILD,
+        nullable=False,
+    )
+    minor_mode: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+    child: Mapped[User] = relationship(back_populates="guardian_controls")
+
+
+class FeedbackTicket(Base):
+    __tablename__ = "feedback_tickets"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    category: Mapped[FeedbackCategory] = mapped_column(
+        Enum(FeedbackCategory, native_enum=False, length=24), nullable=False
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[TicketStatus] = mapped_column(
+        Enum(TicketStatus, native_enum=False, length=16),
+        default=TicketStatus.OPEN,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class DataRightsRequest(Base):
+    __tablename__ = "data_rights_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    request_type: Mapped[DataRequestType] = mapped_column(
+        Enum(DataRequestType, native_enum=False, length=24), nullable=False
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[DataRequestStatus] = mapped_column(
+        Enum(DataRequestStatus, native_enum=False, length=16),
+        default=DataRequestStatus.PENDING,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class BlacklistEntry(Base):
+    __tablename__ = "blacklist_entries"
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "blocked_user_id", name="uq_blacklist_owner_blocked"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    blocked_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

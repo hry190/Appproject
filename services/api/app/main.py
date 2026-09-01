@@ -6,8 +6,11 @@ from redis import Redis
 from sqlalchemy.engine import Engine
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.api.routes.account import router as account_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.health import router as health_router
+from app.api.routes.settings import router as settings_router
+from app.api.routes.support import router as support_router
 from app.core.config import Settings, get_settings
 from app.core.errors import ApiError, api_error_handler, validation_error_handler
 from app.core.middleware import RequestContextMiddleware, RequestSizeLimitMiddleware
@@ -73,6 +76,9 @@ def create_app(
 
     application.include_router(health_router)
     application.include_router(auth_router)
+    application.include_router(settings_router)
+    application.include_router(support_router)
+    application.include_router(account_router)
 
     application.add_middleware(
         RequestSizeLimitMiddleware, max_bytes=resolved.max_request_bytes

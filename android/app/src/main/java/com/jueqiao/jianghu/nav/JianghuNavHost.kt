@@ -1,8 +1,18 @@
 package com.jueqiao.jianghu.nav
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,7 +36,14 @@ import com.jueqiao.jianghu.ui.screens.home.Home1Screen
 import com.jueqiao.jianghu.ui.screens.home.HomeScreen
 import com.jueqiao.jianghu.ui.screens.home.LuggageScreen
 import com.jueqiao.jianghu.ui.screens.home.SettingsScreen
+import com.jueqiao.jianghu.ui.screens.settings.SettingsDetailScreen
+import com.jueqiao.jianghu.ui.screens.settings.SettingsPage
+import com.jueqiao.jianghu.ui.screens.login.LoginComponentsFadeMillis
+import com.jueqiao.jianghu.ui.screens.login.LoginMistTransition
 import com.jueqiao.jianghu.ui.screens.login.LoginScreen
+import com.jueqiao.jianghu.ui.screens.login.MistCoveredHoldMillis
+import com.jueqiao.jianghu.ui.screens.login.MistDisperseMillis
+import com.jueqiao.jianghu.ui.screens.login.MistGatherMillis
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
@@ -41,6 +58,8 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun JianghuNavHost(
@@ -52,7 +71,54 @@ fun JianghuNavHost(
     }
     val authViewModel: AuthViewModel = viewModel(factory = authFactory)
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val transitionScope = rememberCoroutineScope()
+    val loginContentAlpha = remember { Animatable(1f) }
+    val mistPhase = remember { Animatable(0f) }
+    var loginTransitionRunning by remember { mutableStateOf(false) }
 
+    val startLoginTransition: (String) -> Unit = { destination ->
+        if (!loginTransitionRunning) {
+            loginTransitionRunning = true
+            transitionScope.launch {
+                loginContentAlpha.snapTo(1f)
+                mistPhase.snapTo(0f)
+                loginContentAlpha.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(
+                        durationMillis = LoginComponentsFadeMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+                delay(80)
+                mistPhase.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = MistGatherMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+                delay(MistCoveredHoldMillis)
+
+                navController.navigate(destination) {
+                    popUpTo(Routes.Login) { inclusive = true }
+                    launchSingleTop = true
+                }
+                delay(50)
+                mistPhase.animateTo(
+                    targetValue = 2f,
+                    animationSpec = tween(
+                        durationMillis = MistDisperseMillis,
+                        easing = LinearOutSlowInEasing,
+                    ),
+                )
+                mistPhase.snapTo(0f)
+                loginContentAlpha.snapTo(1f)
+                loginTransitionRunning = false
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     NavHost(
         navController    = navController,
         startDestination = Routes.Splash,
@@ -62,7 +128,7 @@ fun JianghuNavHost(
                 onTap = {
                     authViewModel.bootstrap { authenticated ->
                         navController.navigate(
-                            if (authenticated) Routes.Home else Routes.Login
+                            if (authenticated) Routes.Home1 else Routes.Login
                         ) {
                             popUpTo(Routes.Splash) { inclusive = true }
                         }
@@ -74,10 +140,13 @@ fun JianghuNavHost(
         composable(Routes.Login) {
             LoginScreen(
                 onLogin         = { phone, password ->
-                    authViewModel.login(phone, password) {
-                        navController.navigate(Routes.Home) {
-                            popUpTo(Routes.Login) { inclusive = true }
+                    authViewModel.login(phone, password) { response ->
+                        val destination = if (response.nextAction == "SHOW_GUIDE") {
+                            Routes.Home
+                        } else {
+                            Routes.Home1
                         }
+                        startLoginTransition(destination)
                     }
                 },
                 onOpenForgot    = {
@@ -95,6 +164,8 @@ fun JianghuNavHost(
                     navController.popBackStack()
                 },
                 isSubmitting    = authState.operation == AuthOperation.Login,
+                isTransitioning = loginTransitionRunning,
+                contentAlpha    = loginContentAlpha.value,
                 errorMessage    = authState.errorMessage,
                 onClearError    = authViewModel::clearFeedback,
             )
@@ -189,7 +260,6 @@ fun JianghuNavHost(
         composable(Routes.Home) {
             HomeScreen(
                 onOpenHome1   = { navController.navigate(Routes.Home1) },
-                onOpenLuggage = { navController.navigate(Routes.Luggage) },
             )
         }
 
@@ -369,31 +439,78 @@ fun JianghuNavHost(
         composable(Routes.Settings) {
             SettingsScreen(
                 onBack             = { navController.popBackStack() },
-                onOpenWorks        = { /* TODO: 作品页 */ },
-                onOpenProgress     = { /* TODO: 进度页/弹窗 */ },
-                onOpenTask         = { /* TODO: 任务页 */ },
-                onOpenAccount      = { /* TODO: 账号管理 */ },
-                onOpenMessage      = { /* TODO: 消息设置 */ },
-                onOpenGeneral      = { /* TODO: 通用设置 */ },
-                onOpenSound        = { /* TODO: 声音调节 */ },
-                onOpenBlacklist    = { /* TODO: 黑名单管理 */ },
+                onOpenWorks        = { navController.navigate(Routes.Zaowu) },
+                onOpenTask         = { navController.navigate(Routes.Challenge) },
+                onOpenLuggage      = { navController.navigate(Routes.Luggage) },
+                onOpenAccount      = { navController.navigate(Routes.SettingsAccount) },
+                onOpenMessage      = { navController.navigate(Routes.SettingsMessage) },
+                onOpenGeneral      = { navController.navigate(Routes.SettingsGeneral) },
+                onOpenSound        = { navController.navigate(Routes.SettingsSound) },
+                onOpenBlacklist    = { navController.navigate(Routes.SettingsBlacklist) },
                 onOpenPrivacy      = { navController.navigate(Routes.Privacy) },
                 onOpenAgreement    = { navController.navigate(Routes.Agreement) },
-                onOpenCollection   = { /* TODO: 个人信息收集清单 */ },
-                onOpenSharing      = { /* TODO: 第三方信息共享清单 */ },
-                onOpenHelp         = { /* TODO: 帮助中心 */ },
-                onOpenAbout        = { /* TODO: 关于 */ },
-                onOpenDataRecovery = { /* TODO: 数据恢复 */ },
-                onSwitchAccount    = { /* TODO: 切换账号 */ },
+                onOpenCollection   = { navController.navigate(Routes.SettingsCollection) },
+                onOpenSharing      = { navController.navigate(Routes.SettingsSharing) },
+                onOpenHelp         = { navController.navigate(Routes.SettingsHelp) },
+                onOpenAbout        = { navController.navigate(Routes.SettingsAbout) },
+                onOpenDataRecovery = { navController.navigate(Routes.SettingsDataRecovery) },
+                onSwitchAccount    = {
+                    authViewModel.logout {
+                        navController.navigate(Routes.Login) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
                 onLogout           = {
                     authViewModel.logout {
                         navController.navigate(Routes.Login) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
                 },
             )
+        }
+
+        composable(Routes.SettingsAccount) {
+            SettingsDetailScreen(
+                page = SettingsPage.Account,
+                onBack = { navController.popBackStack() },
+                onChangePassword = { navController.navigate(Routes.Forgot) },
+            )
+        }
+        composable(Routes.SettingsMessage) {
+            SettingsDetailScreen(SettingsPage.Message, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsGeneral) {
+            SettingsDetailScreen(SettingsPage.General, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsSound) {
+            SettingsDetailScreen(SettingsPage.Sound, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsBlacklist) {
+            SettingsDetailScreen(SettingsPage.Blacklist, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsCollection) {
+            SettingsDetailScreen(SettingsPage.Collection, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsSharing) {
+            SettingsDetailScreen(SettingsPage.Sharing, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsHelp) {
+            SettingsDetailScreen(SettingsPage.Help, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.SettingsAbout) {
+            SettingsDetailScreen(
+                page = SettingsPage.About,
+                onBack = { navController.popBackStack() },
+                onOpenPrivacy = { navController.navigate(Routes.Privacy) },
+                onOpenAgreement = { navController.navigate(Routes.Agreement) },
+            )
+        }
+        composable(Routes.SettingsDataRecovery) {
+            SettingsDetailScreen(SettingsPage.DataRecovery, onBack = { navController.popBackStack() })
         }
 
         // 首页挑战页(Figma 设计) — 点击"任务"展开栏的"挑战"文本跳转
@@ -404,5 +521,10 @@ fun JianghuNavHost(
                 onOpenProgress = { /* TODO:进度弹窗或页面 */ },
             )
         }
+    }
+        LoginMistTransition(
+            phase = mistPhase.value,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }

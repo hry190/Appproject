@@ -1,6 +1,6 @@
 # 机巧江湖 API
 
-第一阶段实现手机号验证码、注册、密码登录、监护人同意、令牌刷新、退出登录和密码重置。
+第一阶段实现手机号验证码、注册、密码登录、监护人同意、令牌刷新、退出登录和密码重置；设置模块已补充偏好同步、黑名单、反馈、登录设备、家长控制与数据权利接口。
 
 ## 本地运行
 
@@ -49,6 +49,14 @@
 - `POST /v1/auth/logout`
 - `POST /v1/auth/logout-all`
 - `GET /v1/auth/me`
+- `GET|PATCH /v1/settings/preferences`
+- `GET|PATCH /v1/settings/guardian-controls`
+- `GET|POST|DELETE /v1/settings/blacklist`
+- `POST /v1/support/feedback`
+- `GET|DELETE /v1/account/sessions`
+- `GET /v1/account/export`
+- `GET|POST /v1/account/data-rights-requests`
 
 前端字段、成功响应、错误码和未满 14 周岁注册分支见
-[`docs/auth-integration.md`](docs/auth-integration.md)。
+[`docs/auth-integration.md`](docs/auth-integration.md)；设置页当前接入状态、字段和后续页面接入方式见
+[`docs/settings-integration.md`](docs/settings-integration.md)。

@@ -12,6 +12,7 @@ from app.core.security import PasswordService, PhoneProtector, TokenService, Ver
 from app.db import get_db
 from app.models import User, UserStatus
 from app.services.auth import AuthService
+from app.services.user_settings import UserSettingsService
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -49,3 +50,13 @@ def get_current_user(
     ):
         raise ApiError(401, "INVALID_ACCESS_TOKEN", "登录状态无效或已过期")
     return user
+
+
+def get_user_settings_service(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Iterator[UserSettingsService]:
+    yield UserSettingsService(
+        db=db,
+        phone_protector=request.app.state.phone_protector,
+    )
