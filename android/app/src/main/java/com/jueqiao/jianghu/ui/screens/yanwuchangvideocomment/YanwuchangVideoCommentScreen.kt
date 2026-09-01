@@ -83,6 +83,7 @@ import kotlin.math.PI
 @Composable
 fun YanwuchangVideoCommentScreen(
     onBack: () -> Unit = {},
+    onOpenExpanded: () -> Unit = {},
 ) {
     // 评论数据 — 待接入后端接口
     var comments by remember { mutableStateOf<List<CommentItem>>(emptyList()) }
@@ -238,11 +239,12 @@ fun YanwuchangVideoCommentScreen(
                     }
 
                     // 放大缩小.png(X=54, Y=419, 17×17dp)— 可点击(触摸区域扩大)
+                    //   点击 → 触发 onOpenExpanded → 跳到全屏展开页(评论框向上扩展动画)
                     Box(
                         modifier = Modifier
                             .offset(x = 54.dp - (44.dp - 17.dp) / 2, y = 419.dp - (44.dp - 17.dp) / 2)
                             .size(width = 44.dp, height = 44.dp)
-                            .clickable { /* TODO: 视频缩略图展开 / 收起 */ },
+                            .clickable { onOpenExpanded() },
                         contentAlignment = Alignment.Center,
                     ) {
                         Image(
@@ -291,36 +293,38 @@ private fun CommentRow(
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
-        // 右侧:爱心 + 点赞数(垂直居中)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 12.dp),
-        ) {
-            Image(
-                painter = painterResource(
-                    if (comment.isLiked) R.drawable.ic_like_filled
-                    else R.drawable.ic_like_outline
-                ),
-                contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
-                modifier = Modifier
-                    .size(width = 18.dp, height = 18.dp)
-                    .clickable(onClick = onLikeToggle),
-                contentScale = ContentScale.Fit,
-                // 已点赞时填充 #6D8470;未态保留原色(灰)
-                colorFilter = if (comment.isLiked) {
-                    ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn)
-                } else {
-                    ColorFilter.tint(Color(0xFF999999), BlendMode.SrcIn)
-                },
-                alpha = 1f,
-            )
-            Text(
-                text  = comment.likeCount.toString(),
-                color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
-                style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
+        // 右侧:Vector.png 点赞图标(13×11dp)
+            //   - 未点赞:Vector.png 原色(无 ColorFilter)
+            //   - 已点赞:ColorFilter.tint + BlendMode.SrcIn 把图标**已有像素**染成 #6D8470
+            //     填充严格限制在图标自身轮廓内,不超出边线
+            //   点击翻转 isLiked 同步数字 ±1
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 12.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment_like_vector),
+                    contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
+                    modifier = Modifier
+                        .size(width = 13.dp, height = 11.dp)
+                        .clickable(onClick = onLikeToggle),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = if (comment.isLiked) {
+                        // 已点赞:仅染色图标自身的描边像素,不会扩展到矩形外
+                        ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn)
+                    } else {
+                        // 未点赞:原图无 tint
+                        null
+                    },
+                    alpha = 1f,
+                )
+                Text(
+                    text  = comment.likeCount.toString(),
+                    color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            }
     }
 }
 
