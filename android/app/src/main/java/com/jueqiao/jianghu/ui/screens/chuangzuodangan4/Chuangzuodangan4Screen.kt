@@ -205,27 +205,21 @@ for (i in 0 until chuangyuanN) {
 }
 
 // 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
-// 位置 7 槽位(AI 共享)+ 旋转 5 槽位(《/熊、AI、画/》 各共享)
-// 90° 弧 6 间隔均分(位置),旋转 55° 4 间隔均分
+// 位置 8 槽位(每字独立) + 旋转 5 槽位(《/熊、AI、画/》 各共享一个旋转)
+// 90° 弧 7 间隔均分(位置),旋转 55° 4 间隔均分
 val xuanzeText = "《熊猫AI绘画》"
 val xuanzeN = xuanzeText.length
-// 位置映射(8 字 → 7 槽位):AI 共享一个位置,其它字独立
-//   i=0 《 → pos 0
-//   i=1 熊 → pos 1(独立位置)
-//   i=2 猫 → pos 2
-//   i=3 A  → pos 3(同 I,AI 整体占一格)
-//   i=4 I  → pos 3
-//   i=5 绘 → pos 4
-//   i=6 画 → pos 5
-//   i=7 》→ pos 6
-val xuanzePosSlots = intArrayOf(0, 1, 2, 3, 3, 4, 5, 6)
-val xuanzePosN = 7
+// 位置映射(8 字 → 8 槽位):每字独立,AI A 和 I 各占一格
+//   i=0 《→ 0, i=1 熊 → 1, i=2 猫 → 2, i=3 A → 3,
+//   i=4 I → 4, i=5 绘 → 5, i=6 画 → 6, i=7 》→ 7
+val xuanzePosSlots = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7)
+val xuanzePosN = 8
 // 旋转映射(8 字 → 5 槽位):《/熊、AI、画/》 各共享一个旋转角度
 //   i=0 《 → rot 0(同 熊)
 //   i=1 熊 → rot 0(同 《)
 //   i=2 猫 → rot 1
 //   i=3 A  → rot 2(同 I)
-//   i=4 I  → rot 2
+//   i=4 I  → rot 2(同 A)
 //   i=5 绘 → rot 3
 //   i=6 画 → rot 4(同 》)
 //   i=7 》→ rot 4
