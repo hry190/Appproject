@@ -77,7 +77,7 @@ fun YanwuchangVideoScreen(
     var isLiked by remember { mutableStateOf(false) }
     var likeCount by remember { mutableStateOf(500) }
 
-    // 收藏状态:false = 空心(img_yanwuchang_video_favorite),true = 实心(ic_favorite_filled)
+    // 收藏状态:false = 仅空心星,true = 空心星 + Vector 600 中心叠加(视觉实心)
     // 计数:收藏后 +1(500 → 501)
     var isFavorited by remember { mutableStateOf(false) }
     var favoriteCount by remember { mutableStateOf(500) }
@@ -332,25 +332,25 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // Rectangle 201: 位置 (394, 497), 2.86×7.98dp,旋转 -35.96°
+        // Rectangle 201: 位置 (394, 497), 3×7.98dp,旋转 -35.96°
         Image(
             painter = painterResource(R.drawable.rectangle_201),
             contentDescription = null,
             modifier = Modifier
                 .offset(x = 394.dp, y = 497.dp)
-                .size(width = 2.86.dp, height = 7.98.dp)
+                .size(width = 3.dp, height = 7.98.dp)
                 .rotate(-35.96f),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // Rectangle 202: 位置 (401, 506), 2.86×7.98dp,旋转 -69.34°
+        // Rectangle 202: 位置 (401, 506), 3×7.98dp,旋转 -69.34°
         Image(
             painter = painterResource(R.drawable.rectangle_202),
             contentDescription = null,
             modifier = Modifier
                 .offset(x = 401.dp, y = 506.dp)
-                .size(width = 2.86.dp, height = 7.98.dp)
+                .size(width = 3.dp, height = 7.98.dp)
                 .rotate(-69.34f),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
@@ -362,7 +362,7 @@ fun YanwuchangVideoScreen(
         Image(
             painter = painterResource(
                 if (isLiked) R.drawable.ic_like_filled
-                else R.drawable.img_yanwuchang_video_like
+                else R.drawable.ic_like_outline
             ),
             contentDescription = if (isLiked) "已点赞" else "点赞",
             modifier = Modifier
@@ -411,14 +411,12 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
             alpha = 1f,
         )
-        // 收藏 — 点击切换空心/实心,数字同步 +1/-1
-        //   容器固定 34×34dp;空心和实心都使用 ColorFilter.tint(#81A084) 保持视觉一致
-        //   实心时整体 100% 不透明,填充色统一为 #81A084
+        // 收藏 — 点击在图标中央叠加 Vector 600 标记,数字同步 +1/-1
+        //   容器固定 34×34dp;始终显示空心星 img_yanwuchang_video_favorite(#81A084)
+        //   已收藏时,在星图标中心(381, 649.5)叠加 Vector 600(16×15dp)使其视觉上"实心"
+        //   不透明度 100%,填充色统一 #81A084
         Image(
-            painter = painterResource(
-                if (isFavorited) R.drawable.ic_favorite_filled
-                else R.drawable.img_yanwuchang_video_favorite
-            ),
+            painter = painterResource(R.drawable.img_yanwuchang_video_favorite),
             contentDescription = if (isFavorited) "已收藏" else "收藏",
             modifier = Modifier
                 .offset(x = 372.dp, y = 640.dp)
@@ -431,7 +429,22 @@ fun YanwuchangVideoScreen(
             colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
             alpha = 1f,
         )
+        // 收藏 — 已收藏时,Vector 600 标记叠加在图标中心(16×15dp,容器内居中)
+        if (isFavorited) {
+            Image(
+                painter = painterResource(R.drawable.vector_600),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 381.dp, y = 649.5.dp)
+                    .size(width = 16.dp, height = 15.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+        }
         // 收藏 — 数字 (500.png / 501.png, 22×16dp, #FFFFFF, 不透明度 100%)
+        //   text_500.png 和 text_501.png 像素尺寸完全一致(20×10),在 22×16dp 容器中
+        //   以 ContentScale.Fit 等比渲染,切换时视觉大小不变
         Image(
             painter = painterResource(
                 if (favoriteCount >= 501) R.drawable.text_501
