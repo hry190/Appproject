@@ -289,11 +289,11 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本整组可点击跳 Chuangzuodangan4
+// 雾气+文本整组可点击跳 Chuangzuodangan4(下移 30,Y 55→85)
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 55.dp)
+        .offset(y = 85.dp)
         .clickable(onClick = onOpenChuangzuodangan4),
 ) {
     // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55

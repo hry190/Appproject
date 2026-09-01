@@ -192,7 +192,7 @@ Image(
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 345.32.dp),
+        .offset(y = 245.32.dp),
 ) {
     Image(
         painter = painterResource(R.drawable.img_chuangzuodangan6_rect24),
