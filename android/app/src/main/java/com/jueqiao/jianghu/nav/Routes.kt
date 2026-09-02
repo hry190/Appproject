@@ -30,6 +30,8 @@ object Routes {
     const val YanwuchangVideoScience = "yanwuchang_video_science"
     const val YanwuchangVideoMath    = "yanwuchang_video_math"
     const val YanwuchangVideoChinese = "yanwuchang_video_chinese"
+    // 演武场视频 — "我的"页(点击底部导航"我的"图标进入,带返回键)
+    const val YanwuchangVideoMy = "yanwuchang_video_my"
     const val Gongfang  = "gongfang"
     const val Shengtu   = "shengtu"
     const val Picture   = "picture"

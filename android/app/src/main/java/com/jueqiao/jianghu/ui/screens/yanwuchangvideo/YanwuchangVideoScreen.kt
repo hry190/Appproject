@@ -51,6 +51,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *
  * @param onBack             左上角返回 / 系统返回键回调
  * @param onOpenComment      点击"评论"图标 — 跳转至演武场视频评论1页
+ * @param onOpenMy           点击底部导航栏"我的"图标 — 跳转至演武场视频"我的"页
  *
  * 注意:5 个 Tab 共享同一个 Composable 实例,Tab 切换通过内部状态完成,
  *      不调用 NavController.navigate,避免页面重建和明显的切换动画。
@@ -60,6 +61,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun YanwuchangVideoScreen(
     onBack: () -> Unit = {},
     onOpenComment: () -> Unit = {},
+    onOpenMy: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到演武场首页)
     BackHandler(enabled = true) {
@@ -210,28 +212,37 @@ fun YanwuchangVideoScreen(
                     .size(width = 58.93.dp, height = 54.49.dp),
                 contentScale = ContentScale.Fit,
             )
-            // "我的"图标
-            Image(
-                painter = painterResource(R.drawable.ic_yanwuchang_video_people),
-                contentDescription = "我的",
+            // "我的"按钮(爪子图标 + 文字),点击进入演武场视频"我的"页
+            //   容器位置 (296, 8), 28×52dp 命中范围
+            //   内部用 Box 局部坐标系 — 图标 (0, 0) 27×26,文字 (0, 26) 28×18
+            Box(
                 modifier = Modifier
                     .offset(x = 296.dp, y = 8.dp)
-                    .size(width = 27.dp, height = 26.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
-            )
-            // "我的"文字
-            Text(
-                text  = "我的",
-                color = Color.White,
-                style = TextStyle(
-                    fontFamily = YaHei,
-                    fontSize   = 14.sp,
-                ),
-                modifier = Modifier
-                    .offset(x = 296.dp, y = 34.dp)
-                    .size(width = 28.dp, height = 18.dp),
-            )
+                    .size(width = 28.dp, height = 44.dp)
+                    .clickable(onClick = onOpenMy),
+            ) {
+                // "我的"图标(爪子)
+                Image(
+                    painter = painterResource(R.drawable.ic_yanwuchang_video_me_paw),
+                    contentDescription = "我的",
+                    modifier = Modifier
+                        .size(width = 27.dp, height = 26.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
+                )
+                // "我的"文字
+                Text(
+                    text  = "我的",
+                    color = Color.White,
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize   = 14.sp,
+                    ),
+                    modifier = Modifier
+                        .offset(y = 26.dp)
+                        .size(width = 28.dp, height = 18.dp),
+                )
+            }
         }
 
         // ===== 视频内容(5 个页面完全相同)=====

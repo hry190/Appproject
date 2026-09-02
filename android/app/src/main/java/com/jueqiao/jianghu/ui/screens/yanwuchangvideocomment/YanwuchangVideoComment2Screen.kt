@@ -57,7 +57,8 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *         - 中部:用户名(呀呀呀,13sp #6D8470) + 评论文本(14sp #333333)
  *         - 右侧:爱心(ic_like_outline/ic_like_filled)+ 数字(12sp #6D8470 / #999999)
  *         - 整行间距 24dp
- *   - 底部:Group 166.png 按钮(可点击,380×64dp 原图),代替原"互评"绿色按钮
+ *   - 底部:"互评" 按钮(背景图 img_yanwuchang_video_comment_reply + 白色文字)
+ *           整体可点击,显示 380×48dp;文字 "互评" 居中,20sp,白色 #FFFFFF,40×26dp 区域
  *
  * @param onBackToHome     X 点击 — 跳到演武场视频首页(直接 popBackStack 到 YanwuchangVideo)
  * @param onBackToComment  返回箭头点击 — 动画回到小评论框页(slide down 出场)
@@ -181,22 +182,38 @@ fun YanwuchangVideoComment2Screen(
                 }
             }
 
-            // ===== 底部 Group 166.png 按钮(替代原"互评"绿色按钮)=====
-            //   原图 380×64dp,居中显示,整图可点击
+            // ===== 底部 "互评" 按钮 =====
+            //   背景:未标题-2-恢复的 12.png(img_yanwuchang_video_comment_reply,372×47)
+            //   文字:居中叠加 "互评",40×26dp 区域,20sp 字号,白色 #FFFFFF,不透明度 100%
+            //   显示尺寸 380×48dp,水平居中,距底 20dp
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 20.dp)
+                    .size(width = 380.dp, height = 48.dp)
                     .clickable { /* TODO: 互评功能 */ },
                 contentAlignment = Alignment.Center,
             ) {
+                // 底层:装饰横幅背景
                 Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_comment_group166),
-                    contentDescription = "互评",
-                    // 按原图宽高 380×64 等比缩放到屏幕内(留 16dp 边距)
-                    modifier = Modifier.size(width = 380.dp, height = 64.dp),
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment_reply),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit,
                 )
+                // 顶层:"互评" 文字(白色,20sp,YaHei,不透明度 100%)
+                Box(
+                    modifier = Modifier.size(width = 40.dp, height = 26.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text  = "互评",
+                        color = Color(0xFFFFFFFF),
+                        style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+                        modifier = Modifier.fillMaxSize(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                }
             }
         }
     }

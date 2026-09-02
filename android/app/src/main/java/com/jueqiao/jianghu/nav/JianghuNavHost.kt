@@ -14,6 +14,7 @@ import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment1Screen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment2Screen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideomy.YanwuchangVideoMyScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -175,8 +176,15 @@ fun JianghuNavHost(
         //   Tab 选中态、点赞/收藏状态都在屏幕内部 remember 中,跨 Tab 不丢失
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
-                onBack         = { navController.popBackStack() },
-                onOpenComment  = { navController.navigate(Routes.YanwuchangVideoComment1) },
+                onBack          = { navController.popBackStack() },
+                onOpenComment   = { navController.navigate(Routes.YanwuchangVideoComment1) },
+                onOpenMy        = { navController.navigate(Routes.YanwuchangVideoMy) },
+            )
+        }
+        // 演武场视频 — "我的"页(点击演武场视频首页底部导航栏"我的"图标进入)
+        composable(Routes.YanwuchangVideoMy) {
+            YanwuchangVideoMyScreen(
+                onBack = { navController.popBackStack() },
             )
         }
         // 演武场视频 — 评论1 页(背景图:室内家园要求 1.png)

@@ -1,36 +1,16 @@
 package com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Rect
@@ -43,86 +23,34 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.theme.YaHei
-import kotlinx.coroutines.delay
 import kotlin.math.PI
 
 /**
  * 演武场视频评论1页 — 点击演武场视频首页的"评论"图标进入
  *
- * 布局(Figma 设计稿 412×917 基准):
+ * 当前布局(Figma 设计稿 412×917 基准,简化版):
  *   - 全屏背景:室内家园要求 1.png(img_yanwuchang_bg, 412×917, ContentScale.Crop)
- *   - 视频缩略图:image 24.png(img_yanwuchang_video_comment_image24, 198×347)
+ *   - 视频缩略图:image 24.png(img_yanwuchang_video_comment_image24)
  *       位置 (107, 56),尺寸 198×347dp
- *       关闭动画中会从 198×347 放大到 412×917 (铺满全屏)
- *   - 评论框:评论框.png(img_yanwuchang_video_comment_box)
- *       位置 (0, 394),尺寸 417×523dp — 关闭动画中向下缩消失
- *   - 顶部两个图标(可点击):
- *       Group 141.png @ (17, 419), 17×17dp — 点击关闭本页(下缩动画)
- *       放大缩小.png @ (54, 419), 17×17dp
- *   - 评论区(Y=440 起到评论框底 Y=917):可上下滑动的评论列表
- *       每条评论右侧爱心可点击:
- *         - 未点赞:Like (喜欢).png(img_yanwuchang_video_comment_like, 17×16dp)
- *                   带心形 + "+" 提示,提示"点击进行点赞"
- *         - 已点赞:实心 ic_comment_like_filled,填充色 #6D8470
- *         - 数字 +1 / -1 同步
- *         - 点击热区 44×44dp(符合 Material 最小触摸规范)
- *   - 无可见返回键(点 Group 141 触发下缩关闭动画)
+ *   - 中心装饰圆:Ellipse 30.png
+ *       位置 (187, 194),尺寸 35×35dp;填充 #D9D9D9,不透明度 54%
+ *   - 播放三角形:Polygon 3.png
+ *       位置 (195, 201),尺寸 20×20dp;等边三角形,填充 #F6F6F6,不透明度 100%
+ *   - 视频进度条:Group 177.png(原图 377×8,宽高比 47.13:1)
+ *       位置 (116, 399),尺寸 180×4dp — 水平居中于缩略图,贴视频底沿
+ *   - 评论框背景:已删除,等用户重新加入图片
  *
- * 关闭动画:
- *   1. 点击 Group 141 → isDismissing = true
- *   2. 评论框 / 列表 / 装饰圆 / 顶部图标 = AnimatedVisibility 向下 fadeOut + slideOutVertically
- *   3. 视频缩略图同时从 (107,56)/198×347 动画到 (0,0)/412×917(放大成视频首页全屏)
- *   4. 动画结束后(450ms)调用 onBack() 真正 popBackStack 到演武场视频首页
- *
- * @param onBack 动画结束后调用 — 触发 NavController.popBackStack()
+ * @param onBack         返回回调(预留,当前未使用)
+ * @param onOpenExpanded 打开全屏展开页回调(预留,当前未使用)
  */
 @Composable
 fun YanwuchangVideoComment1Screen(
     onBack: () -> Unit = {},
     onOpenExpanded: () -> Unit = {},
 ) {
-    // 评论数据 — 待接入后端接口
-    var comments by remember { mutableStateOf<List<CommentItem>>(emptyList()) }
-
-    // 关闭动画状态
-    var isDismissing by remember { mutableStateOf(false) }
-
-    // 视频缩略图放大动画:从 (107, 56)/198×347 → (0, 0)/412×917
-    val videoOffsetX by animateDpAsState(
-        targetValue = if (isDismissing) 0.dp else 107.dp,
-        animationSpec = tween(durationMillis = 450),
-        label = "videoOffsetX",
-    )
-    val videoOffsetY by animateDpAsState(
-        targetValue = if (isDismissing) 0.dp else 56.dp,
-        animationSpec = tween(durationMillis = 450),
-        label = "videoOffsetY",
-    )
-    val videoWidth by animateDpAsState(
-        targetValue = if (isDismissing) 412.dp else 198.dp,
-        animationSpec = tween(durationMillis = 450),
-        label = "videoWidth",
-    )
-    val videoHeight by animateDpAsState(
-        targetValue = if (isDismissing) 917.dp else 347.dp,
-        animationSpec = tween(durationMillis = 450),
-        label = "videoHeight",
-    )
-
-    // 动画结束后真正返回
-    LaunchedEffect(isDismissing) {
-        if (isDismissing) {
-            delay(450)
-            onBack()
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -139,235 +67,65 @@ fun YanwuchangVideoComment1Screen(
         // 内容层(避开系统导航条)
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.navigationBars),
+                .fillMaxSize(),
         ) {
-            // 视频缩略图(image 24.png)— 默认 (107,56)/198×347;关闭时放大成全屏
+            // 中心装饰圆形(Ellipse 30.png, X=187, Y=194, 35×35dp)
+            //   填充 #D9D9D9,不透明度 54%
+            //   叠在视频缩略图正中,作为视频缩略图的"播放"提示装饰
+            Image(
+                painter = painterResource(R.drawable.ellipse_30),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 187.dp, y = 194.dp)
+                    .size(width = 35.dp, height = 35.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFD9D9D9), BlendMode.SrcIn),
+                alpha = 0.54f,
+            )
+
+            // 播放三角形(Polygon 3.png, X=195, Y=201, 20×20dp)
+            //   等边三角形,corner radius 3,count 3(3 边 / 3 角)
+            //   填充 #F6F6F6,不透明度 100%
+            //   居中叠在 Ellipse 30 之上
+            Image(
+                painter = painterResource(R.drawable.polygon_3),
+                contentDescription = "播放",
+                modifier = Modifier
+                    .offset(x = 195.dp, y = 201.dp)
+                    .size(width = 20.dp, height = 20.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFF6F6F6), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+
+            // 视频缩略图(image 24.png)— 位置 (107, 56),尺寸 198×347dp
             Image(
                 painter = painterResource(R.drawable.img_yanwuchang_video_comment_image24),
                 contentDescription = "视频缩略图",
                 modifier = Modifier
-                    .offset(x = videoOffsetX, y = videoOffsetY)
-                    .size(width = videoWidth, height = videoHeight),
+                    .offset(x = 107.dp, y = 56.dp)
+                    .size(width = 198.dp, height = 347.dp),
                 contentScale = ContentScale.Crop,
             )
 
-            // === 关闭时被隐藏的全部评论 UI(评论框 / 列表 / 装饰圆 / 顶部图标) ===
-            //   用 Box 而非 Column:保持各元素用 offset() 绝对定位的原始布局
-            AnimatedVisibility(
-                visible = !isDismissing,
-                exit = slideOutVertically(
-                    targetOffsetY = { it },        // 从当前位置滑到底部外
-                    animationSpec = tween(450),
-                ) + fadeOut(animationSpec = tween(450)),
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // 中心装饰圆形(Ellipse 30.png, X=187.93, Y=194.63, 35×35dp)
-                    //   填充 #D9D9D9,不透明度 54%
-                    Image(
-                        painter = painterResource(R.drawable.ellipse_30),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 187.93.dp, y = 194.63.dp)
-                            .size(width = 35.dp, height = 35.dp),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFD9D9D9), BlendMode.SrcIn),
-                        alpha = 0.54f,
-                    )
-
-                    // 播放三角形(Polygon 3.png, X=195, Y=201, 21×20dp)
-                    //   等边三角形,corner radius 3,count 3(3 边 / 3 角)
-                    //   填充 #F6F6F6,不透明度 100%
-                    Image(
-                        painter = painterResource(R.drawable.polygon_3),
-                        contentDescription = "播放",
-                        modifier = Modifier
-                            .offset(x = 195.dp, y = 201.dp)
-                            .size(width = 21.dp, height = 20.dp),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFF6F6F6), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-
-                    // 评论框背景(评论框.png, X=0, Y=394, 417×523dp)
-                    Image(
-                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_box),
-                        contentDescription = "评论框",
-                        modifier = Modifier
-                            .offset(x = 0.dp, y = 394.dp)
-                            .size(width = 417.dp, height = 523.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-
-                    // 评论列表(Y=440 起到评论框底 Y=917,宽 417dp,可上下滑动)
-                    LazyColumn(
-                        modifier = Modifier
-                            .offset(x = 0.dp, y = 440.dp)
-                            .size(width = 417.dp, height = 477.dp)
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(comments, key = { it.id }) { comment ->
-                            CommentRow(
-                                comment = comment,
-                                onLikeToggle = {
-                                    comments = comments.map { c ->
-                                        if (c.id == comment.id) {
-                                            c.copy(
-                                                isLiked   = !c.isLiked,
-                                                likeCount = c.likeCount + if (!c.isLiked) 1 else -1,
-                                            )
-                                        } else c
-                                    }
-                                },
-                            )
-                        }
-                    }
-
-                    // Group 141.png(X=17, Y=419, 17×17dp)— 可点击(触摸区域扩大到 44×44dp 居中包裹图标,符合 Material 最小点击规范)
-                    //   点击 → 触发 isDismissing → 评论框下缩消失 + 视频图放大
-                    Box(
-                        modifier = Modifier
-                            .offset(x = 17.dp - (44.dp - 17.dp) / 2, y = 419.dp - (44.dp - 17.dp) / 2)
-                            .size(width = 44.dp, height = 44.dp)
-                            .clickable { isDismissing = true },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_yanwuchang_video_comment_group141),
-                            contentDescription = "关闭评论",
-                            modifier = Modifier.size(width = 17.dp, height = 17.dp),
-                        )
-                    }
-
-                    // 放大缩小.png(X=54, Y=419, 17×17dp)— 可点击(触摸区域扩大)
-                    //   点击 → 触发 onOpenExpanded → 跳到全屏展开页(评论框向上扩展动画)
-                    Box(
-                        modifier = Modifier
-                            .offset(x = 54.dp - (44.dp - 17.dp) / 2, y = 419.dp - (44.dp - 17.dp) / 2)
-                            .size(width = 44.dp, height = 44.dp)
-                            .clickable { onOpenExpanded() },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_yanwuchang_video_comment_zoom),
-                            contentDescription = "放大缩小",
-                            modifier = Modifier.size(width = 17.dp, height = 17.dp),
-                        )
-                    }
-
-                    // 视频进度条(Group 177.png)— 叠在缩略图底部边缘,作为 z-order 最顶层
-                    //   原图 377×8px(宽高比 47.125:1)
-                    //   缩略图宽 198dp,进度条宽 180dp(左右各 9dp 内边距)
-                    //   高度按宽高比 180 / 47.125 ≈ 3.82dp → 取 4dp
-                    //   X = 107 + 9 = 116dp(水平居中)
-                    //   Y = 缩略图 Y + 缩略图高 - 4dp = 56 + 347 - 4 = 399dp(让进度条贴视频底沿,深入评论框 4dp 之上)
-                    //   随 videoOffsetX/Y/Width/Height 动画同步
-                    Image(
-                        painter = painterResource(R.drawable.group_177),
-                        contentDescription = "视频进度",
-                        modifier = Modifier
-                            .offset(x = videoOffsetX + 9.dp, y = videoOffsetY + videoHeight - 4.dp)
-                            .size(width = 180.dp, height = 4.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * 单条评论行 — 左侧用户名 + 评论文本,右侧爱心 + 点赞数
- *
- * 爱心交互:
- *   - 未点赞 → 已点赞:实心 ic_like_filled + 填充 #6D8470 + 数字 +1
- *   - 已点赞 → 未点赞:空心 ic_like_outline + 数字 -1
- */
-@Composable
-private fun CommentRow(
-    comment: CommentItem,
-    onLikeToggle: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // 左侧:用户名 + 评论文本
-        Column(
-            modifier = Modifier.weight(1f),
-        ) {
-            // 用户名
-            Text(
-                text  = comment.username,
-                color = Color(0xFF6D8470),
-                style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
-            )
-            // 评论内容
-            Text(
-                text  = comment.text,
-                color = Color(0xFF333333),
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-        // 右侧:点赞图标(17×16dp,点击热区 44×44dp)
-        //   - 未点赞:Like (喜欢).png — 带心形 + "+",提示用户点击进行点赞
-        //   - 已点赞:实心 heart(ic_comment_like_filled),填充 #6D8470
-        //   点击翻转 isLiked,数字 ±1 同步
-        Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(start = 12.dp),
-            ) {
-            // 点赞图标 — 17×16dp(外加 44×44dp 透明点击热区,符合 Material 最小触摸规范)
-            //   未点赞:显示"Like (喜欢).png"(img_yanwuchang_video_comment_like)
-            //         带心形 + "+" 标志,提示用户点击进行点赞
-            //   已点赞:显示实心 heart(ic_comment_like_filled),填充 #6D8470
-            //   点击翻转 isLiked,同步数字 ±1
-            Box(
+            // 视频进度条(Group 177.png)— 叠在缩略图底部边缘
+            //   原图 377×8px(宽高比 47.13:1)
+            //   缩略图宽 198dp,进度条宽 180dp(左右各 9dp 内边距,水平居中)
+            //   高度按宽高比 180 / 47.13 ≈ 3.82dp → 取 4dp
+            //   X = 107 + 9 = 116dp(水平居中)
+            //   Y = 缩略图 Y + 缩略图高 - 4dp = 56 + 347 - 4 = 399dp
+            //   (进度条 Y=399-403,贴视频底沿 4dp)
+            Image(
+                painter = painterResource(R.drawable.group_177),
+                contentDescription = "视频进度",
                 modifier = Modifier
-                    .size(width = 44.dp, height = 44.dp)
-                    .clickable(onClick = onLikeToggle),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (comment.isLiked) {
-                    // 已点赞:实心 heart
-                    Image(
-                        painter = painterResource(R.drawable.ic_comment_like_filled),
-                        contentDescription = "取消点赞",
-                        modifier = Modifier.size(width = 17.dp, height = 16.dp),
-                        contentScale = ContentScale.Fit,
-                        alpha = 1f,
-                    )
-                } else {
-                    // 未点赞:Like (喜欢).png(带 "+" 的心形)
-                    Image(
-                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_like),
-                        contentDescription = "点赞",
-                        modifier = Modifier.size(width = 17.dp, height = 16.dp),
-                        contentScale = ContentScale.Fit,
-                        alpha = 1f,
-                    )
-                }
-            }
-                Text(
-                    text  = comment.likeCount.toString(),
-                    color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
+                    .offset(x = 116.dp, y = 399.dp)
+                    .size(width = 180.dp, height = 4.dp),
+                contentScale = ContentScale.Fit,
+            )
+        }
     }
 }
-
-/** 单条评论数据(可序列化版本 — 后续接接口时按需调整) */
-private data class CommentItem(
-    val id: Int,
-    val username: String,
-    val text: String,
-    val likeCount: Int,
-    val isLiked: Boolean = false,
-)
 
 /**
  * 自定义 Modifier — 在元素四周绘制一圈虚线边框
