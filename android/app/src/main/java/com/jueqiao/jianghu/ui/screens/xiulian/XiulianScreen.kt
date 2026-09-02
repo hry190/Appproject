@@ -72,7 +72,7 @@ fun XiulianScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // Group 17.png(左侧装饰,135.84, 501, 138.16×245)
+            // Group 17.png(左侧装饰,35.84, 501, 138.16×245)
         Image(
             painter = painterResource(R.drawable.img_xiulian_group17),
             contentDescription = null,
@@ -80,24 +80,6 @@ fun XiulianScreen(
                 .offset(x = 35.84.dp, y = 501.dp)
                 .size(width = 138.16.dp, height = 245.dp),
             contentScale = ContentScale.Fit,
-        )
-
-        // 修炼按钮(未标题-1 50.png,X=141, Y=368, W=55, H=90)
-        Image(
-            painter = painterResource(R.drawable.img_xiulian_group128),
-            contentDescription = "修炼",
-            modifier = Modifier
-                .offset(x = 131.dp, y = 358.dp)
-                .size(width = 55.dp, height = 90.dp),
-            contentScale = ContentScale.Fit,
-        )
-
-        // "修\n炼" 标签(X=150, Y=378,字号 12) — 在图标之上
-        Text(
-            text = "修\n炼",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-            modifier = Modifier.offset(x = 150.dp, y = 378.dp),
         )
 
         // "秘籍" 旋转标签(X=104.5, Y=785.5, rotation -23.36° 逆时针, W=48, H=25,字号 20,白色)
@@ -122,39 +104,55 @@ fun XiulianScreen(
                 .rotate(15.3f),
         )
 
-        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=18,字号 16,白色)
+        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=22,字号 16,白色)
         Text(
             text = "试炼",
             color = Color.White,
             style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
             modifier = Modifier
                 .offset(x = 271.dp, y = 814.dp)
-                .size(width = 43.dp, height = 18.dp)
+                .size(width = 43.dp, height = 22.dp)
                 .rotate(26f),
         )
 
-        // 6.png 作为气泡背景(118, 453, 175×79)
-        Box(
+        // Rectangle 18.png(X=120, Y=389, W=168, H=140)
+        Image(
+            painter = painterResource(R.drawable.img_xiulian_rectangle_18),
+            contentDescription = null,
             modifier = Modifier
-                .offset(x = 118.dp, y = 453.dp)
-                .size(width = 175.dp, height = 79.dp),
-        ) {
-            Image(
-                painter = painterResource(R.drawable.img_xiulian_6),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
-            )
-            // 气泡文本
-            Text(
-                text = "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-            )
-        }
+                .offset(x = 120.dp, y = 389.dp)
+                .size(width = 168.dp, height = 140.dp),
+            contentScale = ContentScale.FillBounds,
+        )
+
+        // Rectangle 18.png 气泡内文字(X=138, Y=401, W=138, H=58,字号 14,黑色)
+        Text(
+            text = "后院竹静风清水淡，乃是绝佳修炼之地，随我前往吧",
+            color = Color.Black,
+            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+            modifier = Modifier
+                .offset(x = 138.dp, y = 401.dp)
+                .size(width = 138.dp, height = 58.dp),
+        )
+
+        // Vector 579.png 按钮(X=183.69, Y=482.22, W=89.6, H=20.56)
+        Image(
+            painter = painterResource(R.drawable.img_xiulian_vector_579),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 183.69.dp, y = 482.22.dp)
+                .size(width = 89.6.dp, height = 25.6.dp),
+            contentScale = ContentScale.FillBounds,
+        )
+        // Vector 579.png 按钮文字(X=200.49, Y=484, W=56, H=17,字号 14,黑色,居中于按钮)
+        Text(
+            text = "前往后院",
+            color = Color.Black,
+            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+            modifier = Modifier
+                .offset(x = 200.49.dp, y = 484.dp)
+                .size(width = 56.dp, height = 25.dp),
+        )
 
         // 左上角:返回按钮(Return.png,点击回到首页1)
         Box(

@@ -54,17 +54,17 @@ fun DahuiScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-        // o.png 图标(X=70, Y=458, W=55, H=90)
+        // o.png 图标(X=72.5, Y=458, W=55, H=90)
         Image(
             painter = painterResource(R.drawable.img_dahui_o),
             contentDescription = null,
             modifier = Modifier
                 .offset(x = 72.5.dp, y = 458.dp)
                 .size(width = 55.dp, height = 90.dp),
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.FillBounds,
         )
 
-        // 演武场竖排文字标签(X=98, Y=510, W=15, H=45)— 在 o.png 之上
+        // 演武场竖排文字标签(X=89, Y=480, W=15, H=45)— 在 o.png 之上
         Column(
             modifier = Modifier
                 .offset(x = 89.dp, y = 480.dp)
