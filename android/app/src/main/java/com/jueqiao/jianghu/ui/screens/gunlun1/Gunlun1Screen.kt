@@ -36,6 +36,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun Gunlun1Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -116,10 +117,12 @@ fun Gunlun1Screen(
             }
 
             // Rectangle 86.png 气泡(D:\图\Rectangle 86.png)— X=23, Y=324, W=148, H=84
+            //   点击气泡跳转到滚轮2
             Box(
                 modifier = Modifier
                     .offset(x = 23.dp, y = 324.dp)
-                    .size(width = 148.dp, height = 84.dp),
+                    .size(width = 148.dp, height = 84.dp)
+                    .clickable(onClick = onOpenGunlun2),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_gunlun1_rect86),
@@ -152,7 +155,7 @@ fun Gunlun1Screen(
             // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 16, 白色, YaHei)
             Column(
                 modifier = Modifier
-                    .offset(x = 35.dp, y = 548.dp)
+                    .offset(x = 31.dp, y = 548.dp)
                     .size(width = 55.dp, height = 117.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,

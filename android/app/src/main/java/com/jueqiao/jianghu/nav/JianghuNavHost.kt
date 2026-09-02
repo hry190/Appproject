@@ -68,6 +68,7 @@ import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
+import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.picture.PictureScreen
 import com.jueqiao.jianghu.ui.screens.yaosu.YaosuScreen
@@ -331,6 +332,12 @@ fun JianghuNavHost(
         }
         composable(Routes.Gunlun1) {
             Gunlun1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
+            )
+        }
+        composable(Routes.Gunlun2) {
+            Gunlun2Screen(
                 onBack = { navController.popBackStack() },
             )
         }

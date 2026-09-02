@@ -15,6 +15,7 @@ object Routes {
     const val Home1     = "home1"
     const val Xiulian   = "xiulian"
     const val Gunlun1  = "gunlun1"
+    const val Gunlun2  = "gunlun2"
     const val Luggage   = "luggage"
     const val LuggageBadges = "luggage/badges"
     const val LuggageGrowth = "luggage/growth"
