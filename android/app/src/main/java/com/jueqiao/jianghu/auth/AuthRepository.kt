@@ -115,6 +115,9 @@ class AuthRepository(
 
     suspend fun getSessions(): List<SessionDto> = authorized(api::getSessions)
 
+    /** Reuse the single refresh-token/401 retry path for feature API clients. */
+    suspend fun <T> withAccessToken(block: suspend (String) -> T): T = authorized(block)
+
     suspend fun logoutCurrent() {
         val refreshToken = tokenStore.readRefreshToken()
         try {

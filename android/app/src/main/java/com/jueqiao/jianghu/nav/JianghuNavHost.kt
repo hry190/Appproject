@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +28,10 @@ import com.jueqiao.jianghu.auth.AuthOperation
 import com.jueqiao.jianghu.auth.AuthViewModel
 import com.jueqiao.jianghu.auth.AuthViewModelFactory
 import com.jueqiao.jianghu.auth.VerificationPurpose
+import com.jueqiao.jianghu.luggage.LuggageViewModel
+import com.jueqiao.jianghu.luggage.LuggageViewModelFactory
+import com.jueqiao.jianghu.luggage.PrivacySettingsPatchDto
+import com.jueqiao.jianghu.luggage.RetrySessionDto
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
 import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
@@ -36,6 +41,16 @@ import com.jueqiao.jianghu.ui.screens.home.Home1Screen
 import com.jueqiao.jianghu.ui.screens.home.HomeScreen
 import com.jueqiao.jianghu.ui.screens.home.LuggageScreen
 import com.jueqiao.jianghu.ui.screens.home.SettingsScreen
+import com.jueqiao.jianghu.ui.screens.luggage.BadgesScreen
+import com.jueqiao.jianghu.ui.screens.luggage.CreationDetailScreen
+import com.jueqiao.jianghu.ui.screens.luggage.CreationsScreen
+import com.jueqiao.jianghu.ui.screens.luggage.EvidenceScreen
+import com.jueqiao.jianghu.ui.screens.luggage.ManualDetailScreen
+import com.jueqiao.jianghu.ui.screens.luggage.ManualsScreen
+import com.jueqiao.jianghu.ui.screens.luggage.MistakeDetailScreen
+import com.jueqiao.jianghu.ui.screens.luggage.MistakesScreen
+import com.jueqiao.jianghu.ui.screens.luggage.PrivacySafetyScreen
+import com.jueqiao.jianghu.ui.screens.luggage.RetryTrialScreen
 import com.jueqiao.jianghu.ui.screens.settings.SettingsDetailScreen
 import com.jueqiao.jianghu.ui.screens.settings.SettingsPage
 import com.jueqiao.jianghu.ui.screens.login.LoginComponentsFadeMillis
@@ -61,7 +76,6 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan6.Chuangzuodangan6Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,10 +89,17 @@ fun JianghuNavHost(
     }
     val authViewModel: AuthViewModel = viewModel(factory = authFactory)
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val luggageFactory = remember(application) {
+        LuggageViewModelFactory(application.luggageRepository)
+    }
+    val luggageViewModel: LuggageViewModel = viewModel(factory = luggageFactory)
+    val luggageState by luggageViewModel.uiState.collectAsStateWithLifecycle()
+    val luggageDetailState by luggageViewModel.detailState.collectAsStateWithLifecycle()
     val transitionScope = rememberCoroutineScope()
     val loginContentAlpha = remember { Animatable(1f) }
     val mistPhase = remember { Animatable(0f) }
     var loginTransitionRunning by remember { mutableStateOf(false) }
+    var animateHomeQuickActionsOnNextEntry by remember { mutableStateOf(false) }
 
     val startLoginTransition: (String) -> Unit = { destination ->
         if (!loginTransitionRunning) {
@@ -150,6 +171,7 @@ fun JianghuNavHost(
                         } else {
                             Routes.Home1
                         }
+                        animateHomeQuickActionsOnNextEntry = true
                         startLoginTransition(destination)
                     }
                 },
@@ -196,6 +218,7 @@ fun JianghuNavHost(
                         ageBand,
                         guardianToken,
                     ) {
+                        animateHomeQuickActionsOnNextEntry = true
                         navController.navigate(Routes.Home) {
                             popUpTo(Routes.Login) { inclusive = true }
                         }
@@ -263,12 +286,22 @@ fun JianghuNavHost(
 
         composable(Routes.Home) {
             HomeScreen(
-                onOpenHome1   = { navController.navigate(Routes.Home1) },
+                onOpenHome1 = {
+                    // 引导结束进入首页时，重新请求一次八个入口的进场动效。
+                    // 从各功能页返回 Home1 不会走此分支，因此仍保持直接显示。
+                    animateHomeQuickActionsOnNextEntry = true
+                    navController.navigate(Routes.Home1)
+                },
             )
         }
 
         composable(Routes.Home1) {
             Home1Screen(
+                animateQuickActionsEntrance = animateHomeQuickActionsOnNextEntry,
+                quickActionsEntranceReady = !loginTransitionRunning,
+                onQuickActionsEntranceConsumed = {
+                    animateHomeQuickActionsOnNextEntry = false
+                },
                 onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
                 onOpenLuggage   = { navController.navigate(Routes.Luggage) },
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
@@ -398,6 +431,28 @@ fun JianghuNavHost(
             )
         }
 
+        composable(
+            Routes.ShengtuProjectPattern,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            val bundle = luggageDetailState.creationDetail
+                ?.takeIf { it.project.id == projectId }
+            val latestVersion = bundle?.versions?.maxByOrNull { it.versionNumber }
+            val initialPrompt = latestVersion?.layers
+                ?.firstOrNull { it.kind == "TEXT" && !it.textContent.isNullOrBlank() }
+                ?.textContent
+                ?: bundle?.project?.description
+            ShengtuScreen(
+                projectId = projectId,
+                projectTitle = bundle?.project?.title,
+                currentVersionNumber = latestVersion?.versionNumber,
+                initialPrompt = initialPrompt,
+                onBack = { navController.popBackStack() },
+                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+            )
+        }
+
         composable(Routes.Picture) {
             PictureScreen(
                 onBack      = { navController.popBackStack() },
@@ -465,9 +520,246 @@ fun JianghuNavHost(
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {
+            LaunchedEffect(Unit) { luggageViewModel.refresh() }
             LuggageScreen(
-                onBack         = { navController.popBackStack() },
-                onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
+                uiState = luggageState,
+                onBack = { navController.popBackStack() },
+                onOpenZaowu = { navController.navigate(Routes.Zaowu) },
+                onRefresh = { luggageViewModel.refresh(force = true) },
+                onOpenBadges = { navController.navigate(Routes.LuggageBadges) },
+                onOpenGrowth = { navController.navigate(Routes.LuggageGrowth) },
+                onOpenManuals = { state -> navController.navigate(Routes.luggageManuals(state)) },
+                onOpenManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
+                onOpenMistakes = { navController.navigate(Routes.LuggageMistakes) },
+                onRetryMistake = { id ->
+                    luggageViewModel.retryMistake(id) { session ->
+                        navController.navigate(
+                            Routes.retryTrial(
+                                session.mistakeId,
+                                session.trialId,
+                                session.trialVersionId,
+                                session.id,
+                            )
+                        )
+                    }
+                },
+                onOpenCreations = { navController.navigate(Routes.LuggageCreations) },
+                onOpenCreation = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
+                onContinueCreation = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
+                onOpenEvidence = { navController.navigate(Routes.LuggageEvidence) },
+                onOpenPrivacy = { navController.navigate(Routes.LuggagePrivacySafety) },
+            )
+        }
+
+        composable(Routes.LuggageBadges) {
+            BadgesScreen(
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadBadges,
+            )
+        }
+
+        composable(Routes.LuggageGrowth) {
+            EvidenceScreen(
+                title = "本周成长记录",
+                weekOnly = true,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = { category -> luggageViewModel.loadEvidence(category, weekOnly = true) },
+                onLoadMore = { category -> luggageViewModel.loadMoreEvidence(category, weekOnly = true) },
+            )
+        }
+
+        composable(Routes.LuggageEvidence) {
+            EvidenceScreen(
+                title = "学习证据",
+                weekOnly = false,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = { category -> luggageViewModel.loadEvidence(category) },
+                onLoadMore = { category -> luggageViewModel.loadMoreEvidence(category) },
+            )
+        }
+
+        composable(
+            Routes.LuggageManualsPattern,
+            arguments = listOf(navArgument("state") { type = NavType.StringType }),
+        ) { entry ->
+            val initialState = entry.arguments?.getString("state")?.takeUnless { it == "ALL" }
+            ManualsScreen(
+                state = luggageDetailState,
+                initialState = initialState,
+                onBack = { navController.popBackStack() },
+                onLoad = { volume, query, state, favorites ->
+                    luggageViewModel.loadManuals(volume, query, state, favorites)
+                },
+                onLoadMore = { volume, query, state, favorites ->
+                    luggageViewModel.loadMoreManuals(volume, query, state, favorites)
+                },
+                onOpenManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
+                onToggleFavorite = luggageViewModel::toggleManualFavorite,
+            )
+        }
+
+        composable(
+            Routes.LuggageManualDetailPattern,
+            arguments = listOf(navArgument("manualId") { type = NavType.StringType }),
+        ) { entry ->
+            val manualId = entry.arguments?.getString("manualId").orEmpty()
+            ManualDetailScreen(
+                manualId = manualId,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadManualDetail,
+            )
+        }
+
+        composable(Routes.LuggageMistakes) {
+            MistakesScreen(
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = { luggageViewModel.loadMistakes() },
+                onLoadMore = { luggageViewModel.loadMoreMistakes() },
+                onOpen = { id -> navController.navigate(Routes.luggageMistakeDetail(id)) },
+                onRetry = { id ->
+                    luggageViewModel.retryMistake(id) { session ->
+                        navController.navigate(
+                            Routes.retryTrial(
+                                session.mistakeId,
+                                session.trialId,
+                                session.trialVersionId,
+                                session.id,
+                            )
+                        )
+                    }
+                },
+            )
+        }
+
+        composable(
+            Routes.LuggageMistakeDetailPattern,
+            arguments = listOf(navArgument("mistakeId") { type = NavType.StringType }),
+        ) { entry ->
+            val mistakeId = entry.arguments?.getString("mistakeId").orEmpty()
+            MistakeDetailScreen(
+                mistakeId = mistakeId,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadMistakeDetail,
+                onRetry = { id ->
+                    luggageViewModel.retryMistake(id) { session ->
+                        navController.navigate(
+                            Routes.retryTrial(
+                                session.mistakeId,
+                                session.trialId,
+                                session.trialVersionId,
+                                session.id,
+                            )
+                        )
+                    }
+                },
+            )
+        }
+
+        composable(Routes.LuggageCreations) {
+            CreationsScreen(
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = { luggageViewModel.loadCreations() },
+                onLoadMore = { luggageViewModel.loadMoreCreations() },
+                onOpen = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
+                onContinue = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
+            )
+        }
+
+        composable(
+            Routes.LuggageCreationDetailPattern,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            CreationDetailScreen(
+                projectId = projectId,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadCreationDetail,
+                onContinue = {
+                    navController.navigate(Routes.shengtuProject(it))
+                },
+                onWithdraw = luggageViewModel::withdrawPublication,
+                onAppeal = luggageViewModel::createAppeal,
+                onDelete = { id ->
+                    luggageViewModel.deleteCreationProject(id) {
+                        navController.popBackStack()
+                    }
+                },
+            )
+        }
+
+        composable(Routes.LuggagePrivacySafety) {
+            PrivacySafetyScreen(
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadPrivacy,
+                onToggle = { key, value ->
+                    luggageViewModel.updatePrivacy { current ->
+                        when (key) {
+                            "learning_card_public" -> PrivacySettingsPatchDto(
+                                learningCardPublic = value,
+                                rowVersion = current.rowVersion,
+                            )
+                            "aigc_export_mark_enabled" -> PrivacySettingsPatchDto(
+                                aigcExportMarkEnabled = value,
+                                rowVersion = current.rowVersion,
+                            )
+                            else -> PrivacySettingsPatchDto(
+                                profileDiscoveryEnabled = value,
+                                rowVersion = current.rowVersion,
+                            )
+                        }
+                    }
+                },
+                onVisibility = { visibility ->
+                    luggageViewModel.updatePrivacy { current ->
+                        PrivacySettingsPatchDto(
+                            defaultWorkVisibility = visibility,
+                            rowVersion = current.rowVersion,
+                        )
+                    }
+                },
+                onExport = luggageViewModel::loadAccountExport,
+                onRequestDeletion = luggageViewModel::requestAccountDeletion,
+            )
+        }
+
+        composable(
+            Routes.RetryTrialPattern,
+            arguments = listOf(
+                navArgument("mistakeId") { type = NavType.StringType },
+                navArgument("trialId") { type = NavType.StringType },
+                navArgument("versionId") { type = NavType.StringType },
+                navArgument("sessionId") { type = NavType.StringType },
+            ),
+        ) { entry ->
+            val session = RetrySessionDto(
+                id = entry.arguments?.getString("sessionId").orEmpty(),
+                mistakeId = entry.arguments?.getString("mistakeId").orEmpty(),
+                trialId = entry.arguments?.getString("trialId").orEmpty(),
+                trialVersionId = entry.arguments?.getString("versionId").orEmpty(),
+                expiresAt = "",
+                submitUrl = "",
+            )
+            RetryTrialScreen(
+                session = session,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadRetryTrial,
+                onSubmit = { prediction, answer, explanation ->
+                    luggageViewModel.submitRetry(session, prediction, answer, explanation)
+                },
+                onComplete = {
+                    luggageViewModel.refreshMistakeAfterRetry(session.mistakeId)
+                    navController.popBackStack()
+                },
             )
         }
 

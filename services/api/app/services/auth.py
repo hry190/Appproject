@@ -296,7 +296,7 @@ class AuthService:
         except IntegrityError as exc:
             self.db.rollback()
             raise ApiError(409, "ACCOUNT_NOT_AVAILABLE", "该手机号暂不能用于注册，请直接登录") from exc
-        return self._auth_response(user, tokens)
+        return self._auth_response(user, tokens, next_action="SHOW_GUIDE")
 
     def login(
         self,
@@ -347,6 +347,16 @@ class AuthService:
         if user.age_band == AgeBand.UNDER_14 and user.guardian_status != GuardianStatus.VERIFIED:
             raise ApiError(403, "GUARDIAN_CONSENT_REQUIRED", "账号需要先完成监护人同意")
 
+        has_entered_app = self.db.scalar(
+            select(AuthAuditEvent.id)
+            .where(
+                AuthAuditEvent.user_id == user.id,
+                AuthAuditEvent.result == "SUCCESS",
+                AuthAuditEvent.event_type.in_(("REGISTER", "LOGIN")),
+            )
+            .limit(1)
+        ) is not None
+
         credential.failed_attempts = 0
         credential.locked_until = None
         tokens = self._new_session(user, device_name=payload.device_name)
@@ -359,7 +369,11 @@ class AuthService:
             network_key=network_key,
         )
         self.db.commit()
-        return self._auth_response(user, tokens)
+        return self._auth_response(
+            user,
+            tokens,
+            next_action="ENTER_APP" if has_entered_app else "SHOW_GUIDE",
+        )
 
     def refresh(self, refresh_token: str, *, device_name: str | None) -> TokenPair:
         token_hash = self.tokens.refresh_token_hash(refresh_token)
@@ -527,7 +541,13 @@ class AuthService:
             refresh_expires_in=int((refresh_expires - now).total_seconds()),
         )
 
-    def _auth_response(self, user: User, tokens: TokenPair) -> AuthResponse:
+    def _auth_response(
+        self,
+        user: User,
+        tokens: TokenPair,
+        *,
+        next_action: str = "ENTER_APP",
+    ) -> AuthResponse:
         normalized_phone = self.phone.decrypt(user.phone_ciphertext)
         return AuthResponse(
             user=UserPublic(
@@ -539,6 +559,7 @@ class AuthService:
                 guardian_status=user.guardian_status,
             ),
             tokens=tokens,
+            next_action=next_action,
         )
 
     def _revoke_all_sessions(self, user: User) -> None:

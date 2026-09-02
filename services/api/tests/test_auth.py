@@ -62,6 +62,7 @@ def test_register_login_and_current_user(client: TestClient) -> None:
     assert auth["user"]["phone_masked"] == "138****8000"
     assert auth["user"]["guardian_status"] == "NOT_REQUIRED"
     assert auth["tokens"]["token_type"] == "bearer"
+    assert auth["next_action"] == "SHOW_GUIDE"
 
     current = client.get(
         "/v1/auth/me", headers=bearer(auth["tokens"]["access_token"])
@@ -75,6 +76,7 @@ def test_register_login_and_current_user(client: TestClient) -> None:
     )
     assert login.status_code == 200, login.text
     assert login.json()["user"]["id"] == auth["user"]["id"]
+    assert login.json()["next_action"] == "ENTER_APP"
 
 
 def test_login_does_not_disclose_account_existence(client: TestClient) -> None:

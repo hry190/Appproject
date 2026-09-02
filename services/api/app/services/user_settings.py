@@ -7,6 +7,18 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
 from app.core.security import PhoneProtector, utcnow
+from app.domains.creations.models import (
+    CreationProject,
+    CreationVersion,
+    LearningCard,
+    LearningCardManual,
+    ProvenanceItem,
+    ProvenanceManifest,
+    Publication,
+)
+from app.domains.media.models import MediaAsset
+from app.domains.moderation.models import DomainAuditEvent, ModerationAppeal
+from app.domains.privacy.models import PrivacySetting
 from app.models import (
     AgeBand,
     AuthSession,
@@ -255,6 +267,7 @@ class UserSettingsService:
             .where(ConsentRecord.user_id == user.id)
             .order_by(ConsentRecord.agreed_at.asc())
         ).all()
+        domain_data = self._export_domain_data(user)
         return AccountExport(
             generated_at=utcnow(),
             user=UserPublic(
@@ -279,7 +292,182 @@ class UserSettingsService:
                 for record in consents
             ],
             active_sessions=self.list_sessions(user),
+            **domain_data,
         )
+
+    def _export_domain_data(self, user: User) -> dict:
+        projects = self.db.scalars(
+            select(CreationProject)
+            .where(CreationProject.owner_user_id == user.id)
+            .order_by(CreationProject.created_at)
+        ).all()
+        creations: list[dict] = []
+        for project in projects:
+            versions = self.db.scalars(
+                select(CreationVersion)
+                .where(CreationVersion.project_id == project.id)
+                .order_by(CreationVersion.version_number)
+            ).all()
+            version_exports = [self._export_creation_version(version) for version in versions]
+            publications = self.db.scalars(
+                select(Publication)
+                .where(Publication.project_id == project.id)
+                .order_by(Publication.submitted_at)
+            ).all()
+            creations.append(
+                {
+                    "id": project.id,
+                    "title": project.title,
+                    "description": project.description,
+                    "media_type": project.media_type,
+                    "status": project.status,
+                    "default_visibility": project.default_visibility,
+                    "created_at": project.created_at,
+                    "versions": version_exports,
+                    "publications": [
+                        {
+                            "id": item.id,
+                            "creation_version_id": item.creation_version_id,
+                            "status": item.status,
+                            "visibility": item.visibility,
+                            "submitted_at": item.submitted_at,
+                            "published_at": item.published_at,
+                            "withdrawn_at": item.withdrawn_at,
+                        }
+                        for item in publications
+                    ],
+                }
+            )
+        assets = self.db.scalars(
+            select(MediaAsset)
+            .where(MediaAsset.owner_user_id == user.id)
+            .order_by(MediaAsset.created_at)
+        ).all()
+        appeals = self.db.scalars(
+            select(ModerationAppeal)
+            .where(ModerationAppeal.appellant_user_id == user.id)
+            .order_by(ModerationAppeal.created_at)
+        ).all()
+        privacy = self.db.get(PrivacySetting, user.id)
+        audit_events = self.db.scalars(
+            select(DomainAuditEvent)
+            .where(DomainAuditEvent.actor_user_id == user.id)
+            .order_by(DomainAuditEvent.created_at)
+        ).all()
+        return {
+            "creations": creations,
+            "media_assets": [
+                {
+                    "id": item.id,
+                    "purpose": item.purpose,
+                    "original_filename": item.original_filename,
+                    "actual_mime": item.actual_mime,
+                    "byte_size": item.byte_size,
+                    "sha256": item.sha256,
+                    "status": item.status,
+                    "width": item.width,
+                    "height": item.height,
+                    "aigc_detected": item.aigc_detected,
+                    "created_at": item.created_at,
+                    "deleted_at": item.deleted_at,
+                }
+                for item in assets
+            ],
+            "moderation_appeals": [
+                {
+                    "id": item.id,
+                    "moderation_case_id": item.moderation_case_id,
+                    "reason": item.reason,
+                    "status": item.status,
+                    "resolution_summary": item.resolution_summary,
+                    "created_at": item.created_at,
+                    "resolved_at": item.resolved_at,
+                }
+                for item in appeals
+            ],
+            "privacy_settings": (
+                {
+                    "default_work_visibility": privacy.default_work_visibility,
+                    "learning_card_public": privacy.learning_card_public,
+                    "aigc_export_mark_enabled": privacy.aigc_export_mark_enabled,
+                    "profile_discovery_enabled": privacy.profile_discovery_enabled,
+                    "updated_at": privacy.updated_at,
+                }
+                if privacy
+                else {}
+            ),
+            "domain_audit_events": [
+                {
+                    "action": item.action,
+                    "target_type": item.target_type,
+                    "target_id": item.target_id,
+                    "result": item.result,
+                    "safe_diff": item.safe_diff,
+                    "created_at": item.created_at,
+                }
+                for item in audit_events
+            ],
+        }
+
+    def _export_creation_version(self, version: CreationVersion) -> dict:
+        learning_card = self.db.get(LearningCard, version.id)
+        manual_ids = self.db.scalars(
+            select(LearningCardManual.manual_page_id).where(
+                LearningCardManual.creation_version_id == version.id
+            )
+        ).all()
+        manifest = self.db.get(ProvenanceManifest, version.id)
+        provenance_items = self.db.scalars(
+            select(ProvenanceItem).where(
+                ProvenanceItem.creation_version_id == version.id
+            )
+        ).all()
+        return {
+            "id": version.id,
+            "version_number": version.version_number,
+            "parent_version_id": version.parent_version_id,
+            "layers": version.layer_manifest,
+            "change_summary": version.change_summary,
+            "modification_reason": version.modification_reason,
+            "created_at": version.created_at,
+            "learning_card": (
+                {
+                    "manual_page_ids": list(manual_ids),
+                    "method_summary": learning_card.method_summary,
+                    "unresolved_questions": learning_card.unresolved_questions,
+                    "questions_confirmed": learning_card.questions_confirmed,
+                    "status": learning_card.status,
+                }
+                if learning_card
+                else None
+            ),
+            "provenance": (
+                {
+                    "human_contribution_summary": manifest.human_contribution_summary,
+                    "ai_assistance_used": manifest.ai_assistance_used,
+                    "ai_contribution_summary": manifest.ai_contribution_summary,
+                    "aigc_label_declared": manifest.aigc_label_declared,
+                    "unresolved_rights": manifest.unresolved_rights,
+                    "items": [
+                        {
+                            "item_type": item.item_type,
+                            "contribution_type": item.contribution_type,
+                            "description": item.description,
+                            "source_url": item.source_url,
+                            "source_author": item.source_author,
+                            "license_type": item.license_type,
+                            "ai_provider": item.ai_provider,
+                            "ai_model": item.ai_model,
+                            "ai_tool_action": item.ai_tool_action,
+                            "prompt_summary": item.prompt_summary,
+                        }
+                        for item in provenance_items
+                    ],
+                }
+                if manifest
+                else None
+            ),
+        }
 
     @staticmethod
     def _session_public(session: AuthSession) -> SessionPublic:

@@ -2,11 +2,22 @@ from __future__ import annotations
 
 import re
 import uuid
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models import AgeBand, GuardianStatus, UserStatus
+from app.models import (
+    AgeBand,
+    ContentLevel,
+    DataRequestStatus,
+    DataRequestType,
+    FeedbackCategory,
+    GuardianStatus,
+    TicketStatus,
+    UserStatus,
+)
 
 
 PHONE_INPUT_RE = re.compile(r"^(?:\+?86)?1[3-9]\d{9}$")
@@ -138,3 +149,160 @@ class PasswordResetResponse(StrictModel):
 
 class StatusResponse(StrictModel):
     status: str
+
+
+class UserPreferencesPublic(StrictModel):
+    message_enabled: bool
+    learning_reminder: bool
+    work_updates: bool
+    service_messages: bool
+    quiet_hours: bool
+    auto_save: bool
+    wifi_only: bool
+    haptic_feedback: bool
+    large_text: bool
+    sound_enabled: bool
+    music_volume: float
+    effect_volume: float
+    high_contrast: bool
+    read_aloud: bool
+    subtitles_enabled: bool
+    personalization_enabled: bool
+    rest_reminder: bool
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+
+class UserPreferencesPatch(StrictModel):
+    message_enabled: bool | None = None
+    learning_reminder: bool | None = None
+    work_updates: bool | None = None
+    service_messages: bool | None = None
+    quiet_hours: bool | None = None
+    auto_save: bool | None = None
+    wifi_only: bool | None = None
+    haptic_feedback: bool | None = None
+    large_text: bool | None = None
+    sound_enabled: bool | None = None
+    music_volume: float | None = Field(default=None, ge=0, le=1)
+    effect_volume: float | None = Field(default=None, ge=0, le=1)
+    high_contrast: bool | None = None
+    read_aloud: bool | None = None
+    subtitles_enabled: bool | None = None
+    personalization_enabled: bool | None = None
+    rest_reminder: bool | None = None
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "UserPreferencesPatch":
+        if not self.model_fields_set:
+            raise ValueError("请至少提交一项设置")
+        return self
+
+
+class GuardianControlsPublic(StrictModel):
+    daily_limit_minutes: int
+    creation_allowed: bool
+    content_level: ContentLevel
+    minor_mode: bool
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+
+class GuardianControlsPatch(StrictModel):
+    daily_limit_minutes: int | None = Field(default=None, ge=15, le=240)
+    creation_allowed: bool | None = None
+    content_level: ContentLevel | None = None
+    minor_mode: bool | None = None
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "GuardianControlsPatch":
+        if not self.model_fields_set:
+            raise ValueError("请至少提交一项监护设置")
+        return self
+
+
+class FeedbackCreate(StrictModel):
+    category: FeedbackCategory = FeedbackCategory.GENERAL
+    message: str = Field(min_length=10, max_length=1000)
+
+    @field_validator("message")
+    @classmethod
+    def normalize_message(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 10:
+            raise ValueError("反馈内容至少需要10个字")
+        return normalized
+
+
+class FeedbackPublic(StrictModel):
+    id: uuid.UUID
+    category: FeedbackCategory
+    message: str
+    status: TicketStatus
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+
+class BlacklistCreate(StrictModel):
+    blocked_user_id: uuid.UUID
+
+
+class BlacklistEntryPublic(StrictModel):
+    user_id: uuid.UUID
+    nickname: str
+    blocked_at: datetime
+
+
+class SessionPublic(StrictModel):
+    id: uuid.UUID
+    device_name: str
+    created_at: datetime
+    last_seen_at: datetime
+    expires_at: datetime
+
+
+class DataRightsRequestCreate(StrictModel):
+    request_type: DataRequestType
+    reason: str | None = Field(default=None, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def normalize_reason(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
+class DataRightsRequestPublic(StrictModel):
+    id: uuid.UUID
+    request_type: DataRequestType
+    status: DataRequestStatus
+    reason: str | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+
+class ConsentRecordPublic(StrictModel):
+    consent_type: str
+    document_version: str
+    subject: str
+    agreed_at: datetime
+
+
+class AccountExport(StrictModel):
+    generated_at: datetime
+    user: UserPublic
+    preferences: UserPreferencesPublic
+    guardian_controls: GuardianControlsPublic | None
+    consents: list[ConsentRecordPublic]
+    active_sessions: list[SessionPublic]
+    creations: list[dict[str, Any]]
+    media_assets: list[dict[str, Any]]
+    moderation_appeals: list[dict[str, Any]]
+    privacy_settings: dict[str, Any]
+    domain_audit_events: list[dict[str, Any]]
