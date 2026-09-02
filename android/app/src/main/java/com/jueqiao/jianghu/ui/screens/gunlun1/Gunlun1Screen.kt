@@ -106,12 +106,12 @@ fun Gunlun1Screen(
                 Text(
                     text = "后",
                     color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
                 )
                 Text(
                     text = "山",
                     color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
                 )
             }
 
@@ -160,12 +160,12 @@ fun Gunlun1Screen(
                 Text(
                     text = "修",
                     color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
                 )
                 Text(
                     text = "炼",
                     color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
                 )
             }
         }
