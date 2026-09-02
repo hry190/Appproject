@@ -1,13 +1,6 @@
 package com.jueqiao.jianghu.nav
 
 import androidx.compose.runtime.Composable
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -180,75 +173,21 @@ fun JianghuNavHost(
         // 演武场视频首页 — 5 个 Tab(推荐/艺术/科学/数学/语文)在同一个 Composable 内
         //   切换 Tab 不调用 NavController.navigate,避免页面重建和明显的切换动画
         //   Tab 选中态、点赞/收藏状态都在屏幕内部 remember 中,跨 Tab 不丢失
-        //
-        // 过渡动画设计(点击"评论"图标 → 演武场视频评论页):
-        //   - 视频页 exit: scaleOut(从 1.0 缩到 0.5) + fadeOut → 视觉上"视频页缩小"
-        //   - 评论页 enter: slideInVertically(从底部滑入) + fadeIn → 视觉上"评论框自动上滑出现"
-        //   - 反向:评论页 slideOutVertically + fadeOut,视频页 scaleIn(从 0.5 放大) + fadeIn
-        //     → 平滑缩放回主页,无明显的整页切换跳跃感
-        composable(
-            route = Routes.YanwuchangVideo,
-            enterTransition = {
-                // 返回视频首页:从 0.5 平滑放大到 1.0 + 淡入(顺滑缩放)
-                scaleIn(
-                    initialScale = 0.5f,
-                    animationSpec = tween(durationMillis = 450),
-                ) + fadeIn(animationSpec = tween(durationMillis = 450))
-            },
-            exitTransition = {
-                // 进入评论:视频页缩到 0.5 + 淡出(模拟"视频页缩小")
-                scaleOut(
-                    targetScale = 0.5f,
-                    animationSpec = tween(durationMillis = 450),
-                ) + fadeOut(animationSpec = tween(durationMillis = 450))
-            },
-        ) {
+        composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
                 onBack         = { navController.popBackStack() },
                 onOpenComment  = { navController.navigate(Routes.YanwuchangVideoComment) },
             )
         }
         // 演武场视频 — 评论页(背景图:室内家园要求 1.png)
-        //   enter:从底部滑入 + 淡入,模拟"评论框自动上滑出现"
-        //   exit:向下滑出 + 淡出,模拟"评论框向下缩小"
-        composable(
-            route = Routes.YanwuchangVideoComment,
-            enterTransition = {
-                slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 450),
-                ) + fadeIn(animationSpec = tween(durationMillis = 450))
-            },
-            exitTransition = {
-                slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(durationMillis = 450),
-                ) + fadeOut(animationSpec = tween(durationMillis = 450))
-            },
-        ) {
+        composable(Routes.YanwuchangVideoComment) {
             YanwuchangVideoCommentScreen(
                 onBack          = { navController.popBackStack() },
                 onOpenExpanded  = { navController.navigate(Routes.YanwuchangVideoCommentExpanded) },
             )
         }
         // 演武场视频 — 评论全屏展开页(点"放大缩小"图标;背景图:未标题-1 69.png)
-        //   enterTransition:从底部向上滑入,模拟"评论框向上扩展"
-        //   exitTransition:向下滑出,模拟"评论框向下缩小"(返回小评论框页)
-        composable(
-            route = Routes.YanwuchangVideoCommentExpanded,
-            enterTransition = {
-                slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 450),
-                )
-            },
-            exitTransition = {
-                slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(durationMillis = 450),
-                )
-            },
-        ) {
+        composable(Routes.YanwuchangVideoCommentExpanded) {
             YanwuchangVideoCommentExpandedScreen(
                 onBackToHome    = {
                     // X 关闭:直接 popBackStack 到 YanwuchangVideo 页面(演武场视频首页)
@@ -256,7 +195,6 @@ fun JianghuNavHost(
                 },
                 onBackToComment = {
                     // 返回箭头:popBackStack 回到 YanwuchangVideoComment(小评论框页)
-                    // 配合 exitTransition slideOutVertically 看起来就是"评论框向下缩小"
                     navController.popBackStack()
                 },
             )

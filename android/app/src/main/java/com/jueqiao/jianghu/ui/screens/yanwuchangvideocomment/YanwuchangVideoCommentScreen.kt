@@ -302,22 +302,35 @@ private fun CommentRow(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(start = 12.dp),
             ) {
-                Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_comment_like_vector),
-                    contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
+                // 点赞图标 — 13×11dp
+                //   未点赞:仅显示空心 heart 描边(img_yanwuchang_video_comment_like_vector 原色)
+                //   已点赞:在原描边图下叠加一个填充 #6D8470 的实心 heart
+                //          (ic_comment_like_filled),仅填充空心处,描边保留
+                Box(
                     modifier = Modifier
                         .size(width = 13.dp, height = 11.dp)
                         .clickable(onClick = onLikeToggle),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = if (comment.isLiked) {
-                        // 已点赞:仅染色图标自身的描边像素,不会扩展到矩形外
-                        ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn)
-                    } else {
-                        // 未点赞:原图无 tint
-                        null
-                    },
-                    alpha = 1f,
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // 底层:已点赞时的实心填充(仅 isLiked 时渲染)
+                    if (comment.isLiked) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_comment_like_filled),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit,
+                            alpha = 1f,
+                        )
+                    }
+                    // 顶层:始终渲染空心 heart 描边
+                    Image(
+                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_like_vector),
+                        contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit,
+                        alpha = 1f,
+                    )
+                }
                 Text(
                     text  = comment.likeCount.toString(),
                     color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
