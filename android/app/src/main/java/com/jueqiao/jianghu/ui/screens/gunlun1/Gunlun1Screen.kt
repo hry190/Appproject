@@ -95,7 +95,7 @@ fun Gunlun1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "后\n山" 竖排文字(在未标题-1 50.png 上,X=247, Y=165, 字号 21.78, 白色, YaHei)
+            // "后\n山" 竖排文字(在未标题-1 50.png 上,X=247, Y=165, 字号 16, 白色, YaHei)
             Column(
                 modifier = Modifier
                     .offset(x = 242.dp, y = 165.dp)
@@ -149,7 +149,7 @@ fun Gunlun1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 21.78, 白色, YaHei)
+            // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 16, 白色, YaHei)
             Column(
                 modifier = Modifier
                     .offset(x = 35.dp, y = 548.dp)
