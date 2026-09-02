@@ -77,10 +77,10 @@ fun GongfangScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-        // 返回按钮(Return.png,X=20, Y=41, W=32, H=32,内部图标 24×24)
+        // 返回按钮(Return.png,X=20, Y=55, W=32, H=32,内部图标 24×24)
         Box(
             modifier = Modifier
-                .offset(x = 20.dp, y = 41.dp)
+                .offset(x = 20.dp, y = 55.dp)
                 .size(32.dp)
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
@@ -93,45 +93,45 @@ fun GongfangScreen(
             )
         }
 
-        // 未标题-2 23.png(X=57, Y=64, W=160, H=58)
+        // 未标题-2 23.png(X=57, Y=45, W=160, H=58)
         Image(
             painter = painterResource(R.drawable.img_gongfang_23),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 57.dp, y = 29.dp)
+                .offset(x = 57.dp, y = 45.dp)
                 .size(width = 160.dp, height = 58.dp),
             contentScale = ContentScale.Fit,
         )
 
-        // 未标题-2 24.png(X=265, Y=70, W=127, H=46)
+        // 未标题-2 24.png(X=240, Y=45, W=157, H=58)
         Image(
             painter = painterResource(R.drawable.img_gongfang_24),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 265.dp, y = 35.dp)
-                .size(width = 127.dp, height = 46.dp)
+                .offset(x = 240.dp, y = 45.dp)
+                .size(width = 157.dp, height = 58.dp)
                 .clickable(onClick = onOpenChuangzuodangan),
             contentScale = ContentScale.Fit,
         )
 
-        // "教练辅助" 标签(X=87, Y=81, W=71, H=18,字号 14)
+        // "教练辅助" 标签(X=93, Y=58, W=71, H=18,字号 14)
         Text(
             text = "教练辅助",
             color = Color.Black,
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
             modifier = Modifier
-                .offset(x = 93.dp, y = 46.dp)
+                .offset(x = 93.dp, y = 58.dp)
                 .size(width = 71.dp, height = 18.dp),
         )
 
-        // "创作档案" 标签(X=287, Y=81, W=76, H=15,字号 14)
+        // "创作档案" 标签(X=287, Y=58, W=71, H=18,字号 14)
         Text(
             text = "创作档案",
             color = Color.Black,
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
             modifier = Modifier
-                .offset(x = 287.dp, y = 46.dp)
-                .size(width = 76.dp, height = 25.dp)
+                .offset(x = 287.dp, y = 58.dp)
+                .size(width = 71.dp, height = 18.dp)
                 .clickable(onClick = onOpenChuangzuodangan),
         )
 
