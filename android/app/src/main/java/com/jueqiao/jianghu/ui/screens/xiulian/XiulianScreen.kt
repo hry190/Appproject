@@ -48,6 +48,7 @@ fun XiulianScreen(
     onOpenSettings: () -> Unit = {},
     onOpenProgress: () -> Unit = {},
     onOpenTask: () -> Unit = {},
+    onOpenGunlun1: () -> Unit = {},
 ) {
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen    by remember { mutableStateOf(false) }
@@ -135,13 +136,14 @@ fun XiulianScreen(
                 .size(width = 138.dp, height = 58.dp),
         )
 
-        // Vector 579.png 按钮(X=183.69, Y=482.22, W=89.6, H=20.56)
+        // Vector 579.png 按钮(X=183.69, Y=482.22, W=89.6, H=20.56)— 点击跳滚轮1
         Image(
             painter = painterResource(R.drawable.img_xiulian_vector_579),
-            contentDescription = null,
+            contentDescription = "前往后院",
             modifier = Modifier
                 .offset(x = 183.69.dp, y = 482.22.dp)
-                .size(width = 89.6.dp, height = 25.6.dp),
+                .size(width = 89.6.dp, height = 25.6.dp)
+                .clickable(onClick = onOpenGunlun1),
             contentScale = ContentScale.FillBounds,
         )
         // Vector 579.png 按钮文字(X=200.49, Y=484, W=56, H=17,字号 14,黑色,居中于按钮)
