@@ -84,7 +84,7 @@ fun YaosuScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)

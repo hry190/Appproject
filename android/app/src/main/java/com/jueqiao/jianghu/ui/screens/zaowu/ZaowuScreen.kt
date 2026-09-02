@@ -74,7 +74,7 @@ fun ZaowuScreen(
             )
         }
 
-        // 角色插画(pp.png, X=230, Y=550, W=176, H=271)
+        // 角色插画(pp.png, X=230, Y=500, W=176, H=271)
         Image(
             painter = painterResource(R.drawable.img_zaowu_figure),
             contentDescription = null,
@@ -107,7 +107,7 @@ fun ZaowuScreen(
             )
         }
 
-        // Rectangle 186.png 作为气泡背景(X=149, Y=479, W=144, H=81)
+        // Rectangle 186.png 作为气泡背景(X=149, Y=429, W=144, H=81)
         Box(
             modifier = Modifier
                 .offset(x = 149.dp, y = 429.dp)

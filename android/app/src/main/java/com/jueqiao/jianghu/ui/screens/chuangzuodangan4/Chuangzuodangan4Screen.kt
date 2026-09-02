@@ -72,7 +72,7 @@ fun Chuangzuodangan4Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)
@@ -128,7 +128,6 @@ fun Chuangzuodangan4Screen(
                     .size(width = 71.dp, height = 18.dp),
             )
 
-            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
 val arcText = "修改版本记录"
 val arcN = arcText.length
@@ -153,7 +152,6 @@ for (i in 0 until arcN) {
     )
 }
 
-// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
 // 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
 // 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
@@ -204,7 +202,6 @@ for (i in 0 until chuangyuanN) {
     )
 }
 
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
 // 位置 7 槽位(AI A-I 间距压缩 50%) + 旋转 5 槽位(《/熊、AI、画/》 各共享)
 // 90° 弧 6 间隔均分(其中 AI 之间 0.5 间距)
 val xuanzeText = "《熊猫AI绘画》"
@@ -256,7 +253,7 @@ for (i in 0 until xuanzeN) {
     )
 }
 
-// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3(创作档案3 也保留作为导航目标之一)
+// AI教练辅助记录 — 整组可点击跳 Chuangzuodangan3
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -318,7 +315,7 @@ Box(
         contentScale = ContentScale.FillWidth,
     )
 
-    // 雾气上的文本(X居中, Y=346, W=189, H=58, 14sp, 黑色)
+    // 雾气上的文本(X居中, Y=277, W=189, H=58, 14sp, 黑色)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -334,7 +331,7 @@ Box(
     }
 }
 
-// image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
+// image 62.png(X=174, Y=646, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
     contentDescription = null,
@@ -344,7 +341,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 61.png(X=35, Y=484, W=193, H=203)— 飘雾
+// image 61.png(X=35, Y=434, W=193, H=203)— 飘雾
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
     contentDescription = null,
@@ -354,7 +351,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 52.png(X=14, Y=596, W=214, H=172)— 莲花图
+// image 52.png(X=8, Y=556, W=214, H=172)— 莲花图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
     contentDescription = null,

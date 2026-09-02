@@ -86,7 +86,7 @@ fun ShengtuScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)— 上移 10)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)— 上移 10)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)
@@ -220,7 +220,7 @@ fun ShengtuScreen(
                         .size(width = 180.dp, height = 16.dp),
                 )
             }
-            // 未标题-1 41.png(X=310, Y=605, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
+            // 未标题-1 41.png(X=300, Y=605, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
             Image(
                 painter = painterResource(R.drawable.img_shengtu_untitled41),
                 contentDescription = null,

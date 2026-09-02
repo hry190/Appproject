@@ -72,7 +72,7 @@ fun Chuangzuodangan5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)
@@ -130,7 +130,6 @@ fun Chuangzuodangan5Screen(
 
 
 
-// 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
 val arcText = "修改版本记录"
 val arcN = arcText.length
@@ -155,7 +154,6 @@ for (i in 0 until arcN) {
     )
 }
 
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
 // 位置 7 槽位(AI A-I 间距压缩 50%) + 旋转 5 槽位(《/熊、AI、画/》 各共享)
 // 90° 弧 6 间隔均分(其中 AI 之间 0.5 间距)
 val xuanzeText = "《熊猫AI绘画》"
@@ -221,7 +219,7 @@ Image(
 
 // Rectangle 25.png — 雾气(D:\图\Rectangle 25.png)
 // 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
-//   本页 Y = 171(其他页多在 55,本屏需要下移)
+//   本页 Y = 111(其他页多在 55,本屏需要下移)
 Box(
     modifier = Modifier
         .fillMaxWidth()
@@ -233,7 +231,7 @@ Box(
         modifier = Modifier.fillMaxWidth(),
         contentScale = ContentScale.FillWidth,
     )
-    // 雾气上的文本(X居中, Y=274 绝对 = 171 + 103, 14sp, 黑色)
+    // 雾气上的文本(X居中, Y=214 绝对 = 111 + 103, 14sp, 黑色)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,7 +257,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
+// image 62.png(X=174, Y=646, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
     contentDescription = null,

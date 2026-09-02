@@ -78,7 +78,7 @@ fun Chuangzuodangan2Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)
@@ -134,7 +134,6 @@ fun Chuangzuodangan2Screen(
                     .size(width = 71.dp, height = 18.dp),
             )
 
-            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
 val arcText = "修改版本记录"
 val arcN = arcText.length
@@ -161,7 +160,7 @@ for (i in 0 until arcN) {
 
 // 透明可点击 Box:覆盖"修改版本记录"6 字的实际渲染区域
 //   charX 范围 275.735 ~ 396.735,charY 范围 334.4 ~ 455.4
-//   用 (275, 334) size (122, 122) — 紧贴字符外接矩形
+//   用 (275, 372) size (122, 122) — 紧贴字符外接矩形
 Box(
     modifier = Modifier
         .offset(x = 275.dp, y = 372.dp)
@@ -169,7 +168,6 @@ Box(
         .clickable(onClick = onOpenChuangzuodangan5),
 )
 
-// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
 // 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
 // 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
@@ -222,7 +220,7 @@ for (i in 0 until chuangyuanN) {
 
 // 透明可点击 Box:覆盖"原创记录"4 字的实际渲染区域
 //   charX 范围 55 ~ 100.32,charY 范围 321.19 ~ 350.055
-//   用 (48, 312) size (70, 53) — 紧贴字符外接矩形 + padding(宽度 +8,高度 +5)
+//   用 (43, 320) size (70, 53) — 紧贴字符外接矩形 + padding(宽度 +8,高度 +5)
 Box(
     modifier = Modifier
         .offset(x = 43.dp, y = 320.dp)
@@ -230,7 +228,6 @@ Box(
         .clickable(onClick = onOpenChuangzuodangan6),
 )
 
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
 // 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
 val xuanzeText = "选择作品查看"
 val xuanzeN = xuanzeText.length
@@ -264,7 +261,7 @@ for (i in 0 until xuanzeN) {
     )
 }
 
-// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3
+// AI教练辅助记录 — 整组可点击跳 Chuangzuodangan3
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -320,7 +317,7 @@ Box(
         .clickable(onClick = onOpenChuangzuodangan3),
 )
 
-// 未标题-1 72.png(X=201, Y=614, W=212, H=245)
+// 未标题-1 72.png(X=201, Y=584, W=212, H=245)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
     contentDescription = null,
@@ -360,7 +357,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Vector.png(X=80, Y=219, W=12, H=6)— 浮在 Group 709 之上
+// Vector.png(X=80, Y=223, W=12, H=6)— 浮在 Group 709 之上
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan2_vector),
     contentDescription = null,
@@ -370,7 +367,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Group 709 之上的文字(X=106, Y=228, W=298, H=17,字号 12, YaHei)
+// Group 709 之上的文字(X=106, Y=218, W=298, H=17,字号 12, YaHei)
 // "|" 颜色 #365B36,其他文字颜色 #3D4522
 val c2TitleText = buildAnnotatedString {
     withStyle(SpanStyle(color = Color(0xFF3D4522))) { append("《熊猫AI绘画》") }

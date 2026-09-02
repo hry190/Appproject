@@ -135,7 +135,7 @@ fun GongfangScreen(
                 .clickable(onClick = onOpenChuangzuodangan),
         )
 
-        // 框.png(屏幕水平居中,垂直位置可调:W=372, H=462, opacity 100%, corner radius 8)
+        // 框.png(屏幕水平居中,垂直位置可调:W=392, H=432, opacity 100%, corner radius 8)
         Image(
             painter = painterResource(R.drawable.img_gongfang_frame),
             contentDescription = null,
@@ -232,7 +232,7 @@ fun GongfangScreen(
             }
         }
 
-        // 熊猫角色(未标题-1 45.png, X=291, Y=442, W=112, H=167)
+        // 熊猫角色(未标题-1 45.png, X=285, Y=377, W=112, H=167)
         Image(
             painter = painterResource(R.drawable.img_gongfang_panda),
             contentDescription = null,
@@ -287,7 +287,7 @@ fun GongfangScreen(
                 .size(width = 80.dp, height = 30.dp),
         )
 
-        // 创作作品.png"创作作品"列表(X=20, Y=552, W=374, H=217) — 上移 30
+        // 创作作品.png"创作作品"列表(X=20, Y=542, W=374, H=217) — 上移 30
         // 列表包含:创作作品/所有作品 标题 + 3 行作品(含"继续创作"按钮)
         Box(
             modifier = Modifier

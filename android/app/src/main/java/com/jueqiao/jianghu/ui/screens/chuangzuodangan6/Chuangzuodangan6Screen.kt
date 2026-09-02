@@ -72,7 +72,7 @@ fun Chuangzuodangan6Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
+            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 55.dp)
@@ -130,7 +130,6 @@ fun Chuangzuodangan6Screen(
 
 
 
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101) — 改为\"《熊猫AI绘画》\"(8 字)
 // 位置 7 槽位(AI A-I 间距压缩 50%) + 旋转 5 槽位(《/熊、AI、画/》 各共享)
 // 90° 弧 6 间隔均分(其中 AI 之间 0.5 间距)
 val xuanzeText = "《熊猫AI绘画》"
@@ -184,8 +183,8 @@ for (i in 0 until xuanzeN) {
 
 
 
-// image 54.png(X=12, Y=274, W=132, H=106)— 莲花(D:\图\image 54.png)
-// image 57.png(X=16, Y=243, W=282, H=173)— 飘雾(D:\图\image 57.png)
+// image 54.png(X=-8, Y=233, W=132, H=106)— 莲花(D:\图\image 54.png)
+// image 57.png(X=10, Y=203, W=282, H=173)— 飘雾(D:\图\image 57.png)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan6_image57),
     contentDescription = null,
@@ -206,7 +205,7 @@ Image(
 
 // Rectangle 24.png — 雾气(D:\图\Rectangle 24.png)
 // 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
-//   本页 Y = 345.32, 文本绝对 Y = 480(内 Box offset 134.68)
+//   本页 Y = 245.32, 文本绝对 Y = 380(内 Box offset 134.68)
 Box(
     modifier = Modifier
         .fillMaxWidth()
@@ -218,7 +217,7 @@ Box(
         modifier = Modifier.fillMaxWidth(),
         contentScale = ContentScale.FillWidth,
     )
-    // 雾气上的文本(X居中, Y=480 绝对 = 345.32 + 134.68, 14sp, 黑色)
+    // 雾气上的文本(X居中, Y=380 绝对 = 245.32 + 134.68, 14sp, 黑色)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -233,7 +232,7 @@ Box(
     }
 }
 
-// image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
+// image 62.png(X=174, Y=646, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
     contentDescription = null,
