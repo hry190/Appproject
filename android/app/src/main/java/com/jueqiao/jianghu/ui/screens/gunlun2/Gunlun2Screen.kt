@@ -32,7 +32,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * 布局:
  *   - 滚轮.png 全屏背景
  *   - 未标题-1-恢复的 5.png 熊猫打坐图像 (70, 320, 257×457)
- *   - 未标题-2-恢复的 1.png 秘籍 (122, 211, 155×147)
+ *   - 未标题-2-恢复的 1.png 秘籍 (135, 251, 155×147)
  *   - 未解锁秘籍 1-9(9 张图,见 L81-L170)
  *   - Rectangle 251.png 介绍 (283, 264, 旋转 0.93°, 23×101.5, #DDC686 背景)
  *   - Vector.png 返回按钮 (20, 77, 18×13)
@@ -74,12 +74,12 @@ fun Gunlun2Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "秘籍" 图像(未标题-2-恢复的 1.png,X=122, Y=211, W=155, H=147)
+            // "秘籍" 图像(未标题-2-恢复的 1.png,X=135, Y=251, W=155, H=147)
             Image(
                 painter = painterResource(R.drawable.img_gunlun2_untitled_2_recovered_1),
                 contentDescription = "秘籍",
                 modifier = Modifier
-                    .offset(x = 122.dp, y = 211.dp)
+                    .offset(x = 135.dp, y = 251.dp)
                     .size(width = 155.dp, height = 147.dp),
                 contentScale = ContentScale.FillBounds,
             )
