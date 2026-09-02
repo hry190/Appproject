@@ -80,7 +80,7 @@ fun ChuangzuodanganScreen(
             // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
             Box(
                 modifier = Modifier
-                    .offset(x = 20.dp, y = 41.dp)
+                    .offset(x = 20.dp, y = 55.dp)
                     .size(32.dp)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
@@ -98,7 +98,7 @@ fun ChuangzuodanganScreen(
                 painter = painterResource(R.drawable.img_gongfang_23),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 57.dp, y = 29.dp)
+                    .offset(x = 57.dp, y = 45.dp)
                     .size(width = 160.dp, height = 58.dp),
                 contentScale = ContentScale.Fit,
             )
@@ -108,8 +108,8 @@ fun ChuangzuodanganScreen(
                 painter = painterResource(R.drawable.img_gongfang_24),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 265.dp, y = 35.dp)
-                    .size(width = 127.dp, height = 46.dp),
+                    .offset(x = 240.dp, y = 45.dp)
+                    .size(width = 157.dp, height = 58.dp),
                 contentScale = ContentScale.Fit,
             )
 
@@ -119,7 +119,7 @@ fun ChuangzuodanganScreen(
                 color = Color.Black,
                 style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                 modifier = Modifier
-                    .offset(x = 93.dp, y = 46.dp)
+                    .offset(x = 93.dp, y = 58.dp)
                     .size(width = 71.dp, height = 18.dp),
             )
 
@@ -129,8 +129,8 @@ fun ChuangzuodanganScreen(
                 color = Color.Black,
                 style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                 modifier = Modifier
-                    .offset(x = 287.dp, y = 46.dp)
-                    .size(width = 76.dp, height = 25.dp),
+                    .offset(x = 287.dp, y = 58.dp)
+                    .size(width = 71.dp, height = 18.dp),
             )
 
             // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
