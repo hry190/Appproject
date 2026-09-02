@@ -184,7 +184,17 @@ fun JianghuNavHost(
         // 演武场视频 — "我的"页(点击演武场视频首页底部导航栏"我的"图标进入)
         composable(Routes.YanwuchangVideoMy) {
             YanwuchangVideoMyScreen(
-                onBack = { navController.popBackStack() },
+                onBack      = { navController.popBackStack() },
+                // 底部 nav 点击"作品" → 退回"演武场视频首页"(Routes.YanwuchangVideo)
+                onOpenWorks = {
+                    navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)
+                },
+                // "查看点赞"按钮:暂无对应路由,空实现占位
+                onOpenLikes        = { /* TODO: 接入点赞列表页 */ },
+                // "浏览记录"条目:暂无对应路由,空实现占位
+                onOpenBrowseRecord = { /* TODO: 接入浏览记录页 */ },
+                // "我的班级"条目:暂无对应路由,空实现占位
+                onOpenMyClass      = { /* TODO: 接入我的班级页 */ },
             )
         }
         // 演武场视频 — 评论1 页(背景图:室内家园要求 1.png)
