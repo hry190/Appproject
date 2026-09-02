@@ -50,7 +50,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 4 个学科 Tab 互相跳转;"推荐" 回到主入口
  *
  * @param onBack             左上角返回 / 系统返回键回调
- * @param onOpenComment      点击"评论"图标 — 跳转至演武场视频评论页
+ * @param onOpenComment      点击"评论"图标 — 跳转至演武场视频评论1页
  *
  * 注意:5 个 Tab 共享同一个 Composable 实例,Tab 切换通过内部状态完成,
  *      不调用 NavController.navigate,避免页面重建和明显的切换动画。
@@ -389,7 +389,7 @@ fun YanwuchangVideoScreen(
                 .size(width = 22.dp, height = 16.dp),
         )
         // 小爱心 + 数字 已移除(避免与主点赞按钮重复)
-        // 评论 — 点击跳转到演武场视频评论页
+        // 评论 — 点击跳转到演武场视频评论1页
         Image(
             painter = painterResource(R.drawable.img_yanwuchang_video_comment),
             contentDescription = "评论",

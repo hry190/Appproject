@@ -41,7 +41,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 演武场视频评论 — 全屏展开页
+ * 演武场视频评论2 — 全屏展开页
  *
  * 点击评论页(小评论框)的"放大缩小"图标进入。视觉效果:小评论框向上扩展成全屏。
  *
@@ -63,7 +63,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * @param onBackToComment  返回箭头点击 — 动画回到小评论框页(slide down 出场)
  */
 @Composable
-fun YanwuchangVideoCommentExpandedScreen(
+fun YanwuchangVideoComment2Screen(
     onBackToHome: () -> Unit = {},
     onBackToComment: () -> Unit = {},
 ) {
@@ -246,9 +246,12 @@ private fun ExpandedCommentRow(
             //   - 已点赞:ColorFilter.tint + BlendMode.SrcIn 把图标**已有像素**染成 #6D8470
             //     填充严格限制在图标自身轮廓内,不超出边线
             //   点击翻转 isLiked 同步数字 ±1
+            //   整体下移:top = 38dp — 对齐到中部"评论文本第二行"基线
+            //     (中部 Column 高度:用户名 13sp + 4dp padding + 文本 14sp × 2 行 ≈ 38dp)
+            //     参考 演武场视频评论.png 的视觉位置
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(start = 12.dp, top = 6.dp),
+                modifier = Modifier.padding(start = 12.dp, top = 38.dp),
             ) {
                 // 点赞图标 — 13×11dp
                 //   未点赞:仅显示空心 heart 描边(img_yanwuchang_video_comment_like_vector 原色)

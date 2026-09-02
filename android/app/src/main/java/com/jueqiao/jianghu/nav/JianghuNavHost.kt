@@ -12,8 +12,8 @@ import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
-import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoCommentExpandedScreen
-import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoCommentScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment1Screen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment2Screen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -176,25 +176,25 @@ fun JianghuNavHost(
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
                 onBack         = { navController.popBackStack() },
-                onOpenComment  = { navController.navigate(Routes.YanwuchangVideoComment) },
+                onOpenComment  = { navController.navigate(Routes.YanwuchangVideoComment1) },
             )
         }
-        // 演武场视频 — 评论页(背景图:室内家园要求 1.png)
-        composable(Routes.YanwuchangVideoComment) {
-            YanwuchangVideoCommentScreen(
+        // 演武场视频 — 评论1 页(背景图:室内家园要求 1.png)
+        composable(Routes.YanwuchangVideoComment1) {
+            YanwuchangVideoComment1Screen(
                 onBack          = { navController.popBackStack() },
-                onOpenExpanded  = { navController.navigate(Routes.YanwuchangVideoCommentExpanded) },
+                onOpenExpanded  = { navController.navigate(Routes.YanwuchangVideoComment2) },
             )
         }
-        // 演武场视频 — 评论全屏展开页(点"放大缩小"图标;背景图:未标题-1 69.png)
-        composable(Routes.YanwuchangVideoCommentExpanded) {
-            YanwuchangVideoCommentExpandedScreen(
+        // 演武场视频 — 评论2 页(点"放大缩小"图标;背景图:未标题-1 69.png)
+        composable(Routes.YanwuchangVideoComment2) {
+            YanwuchangVideoComment2Screen(
                 onBackToHome    = {
                     // X 关闭:直接 popBackStack 到 YanwuchangVideo 页面(演武场视频首页)
                     navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)
                 },
                 onBackToComment = {
-                    // 返回箭头:popBackStack 回到 YanwuchangVideoComment(小评论框页)
+                    // 返回箭头:popBackStack 回到 YanwuchangVideoComment1(小评论框页)
                     navController.popBackStack()
                 },
             )

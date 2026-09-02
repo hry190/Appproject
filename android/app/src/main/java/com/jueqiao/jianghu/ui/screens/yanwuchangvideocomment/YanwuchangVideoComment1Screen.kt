@@ -53,7 +53,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.PI
 
 /**
- * 演武场视频评论页 — 点击演武场视频首页的"评论"图标进入
+ * 演武场视频评论1页 — 点击演武场视频首页的"评论"图标进入
  *
  * 布局(Figma 设计稿 412×917 基准):
  *   - 全屏背景:室内家园要求 1.png(img_yanwuchang_bg, 412×917, ContentScale.Crop)
@@ -67,9 +67,11 @@ import kotlin.math.PI
  *       放大缩小.png @ (54, 419), 17×17dp
  *   - 评论区(Y=440 起到评论框底 Y=917):可上下滑动的评论列表
  *       每条评论右侧爱心可点击:
- *         - 未点赞:空心 ic_like_outline
- *         - 已点赞:实心 ic_like_filled,填充色 #6D8470, 不透明度 100%
+ *         - 未点赞:Like (喜欢).png(img_yanwuchang_video_comment_like, 17×16dp)
+ *                   带心形 + "+" 提示,提示"点击进行点赞"
+ *         - 已点赞:实心 ic_comment_like_filled,填充色 #6D8470
  *         - 数字 +1 / -1 同步
+ *         - 点击热区 44×44dp(符合 Material 最小触摸规范)
  *   - 无可见返回键(点 Group 141 触发下缩关闭动画)
  *
  * 关闭动画:
@@ -81,7 +83,7 @@ import kotlin.math.PI
  * @param onBack 动画结束后调用 — 触发 NavController.popBackStack()
  */
 @Composable
-fun YanwuchangVideoCommentScreen(
+fun YanwuchangVideoComment1Screen(
     onBack: () -> Unit = {},
     onOpenExpanded: () -> Unit = {},
 ) {
@@ -253,6 +255,22 @@ fun YanwuchangVideoCommentScreen(
                             modifier = Modifier.size(width = 17.dp, height = 17.dp),
                         )
                     }
+
+                    // 视频进度条(Group 177.png)— 叠在缩略图底部边缘,作为 z-order 最顶层
+                    //   原图 377×8px(宽高比 47.125:1)
+                    //   缩略图宽 198dp,进度条宽 180dp(左右各 9dp 内边距)
+                    //   高度按宽高比 180 / 47.125 ≈ 3.82dp → 取 4dp
+                    //   X = 107 + 9 = 116dp(水平居中)
+                    //   Y = 缩略图 Y + 缩略图高 - 4dp = 56 + 347 - 4 = 399dp(让进度条贴视频底沿,深入评论框 4dp 之上)
+                    //   随 videoOffsetX/Y/Width/Height 动画同步
+                    Image(
+                        painter = painterResource(R.drawable.group_177),
+                        contentDescription = "视频进度",
+                        modifier = Modifier
+                            .offset(x = videoOffsetX + 9.dp, y = videoOffsetY + videoHeight - 4.dp)
+                            .size(width = 180.dp, height = 4.dp),
+                        contentScale = ContentScale.Fit,
+                    )
                 }
             }
         }
@@ -293,44 +311,45 @@ private fun CommentRow(
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
-        // 右侧:Vector.png 点赞图标(13×11dp)
-            //   - 未点赞:Vector.png 原色(无 ColorFilter)
-            //   - 已点赞:ColorFilter.tint + BlendMode.SrcIn 把图标**已有像素**染成 #6D8470
-            //     填充严格限制在图标自身轮廓内,不超出边线
-            //   点击翻转 isLiked 同步数字 ±1
-            Row(
+        // 右侧:点赞图标(17×16dp,点击热区 44×44dp)
+        //   - 未点赞:Like (喜欢).png — 带心形 + "+",提示用户点击进行点赞
+        //   - 已点赞:实心 heart(ic_comment_like_filled),填充 #6D8470
+        //   点击翻转 isLiked,数字 ±1 同步
+        Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(start = 12.dp),
             ) {
-                // 点赞图标 — 13×11dp
-                //   未点赞:仅显示空心 heart 描边(img_yanwuchang_video_comment_like_vector 原色)
-                //   已点赞:在原描边图下叠加一个填充 #6D8470 的实心 heart
-                //          (ic_comment_like_filled),仅填充空心处,描边保留
-                Box(
-                    modifier = Modifier
-                        .size(width = 13.dp, height = 11.dp)
-                        .clickable(onClick = onLikeToggle),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    // 底层:已点赞时的实心填充(仅 isLiked 时渲染)
-                    if (comment.isLiked) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_comment_like_filled),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit,
-                            alpha = 1f,
-                        )
-                    }
-                    // 顶层:始终渲染空心 heart 描边
+            // 点赞图标 — 17×16dp(外加 44×44dp 透明点击热区,符合 Material 最小触摸规范)
+            //   未点赞:显示"Like (喜欢).png"(img_yanwuchang_video_comment_like)
+            //         带心形 + "+" 标志,提示用户点击进行点赞
+            //   已点赞:显示实心 heart(ic_comment_like_filled),填充 #6D8470
+            //   点击翻转 isLiked,同步数字 ±1
+            Box(
+                modifier = Modifier
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable(onClick = onLikeToggle),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (comment.isLiked) {
+                    // 已点赞:实心 heart
                     Image(
-                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_like_vector),
-                        contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
-                        modifier = Modifier.fillMaxSize(),
+                        painter = painterResource(R.drawable.ic_comment_like_filled),
+                        contentDescription = "取消点赞",
+                        modifier = Modifier.size(width = 17.dp, height = 16.dp),
+                        contentScale = ContentScale.Fit,
+                        alpha = 1f,
+                    )
+                } else {
+                    // 未点赞:Like (喜欢).png(带 "+" 的心形)
+                    Image(
+                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_like),
+                        contentDescription = "点赞",
+                        modifier = Modifier.size(width = 17.dp, height = 16.dp),
                         contentScale = ContentScale.Fit,
                         alpha = 1f,
                     )
                 }
+            }
                 Text(
                     text  = comment.likeCount.toString(),
                     color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
