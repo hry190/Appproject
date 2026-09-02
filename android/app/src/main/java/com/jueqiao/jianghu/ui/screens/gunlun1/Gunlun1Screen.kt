@@ -137,6 +137,37 @@ fun Gunlun1Screen(
                         .fillMaxSize(),
                 )
             }
+
+            // 未标题-150.png — "修炼"按钮的背景图像
+            //   (X=35, Y=548, W=55, H=117)
+            Image(
+                painter = painterResource(R.drawable.img_gunlun1_untitled_150),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 35.dp, y = 548.dp)
+                    .size(width = 55.dp, height = 117.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 21.78, 白色, YaHei)
+            Column(
+                modifier = Modifier
+                    .offset(x = 35.dp, y = 548.dp)
+                    .size(width = 55.dp, height = 117.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "修",
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                )
+                Text(
+                    text = "炼",
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 21.78.sp),
+                )
+            }
         }
     }
 }
