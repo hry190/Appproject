@@ -15,6 +15,7 @@ import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment1Screen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment2Screen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideomy.YanwuchangVideoMyScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideobrowserecord.YanwuchangVideoBrowseRecordScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -191,10 +192,18 @@ fun JianghuNavHost(
                 },
                 // "查看点赞"按钮:暂无对应路由,空实现占位
                 onOpenLikes        = { /* TODO: 接入点赞列表页 */ },
-                // "浏览记录"条目:暂无对应路由,空实现占位
-                onOpenBrowseRecord = { /* TODO: 接入浏览记录页 */ },
+                // "浏览记录"条目:点击 → 跳转"演武场视频浏览记录"页
+                onOpenBrowseRecord = {
+                    navController.navigate(Routes.YanwuchangVideoBrowseRecord)
+                },
                 // "我的班级"条目:暂无对应路由,空实现占位
                 onOpenMyClass      = { /* TODO: 接入我的班级页 */ },
+            )
+        }
+        // 演武场视频 — "浏览记录"页(从"我的"页 → 点击"浏览记录"卡片进入)
+        composable(Routes.YanwuchangVideoBrowseRecord) {
+            YanwuchangVideoBrowseRecordScreen(
+                onBack = { navController.popBackStack() },
             )
         }
         // 演武场视频 — 评论1 页(背景图:室内家园要求 1.png)
