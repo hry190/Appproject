@@ -50,6 +50,10 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun ShengtuScreen(
     onBack: () -> Unit = {},
+    projectId: String? = null,
+    projectTitle: String? = null,
+    currentVersionNumber: Int? = null,
+    initialPrompt: String? = null,
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan: () -> Unit = {},
 ) {
@@ -63,9 +67,16 @@ fun ShengtuScreen(
     val rect227FocusRequester = remember { FocusRequester() }
     val context = LocalContext.current
     val draftStore = remember(context) { CreationDraftStore(context) }
-    var rect227Text by rememberSaveable {
-        mutableStateOf(draftStore.read(CreationDraftStore.Keys.ImagePrompt))
+    val draftKey = remember(projectId) {
+        if (projectId == null) CreationDraftStore.Keys.ImagePrompt
+        else "${CreationDraftStore.Keys.ImagePrompt}:$projectId"
     }
+    var rect227Text by rememberSaveable(projectId) {
+        mutableStateOf(
+            draftStore.read(draftKey).ifBlank { initialPrompt.orEmpty() }
+        )
+    }
+    var draftNotice by rememberSaveable(projectId) { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -232,7 +243,12 @@ fun ShengtuScreen(
 
             // 9 个点:15字 × 12sp ≈ 180dp,Box 放宽让文字自然展开
             Text(
-                text = "正在生成图片.........",
+                text = if (projectId != null) {
+                    "正在为《${projectTitle ?: "未命名作品"}》准备创作草稿" +
+                        (currentVersionNumber?.let { " · 当前版本 V$it" }.orEmpty())
+                } else {
+                    "正在生成图片........."
+                },
                 color = Color(0xFF50553D),
                 style = TextStyle(
                     fontFamily = YaHei,        // YaHei(项目通用字体)
@@ -297,7 +313,7 @@ fun ShengtuScreen(
                     value = rect227Text,
                     onValueChange = {
                         rect227Text = it
-                        draftStore.saveIfEnabled(CreationDraftStore.Keys.ImagePrompt, it)
+                        draftStore.saveIfEnabled(draftKey, it)
                     },
                     singleLine = true,
                     cursorBrush = SolidColor(Color.Black),
@@ -312,15 +328,20 @@ fun ShengtuScreen(
                         .padding(start = 8.dp),
                 )
             }
-            // "保存作品" 按钮(Group 196.png + "保存作品" 文字,屏幕水平居中,下移 393)
+            // 行囊项目在完整编辑器上线前只暂存本机草稿，不写入服务端版本。
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = 393.dp)
                     .size(width = 372.dp, height = 55.dp)
-                    .clickable {
-                        draftStore.clear(CreationDraftStore.Keys.ImagePrompt)
-                        onCreateWork()
+                    .clickable(enabled = rect227Text.isNotBlank()) {
+                        if (projectId != null) {
+                            draftStore.save(draftKey, rect227Text)
+                            draftNotice = "草稿已暂存到本机；完整创作页完成后可继续编辑"
+                        } else {
+                            draftStore.clear(draftKey)
+                            onCreateWork()
+                        }
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -331,13 +352,24 @@ fun ShengtuScreen(
                     contentScale = ContentScale.FillBounds,
                 )
                 Text(
-                    text = "保存作品",
+                    text = if (projectId != null) "暂存草稿" else "保存作品",
                     color = Color.White,
                     style = TextStyle(
                         fontFamily = YaHei,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Normal,
                     ),
+                )
+            }
+
+            draftNotice?.let { message ->
+                Text(
+                    text = message,
+                    color = Color(0xFF8C4D3D),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(y = 350.dp),
                 )
             }
         }

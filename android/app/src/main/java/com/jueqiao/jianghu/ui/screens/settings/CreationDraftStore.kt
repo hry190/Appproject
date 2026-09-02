@@ -12,6 +12,11 @@ class CreationDraftStore(context: Context) {
 
     fun saveIfEnabled(key: String, value: String) {
         if (!settings.getBoolean(SettingsPreferences.Keys.AutoSave, true)) return
+        save(key, value)
+    }
+
+    /** An explicit user action must persist even when automatic saving is disabled. */
+    fun save(key: String, value: String) {
         drafts.edit().putString(key, value).apply()
     }
 

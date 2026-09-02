@@ -4,6 +4,7 @@ import re
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -300,3 +301,8 @@ class AccountExport(StrictModel):
     guardian_controls: GuardianControlsPublic | None
     consents: list[ConsentRecordPublic]
     active_sessions: list[SessionPublic]
+    creations: list[dict[str, Any]]
+    media_assets: list[dict[str, Any]]
+    moderation_appeals: list[dict[str, Any]]
+    privacy_settings: dict[str, Any]
+    domain_audit_events: list[dict[str, Any]]

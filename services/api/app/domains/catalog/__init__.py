@@ -1,0 +1,2 @@
+"""Manual catalog domain."""
+

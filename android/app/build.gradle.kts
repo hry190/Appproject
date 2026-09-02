@@ -13,7 +13,7 @@ val localProps = Properties().apply {
 }
 val minimaxBaseUrl: String = localProps.getProperty("MINIMAX_BASE_URL", "https://api.MiniMax.cn/v1")
 val minimaxApiKey:  String = localProps.getProperty("MINIMAX_API_KEY",  "")
-val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://10.0.2.2:8000/")
+val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://10.0.2.2:8010/")
 val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-08")
 val privacyVersion: String = localProps.getProperty("PRIVACY_VERSION", "2026-08")
 

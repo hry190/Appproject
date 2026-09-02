@@ -303,3 +303,14 @@ class BlacklistEntry(Base):
 
 
 Index("ix_auth_audit_event_type_created", AuthAuditEvent.event_type, AuthAuditEvent.created_at)
+
+
+# Domain models are imported here so Alembic and test metadata discover them.
+from app.domains.catalog import models as _catalog_models  # noqa: E402,F401
+from app.domains.creations import models as _creation_models  # noqa: E402,F401
+from app.domains.learning import models as _learning_models  # noqa: E402,F401
+from app.domains.media import models as _media_models  # noqa: E402,F401
+from app.domains.mistakes import models as _mistake_models  # noqa: E402,F401
+from app.domains.moderation import models as _moderation_models  # noqa: E402,F401
+from app.domains.privacy import models as _privacy_models  # noqa: E402,F401
+from app.domains.profiles import models as _profile_models  # noqa: E402,F401
