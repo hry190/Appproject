@@ -76,6 +76,7 @@ import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
+import com.jueqiao.jianghu.ui.screens.chuangzuodangan6.Chuangzuodangan6Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

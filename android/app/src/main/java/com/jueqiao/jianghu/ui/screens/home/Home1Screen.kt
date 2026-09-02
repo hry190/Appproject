@@ -92,13 +92,6 @@ private val DecorButtonGoldOutlineOffsets = listOf(
     0.dp to 0.65.dp,
 )
 
-internal object HomePandaLayout {
-    val X = 107.dp
-    val Y = 478.dp
-    val Width = 200.dp
-    val Height = 256.dp
-}
-
 /**
  * 首页1 — 点击首页后跳转的次页。
  * 布局：背景竹林 + 熊猫 + 4 个装饰横幅按钮(行囊/修炼/大会/作品)。
