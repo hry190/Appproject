@@ -59,12 +59,12 @@ fun Gunlun1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 熊猫打坐图像(未标题-1-恢复的 5.png,X=70, Y=320, W=257, H=457)— 居中内容面板
+            // 熊猫打坐图像(未标题-1-恢复的 5.png,X=70, Y=330, W=257, H=457)— 居中内容面板
             Image(
                 painter = painterResource(R.drawable.img_gunlun1_untitled_1_recovered_5),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 70.dp, y = 320.dp)
+                    .offset(x = 70.dp, y = 330.dp)
                     .size(width = 257.dp, height = 457.dp),
                 contentScale = ContentScale.FillBounds,
             )

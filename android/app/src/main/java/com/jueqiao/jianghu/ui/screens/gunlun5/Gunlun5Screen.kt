@@ -1,9 +1,10 @@
-package com.jueqiao.jianghu.ui.screens.gunlun2
+package com.jueqiao.jianghu.ui.screens.gunlun5
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,21 +29,23 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 滚轮2 页 — 滚轮1 → "气泡"点击跳转目标。
- * 布局:
+ * 滚轮5 页 — 滚轮4 → 点击"熊猫"贴图跳转目标。
+ *
+ * 完全复制滚轮2 页的结构:
  *   - 滚轮.png 全屏背景
  *   - 未标题-1-恢复的 5.png 熊猫打坐图像 (70, 330, 257×457)
  *   - 未标题-2-恢复的 1.png 秘籍 (135, 221, 155×147)
- *   - 未解锁秘籍 1-9(9 张图,见 L81-L170)
+ *   - 未解锁秘籍 1-9(9 张图)
  *   - Rectangle 251.png 介绍 (283, 264, 旋转 0.93°, 23×101.5, #DDC686 背景)
- *   - Vector.png 返回按钮 (20, 77, 18×13)
- * 复制自 Gunlun1Screen.kt,删除了:气泡及其文本、后山按钮、修炼按钮。
+ *   - Vector.png 返回按钮(20, 77, 18×13)
+ *
+ * 熊猫在滚轮5 中**不可点击**(5 是叶子页)。
+ * 复制自 Gunlun2Screen.kt,完全相同。
  * 复制自 screen-adaptation.md 模式 A (YanwuchangScreen 简化版)。
  */
 @Composable
-fun Gunlun2Screen(
+fun Gunlun5Screen(
     onBack: () -> Unit = {},
-    onOpenGunlun3: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -51,7 +54,7 @@ fun Gunlun2Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(滚轮.png)— 延伸到屏幕底部
+        // 全屏背景图(滚轮.png)
         Image(
             painter = painterResource(R.drawable.img_gunlun1_bg),
             contentDescription = null,
@@ -65,15 +68,13 @@ fun Gunlun2Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 熊猫打坐图像(未标题-1-恢复的 5.png,X=70, Y=330, W=257, H=457)— 居中内容面板
-            //   点击跳转到滚轮3
+            // 熊猫打坐图像(背景场景)— 滚轮5 中不可点击(5 是叶子页)
             Image(
                 painter = painterResource(R.drawable.img_gunlun1_untitled_1_recovered_5),
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 70.dp, y = 330.dp)
-                    .size(width = 257.dp, height = 457.dp)
-                    .clickable(onClick = onOpenGunlun3),
+                    .size(width = 257.dp, height = 457.dp),
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -206,6 +207,29 @@ fun Gunlun2Screen(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(width = 16.dp, height = 76.dp),
+                )
+            }
+
+            // Rectangle16.png 气泡(X=259, Y=374, W=149, H=100)
+            Box(
+                modifier = Modifier
+                    .offset(x = 259.dp, y = 374.dp)
+                    .size(width = 149.dp, height = 100.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_gunlun5_rect16),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+                // 气泡文本(W=127, H=80, 字号 14, 黑色, YaHei)
+                Text(
+                    text = "山水作伴，秘籍环绕。静下心来研读秘籍。选一本心仪秘籍，开始江湖修行。",
+                    color = Color.Black,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(width = 127.dp, height = 80.dp),
                 )
             }
 
