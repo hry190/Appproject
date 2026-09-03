@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Rect
@@ -23,9 +26,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.math.PI
 
 /**
@@ -41,7 +48,24 @@ import kotlin.math.PI
  *       位置 (195, 201),尺寸 20×20dp;等边三角形,填充 #F6F6F6,不透明度 100%
  *   - 视频进度条:Group 177.png(原图 377×8,宽高比 47.13:1)
  *       位置 (116, 399),尺寸 180×4dp — 水平居中于缩略图,贴视频底沿
- *   - 评论框背景:已删除,等用户重新加入图片
+ *   - 评论框背景:未标题-1 69 (3).png(img_yanwuchang_video_comment1_bg)
+ *       位置 (0, 393),尺寸 417×523dp — 略宽于画布,右侧溢出 5dp(按设计保留)
+ *   - 顶部 X 关闭按钮:Group 141 (2).png(img_yanwuchang_video_comment1_group141)
+ *       位置 (17, 418),尺寸 17×17dp, 填色 #6D8470, 不透明度 100%
+ *       点击 → 关闭评论1页,回到演武场视频首页(onBack)
+ *   - 顶部 "放大缩小" 按钮:放大缩小 (2).png(img_yanwuchang_video_comment1_zoom)
+ *       位置 (54, 418),尺寸 17×17dp, 填色 #6D8470, 不透明度 100%
+ *       (源图属性:opacity 54%, position mixed, weight 1, end point mixed)
+ *       点击 → 展开为全屏评论2页(onOpenExpanded)
+ *   - "500 条评论" 标题(Text 渲染,与 Comment2 页风格一致)
+ *       位置 (160, 443),96×18dp 容器,14sp,YaHei,填色 #6D8470,不透明度 100%
+ *       letterSpacing 0.25em(原 41% 会裁字,改为 25% 保证 7 个字完整显示)
+ *   - 底部 "互评" 按钮(背景图 + 文字):
+ *       背景:未标题-2-恢复的 12 (1).png(img_yanwuchang_video_comment1_reply, 372×47)
+ *         位置 (22, 834),尺寸 372×47dp
+ *       文字:"互评" @ (188, 844),40×26dp 区域,20sp,YaHei,白色 #FFFFFF,不透明度 100%
+ *         (源图属性:opacity 88%)
+ *       整体可点击,目前为占位
  *
  * @param onBack         返回回调(预留,当前未使用)
  * @param onOpenExpanded 打开全屏展开页回调(预留,当前未使用)
@@ -123,6 +147,120 @@ fun YanwuchangVideoComment1Screen(
                     .size(width = 180.dp, height = 4.dp),
                 contentScale = ContentScale.Fit,
             )
+
+            // 评论框背景(未标题-1 69 (3).png, 417×523dp)
+            //   位置 (0, 393),尺寸 417×523dp
+            //   图片宽 417 略大于画布 412,右侧溢出 5dp,按设计保留
+            //   顶部 Y=393 略高于视频进度条 Y=399(进度条叠在新评论框之上,效果保留)
+            //   高度 523 + Y 393 = 916,贴底(系统导航条之上)
+            Image(
+                painter = painterResource(R.drawable.img_yanwuchang_video_comment1_bg),
+                contentDescription = "评论框背景",
+                modifier = Modifier
+                    .offset(x = 0.dp, y = 393.dp)
+                    .size(width = 417.dp, height = 523.dp),
+                contentScale = ContentScale.Fit,
+            )
+
+            // ===== 顶部 X 关闭按钮(Group 141 (2).png @ (17, 418), 17×17dp) =====
+            //   位于评论框背景图(Y=393 起)顶部偏上,Y=418 距评论框顶 25dp,水平居中布局
+            //   触摸区域扩大到 44×44dp,符合 Material 最小点击规范
+            //   填色 #6D8470,不透明度 100%
+            //   点击 → 关闭评论1页,回到演武场视频首页(onBack)
+            Box(
+                modifier = Modifier
+                    .offset(x = 17.dp - (44.dp - 17.dp) / 2, y = 418.dp - (44.dp - 17.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable { onBack() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment1_group141),
+                    contentDescription = "关闭",
+                    modifier = Modifier.size(width = 17.dp, height = 17.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn),
+                    alpha = 1f,
+                )
+            }
+
+            // ===== 顶部 "放大缩小" 按钮(放大缩小 (2).png @ (54, 418), 17×17dp) =====
+            //   位于 X 关闭按钮右侧 37dp,水平对齐同一行
+            //   触摸区域扩大到 44×44dp,符合 Material 最小点击规范
+            //   填色 #6D8470,不透明度 100%
+            //   (源图本身属性:opacity 54%, position mixed, weight 1, end point mixed)
+            //   点击 → 展开为全屏评论2页(onOpenExpanded)
+            Box(
+                modifier = Modifier
+                    .offset(x = 54.dp - (44.dp - 17.dp) / 2, y = 418.dp - (44.dp - 17.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable { onOpenExpanded() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment1_zoom),
+                    contentDescription = "放大缩小",
+                    modifier = Modifier.size(width = 17.dp, height = 17.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(Color(0xFF6D8470), BlendMode.SrcIn),
+                    alpha = 1f,
+                )
+            }
+
+            // ===== "500 条评论" 标题 @ (160, 443), 96×18dp, 14sp, #6D8470 =====
+            //   位于 X 关闭 + 放大缩小 按钮右侧(同 Y=443 行,略低于图标中心 Y=418+8.5=426.5)
+            //   letterSpacing 0.25em(原 41% 太宽会被裁字,改为 25% 保证 7 个字完整显示)
+            //   与 Comment2 页同名标题风格完全一致
+            Text(
+                text  = "500 条评论",
+                color = Color(0xFF6D8470),
+                style = TextStyle(
+                    fontFamily    = YaHei,
+                    fontSize      = 14.sp,
+                    letterSpacing = 0.25.em,
+                ),
+                modifier = Modifier
+                    .offset(x = 160.dp, y = 443.dp)
+                    .size(width = 96.dp, height = 18.dp),
+            )
+
+            // ===== 底部 "互评" 按钮(背景图 @ (22, 834) + 居中文字) =====
+            //   背景:未标题-2-恢复的 12 (1).png(img_yanwuchang_video_comment1_reply, 372×47)
+            //     位置 (22, 834),尺寸 372×47dp(源图属性:opacity 88%)
+            //   文字:"互评" 居中叠加在背景图上
+            //     位置 (188, 844),40×26dp 区域,20sp,YaHei,白色 #FFFFFF,不透明度 100%
+            //     (X=188 = 22 + (372-40)/2 = 22 + 166 = 188,水平居中于背景)
+            //     (Y=844 = 834 + (47-26)/2 = 834 + 10.5 ≈ 844,垂直居中于背景)
+            //   整体可点击,目前为占位(TODO:接入互评功能)
+            Box(
+                modifier = Modifier
+                    .offset(x = 22.dp, y = 834.dp)
+                    .size(width = 372.dp, height = 47.dp)
+                    .clickable { /* TODO: 互评功能 */ },
+                contentAlignment = Alignment.Center,
+            ) {
+                // 底层:装饰横幅背景(372×47dp,贴原图原生比例)
+                Image(
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment1_reply),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+                // 顶层:"互评" 文字(白色 #FFFFFF,20sp,YaHei,不透明度 100%)
+                //   居中显示在背景图正中(由外层 Box 的 Alignment.Center 处理)
+                Box(
+                    modifier = Modifier.size(width = 40.dp, height = 26.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text  = "互评",
+                        color = Color(0xFFFFFFFF),
+                        style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+                        modifier = Modifier.fillMaxSize(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                }
+            }
         }
     }
 }
