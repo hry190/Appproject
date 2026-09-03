@@ -18,14 +18,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.HexagonShape
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -88,9 +91,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍1 图像(未标题1.png,X=8, Y=205, W=96, H=96)
+            // 未解锁秘籍1 图像(未标题1.png,X=8, Y=205, W=96, H=96 — 素材换成"已解锁1" 未标题-2 30.png)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_1),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_30),
                 contentDescription = "未解锁秘籍1",
                 modifier = Modifier
                     .offset(x = 8.dp, y = 205.dp)
@@ -98,9 +101,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍2 旋转图像(未标题-2.png,X=-21, Y=130.29, rotation -11.03° 顺时针, W=66.29, H=69)
+            // 未解锁秘籍2 旋转图像(未标题-2 32.png,X=-21, Y=130.29, rotation -11.03° 顺时针, W=66.29, H=69)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_2),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_32),
                 contentDescription = "未解锁秘籍2",
                 modifier = Modifier
                     .offset(x = (-21).dp, y = 130.29.dp)
@@ -109,9 +112,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍3 图像(未标题-3.png,X=50, Y=87, W=64, H=66.6)
+            // 未解锁秘籍3 图像(未标题-232.png,X=50, Y=87, W=64, H=66.6)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_3),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_232),
                 contentDescription = "未解锁秘籍3",
                 modifier = Modifier
                     .offset(x = 50.dp, y = 87.dp)
@@ -119,9 +122,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍4 图像(未标题-4.png,X=123.4, Y=66, W=55.6, H=57.9)
+            // 未解锁秘籍4 图像(未标题-2 28.png,X=123.4, Y=66, W=55.6, H=57.9)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_4),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_28),
                 contentDescription = "未解锁秘籍4",
                 modifier = Modifier
                     .offset(x = 123.4.dp, y = 66.dp)
@@ -129,9 +132,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍5 图像(未标题-5.png,X=198, Y=69, W=42.62, H=38.41)
+            // 未解锁秘籍5 图像(未标题-2 24.png,X=198, Y=69, W=42.62, H=38.41)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_5),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_24),
                 contentDescription = "未解锁秘籍5",
                 modifier = Modifier
                     .offset(x = 198.dp, y = 69.dp)
@@ -139,9 +142,9 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍6 图像(未标题-6.png,X=258.15, Y=68.5, W=54.78, H=51.85)
+            // 未解锁秘籍6 图像(未标题-2-恢复的 14.png,X=258.15, Y=68.5, W=54.78, H=51.85)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_6),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_recovered_14),
                 contentDescription = "未解锁秘籍6",
                 modifier = Modifier
                     .offset(x = 258.15.dp, y = 68.5.dp)
@@ -151,7 +154,7 @@ fun Gunlun5Screen(
 
             // 未解锁秘籍7 图像(未标题-7.png,X=311.04, Y=92, W=58, H=57.5)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_7),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_31),
                 contentDescription = "未解锁秘籍7",
                 modifier = Modifier
                     .offset(x = 311.04.dp, y = 92.dp)
@@ -161,7 +164,7 @@ fun Gunlun5Screen(
 
             // 未解锁秘籍8 图像(未标题-8.png,X=357, Y=136.32, W=66, H=69)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_8),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_26),
                 contentDescription = "未解锁秘籍8",
                 modifier = Modifier
                     .offset(x = 357.dp, y = 136.32.dp)
@@ -171,7 +174,7 @@ fun Gunlun5Screen(
 
             // 未解锁秘籍9 图像(未标题-9.png,X=321, Y=205, W=93, H=92)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_9),
+                painter = painterResource(R.drawable.img_gunlun5_untitled_2_33),
                 contentDescription = "未解锁秘籍9",
                 modifier = Modifier
                     .offset(x = 321.dp, y = 205.dp)
@@ -179,13 +182,15 @@ fun Gunlun5Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "介绍" 旋转图像 + 背景填充(Rectangle 251.png,X=283, Y=264, rotation 0.93°, W=23, H=101.5)
+            // "介绍" 旋转图像 + 背景填充(Rectangle 251.png,X=283, Y=254, rotation 0.93°, W=23, H=115.5)
             //   外观:Opacity 100%, Corner radius 0
             //   填充色:#DDC686,Opacity 100%
+            //   裁剪为六边形显示
             Box(
                 modifier = Modifier
-                    .offset(x = 283.dp, y = 264.dp)
-                    .size(width = 23.dp, height = 101.5.dp)
+                    .offset(x = 283.dp, y = 254.dp)
+                    .size(width = 23.dp, height = 115.5.dp)
+                    .clip(HexagonShape())
                     .background(Color(0xFFDDC686))
                     .rotate(0.93f),
             ) {
@@ -210,11 +215,11 @@ fun Gunlun5Screen(
                 )
             }
 
-            // Rectangle16.png 气泡(X=259, Y=374, W=149, H=100)
+            // Rectangle16.png 气泡(X=259, Y=374, W=149, H=110)
             Box(
                 modifier = Modifier
                     .offset(x = 259.dp, y = 374.dp)
-                    .size(width = 149.dp, height = 100.dp),
+                    .size(width = 149.dp, height = 110.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_gunlun5_rect16),
@@ -222,14 +227,15 @@ fun Gunlun5Screen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
-                // 气泡文本(W=127, H=80, 字号 14, 黑色, YaHei)
+                // 气泡文本(W=127, H=80, 字号 14, 黑色, YaHei)— translationY -5 上移
                 Text(
                     text = "山水作伴，秘籍环绕。静下心来研读秘籍。选一本心仪秘籍，开始江湖修行。",
                     color = Color.Black,
                     style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .size(width = 127.dp, height = 80.dp),
+                        .size(width = 127.dp, height = 80.dp)
+                        .graphicsLayer { translationY = -5f },
                 )
             }
 

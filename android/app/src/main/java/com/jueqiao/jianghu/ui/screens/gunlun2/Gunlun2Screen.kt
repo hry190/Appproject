@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.HexagonShape
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -34,7 +36,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 未标题-1-恢复的 5.png 熊猫打坐图像 (70, 330, 257×457)
  *   - 未标题-2-恢复的 1.png 秘籍 (135, 221, 155×147)
  *   - 未解锁秘籍 1-9(9 张图,见 L81-L170)
- *   - Rectangle 251.png 介绍 (283, 264, 旋转 0.93°, 23×101.5, #DDC686 背景)
+ *   - Rectangle 251.png 介绍 (283, 254, 旋转 0.93°, 23×115.5, #DDC686 背景)
  *   - Vector.png 返回按钮 (20, 77, 18×13)
  * 复制自 Gunlun1Screen.kt,删除了:气泡及其文本、后山按钮、修炼按钮。
  * 复制自 screen-adaptation.md 模式 A (YanwuchangScreen 简化版)。
@@ -87,9 +89,9 @@ fun Gunlun2Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 未解锁秘籍1 图像(未标题1.png,X=8, Y=205, W=96, H=96)
+            // 未解锁秘籍1 图像(未标题1.png,X=8, Y=205, W=96, H=96 — 素材换成"已解锁1" 未标题-2 30.png)
             Image(
-                painter = painterResource(R.drawable.img_gunlun2_untitled_1),
+                painter = painterResource(R.drawable.img_gunlun2_untitled_2_30),
                 contentDescription = "未解锁秘籍1",
                 modifier = Modifier
                     .offset(x = 8.dp, y = 205.dp)
@@ -178,13 +180,15 @@ fun Gunlun2Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "介绍" 旋转图像 + 背景填充(Rectangle 251.png,X=283, Y=264, rotation 0.93°, W=23, H=101.5)
+            // "介绍" 旋转图像 + 背景填充(Rectangle 251.png,X=283, Y=254, rotation 0.93°, W=23, H=115.5)
             //   外观:Opacity 100%, Corner radius 0
             //   填充色:#DDC686,Opacity 100%
+            //   裁剪为六边形显示
             Box(
                 modifier = Modifier
-                    .offset(x = 283.dp, y = 264.dp)
-                    .size(width = 23.dp, height = 101.5.dp)
+                    .offset(x = 283.dp, y = 254.dp)
+                    .size(width = 23.dp, height = 115.5.dp)
+                    .clip(HexagonShape())
                     .background(Color(0xFFDDC686))
                     .rotate(0.93f),
             ) {
