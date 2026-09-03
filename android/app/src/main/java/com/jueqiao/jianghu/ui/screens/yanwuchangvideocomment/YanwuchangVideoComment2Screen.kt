@@ -55,7 +55,8 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *       每条评论:
  *         - 左侧:圆形头像(38dp,填充 #6D8470)
  *         - 中部:用户名(呀呀呀,13sp #6D8470) + 评论文本(14sp #333333)
- *         - 右侧:爱心(ic_like_outline/ic_like_filled)+ 数字(12sp #6D8470 / #999999)
+ *         - 右侧:爱心(未点赞 img_yanwuchang_video_comment_like_vector / 已点赞 img_yanwuchang_video_comment1_like_filled)
+ *                 + 数字(12sp #000000,不透明度 100%)
  *         - 整行间距 24dp
  *   - 底部:"互评" 按钮(背景图 img_yanwuchang_video_comment_reply + 白色文字)
  *           整体可点击,显示 380×48dp;文字 "互评" 居中,20sp,白色 #FFFFFF,40×26dp 区域
@@ -258,10 +259,10 @@ private fun ExpandedCommentRow(
             )
         }
 
-        // 右侧:Vector.png 点赞图标(13×11dp)
-            //   - 未点赞:Vector.png 原色(无 ColorFilter)
-            //   - 已点赞:ColorFilter.tint + BlendMode.SrcIn 把图标**已有像素**染成 #6D8470
-            //     填充严格限制在图标自身轮廓内,不超出边线
+        // 右侧:点赞图标(13×11dp 容器,内容 Fit)
+            //   - 未点赞:img_yanwuchang_video_comment_like_vector 原色
+            //   - 已点赞:整个图标切换为 Like (喜欢) (2).png
+            //     (img_yanwuchang_video_comment1_like_filled,17×16,在容器内 Fit)
             //   点击翻转 isLiked 同步数字 ±1
             //   整体下移:top = 38dp — 对齐到中部"评论文本第二行"基线
             //     (中部 Column 高度:用户名 13sp + 4dp padding + 文本 14sp × 2 行 ≈ 38dp)
@@ -270,29 +271,21 @@ private fun ExpandedCommentRow(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(start = 12.dp, top = 38.dp),
             ) {
-                // 点赞图标 — 13×11dp
-                //   未点赞:仅显示空心 heart 描边(img_yanwuchang_video_comment_like_vector 原色)
-                //   已点赞:在原描边图下叠加一个填充 #6D8470 的实心 heart
-                //          (ic_comment_like_filled),仅填充空心处,描边保留
+                // 点赞图标 — 13×11dp 容器
+                //   未点赞:img_yanwuchang_video_comment_like_vector (原色空心 heart)
+                //   已点赞:img_yanwuchang_video_comment1_like_filled (Like (喜欢) (2).png,实心)
+                //   两者互斥,只渲染一个,使用 isLiked 二选一
                 Box(
                     modifier = Modifier
                         .size(width = 13.dp, height = 11.dp)
                         .clickable(onClick = onLikeToggle),
                     contentAlignment = Alignment.Center,
                 ) {
-                    // 底层:已点赞时的实心填充(仅 isLiked 时渲染)
-                    if (comment.isLiked) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_comment_like_filled),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit,
-                            alpha = 1f,
-                        )
-                    }
-                    // 顶层:始终渲染空心 heart 描边
                     Image(
-                        painter = painterResource(R.drawable.img_yanwuchang_video_comment_like_vector),
+                        painter = painterResource(
+                            if (comment.isLiked) R.drawable.img_yanwuchang_video_comment1_like_filled
+                            else                  R.drawable.img_yanwuchang_video_comment_like_vector
+                        ),
                         contentDescription = if (comment.isLiked) "取消点赞" else "点赞",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,
@@ -301,7 +294,7 @@ private fun ExpandedCommentRow(
                 }
                 Text(
                     text  = comment.likeCount.toString(),
-                    color = if (comment.isLiked) Color(0xFF6D8470) else Color(0xFF999999),
+                    color = Color(0xFF000000),
                     style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                     modifier = Modifier.padding(start = 4.dp),
                 )

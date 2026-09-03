@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -60,6 +64,23 @@ import kotlin.math.PI
  *   - "500 条评论" 标题(Text 渲染,与 Comment2 页风格一致)
  *       位置 (160, 443),96×18dp 容器,14sp,YaHei,填色 #6D8470,不透明度 100%
  *       letterSpacing 0.25em(原 41% 会裁字,改为 25% 保证 7 个字完整显示)
+ *   - 4 个评论项装饰(Group 179.png,group_179_v2)
+ *       位置:均 X=20,Y 依次为 493 / 593 / 693 / 793,尺寸 104×50dp
+ *       垂直等距 100dp,位于评论框背景图(Y=393~916)内
+ *   - 4 条评论文本("我最欣赏的...")
+ *       第 1 条 位置 (81, 517),后 3 条 位置 (79, 617) / (79, 717) / (79, 817)
+ *       尺寸 313×36dp,14sp,YaHei,填色 #000000,不透明度 100%
+ *       位置在每个 Group 179 项内垂直居中
+ *   - 4 个评论点赞图标 + 数字(各评论右侧)
+ *       未点赞:Like (喜欢) (1).png(img_yanwuchang_video_comment1_like),17×16dp
+ *       已点赞:Like (喜欢) (2).png(img_yanwuchang_video_comment1_like_filled),17×16dp
+ *         (Y 序列 559/659/759/859,X 序列 358/356/356/356)
+ *       点击 → 切换 空心(1).png / 实心(2).png
+ *       触摸区域扩大到 44×44dp(符合 Material 最小点击规范)
+ *       数字 "50": 15×16dp,12sp,YaHei,填色 #000000,不透明度 100%
+ *         X 序列 377/375/375/375(爱心 X + 爱心宽 17 + 间距 2)
+ *         Y 序列与爱心顶对齐
+ *       点击爱心 → isLiked 翻转 同时 likeCount ±1(默认 50)
  *   - 底部 "互评" 按钮(背景图 + 文字):
  *       背景:未标题-2-恢复的 12 (1).png(img_yanwuchang_video_comment1_reply, 372×47)
  *         位置 (22, 834),尺寸 372×47dp
@@ -75,6 +96,19 @@ fun YanwuchangVideoComment1Screen(
     onBack: () -> Unit = {},
     onOpenExpanded: () -> Unit = {},
 ) {
+    // 4 条评论的点赞状态 + 点赞数(独立维护,互不影响)
+    //   isLiked  false = 未点赞:空心 heart 原色
+    //            true  = 已点赞:实心 heart (Like (喜欢) (2).png)
+    //   likeCount 默认 50,点击爱心同步 ±1
+    var isLiked1 by remember { mutableStateOf(false) }
+    var isLiked2 by remember { mutableStateOf(false) }
+    var isLiked3 by remember { mutableStateOf(false) }
+    var isLiked4 by remember { mutableStateOf(false) }
+    var likeCount1 by remember { mutableStateOf(50) }
+    var likeCount2 by remember { mutableStateOf(50) }
+    var likeCount3 by remember { mutableStateOf(50) }
+    var likeCount4 by remember { mutableStateOf(50) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -224,6 +258,152 @@ fun YanwuchangVideoComment1Screen(
                     .size(width = 96.dp, height = 18.dp),
             )
 
+            // ===== 4 个评论项装饰(Group 179.png, 104×50dp)=====
+            //   垂直等距 100dp 排列,X 统一为 20,均位于评论框背景图(Y=393~916)内
+            //   Y 序列:493 / 593 / 693 / 793(最后一项底沿 793+50=843,距互评按钮 Y=834 重叠 9dp)
+            //   原图为评论项的头部 / 内容区装饰条(头像+昵称 / 文本行等)
+            //   使用私有 Composable CommentGroupItem 避免重复代码
+            CommentGroupItem(y = 493.dp)
+            CommentGroupItem(y = 593.dp)
+            CommentGroupItem(y = 693.dp)
+            CommentGroupItem(y = 793.dp)
+
+            // ===== 4 条评论文本(313×36dp, 14sp, #000000)=====
+            //   文本位于每个 Group 179 项内(Y=493/593/693/793):
+            //   - 前 3 条:位置 81/79,61×9/61×7/61×7,H=50dp(完整显示所有行,无 maxLines 限制)
+            //   - 第 4 条:位置 79, Y=817, H=20dp, maxLines=1 + Ellipsis
+            //     (Y=817 + 20 = 837,被互评按钮 Y=834 遮挡 3dp,只保留顶部 1 行可见)
+            //   使用私有 Composable CommentTextItem 避免重复代码
+            CommentTextItem(
+                x =  81.dp, y = 517.dp,
+                text = "我最欣赏的，是机械冷硬的手掌之上，依旧愿意为一只蝴蝶停留的温柔。",
+                height = 50.dp,
+            )
+            CommentTextItem(
+                x =  79.dp, y = 617.dp,
+                text = "我最欣赏的，是机械冷硬的手掌之上，依旧愿意为一只蝴蝶停留的温柔。",
+                height = 50.dp,
+            )
+            CommentTextItem(
+                x =  79.dp, y = 717.dp,
+                text = "我最欣赏的，是机械冷硬的手掌之上，依旧愿意为一只蝴蝶停留的温柔。",
+                height = 50.dp,
+            )
+            CommentTextItem(
+                x =  79.dp, y = 817.dp,
+                text = "我最欣赏的，是机械冷硬的手掌之上，依旧愿意为一只蝴蝶停留的温柔。",
+                height = 20.dp,
+                maxLines = 1,
+            )
+
+            // ===== 4 个评论点赞图标(17×16dp,可点击切换图标)=====
+            //   位于每条评论文本右侧(贴近右沿 X=358/356)
+            //   Y 序列:559 / 659 / 759 / 859(与文本行对齐)
+            //   点击 → 切换 isLiked 状态,图标资源随之更换:
+            //     - 未点赞:Like (喜欢) (1).png(img_yanwuchang_video_comment1_like)
+            //     - 已点赞:Like (喜欢) (2).png(img_yanwuchang_video_comment1_like_filled)
+            //   触摸区扩大到 44×44dp,符合 Material 最小点击规范
+            //   数字 "50" 紧贴爱心右边 2dp:
+            //     X = 爱心 X + 爱心宽 17 + 间距 2 = 爱心 X + 19
+            //     Y = 爱心 Y(顶对齐,文字在 16dp 容器内自然垂直居中)
+            //     字号 12sp,黑色 #000000,不透明度 100%
+            // 项 1:爱心 X=358 / 数字 X=377
+            //   点击 → isLiked1 翻转 + likeCount1 ±1
+            Box(
+                modifier = Modifier
+                    .offset(x = 358.dp - (44.dp - 17.dp) / 2, y = 559.dp - (44.dp - 16.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable {
+                        isLiked1 = !isLiked1
+                        likeCount1 += if (isLiked1) 1 else -1
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (isLiked1) R.drawable.img_yanwuchang_video_comment1_like_filled
+                        else           R.drawable.img_yanwuchang_video_comment1_like
+                    ),
+                    contentDescription = if (isLiked1) "取消点赞" else "点赞",
+                    modifier = Modifier.size(width = 17.dp, height = 16.dp),
+                    contentScale = ContentScale.Fit,
+                    alpha = 1f,
+                )
+            }
+            CommentLikeNumber(x = 377.dp, y = 559.dp, text = likeCount1.toString())
+            // 项 2:爱心 X=356 / 数字 X=375
+            //   点击 → isLiked2 翻转 + likeCount2 ±1
+            Box(
+                modifier = Modifier
+                    .offset(x = 356.dp - (44.dp - 17.dp) / 2, y = 659.dp - (44.dp - 16.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable {
+                        isLiked2 = !isLiked2
+                        likeCount2 += if (isLiked2) 1 else -1
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (isLiked2) R.drawable.img_yanwuchang_video_comment1_like_filled
+                        else           R.drawable.img_yanwuchang_video_comment1_like
+                    ),
+                    contentDescription = if (isLiked2) "取消点赞" else "点赞",
+                    modifier = Modifier.size(width = 17.dp, height = 16.dp),
+                    contentScale = ContentScale.Fit,
+                    alpha = 1f,
+                )
+            }
+            CommentLikeNumber(x = 375.dp, y = 659.dp, text = likeCount2.toString())
+            // 项 3:爱心 X=356 / 数字 X=375
+            //   点击 → isLiked3 翻转 + likeCount3 ±1
+            Box(
+                modifier = Modifier
+                    .offset(x = 356.dp - (44.dp - 17.dp) / 2, y = 759.dp - (44.dp - 16.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable {
+                        isLiked3 = !isLiked3
+                        likeCount3 += if (isLiked3) 1 else -1
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_yanwuchang_video_comment1_like),
+                    contentDescription = if (isLiked3) "取消点赞" else "点赞",
+                    modifier = Modifier.size(width = 17.dp, height = 16.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = if (isLiked3) ColorFilter.tint(Color(0xFFF97D7D), BlendMode.SrcIn) else null,
+                    alpha = 1f,
+                )
+            }
+            // 项 4:爱心 X=356 / 数字 X=375
+            //   Y=859 超出了评论框背景图(Y=393~916)范围,位于互评按钮 Y=834 之下
+            //   (互评按钮 H=47,Y=834~881,与项 4 爱心 Y=859~875 重叠 16dp)
+            //   实际渲染时爱心可能与互评按钮装饰条交叠
+            //   点击 → isLiked4 翻转 + likeCount4 ±1
+            Box(
+                modifier = Modifier
+                    .offset(x = 356.dp - (44.dp - 17.dp) / 2, y = 859.dp - (44.dp - 16.dp) / 2)
+                    .size(width = 44.dp, height = 44.dp)
+                    .clickable {
+                        isLiked4 = !isLiked4
+                        likeCount4 += if (isLiked4) 1 else -1
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (isLiked4) R.drawable.img_yanwuchang_video_comment1_like_filled
+                        else           R.drawable.img_yanwuchang_video_comment1_like
+                    ),
+                    contentDescription = if (isLiked4) "取消点赞" else "点赞",
+                    modifier = Modifier.size(width = 17.dp, height = 16.dp),
+                    contentScale = ContentScale.Fit,
+                    alpha = 1f,
+                )
+            }
+            CommentLikeNumber(x = 375.dp, y = 859.dp, text = likeCount4.toString())
+
             // ===== 底部 "互评" 按钮(背景图 @ (22, 834) + 居中文字) =====
             //   背景:未标题-2-恢复的 12 (1).png(img_yanwuchang_video_comment1_reply, 372×47)
             //     位置 (22, 834),尺寸 372×47dp(源图属性:opacity 88%)
@@ -263,6 +443,95 @@ fun YanwuchangVideoComment1Screen(
             }
         }
     }
+}
+
+/**
+ * 单条评论点赞数字(50)
+ *
+ *  位于评论1页每个 Like (喜欢) 爱心右边 2dp,15×16dp 容器,12sp 字号
+ *  YaHei 字体,黑色 #000000,不透明度 100%
+ *  使用 Compose Text 而非 PNG:数字变化时(后续可能绑定状态)零缩放
+ *  默认显示静态 "50",未来可改 [text] 参数支持动态数字
+ *
+ * @param x 元素左上角 X 坐标(dp)
+ * @param y 元素左上角 Y 坐标(dp)
+ */
+@Composable
+private fun CommentLikeNumber(
+    x: androidx.compose.ui.unit.Dp,
+    y: androidx.compose.ui.unit.Dp,
+    text: String = "50",
+) {
+    Text(
+        text  = text,
+        color = Color(0xFF000000),
+        style = TextStyle(
+            fontFamily = YaHei,
+            fontSize   = 12.sp,
+        ),
+        modifier = Modifier
+            .offset(x = x, y = y)
+            .size(width = 15.dp, height = 16.dp),
+    )
+}
+
+/**
+ * 单条评论文本项
+ *
+ *  位于评论1页的评论框背景图内,313×可变dp 容器,14sp 字号,黑色 #000000
+ *  使用 private 默认 alpha=1f(不透明度 100%),无 ColorFilter(直接使用原黑色)
+ *  与 CommentGroupItem(Group 179.png)叠加显示,文本位于 Group 179 项内
+ *
+ * @param x        元素左上角 X 坐标(dp)
+ * @param y        元素左上角 Y 坐标(dp)
+ * @param text     评论文本内容
+ * @param height   容器高度(dp),默认 36dp
+ * @param maxLines 最大行数(Int.MAX_VALUE 表示不限制),默认不限制
+ * @param overflow 超出 maxLines 后的裁剪策略,默认 Clip
+ */
+@Composable
+private fun CommentTextItem(
+    x: androidx.compose.ui.unit.Dp,
+    y: androidx.compose.ui.unit.Dp,
+    text: String,
+    height: androidx.compose.ui.unit.Dp = 36.dp,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: androidx.compose.ui.text.style.TextOverflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+) {
+    Text(
+        text  = text,
+        color = Color(0xFF000000),
+        style = TextStyle(
+            fontFamily = YaHei,
+            fontSize   = 14.sp,
+        ),
+        maxLines = maxLines,
+        overflow = overflow,
+        modifier = Modifier
+            .offset(x = x, y = y)
+            .size(width = 313.dp, height = height),
+    )
+}
+
+/**
+ * 单条评论项装饰(Group 179.png)
+ *
+ *  位于评论1页的评论框背景图内,X 固定 20,Y 由调用方传入,尺寸 104×50dp
+ *  使用项目内 drawable/group_179_v2.png(原 PNG Group 179.png,大小 1.4KB)
+ *  未来可在此添加 onClick / 头像 / 文本 / 点赞等子组件
+ *
+ * @param y 元素左上角的 Y 坐标(dp)
+ */
+@Composable
+private fun CommentGroupItem(y: androidx.compose.ui.unit.Dp) {
+    Image(
+        painter = painterResource(R.drawable.group_179_v2),
+        contentDescription = "评论项",
+        modifier = Modifier
+            .offset(x = 20.dp, y = y)
+            .size(width = 104.dp, height = 50.dp),
+        contentScale = ContentScale.Fit,
+    )
 }
 
 /**
