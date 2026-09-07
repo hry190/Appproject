@@ -114,12 +114,12 @@ fun Gunlun8Screen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "已解锁秘籍7" 图像(占原"已解锁秘籍8"槽位,X=377, Y=136.32, W=66, H=69 — 素材换了 未标题-2-恢复的 14.png)
+        // "已解锁秘籍7" 图像(占原"已解锁秘籍8"槽位,X=357, Y=136.32, W=66, H=69 — 素材换了 未标题-2-恢复的 14.png)
         Image(
             painter = painterResource(R.drawable.img_gunlun8_untitled_2_recovered_14),
             contentDescription = "已解锁秘籍7",
             modifier = Modifier
-                .offset(x = 377.dp, y = 136.32.dp)
+                .offset(x = 357.dp, y = 136.32.dp)
                 .size(width = 66.dp, height = 69.dp),
             contentScale = ContentScale.FillBounds,
         )

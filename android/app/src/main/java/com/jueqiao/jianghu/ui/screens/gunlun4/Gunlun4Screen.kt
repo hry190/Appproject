@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.gunlun4
+﻿package com.jueqiao.jianghu.ui.screens.gunlun4
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.offset
@@ -102,12 +102,12 @@ fun Gunlun4Screen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "未解锁秘籍7" 图像(占原"未解锁秘籍8"槽位,X=377, Y=136.32, W=66, H=69)
+        // "未解锁秘籍7" 图像(占原"未解锁秘籍8"槽位,X=357, Y=136.32, W=66, H=69)
         Image(
             painter = painterResource(R.drawable.img_gunlun2_untitled_7),
             contentDescription = "未解锁秘籍7",
             modifier = Modifier
-                .offset(x = 377.dp, y = 136.32.dp)
+                .offset(x = 357.dp, y = 136.32.dp)
                 .size(width = 66.dp, height = 69.dp),
             contentScale = ContentScale.FillBounds,
         )
