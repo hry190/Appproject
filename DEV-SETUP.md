@@ -109,7 +109,7 @@ AUTH_BASE_URL=http://127.0.0.1:8010/
 **说明**:
 - `sdk.dir`:你的 Android SDK 位置
 - `AUTH_BASE_URL`:真机走 adb reverse,所以用 `127.0.0.1`(localhost)
-- 局域网真机调试(非 USB)改成电脑 LAN IP,例如 `http://10.80.15.108:8010/`
+- 局域网真机调试(非 USB)改成电脑 LAN IP,例如 `http://<你的电脑IP>:8010/`
 
 ### Step 4: AS Build → Make Project
 
@@ -140,7 +140,7 @@ AUTH_BASE_URL=http://127.0.0.1:8010/
 - **白名单的 env var**:`JIANGHU_ALLOWED_HOSTS`(注意 `JIANGHU_` 前缀 + JSON 数组格式)
 - **`.env` 文件**:
   ```
-  JIANGHU_ALLOWED_HOSTS=["10.80.15.108","127.0.0.1","localhost","10.0.2.2"]
+  JIANGHU_ALLOWED_HOSTS=["<你的电脑IP>","127.0.0.1","localhost","10.0.2.2"]
   ```
 - ⚠️ **JSON 数组格式**必须是 `["a","b","c"]`,不能是 `a,b,c`(后者会被 pydantic-settings 当 JSON 解析失败)
 
@@ -151,7 +151,7 @@ AUTH_BASE_URL=http://127.0.0.1:8010/
   <network-security-config>
       <domain-config cleartextTrafficPermitted="true">
           <domain includeSubdomains="false">127.0.0.1</domain>
-          <domain includeSubdomains="false">10.80.15.108</domain>
+          <domain includeSubdomains="false"><你的电脑IP></domain>
       </domain-config>
   </network-security-config>
   ```
