@@ -1,4 +1,4 @@
-﻿package com.jueqiao.jianghu.ui.screens.gunlun8
+﻿package com.jueqiao.jianghu.ui.screens.gunlun9
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,24 +24,22 @@ import com.jueqiao.jianghu.ui.components.WideHexagonShape
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 滚轮8 页 — 滚轮7 → 点击"熊猫"贴图跳转目标。
+ * 滚轮9 页 — 滚轮8 → 点击"熊猫"贴图跳转目标。
  *
  * 重构后:用 StandardGunlunScaffold 复用背景 + 熊猫(可点击) + 返回按钮。
  * 本文件只剩页独有的元素:10 本书 + 介绍。
  *
- * 与滚轮7 的差异:
- *   - "秘籍"图像换成 未标题-2 33.png
- * 熊猫在滚轮8 中**可点击**,点击跳转到滚轮9。
- * 复制自 Gunlun7Screen.kt,替换秘籍图像。
+ * 与滚轮8 的差异:
+ *   - 介绍背景色改为 #624113,67% 不透明度
+ *   - 介绍文本改为 "听言解意篇"
+ * 复制自 Gunlun8Screen.kt,修改介绍样式。
  */
 @Composable
-fun Gunlun8Screen(
+fun Gunlun9Screen(
     onBack: () -> Unit = {},
-    onOpenGunlun9: () -> Unit = {},
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
-        onPandaClick = onOpenGunlun9,
     ) {
         // "秘籍" 图像(占原"已解锁秘籍1"槽位,X=8, Y=205, W=96, H=96 — 素材换了 未标题-2 33.png)
         Image(
@@ -145,19 +143,19 @@ fun Gunlun8Screen(
         )
 
         // "介绍" 旋转背景填充(X=283, Y=254, rotation 0.93°, W=23, H=115.5)
-        //   填充色:#2A350E,Opacity 80%
+        //   填充色:#624113,Opacity 67%
         //   裁剪为六边形显示
         Box(
             modifier = Modifier
                 .offset(x = 283.dp, y = 254.dp)
                 .size(width = 23.dp, height = 115.5.dp)
                 .clip(WideHexagonShape())
-                .background(Color(0xCC2A350E))
+                .background(Color(0xAB624113))
                 .rotate(0.93f),
         ) {
-            // "寻\n径\n迷\n踪\n步" 竖排文字(W=16, H=96,字号 14,颜色 #DDC686,YaHei)
+            // "听\n言\n解\n意\n篇" 竖排文字(W=16, H=96,字号 14,颜色 #DDC686,YaHei)
             Text(
-                text = "寻\n径\n迷\n踪\n步",
+                text = "听\n言\n解\n意\n篇",
                 color = Color(0xFFDDC686),
                 style = TextStyle(
                     fontFamily = YaHei,
