@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.gunlun5
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -20,7 +21,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.HexagonShape
+import com.jueqiao.jianghu.ui.components.WideHexagonShape
 import com.jueqiao.jianghu.ui.components.StandardGunlunScaffold
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -36,6 +37,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun Gunlun5Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun6: () -> Unit = {},
 ) {
     StandardGunlunScaffold(onBack = onBack) {
         // "秘籍" 图像(未标题-2-恢复的 1.png,X=135, Y=221, W=155, H=147)
@@ -139,7 +141,7 @@ fun Gunlun5Screen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "介绍" 旋转图像 + 背景填充(Rectangle 251.png,X=283, Y=254, rotation 0.93°, W=23, H=115.5)
+        // "介绍" 旋转背景填充(X=283, Y=254, rotation 0.93°, W=23, H=115.5)
         //   外观:Opacity 100%, Corner radius 0
         //   填充色:#DDC686,Opacity 100%
         //   裁剪为六边形显示
@@ -147,16 +149,10 @@ fun Gunlun5Screen(
             modifier = Modifier
                 .offset(x = 283.dp, y = 254.dp)
                 .size(width = 23.dp, height = 115.5.dp)
-                .clip(HexagonShape())
+                .clip(WideHexagonShape())
                 .background(Color(0xFFDDC686))
                 .rotate(0.93f),
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_gunlun2_rect251),
-                contentDescription = "介绍",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
-            )
             // "识\n机\n真\n决" 竖排文字(W=16, H=76,字号 14,lineHeight 133.5%=18.69sp,黑色,YaHei)
             Text(
                 text = "识\n机\n真\n决",
@@ -173,10 +169,12 @@ fun Gunlun5Screen(
         }
 
         // Rectangle16.png 气泡(X=259, Y=374, W=149, H=110)
+        //   点击气泡跳转到滚轮6
         Box(
             modifier = Modifier
                 .offset(x = 259.dp, y = 374.dp)
-                .size(width = 149.dp, height = 110.dp),
+                .size(width = 149.dp, height = 110.dp)
+                .clickable(onClick = onOpenGunlun6),
         ) {
             Image(
                 painter = painterResource(R.drawable.img_gunlun5_rect16),
