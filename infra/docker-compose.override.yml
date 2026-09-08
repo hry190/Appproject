@@ -1,0 +1,15 @@
+# Docker Compose override 文件
+# 用途:当 Docker Hub 不可访问(国内网络环境)时,切到 DaoCloud 镜像
+# 用法:`docker compose -f docker-compose.yml -f docker-compose.override.yml up -d`
+#
+# 注意:只重写 build args,Dockerfile 不变。Dockerfile 用 ARG BASE_REGISTRY 接收这个值。
+# 如果你有其他镜像加速器(如阿里云、网易),改 BASE_REGISTRY 即可。
+services:
+  api:
+    build:
+      args:
+        BASE_REGISTRY: docker.m.daocloud.io/library/
+  worker:
+    build:
+      args:
+        BASE_REGISTRY: docker.m.daocloud.io/library/

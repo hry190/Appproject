@@ -15,3 +15,15 @@ app/build/
 **/.coverage
 **/*.db
 services/api/.env
+
+# Root-level dev cruft (per ENVIRONMENT.md §8.3 — not project files)
+clean_text.py
+write_vertical_text.py
+hs_err_*.log
+replay_*.log
+
+# Personal session notes (per conversation 2026-09-07)
+# SESSION-LOG-*.md in docs/ SHOULD be committed (team history)
+# but if you keep your own private notes elsewhere, ignore them
+notes/
+*.local.md

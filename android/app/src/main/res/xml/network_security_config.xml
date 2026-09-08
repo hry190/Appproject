@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  网络安全配置:精确允许哪些域用明文 HTTP(cleartext)。
+  其他域必须 HTTPS。生产部署前请移除 10.0.2.2 模拟器例外。
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- USB reverse 场景 (adb reverse tcp:8010 tcp:8010,app 访问 127.0.0.1) -->
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <!-- Android 模拟器场景(10.0.2.2 是模拟器视角的 host) -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
