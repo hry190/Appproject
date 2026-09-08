@@ -41,6 +41,7 @@ data class LuggageDetailState(
     val trialResult: TrialAttemptResultDto? = null,
     val accountExportSummary: String? = null,
     val dataRightsRequest: DataRightsRequestDto? = null,
+    val learningOverview: LearningOverviewDto? = null,
 )
 
 class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() {
@@ -73,6 +74,10 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
     }
 
     fun loadBadges() = loadDetail { copy(badges = repository.badges()) }
+
+    fun loadLearningOverview() = loadDetail {
+        copy(learningOverview = repository.learningOverview())
+    }
 
     fun loadEvidence(category: String? = null, weekOnly: Boolean = false) =
         loadDetail { copy(evidence = repository.evidence(category, weekOnly)) }
@@ -130,7 +135,42 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
     }
 
     fun loadManualDetail(manualId: String) =
-        loadDetail { copy(manualDetail = repository.manualDetail(manualId)) }
+        loadDetail {
+            repository.recordLessonRead(manualId)
+            copy(manualDetail = repository.manualDetail(manualId))
+        }
+
+    fun loadLearningTrial(trialId: String) =
+        loadDetail { copy(trial = repository.trial(trialId), trialResult = null) }
+
+    fun submitLearningTrial(
+        trialId: String,
+        prediction: String?,
+        answer: String,
+        explanation: String,
+    ) {
+        val trial = _detailState.value.trial ?: return
+        val propertyName = trial.currentVersion.answerSchema
+            .getAsJsonObject("properties")
+            ?.keySet()
+            ?.firstOrNull()
+            ?: "choice"
+        loadDetail {
+            copy(
+                trialResult = repository.submitRetry(
+                    trialId,
+                    TrialAttemptRequestDto(
+                        trialVersionId = trial.currentVersion.id,
+                        predictionPayload = prediction?.let { mapOf(propertyName to it) },
+                        answerPayload = mapOf(propertyName to answer),
+                        explanation = explanation.takeIf { it.isNotBlank() },
+                        remediationContextId = null,
+                        clientRequestId = "android-learning-${java.util.UUID.randomUUID()}",
+                    ),
+                ),
+            )
+        }
+    }
 
     fun loadMistakes(status: String? = null) =
         loadDetail { copy(mistakes = repository.mistakes(status)) }

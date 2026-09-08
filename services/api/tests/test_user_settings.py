@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+
+from app.core.security import PhoneProtector
+from app.domains.media.models import OutboxEvent
+from app.models import DataRequestStatus, DataRightsRequest, User, UserStatus
+from app.services.user_settings import UserSettingsService
 
 
 TERMS_VERSION = "2026-08"
@@ -180,3 +186,27 @@ def test_sessions_export_and_data_rights_requests(client: TestClient) -> None:
     )
     assert requests.status_code == 200
     assert len(requests.json()) == 1
+
+    with client.app.state.session_factory() as db:
+        request = db.scalar(
+            select(DataRightsRequest).order_by(DataRightsRequest.created_at.desc())
+        )
+        assert request is not None
+        event = db.scalar(
+            select(OutboxEvent).where(
+                OutboxEvent.event_type == "ACCOUNT_DELETION_REQUESTED",
+                OutboxEvent.aggregate_id == request.id,
+            )
+        )
+        assert event is not None
+        user_id = request.user_id
+        UserSettingsService(
+            db=db,
+            phone_protector=PhoneProtector(client.app.state.settings),
+        ).process_account_deletion(request.id)
+        user = db.scalar(select(User).where(User.id == user_id))
+        assert user is not None
+        assert user.status == UserStatus.DELETED
+        assert request.status == DataRequestStatus.COMPLETED
+
+    assert client.get("/v1/account/sessions", headers=bearer(auth)).status_code == 401

@@ -8,6 +8,14 @@ from sqlalchemy.orm import Session
 from app.core.errors import ApiError
 from app.core.security import utcnow
 from app.domains.creations.models import Publication, PublicationStatus
+from app.domains.conference.models import (
+    ConferenceDerivativeAuthorization,
+    DerivativeAuthorizationStatus,
+)
+from app.domains.distribution.service import (
+    activate_publication_delivery,
+    revoke_publication_deliveries,
+)
 from app.domains.media.models import OutboxEvent, OutboxStatus
 from app.domains.moderation.audit import add_audit_event
 from app.domains.moderation.contracts import (
@@ -163,15 +171,18 @@ class ModerationService:
             publication.published_at = now
             publication.return_reason_code = None
             publication.return_reason_summary = None
+            activate_publication_delivery(self.db, publication)
         elif payload.decision == ModerationDecision.RETURN:
             publication.status = PublicationStatus.RETURNED
             publication.returned_at = now
             publication.return_reason_code = payload.reason_code
             publication.return_reason_summary = payload.reason_summary
+            revoke_publication_deliveries(self.db, publication.id)
         else:
             publication.status = PublicationStatus.RESTRICTED
             publication.return_reason_code = payload.reason_code
             publication.return_reason_summary = payload.reason_summary
+            revoke_publication_deliveries(self.db, publication.id)
         add_audit_event(
             self.db,
             actor_user_id=None,
@@ -217,6 +228,8 @@ class ModerationService:
         publication.withdrawn_at = now
         publication.row_version += 1
         publication.updated_at = now
+        revoke_publication_deliveries(self.db, publication.id)
+        self._revoke_derivative_authorizations(publication.id, now)
         add_audit_event(
             self.db,
             actor_user_id=user.id,
@@ -230,6 +243,19 @@ class ModerationService:
         )
         self.db.commit()
         return self._case_public(case, publication)
+
+    def _revoke_derivative_authorizations(
+        self, publication_id: uuid.UUID, now: object
+    ) -> None:
+        authorizations = self.db.scalars(
+            select(ConferenceDerivativeAuthorization).where(
+                ConferenceDerivativeAuthorization.source_publication_id == publication_id,
+                ConferenceDerivativeAuthorization.status == DerivativeAuthorizationStatus.ACTIVE,
+            )
+        ).all()
+        for authorization in authorizations:
+            authorization.status = DerivativeAuthorizationStatus.REVOKED
+            authorization.revoked_at = now
 
     def create_appeal(
         self,

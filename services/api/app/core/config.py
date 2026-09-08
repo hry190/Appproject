@@ -91,6 +91,26 @@ class Settings(BaseSettings):
         min_length=32,
     )
 
+    image_generation_provider: Literal["development", "openai", "disabled"] = (
+        "development"
+    )
+    image_generation_model: str = "gpt-image-2-2026-04-21"
+    image_generation_daily_limit: int = Field(default=6, ge=1, le=50)
+    image_generation_max_retries: int = Field(default=2, ge=0, le=5)
+    image_generation_timeout_seconds: int = Field(default=180, ge=15, le=600)
+    openai_api_key: SecretStr | None = None
+    openai_base_url: str = "https://api.openai.com/v1"
+
+    conference_judge_provider: Literal["development", "webhook", "disabled"] = (
+        "development"
+    )
+    conference_judge_model: str = "conference-judge-v1"
+    conference_judge_webhook_url: str | None = None
+    conference_judge_webhook_token: SecretStr | None = None
+    conference_judge_timeout_seconds: int = Field(default=30, ge=5, le=120)
+    outbox_max_attempts: int = Field(default=5, ge=1, le=10)
+    outbox_lease_seconds: int = Field(default=300, ge=30, le=1800)
+
     login_failure_limit: int = Field(default=5, ge=3, le=10)
     login_lock_minutes: int = Field(default=15, ge=5, le=60)
 
@@ -109,6 +129,20 @@ class Settings(BaseSettings):
     def validate_fixed_code(cls, value: str | None) -> str | None:
         if value is not None and (len(value) != 6 or not value.isdigit()):
             raise ValueError("fixed_verification_code must contain exactly six digits")
+        return value
+
+    @field_validator("openai_api_key", "conference_judge_webhook_token", mode="before")
+    @classmethod
+    def blank_secret_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("conference_judge_webhook_url", mode="before")
+    @classmethod
+    def blank_webhook_url_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
     @field_validator("phone_encryption_key")
@@ -149,6 +183,20 @@ class Settings(BaseSettings):
             raise ValueError("production media storage must use MinIO/S3")
         if self.media_virus_scanner != "clamav":
             raise ValueError("production media scanning must use ClamAV")
+        if self.image_generation_provider == "development":
+            raise ValueError("production image generation cannot use development provider")
+        if self.image_generation_provider == "openai" and self.openai_api_key is None:
+            raise ValueError("OpenAI image generation requires an API key")
+        if self.conference_judge_provider == "development":
+            raise ValueError("production conference judging cannot use development provider")
+        if self.conference_judge_provider == "webhook":
+            if (
+                self.conference_judge_webhook_url is None
+                or self.conference_judge_webhook_token is None
+            ):
+                raise ValueError("conference judge webhook requires URL and token")
+            if not self.conference_judge_webhook_url.startswith("https://"):
+                raise ValueError("production conference judge webhook must use HTTPS")
         if self.minio_secret_key.get_secret_value() == "jianghu-local-secret-change-me":
             raise ValueError("production MinIO credentials must be replaced")
         if (

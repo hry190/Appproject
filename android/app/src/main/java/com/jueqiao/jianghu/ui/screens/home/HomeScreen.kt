@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -167,15 +168,21 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeGuideBubble(
+fun HomeGuideBubble(
     text: String,
     modifier: Modifier = Modifier,
+    tailPointsRight: Boolean = false,
 ) {
     Box(modifier = modifier) {
         Image(
             painter = painterResource(R.drawable.img_home_guide_bubble_left_tail),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                // 只翻转纸笺图形，不翻转文字；角色在右侧时让尾巴朝右下方。
+                .then(
+                    if (tailPointsRight) Modifier.graphicsLayer(scaleX = -1f) else Modifier,
+                ),
             // The source canvas carries transparent breathing room above and below the artwork.
             // Cropping to the visible frame preserves its intended wide scroll-like proportion.
             contentScale = ContentScale.Crop,

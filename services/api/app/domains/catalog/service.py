@@ -19,6 +19,7 @@ from app.domains.catalog.contracts import (
 from app.domains.catalog.models import ManualPage, ManualVolume, UserManualFavorite
 from app.domains.learning.contracts import EvidenceAwardPublic, ManualProgressState
 from app.domains.learning.models import LearningEvidence, ManualProgress
+from app.domains.learning.models import Trial, TrialStatus, TrialVersion
 from app.models import User
 
 
@@ -184,6 +185,17 @@ class CatalogService:
             raise ApiError(404, "MANUAL_NOT_FOUND", "秘籍不存在或暂未开放")
         page, volume, is_favorite, progress = row
         public = self._to_public(page, volume, bool(is_favorite), progress)
+        trial_id = self.db.scalar(
+            select(Trial.id)
+            .join(TrialVersion, TrialVersion.trial_id == Trial.id)
+            .where(
+                Trial.manual_page_id == page.id,
+                Trial.status == TrialStatus.ACTIVE,
+                TrialVersion.is_active.is_(True),
+            )
+            .order_by(TrialVersion.version.desc())
+            .limit(1)
+        )
         evidence_rows = self.db.scalars(
             select(LearningEvidence)
             .where(
@@ -195,6 +207,7 @@ class CatalogService:
         ).all()
         return ManualPageDetailPublic(
             **public.model_dump(),
+            trial_id=trial_id,
             life_hook=page.life_hook,
             interaction_evidence=page.interaction_evidence,
             progress_requirements=PROGRESS_REQUIREMENTS,

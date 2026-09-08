@@ -1,9 +1,13 @@
 package com.jueqiao.jianghu.ui.screens.chuangzuodangan5
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -45,12 +50,20 @@ import kotlin.math.sin
 @Composable
 fun Chuangzuodangan5Screen(
     onBack: () -> Unit = {},
+    onOpenCreationDesk: () -> Unit = {},
     onCreateWork: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
     BackHandler(enabled = true) {
         onBack()
     }
+    val creationTabInteractionSource = remember { MutableInteractionSource() }
+    val creationTabPressed by creationTabInteractionSource.collectIsPressedAsState()
+    val creationTabScale by animateFloatAsState(
+        targetValue = if (creationTabPressed) 0.96f else 1f,
+        animationSpec = tween(140),
+        label = "档案页创作台叶签按压",
+    )
 
     Box(
         modifier = Modifier
@@ -71,61 +84,46 @@ fun Chuangzuodangan5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=41, 点击区 32×32)
             Box(
-                modifier = Modifier
-                    .offset(x = 20.dp, y = 41.dp)
-                    .size(32.dp)
-                    .clickable(onClick = onBack),
+                modifier = Modifier.align(Alignment.TopCenter).offset(x = (-45).dp, y = 23.dp)
+                    .size(width = 160.dp, height = 58.dp)
+                    .graphicsLayer {
+                        scaleX = creationTabScale
+                        scaleY = creationTabScale
+                    }
+                    .clickable(
+                        interactionSource = creationTabInteractionSource,
+                        indication = null,
+                        onClick = onOpenCreationDesk,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_gongfang_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(R.drawable.img_gongfang_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(width = 132.dp, height = 48.dp),
                     contentScale = ContentScale.Fit,
                 )
+                Text("创作台", color = Color(0xFF294A2E), style = TextStyle(fontFamily = YaHei, fontSize = 16.sp))
             }
 
-            // 未标题-2 23.png(教练辅助装饰)
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_23),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 57.dp, y = 29.dp)
+            Box(
+                modifier = Modifier.align(Alignment.TopCenter).offset(x = 103.dp, y = 23.dp)
                     .size(width = 160.dp, height = 58.dp),
-                contentScale = ContentScale.Fit,
-            )
-
-            // 未标题-2 24.png(创作档案装饰) — 此页面不做可点击,避免自跳死循环
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_24),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 265.dp, y = 35.dp)
-                    .size(width = 127.dp, height = 46.dp),
-                contentScale = ContentScale.Fit,
-            )
-
-            // "教练辅助" 标签
-            Text(
-                text = "教练辅助",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 93.dp, y = 46.dp)
-                    .size(width = 71.dp, height = 18.dp),
-            )
-
-            // "创作档案" 标签 — 此页面不做可点击,避免自跳死循环
-            Text(
-                text = "创作档案",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 287.dp, y = 46.dp)
-                    .size(width = 76.dp, height = 25.dp),
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_gongfang_23),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    "创作档案",
+                    color = Color(0xFF294A2E),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 18.sp, fontWeight = FontWeight.Bold),
+                )
+            }
 
             // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)

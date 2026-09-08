@@ -6,6 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domains.creations.models import (
+    CreationIntent,
+    CreationIntentStatus,
+    CreationExportJob,
+    CreationMethod,
     CreationProject,
     CreationProjectStatus,
     CreationVersion,
@@ -50,6 +54,25 @@ def is_asset_referenced_by_live_data(
     )
     if avatar_reference is not None:
         return True
+    source_key = str(asset_id)
+    intents = db.scalars(
+        select(CreationIntent).where(
+            CreationIntent.owner_user_id == owner_user_id,
+            CreationIntent.status != CreationIntentStatus.EXPIRED,
+        )
+    ).all()
+    if any(source_key in intent.attachment_asset_ids for intent in intents):
+        return True
+    methods = db.scalars(
+        select(CreationMethod)
+        .join(CreationProject, CreationProject.id == CreationMethod.project_id)
+        .where(
+            CreationProject.owner_user_id == owner_user_id,
+            CreationProject.status != CreationProjectStatus.DELETED,
+        )
+    ).all()
+    if any(source_key in method.source_asset_ids for method in methods):
+        return True
     versions = db.scalars(
         select(CreationVersion)
         .join(CreationProject, CreationProject.id == CreationVersion.project_id)
@@ -58,4 +81,16 @@ def is_asset_referenced_by_live_data(
             CreationProject.status != CreationProjectStatus.DELETED,
         )
     ).all()
-    return any(asset_id in collect_version_asset_ids(db, version) for version in versions)
+    if any(asset_id in collect_version_asset_ids(db, version) for version in versions):
+        return True
+    export_reference = db.scalar(
+        select(CreationExportJob.id)
+        .join(CreationProject, CreationProject.id == CreationExportJob.project_id)
+        .where(
+            CreationExportJob.owner_user_id == owner_user_id,
+            CreationExportJob.output_asset_id == asset_id,
+            CreationProject.status != CreationProjectStatus.DELETED,
+        )
+        .limit(1)
+    )
+    return export_reference is not None

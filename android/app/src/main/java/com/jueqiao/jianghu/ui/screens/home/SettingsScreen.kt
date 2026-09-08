@@ -43,7 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -60,9 +60,10 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun SettingsScreen(
     onBack: () -> Unit = {},
     // 顶部 4 个快捷键
-    onOpenWorks: () -> Unit = {},
-    onOpenTask: () -> Unit = {},
+    onOpenWendao: () -> Unit = {},
+    onOpenLetters: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
+    hasUnreadLetters: Boolean = false,
     // 菜单项
     onOpenAccount: () -> Unit = {},
     onOpenMessage: () -> Unit = {},
@@ -103,18 +104,17 @@ fun SettingsScreen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
 
-        // 顶部右侧 4 个快捷图标
-        Row(
+        // 顶部右侧统一快捷入口
+        HomeQuickActions(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = (-12).dp, y = 71.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            QuickActionItem(iconRes = R.drawable.img_icon_works,    label = "作品", onClick = onOpenWorks)
-            QuickActionItem(iconRes = R.drawable.img_icon_progress, label = "进度", onClick = { progressOpen = true })
-            QuickActionItem(iconRes = R.drawable.img_icon_task,     label = "任务", onClick = onOpenTask)
-            QuickActionItem(iconRes = R.drawable.img_icon_settings, label = "设置", onClick = { /* 当前页 */ })
-        }
+            onOpenWendao = onOpenWendao,
+            onOpenCultivation = { progressOpen = true },
+            onOpenLetters = onOpenLetters,
+            onOpenSettings = { /* 当前页 */ },
+            hasUnreadLetters = hasUnreadLetters,
+        )
 
         // 主卡片（仿古纸张纹理,顶部圆角,内容可滚动）
         SettingsPaperSurface(
@@ -218,7 +218,7 @@ fun SettingsScreen(
             onClose = { progressOpen = false },
             onOpenDaily = {
                 progressOpen = false
-                onOpenTask()
+                onOpenWendao()
             },
             onOpenLuggage = {
                 progressOpen = false

@@ -3,9 +3,7 @@ package com.jueqiao.jianghu.ui.screens.xiulian
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -31,7 +29,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.luggage.LearningOverviewDto
+import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.screens.home.ProgressModal
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -44,10 +43,15 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun XiulianScreen(
     onBack: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
-    onOpenZaowu: () -> Unit = {},
+    onOpenManuals: () -> Unit = onOpenLuggage,
+    onOpenLearning: () -> Unit = onOpenLuggage,
+    onOpenTrials: () -> Unit = onOpenLuggage,
+    onOpenRecommendedManual: (String) -> Unit = {},
+    learningOverview: LearningOverviewDto? = null,
+    onOpenWendao: () -> Unit = onBack,
     onOpenSettings: () -> Unit = {},
-    onOpenProgress: () -> Unit = {},
-    onOpenTask: () -> Unit = {},
+    onOpenLetters: () -> Unit = {},
+    hasUnreadLetters: Boolean = false,
 ) {
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen    by remember { mutableStateOf(false) }
@@ -107,8 +111,9 @@ fun XiulianScreen(
             style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
             modifier = Modifier
                 .offset(x = 104.5.dp, y = 785.5.dp)
-                .size(width = 48.dp, height = 25.dp)
-                .rotate(-23.36f),
+                .size(width = 72.dp, height = 40.dp)
+                .rotate(-23.36f)
+                .clickable(onClick = onOpenManuals),
         )
 
         // "学习" 旋转标签(X=238, Y=691, rotation 15.3° 顺时针, W=48, H=25,字号 20,白色)
@@ -118,8 +123,9 @@ fun XiulianScreen(
             style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
             modifier = Modifier
                 .offset(x = 238.dp, y = 691.dp)
-                .size(width = 48.dp, height = 25.dp)
-                .rotate(15.3f),
+                .size(width = 72.dp, height = 40.dp)
+                .rotate(15.3f)
+                .clickable(onClick = onOpenLearning),
         )
 
         // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=18,字号 16,白色)
@@ -129,8 +135,9 @@ fun XiulianScreen(
             style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
             modifier = Modifier
                 .offset(x = 271.dp, y = 814.dp)
-                .size(width = 43.dp, height = 18.dp)
-                .rotate(26f),
+                .size(width = 68.dp, height = 36.dp)
+                .rotate(26f)
+                .clickable(onClick = onOpenTrials),
         )
 
         // 6.png 作为气泡背景(118, 453, 175×79)
@@ -146,14 +153,26 @@ fun XiulianScreen(
                 contentScale = ContentScale.FillBounds,
             )
             // 气泡文本
+            val recommendation = learningOverview?.books?.firstOrNull {
+                it.manualPageId == learningOverview.recommendedLessonId
+            }
             Text(
-                text = "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
+                text = recommendation?.let {
+                    "下一招：${it.title}\n${learningOverview?.backMountain?.reason ?: "打开秘籍继续修炼"}"
+                } ?: "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
                 color = Color.Black,
                 style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp, vertical = 6.dp),
             )
+            if (recommendation != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onOpenRecommendedManual(recommendation.manualPageId) },
+                )
+            }
         }
 
         // 左上角:返回按钮(Return.png,点击回到首页1)
@@ -172,38 +191,21 @@ fun XiulianScreen(
             )
         }
 
-        // 顶部右侧 4 个快捷图标
-        Row(
+        // 所有页面共用的顶部快捷入口：问道、修为、书信、设置。
+        HomeQuickActions(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = (-12).dp, y = 71.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_works,
-                label = "作品",
-                onClick = onOpenZaowu,
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_progress,
-                label = "进度",
-                onClick = { progressOpen = true },
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_task,
-                label = "任务",
-                onClick = onOpenTask,
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_settings,
-                label = "设置",
-                onClick = onOpenSettings,
-            )
-        }
+            onOpenWendao = onOpenWendao,
+            onOpenCultivation = { progressOpen = true },
+            onOpenLetters = onOpenLetters,
+            onOpenSettings = onOpenSettings,
+            hasUnreadLetters = hasUnreadLetters,
+        )
         }
     }
 
-    // 学习进度弹窗(由"进度"图标触发)
+    // 学习进度弹窗由顶部“修为”入口触发。
     if (progressOpen) {
         ProgressModal(
             onClose       = { progressOpen = false },

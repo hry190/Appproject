@@ -301,8 +301,10 @@ class AccountExport(StrictModel):
     guardian_controls: GuardianControlsPublic | None
     consents: list[ConsentRecordPublic]
     active_sessions: list[SessionPublic]
+    creation_intents: list[dict[str, Any]]
     creations: list[dict[str, Any]]
     media_assets: list[dict[str, Any]]
     moderation_appeals: list[dict[str, Any]]
+    conference_activity: dict[str, Any]
     privacy_settings: dict[str, Any]
     domain_audit_events: list[dict[str, Any]]

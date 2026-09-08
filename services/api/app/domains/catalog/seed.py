@@ -7,7 +7,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db import build_engine, build_session_factory
-from app.domains.catalog.models import ManualContentStatus, ManualPage, ManualVolume
+from app.domains.catalog.models import (
+    ManualContentStatus,
+    ManualPage,
+    ManualPrerequisite,
+    ManualVolume,
+)
+from app.domains.catalog.content_schema import TRIAL_DEFINITIONS
 from app.domains.learning.contracts import EvidenceCategory
 from app.domains.learning.models import (
     Trial,
@@ -127,13 +133,21 @@ def _upsert_definition(
         setattr(item, field, value)
 
 
-def _seed_intro_trial(db: Session, page: ManualPage) -> None:
-    trial_code = "manual-01-ai-boundary"
+def _seed_trial(db: Session, page: ManualPage, definition: dict) -> None:
+    trial_code = (
+        "manual-01-ai-boundary"
+        if page.page_no == 1
+        else f"manual-{page.page_no:02d}-core-route"
+    )
     trial = db.scalar(select(Trial).where(Trial.code == trial_code))
     trial_values = {
         "manual_page_id": page.id,
-        "title": "辨别规则系统与学习系统",
-        "knowledge_point_code": "AI_CAPABILITY_BOUNDARY",
+        "title": page.title,
+        "knowledge_point_code": (
+            "AI_CAPABILITY_BOUNDARY"
+            if page.page_no == 1
+            else f"MANUAL_{page.page_no:02d}"
+        ),
         "status": TrialStatus.ACTIVE,
     }
     if trial is None:
@@ -155,38 +169,18 @@ def _seed_intro_trial(db: Session, page: ManualPage) -> None:
         )
     )
     version_values = {
-        "prompt": (
-            "哪一项最能说明一个系统使用了机器学习？"
-            "可选值：FOLLOWS_FIXED_RULES、LEARNS_FROM_DATA、MOVES_AUTOMATICALLY。"
-        ),
-        "prediction_prompt": "作答前先预测：你认为哪一个特征最关键？",
-        "answer_schema": {
-            "type": "object",
-            "properties": {
-                "choice": {
-                    "type": "string",
-                    "enum": [
-                        "FOLLOWS_FIXED_RULES",
-                        "LEARNS_FROM_DATA",
-                        "MOVES_AUTOMATICALLY",
-                    ],
-                }
-            },
-            "required": ["choice"],
-            "additionalProperties": False,
-        },
-        "grader_kind": TrialGraderKind.EXACT_JSON,
-        "grader_config": {
-            "expected_answer": {"choice": "LEARNS_FROM_DATA"},
-            "failure_code": "CONFUSED_AUTOMATION_WITH_LEARNING",
-        },
+        "prompt": definition["prompt"],
+        "prediction_prompt": definition["prediction_prompt"],
+        "answer_schema": definition["answer_schema"],
+        "grader_kind": TrialGraderKind(definition["grader_kind"]),
+        "grader_config": definition["grader_config"],
         "max_score": 100.0,
         "pass_score": 80.0,
         "prediction_required": True,
         "explanation_required": True,
         "min_explanation_length": 8,
         "evidence_category": EvidenceCategory.WISDOM,
-        "rule_version": "manual-01-exact-v1",
+        "rule_version": definition["rubric_version"],
         "is_active": True,
     }
     if version is None:
@@ -275,8 +269,36 @@ def seed_catalog_data(db: Session) -> None:
                 setattr(page, field, value)
         page_by_number[page_no] = page
     db.flush()
-    _seed_intro_trial(db, page_by_number[1])
+    for page_no, definition in TRIAL_DEFINITIONS.items():
+        _seed_trial(db, page_by_number[page_no], definition)
+    _seed_prerequisites(db, page_by_number)
     db.commit()
+
+
+def _seed_prerequisites(db: Session, page_by_number: dict[int, ManualPage]) -> None:
+    """Create a conservative, explainable five-node route inside each volume."""
+    for page_no in range(1, 51):
+        if page_no % 5 == 1:
+            continue
+        page = page_by_number[page_no]
+        prerequisite = page_by_number[page_no - 1]
+        edge = db.scalar(
+            select(ManualPrerequisite).where(
+                ManualPrerequisite.manual_page_id == page.id,
+                ManualPrerequisite.prerequisite_page_id == prerequisite.id,
+            )
+        )
+        if edge is None:
+            db.add(
+                ManualPrerequisite(
+                    id=stable_id("manual_prerequisite", f"{page_no}:{page_no - 1}"),
+                    manual_page_id=page.id,
+                    prerequisite_page_id=prerequisite.id,
+                    rule_version=CONTENT_VERSION,
+                )
+            )
+        else:
+            edge.rule_version = CONTENT_VERSION
 
 
 def main() -> None:

@@ -11,8 +11,6 @@ val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) load(f.inputStream())
 }
-val minimaxBaseUrl: String = localProps.getProperty("MINIMAX_BASE_URL", "https://api.MiniMax.cn/v1")
-val minimaxApiKey:  String = localProps.getProperty("MINIMAX_API_KEY",  "")
 val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://10.0.2.2:8010/")
 val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-08")
 val privacyVersion: String = localProps.getProperty("PRIVACY_VERSION", "2026-08")
@@ -31,9 +29,7 @@ android {
         versionName   = "2.0"
         vectorDrawables { useSupportLibrary = true }
 
-        // Minimax API 配置（从 local.properties 注入,生产环境不要再硬编码）
-        buildConfigField("String", "MINIMAX_BASE_URL", "\"$minimaxBaseUrl\"")
-        buildConfigField("String", "MINIMAX_API_KEY",  "\"$minimaxApiKey\"")
+        // AI 能力统一通过后端代理，客户端不注入供应商地址或密钥。
         buildConfigField("String", "AUTH_BASE_URL", authBaseUrl.asBuildConfigString())
         buildConfigField("String", "TERMS_VERSION", termsVersion.asBuildConfigString())
         buildConfigField("String", "PRIVACY_VERSION", privacyVersion.asBuildConfigString())
@@ -51,7 +47,15 @@ android {
         debug {
             isMinifyEnabled = false
         }
+        create("acceptance") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".acceptance"
+            matchingFallbacks += listOf("debug")
+            signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("String", "AUTH_BASE_URL", "http://10.0.2.2:8011/".asBuildConfigString())
+        }
     }
+    sourceSets.getByName("acceptance").manifest.srcFile("src/debug/AndroidManifest.xml")
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -90,5 +94,6 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.okhttp)
     implementation(libs.gson)
+    testImplementation(libs.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -1,0 +1,747 @@
+[
+  {
+    "page_no": 1,
+    "trial_type": "exact_json",
+    "prompt": "哪一项最能说明一个系统使用了机器学习？",
+    "prediction_prompt": "作答前先预测：你认为哪一个特征最关键？",
+    "answer_schema": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "FOLLOWS_FIXED_RULES",
+            "LEARNS_FROM_DATA",
+            "MOVES_AUTOMATICALLY"
+          ]
+        }
+      },
+      "required": [
+        "choice"
+      ],
+      "additionalProperties": false
+    },
+    "grader_kind": "EXACT_JSON",
+    "grader_config": {
+      "expected_answer": {
+        "choice": "LEARNS_FROM_DATA"
+      },
+      "failure_code": "CONFUSED_AUTOMATION_WITH_LEARNING"
+    },
+    "rubric_version": "manual-01-exact-v1",
+    "status": "ACTIVE"
+  },
+  {
+    "page_no": 2,
+    "trial_type": "pending",
+    "prompt": "拖拽组装三步链；设计一盏会按环境调节的护眼灯。",
+    "prediction_prompt": "学习“拖拽组装三步链；设计一盏会按环境调节的护眼灯。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 3,
+    "trial_type": "pending",
+    "prompt": "把 AI 放入擅长/不擅长擂台；写一张“我会/我不会”说明。",
+    "prediction_prompt": "学习“把 AI 放入擅长/不擅长擂台；写一张“我会/我不会”说明。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 4,
+    "trial_type": "pending",
+    "prompt": "增添不同口音样本看识别变化；采集不含身份信息的平衡样例。",
+    "prediction_prompt": "学习“增添不同口音样本看识别变化；采集不含身份信息的平衡样例。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 5,
+    "trial_type": "exact_json",
+    "prompt": "验毒机关只有七成把握时，高风险场景最合适的下一步是什么？",
+    "prediction_prompt": "作答前先预测：高风险任务应该怎样处理不确定结果？",
+    "answer_schema": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "AUTO_ACCEPT",
+            "LOWER_THRESHOLD",
+            "HUMAN_REVIEW"
+          ]
+        }
+      },
+      "required": [
+        "choice"
+      ],
+      "additionalProperties": false
+    },
+    "grader_kind": "EXACT_JSON",
+    "grader_config": {
+      "expected_answer": {
+        "choice": "HUMAN_REVIEW"
+      },
+      "failure_code": "IGNORED_HIGH_RISK_UNCERTAINTY"
+    },
+    "rubric_version": "manual-05-exact-v1",
+    "status": "ACTIVE"
+  },
+  {
+    "page_no": 6,
+    "trial_type": "pending",
+    "prompt": "重排任务树；把“做班级活动海报”拆成可执行步骤。",
+    "prediction_prompt": "学习“重排任务树；把“做班级活动海报”拆成可执行步骤。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 7,
+    "trial_type": "pending",
+    "prompt": "连线三关并找错；画出“拍照识花”的输入、处理、输出。",
+    "prediction_prompt": "学习“连线三关并找错；画出“拍照识花”的输入、处理、输出。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 8,
+    "trial_type": "pending",
+    "prompt": "为四类任务选择规则/学习/混合方案并解释理由。",
+    "prediction_prompt": "学习“为四类任务选择规则/学习/混合方案并解释理由。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 9,
+    "trial_type": "pending",
+    "prompt": "修复缺失和歧义步骤；编写同伴可复现的纸飞机流程。",
+    "prediction_prompt": "学习“修复缺失和歧义步骤；编写同伴可复现的纸飞机流程。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 10,
+    "trial_type": "pending",
+    "prompt": "在速度、准确、安全间配权重；定义垃圾分类机关的验收指标。",
+    "prediction_prompt": "学习“在速度、准确、安全间配权重；定义垃圾分类机关的验收指标。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 11,
+    "trial_type": "pending",
+    "prompt": "把颜色、温度、声音转换为合适表示；设计植物观察记录表。",
+    "prediction_prompt": "学习“把颜色、温度、声音转换为合适表示；设计植物观察记录表。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 12,
+    "trial_type": "pending",
+    "prompt": "选择有效/无关特征；为“运动鞋分类”写特征清单。",
+    "prediction_prompt": "学习“选择有效/无关特征；为“运动鞋分类”写特征清单。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 13,
+    "trial_type": "pending",
+    "prompt": "移动坐标观察相似排序；做一张“我的阅读偏好向量”。",
+    "prediction_prompt": "学习“移动坐标观察相似排序；做一张“我的阅读偏好向量”。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 14,
+    "trial_type": "pending",
+    "prompt": "拖拽构建人物关系网；制作一张课文人物知识图。",
+    "prediction_prompt": "学习“拖拽构建人物关系网；制作一张课文人物知识图。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 15,
+    "trial_type": "pending",
+    "prompt": "组合图文声消除歧义；设计一则含图、标题和旁白的提示卡。",
+    "prediction_prompt": "学习“组合图文声消除歧义；设计一则含图、标题和旁白的提示卡。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 16,
+    "trial_type": "pending",
+    "prompt": "标出状态/动作/目标；把课程表安排写成搜索问题。",
+    "prediction_prompt": "学习“标出状态/动作/目标；把课程表安排写成搜索问题。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 17,
+    "trial_type": "pending",
+    "prompt": "比较尝试次数；为密码线索制定安全的筛选规则。",
+    "prediction_prompt": "学习“比较尝试次数；为密码线索制定安全的筛选规则。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 18,
+    "trial_type": "pending",
+    "prompt": "点按扩展前沿；设计校园最少转弯路线。",
+    "prediction_prompt": "学习“点按扩展前沿；设计校园最少转弯路线。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 19,
+    "trial_type": "pending",
+    "prompt": "切换启发规则看路径；写出启发式及其可能失败情形。",
+    "prediction_prompt": "学习“切换启发规则看路径；写出启发式及其可能失败情形。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 20,
+    "trial_type": "pending",
+    "prompt": "制造障碍观察重规划；设计“放学避雨路线”并说明更新条件。",
+    "prediction_prompt": "学习“制造障碍观察重规划；设计“放学避雨路线”并说明更新条件。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 21,
+    "trial_type": "pending",
+    "prompt": "调整季节/光线采样比例；写一份校园植物采样计划。",
+    "prediction_prompt": "学习“调整季节/光线采样比例；写一份校园植物采样计划。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 22,
+    "trial_type": "pending",
+    "prompt": "统一标签规范并复核冲突；制定可执行的垃圾标签说明。",
+    "prediction_prompt": "学习“统一标签规范并复核冲突；制定可执行的垃圾标签说明。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 23,
+    "trial_type": "exact_json",
+    "prompt": "为什么测试集不能在训练过程中反复查看？",
+    "prediction_prompt": "作答前先预测：测试集在学习流程中应该保持什么状态？",
+    "answer_schema": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "REUSE_TEST_SET",
+            "UNSEEN_TEST_SET",
+            "TRAINING_ONLY"
+          ]
+        }
+      },
+      "required": [
+        "choice"
+      ],
+      "additionalProperties": false
+    },
+    "grader_kind": "EXACT_JSON",
+    "grader_config": {
+      "expected_answer": {
+        "choice": "UNSEEN_TEST_SET"
+      },
+      "failure_code": "LEAKED_TEST_SET"
+    },
+    "rubric_version": "manual-23-exact-v1",
+    "status": "ACTIVE"
+  },
+  {
+    "page_no": 24,
+    "trial_type": "pending",
+    "prompt": "补齐群体后比较结果；检查自己的样本是否覆盖关键差异。",
+    "prediction_prompt": "学习“补齐群体后比较结果；检查自己的样本是否覆盖关键差异。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 25,
+    "trial_type": "pending",
+    "prompt": "调模型复杂度看训练/测试差距；用新场景验证自己的分类器。",
+    "prediction_prompt": "学习“调模型复杂度看训练/测试差距；用新场景验证自己的分类器。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 26,
+    "trial_type": "pending",
+    "prompt": "切换颜色/形状/用途权重；解释推荐结果为何变化。",
+    "prediction_prompt": "学习“切换颜色/形状/用途权重；解释推荐结果为何变化。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 27,
+    "trial_type": "pending",
+    "prompt": "改变 K 值观察边界；用卡片完成手工近邻分类。",
+    "prediction_prompt": "学习“改变 K 值观察边界；用卡片完成手工近邻分类。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 28,
+    "trial_type": "pending",
+    "prompt": "同一数据分别分类与聚类；说出两种任务的不同问题。",
+    "prediction_prompt": "学习“同一数据分别分类与聚类；说出两种任务的不同问题。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 29,
+    "trial_type": "exact_json",
+    "prompt": "危险物识别属于高风险任务时，阈值调整应优先避免哪类错误？",
+    "prediction_prompt": "作答前先预测：高风险识别应优先减少误报还是漏报？",
+    "answer_schema": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "HIGH_PRECISION",
+            "HIGH_RECALL",
+            "NO_TRADEOFF"
+          ]
+        }
+      },
+      "required": [
+        "choice"
+      ],
+      "additionalProperties": false
+    },
+    "grader_kind": "EXACT_JSON",
+    "grader_config": {
+      "expected_answer": {
+        "choice": "HIGH_RECALL"
+      },
+      "failure_code": "MISSED_HIGH_RISK_TRADEOFF"
+    },
+    "rubric_version": "manual-29-exact-v1",
+    "status": "ACTIVE"
+  },
+  {
+    "page_no": 30,
+    "trial_type": "pending",
+    "prompt": "比较多种指标；为“危险物识别”选最重要指标并说明代价。",
+    "prediction_prompt": "学习“比较多种指标；为“危险物识别”选最重要指标并说明代价。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 31,
+    "trial_type": "pending",
+    "prompt": "调三项权重让判断正确；画出自己的“是否带伞”小节点。",
+    "prediction_prompt": "学习“调三项权重让判断正确；画出自己的“是否带伞”小节点。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 32,
+    "trial_type": "pending",
+    "prompt": "观察每轮误差下降；记录三次调整而非只看最终答案。",
+    "prediction_prompt": "学习“观察每轮误差下降；记录三次调整而非只看最终答案。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 33,
+    "trial_type": "pending",
+    "prompt": "开关激活函数观察边界；用纸片拼出非直线分类。",
+    "prediction_prompt": "学习“开关激活函数观察边界；用纸片拼出非直线分类。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 34,
+    "trial_type": "pending",
+    "prompt": "按层点亮特征；给一张图写出边缘-部件-物体三级线索。",
+    "prediction_prompt": "学习“按层点亮特征；给一张图写出边缘-部件-物体三级线索。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 35,
+    "trial_type": "pending",
+    "prompt": "点击误差回传路径；用团队任务类比“从结果追到原因”。",
+    "prediction_prompt": "学习“点击误差回传路径；用团队任务类比“从结果追到原因”。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 36,
+    "trial_type": "pending",
+    "prompt": "轮流选择动作看累计奖励；定义一个简单校园任务环境。",
+    "prediction_prompt": "学习“轮流选择动作看累计奖励；定义一个简单校园任务环境。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 37,
+    "trial_type": "pending",
+    "prompt": "调探索率比较结果；为三阶段训练安排不同探索比例。",
+    "prediction_prompt": "学习“调探索率比较结果；为三阶段训练安排不同探索比例。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 38,
+    "trial_type": "pending",
+    "prompt": "把终局奖励分配到路径；说明学习习惯中延迟反馈的例子。",
+    "prediction_prompt": "学习“把终局奖励分配到路径；说明学习习惯中延迟反馈的例子。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 39,
+    "trial_type": "pending",
+    "prompt": "设计阶段奖励并测试副作用；改进送药机关奖励表。",
+    "prediction_prompt": "学习“设计阶段奖励并测试副作用；改进送药机关奖励表。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 40,
+    "trial_type": "pending",
+    "prompt": "找出奖励漏洞并修复；写出一个人类最终把关条件。",
+    "prediction_prompt": "学习“找出奖励漏洞并修复；写出一个人类最终把关条件。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 41,
+    "trial_type": "pending",
+    "prompt": "尝试不同切分；为校园公告标出易歧义片段。",
+    "prediction_prompt": "学习“尝试不同切分；为校园公告标出易歧义片段。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 42,
+    "trial_type": "pending",
+    "prompt": "拖词语观察语义邻近；为作品生成准确而不误导的标签。",
+    "prediction_prompt": "学习“拖词语观察语义邻近；为作品生成准确而不误导的标签。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 43,
+    "trial_type": "pending",
+    "prompt": "查看候选概率并续写；比较“可能”与“事实”的差别。",
+    "prediction_prompt": "学习“查看候选概率并续写；比较“可能”与“事实”的差别。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 44,
+    "trial_type": "pending",
+    "prompt": "逐项补充目标/约束/示例；写一条可验证的创作指令。",
+    "prediction_prompt": "学习“逐项补充目标/约束/示例；写一条可验证的创作指令。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 45,
+    "trial_type": "exact_json",
+    "prompt": "面对一段流畅但可能出错的 AI 生成内容，最可靠的下一步是什么？",
+    "prediction_prompt": "作答前先预测：怎样区分听起来合理和有证据支持？",
+    "answer_schema": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "enum": [
+            "TRUST_FLUENCY",
+            "VERIFY_SOURCES",
+            "SHARE_FIRST"
+          ]
+        }
+      },
+      "required": [
+        "choice"
+      ],
+      "additionalProperties": false
+    },
+    "grader_kind": "EXACT_JSON",
+    "grader_config": {
+      "expected_answer": {
+        "choice": "VERIFY_SOURCES"
+      },
+      "failure_code": "TRUSTED_UNVERIFIED_GENERATION"
+    },
+    "rubric_version": "manual-45-exact-v1",
+    "status": "ACTIVE"
+  },
+  {
+    "page_no": 46,
+    "trial_type": "pending",
+    "prompt": "删减注册字段；为作品中的人脸、校服、位置做隐私检查。",
+    "prediction_prompt": "学习“删减注册字段；为作品中的人脸、校服、位置做隐私检查。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 47,
+    "trial_type": "pending",
+    "prompt": "找出缺失群体与代理变量；改写更公平的评价规则。",
+    "prediction_prompt": "学习“找出缺失群体与代理变量；改写更公平的评价规则。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 48,
+    "trial_type": "pending",
+    "prompt": "判断可用/需授权/不可用素材；生成作品“师承签”清单。",
+    "prediction_prompt": "学习“判断可用/需授权/不可用素材；生成作品“师承签”清单。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 49,
+    "trial_type": "pending",
+    "prompt": "查显式/隐式标识和来源链；给 AI 图像添加正确标识。",
+    "prediction_prompt": "学习“查显式/隐式标识和来源链；给 AI 图像添加正确标识。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  },
+  {
+    "page_no": 50,
+    "trial_type": "pending",
+    "prompt": "填写人机分工谱；讲清自己采纳、拒绝和修改了什么。",
+    "prediction_prompt": "学习“填写人机分工谱；讲清自己采纳、拒绝和修改了什么。”前，先写下你的预测。",
+    "answer_schema": {
+      "type": "object"
+    },
+    "grader_kind": null,
+    "grader_config": null,
+    "rubric_version": "pending",
+    "status": "DRAFT"
+  }
+]

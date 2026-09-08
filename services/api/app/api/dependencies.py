@@ -12,7 +12,11 @@ from app.core.errors import ApiError
 from app.core.security import PasswordService, PhoneProtector, TokenService, VerificationCodeDigester
 from app.db import get_db
 from app.domains.catalog.service import CatalogService
+from app.domains.conference.service import ConferenceService
 from app.domains.creations.service import CreationService
+from app.domains.creations.image_generation_service import ImageGenerationService
+from app.domains.creations.export_service import CreationExportService
+from app.domains.distribution.service import DistributionService
 from app.domains.learning.service import LearningService
 from app.domains.luggage.service import LuggageService
 from app.domains.media.service import MediaService
@@ -89,6 +93,43 @@ def get_creation_service(
     )
 
 
+def get_image_generation_service(
+    request: Request, db: Session = Depends(get_db)
+) -> Iterator[ImageGenerationService]:
+    media_service = MediaService(
+        db=db,
+        settings=request.app.state.settings,
+        store=request.app.state.object_store,
+        virus_scanner=request.app.state.virus_scanner,
+        request_id=getattr(request.state, "request_id", "unknown"),
+    )
+    yield ImageGenerationService(
+        db=db,
+        settings=request.app.state.settings,
+        generator=request.app.state.image_generator,
+        media_service=media_service,
+        request_id=getattr(request.state, "request_id", "unknown"),
+    )
+
+
+def get_creation_export_service(
+    request: Request, db: Session = Depends(get_db)
+) -> Iterator[CreationExportService]:
+    media_service = MediaService(
+        db=db,
+        settings=request.app.state.settings,
+        store=request.app.state.object_store,
+        virus_scanner=request.app.state.virus_scanner,
+        request_id=getattr(request.state, "request_id", "unknown"),
+    )
+    yield CreationExportService(
+        db=db,
+        store=request.app.state.object_store,
+        media_service=media_service,
+        request_id=getattr(request.state, "request_id", "unknown"),
+    )
+
+
 def get_luggage_service(
     request: Request, db: Session = Depends(get_db)
 ) -> Iterator[LuggageService]:
@@ -97,6 +138,30 @@ def get_luggage_service(
         settings=request.app.state.settings,
         store=request.app.state.object_store,
         cache=request.app.state.luggage_cache,
+    )
+
+
+def get_distribution_service(
+    request: Request, db: Session = Depends(get_db)
+) -> Iterator[DistributionService]:
+    yield DistributionService(
+        db=db,
+        settings=request.app.state.settings,
+        store=request.app.state.object_store,
+    )
+
+
+def get_conference_service(
+    request: Request, db: Session = Depends(get_db)
+) -> Iterator[ConferenceService]:
+    yield ConferenceService(
+        db=db,
+        request_id=getattr(request.state, "request_id", "unknown"),
+        distribution=DistributionService(
+            db=db,
+            settings=request.app.state.settings,
+            store=request.app.state.object_store,
+        ),
     )
 
 

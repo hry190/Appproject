@@ -44,6 +44,7 @@ class ManualPagePublic(ContractModel):
 
 
 class ManualPageDetailPublic(ManualPagePublic):
+    trial_id: uuid.UUID | None = None
     life_hook: str
     interaction_evidence: str
     progress_requirements: list[ManualProgressRequirementPublic]

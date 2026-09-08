@@ -1,0 +1,24 @@
+{
+  "id": "00000000-0000-0000-0000-000000000001",
+  "page_no": 1,
+  "style_no": 1,
+  "title": "为什么模型会说错话",
+  "volume_no": 1,
+  "volume_title": "识局",
+  "core_logic": "生成结果是概率选择，流畅不等于真实。",
+  "content_version": "v1.0.0",
+  "content_status": "READY",
+  "progress_state": "LEARNED",
+  "progress_label": "习得",
+  "is_favorite": false,
+  "life_hook": "当答案听起来很顺时，先找证据再相信。",
+  "interaction_evidence": "在一次真实创作中记录核验前后的差异。",
+  "progress_requirements": [
+    {"state": "UNSEEN", "label": "未闻", "requirement": "尚未开始"},
+    {"state": "DISCOVERED", "label": "偶得", "requirement": "完成漫画阅读"},
+    {"state": "LEARNED", "label": "习得", "requirement": "通过对应试炼"},
+    {"state": "MASTERED", "label": "悟得", "requirement": "提交迁移证据"},
+    {"state": "TEACHING", "label": "传习", "requirement": "帮助他人完成实践"}
+  ],
+  "evidence": []
+}

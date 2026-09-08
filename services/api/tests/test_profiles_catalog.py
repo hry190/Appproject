@@ -255,3 +255,4 @@ def test_luggage_skeleton_has_explicit_empty_states_and_etag(
     assert capabilities.json()["mistakes"] is True
     assert capabilities.json()["creations"] is True
     assert capabilities.json()["media_uploads"] is True
+    assert capabilities.json()["conference"] is True

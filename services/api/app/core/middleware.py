@@ -27,20 +27,39 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
 
 class RequestSizeLimitMiddleware:
-    def __init__(self, app: ASGIApp, *, max_bytes: int) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        max_bytes: int,
+        development_upload_max_bytes: int | None = None,
+    ) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.development_upload_max_bytes = development_upload_max_bytes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        path = str(scope.get("path", ""))
+        is_development_upload = (
+            self.development_upload_max_bytes is not None
+            and path.startswith("/v1/uploads/")
+            and path.endswith("/object")
+        )
+        request_limit = (
+            self.development_upload_max_bytes
+            if is_development_upload
+            else self.max_bytes
+        )
+        assert request_limit is not None
         headers = {key.lower(): value for key, value in scope.get("headers", [])}
         content_length = headers.get(b"content-length")
         if content_length is not None:
             try:
-                if int(content_length) > self.max_bytes:
+                if int(content_length) > request_limit:
                     await self._reject(send)
                     return
             except ValueError:
@@ -58,7 +77,7 @@ class RequestSizeLimitMiddleware:
             if message["type"] != "http.request":
                 break
             received += len(message.get("body", b""))
-            if received > self.max_bytes:
+            if received > request_limit:
                 await self._reject(send)
                 return
             if not message.get("more_body", False):

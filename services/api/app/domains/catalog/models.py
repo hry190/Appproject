@@ -88,6 +88,33 @@ class ManualPage(Base):
     volume: Mapped[ManualVolume] = relationship(back_populates="pages")
 
 
+class ManualPrerequisite(Base):
+    """Directed prerequisite edge used by the 后山 route planner."""
+
+    __tablename__ = "manual_prerequisites"
+    __table_args__ = (
+        UniqueConstraint(
+            "manual_page_id",
+            "prerequisite_page_id",
+            name="uq_manual_prerequisites_edge",
+        ),
+        CheckConstraint(
+            "manual_page_id <> prerequisite_page_id",
+            name="manual_prerequisite_not_self",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    manual_page_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("manual_pages.id", ondelete="CASCADE"), index=True
+    )
+    prerequisite_page_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("manual_pages.id", ondelete="CASCADE"), index=True
+    )
+    rule_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class UserManualFavorite(Base):
     __tablename__ = "user_manual_favorites"
     __table_args__ = (

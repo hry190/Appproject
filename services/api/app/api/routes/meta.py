@@ -17,6 +17,7 @@ class CapabilitiesPublic(ContractModel):
     mistakes: bool
     creations: bool
     media_uploads: bool
+    conference: bool
 
 
 @router.get("/capabilities", response_model=CapabilitiesPublic)
@@ -30,4 +31,5 @@ def get_capabilities() -> CapabilitiesPublic:
         mistakes=True,
         creations=True,
         media_uploads=True,
+        conference=True,
     )

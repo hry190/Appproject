@@ -96,6 +96,37 @@ def upload_ready_image(
     return processed.json()
 
 
+def test_nonproduction_memory_store_accepts_authenticated_upload_proxy(
+    client: TestClient,
+) -> None:
+    headers = register(client, "13950000020")
+    data = b"x" * 2048
+    digest = hashlib.sha256(data).hexdigest()
+    intent = client.post(
+        "/v1/uploads/intents",
+        headers=headers,
+        json={
+            "purpose": "CREATION_LAYER",
+            "filename": "草图.png",
+            "declared_mime": "image/png",
+            "byte_size": len(data),
+            "sha256": digest,
+        },
+    )
+    assert intent.status_code == 201, intent.text
+
+    uploaded = client.put(
+        f"/v1/uploads/{intent.json()['id']}/object",
+        headers={**headers, "Content-Type": "image/png"},
+        content=data,
+    )
+    assert uploaded.status_code == 204, uploaded.text
+    store = client.app.state.object_store
+    assert isinstance(store, InMemoryObjectStore)
+    key = intent.json()["upload_url"].removeprefix("memory://quarantine/")
+    assert store.read_quarantine(key) == data
+
+
 def create_project_version(
     client: TestClient,
     headers: dict[str, str],
@@ -136,6 +167,63 @@ def complete_creation_evidence(
     headers: dict[str, str],
     version_id: str,
 ) -> None:
+    version = client.get(f"/v1/creation-versions/{version_id}", headers=headers).json()
+    project_id = version["project_id"]
+    project = client.get(f"/v1/creation-projects/{project_id}", headers=headers).json()
+    method = client.put(
+        f"/v1/creation-projects/{project_id}/method",
+        headers=headers,
+        json={
+            "name": "图文创作工法",
+            "goal": "完成作品并说明创作过程",
+            "audience": ["同学与老师"],
+            "format": "图文画面",
+            "steps": ["构思", "草图", "制作", "测试", "说明"],
+            "expected_revision": project["row_version"],
+        },
+    )
+    assert method.status_code == 200, method.text
+    revision = method.json()["project_revision"]
+    for from_stage, to_stage, reason in [
+        ("IDEATION", "DRAFT", "工法已经确认"),
+        ("DRAFT", "PRODUCTION", "开始制作当前版本"),
+        ("PRODUCTION", "TEST", "当前版本制作完成，开始测试"),
+    ]:
+        transition = client.post(
+            f"/v1/creation-projects/{project_id}/stage-transitions",
+            headers=headers,
+            json={
+                "from_stage": from_stage,
+                "to_stage": to_stage,
+                "reason": reason,
+                "expected_revision": revision,
+            },
+        )
+        assert transition.status_code == 201, transition.text
+        revision = transition.json()["project_revision"]
+    test_record = client.post(
+        f"/v1/creation-projects/{project_id}/test-records",
+        headers=headers,
+        json={
+            "creation_version_id": version_id,
+            "scenario": "检查画面主题与隐私信息",
+            "result": "PASSED",
+            "notes": "测试人员能够理解主题。",
+            "findings": [],
+        },
+    )
+    assert test_record.status_code == 201, test_record.text
+    sealed = client.post(
+        f"/v1/creation-projects/{project_id}/stage-transitions",
+        headers=headers,
+        json={
+            "from_stage": "TEST",
+            "to_stage": "SEAL",
+            "reason": "复测通过，进入作品说明",
+            "expected_revision": revision,
+        },
+    )
+    assert sealed.status_code == 201, sealed.text
     manual = client.get("/v1/manuals?limit=1", headers=headers).json()["items"][0]
     card = client.put(
         f"/v1/creation-versions/{version_id}/learning-card",
@@ -167,6 +255,19 @@ def complete_creation_evidence(
         },
     )
     assert manifest.status_code == 200, manifest.text
+    seal_check = client.put(
+        f"/v1/creation-versions/{version_id}/seal-check",
+        headers=headers,
+        json={
+            "work_description": "竹林机关主题图文作品。",
+            "learning_reflection": "我学会了检查结构和表达。",
+            "next_improvement": "下一版会继续优化提示文字。",
+            "identity_privacy_confirmed": True,
+            "contact_privacy_confirmed": True,
+            "portrait_rights_confirmed": True,
+        },
+    )
+    assert seal_check.status_code == 200, seal_check.text
 
 
 def test_media_upload_is_private_scanned_and_generates_signed_thumbnails(

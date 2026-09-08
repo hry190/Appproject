@@ -74,7 +74,27 @@ internal object HomePandaLayout {
 private const val QuickActionsEntranceDelayMillis = 550L
 private const val QuickActionsEntranceDurationMillis = 1_500
 private val QuickActionsEntranceOffset = 56.dp
+private const val PrimaryEntranceDurationMillis = 680
+private const val PrimaryEntranceStaggerMillis = 280L
 private const val DecorButtonSheenDurationMillis = 440
+private enum class PrimaryHomeAction {
+    Luggage,
+    Xiulian,
+    Dahui,
+    Zaowu,
+}
+
+private class PrimaryActionEntrance(initialValue: Float) {
+    val alpha = Animatable(initialValue)
+    val movement = Animatable(initialValue)
+}
+
+private fun PrimaryActionEntrance.isInteractive(): Boolean =
+    alpha.value >= 0.99f && movement.value >= 0.99f
+
+private fun PrimaryActionEntrance.translationY(offsetPx: Float): Float =
+    (1f - movement.value) * offsetPx
+
 private val DecorButtonJadeOutlineOffsets = listOf(
     (-1.5).dp to 0.dp,
     1.5.dp to 0.dp,
@@ -104,9 +124,10 @@ fun Home1Screen(
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
+    dahuiEnabled: Boolean = true,
     onOpenSettings: () -> Unit = {},
     onOpenChallenge: () -> Unit = {},
-    onPandaClick: () -> Unit = {},
+    hasUnreadLetters: Boolean = false,
     animateQuickActionsEntrance: Boolean = false,
     quickActionsEntranceReady: Boolean = true,
     onQuickActionsEntranceConsumed: () -> Unit = {},
@@ -115,7 +136,6 @@ fun Home1Screen(
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen by remember { mutableStateOf(false) }
     var dailyStep by remember { androidx.compose.runtime.mutableIntStateOf(1) }
-    var taskExpanded by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val statusBarTop = with(density) {
         WindowInsets.statusBars.getTop(density).toDp()
@@ -126,6 +146,14 @@ fun Home1Screen(
     }
     val quickActionsMovement = remember {
         Animatable(if (shouldAnimateQuickActions) 0f else 1f)
+    }
+    val primaryEntranceOrder = remember {
+        PrimaryHomeAction.entries.shuffled()
+    }
+    val primaryActionEntrances = remember {
+        List(PrimaryHomeAction.entries.size) {
+            PrimaryActionEntrance(if (shouldAnimateQuickActions) 0f else 1f)
+        }
     }
 
     LaunchedEffect(shouldAnimateQuickActions, quickActionsEntranceReady) {
@@ -151,6 +179,32 @@ fun Home1Screen(
                         ),
                     )
                 }
+                primaryEntranceOrder.forEachIndexed { sequenceIndex, action ->
+                    val entrance = primaryActionEntrances[action.ordinal]
+                    launch {
+                        delay(sequenceIndex * PrimaryEntranceStaggerMillis)
+                        coroutineScope {
+                            launch {
+                                entrance.alpha.animateTo(
+                                    targetValue = 1f,
+                                    animationSpec = tween(
+                                        durationMillis = PrimaryEntranceDurationMillis,
+                                        easing = LinearEasing,
+                                    ),
+                                )
+                            }
+                            launch {
+                                entrance.movement.animateTo(
+                                    targetValue = 1f,
+                                    animationSpec = tween(
+                                        durationMillis = PrimaryEntranceDurationMillis,
+                                        easing = FastOutSlowInEasing,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -163,6 +217,10 @@ fun Home1Screen(
     val homeEntrancesAlpha = quickActionsAlpha.value
     val homeEntrancesTranslationY =
         (1f - quickActionsMovement.value) * quickActionsOffsetPx
+    val luggageEntrance = primaryActionEntrances[PrimaryHomeAction.Luggage.ordinal]
+    val xiulianEntrance = primaryActionEntrances[PrimaryHomeAction.Xiulian.ordinal]
+    val dahuiEntrance = primaryActionEntrances[PrimaryHomeAction.Dahui.ordinal]
+    val zaowuEntrance = primaryActionEntrances[PrimaryHomeAction.Zaowu.ordinal]
 
     EdgeToEdgeScreen(
         background = {
@@ -173,17 +231,19 @@ fun Home1Screen(
     ) {
         // 与三个引导状态共用同一个快捷入口组件；抵消父容器已经添加的状态栏顶部内边距。
         HomeQuickActions(
-            taskExpanded = taskExpanded,
-            onOpenWorks = { /* TODO */ },
-            onOpenProgress = {
+            onOpenWendao = {
+                if (homeEntrancesInteractive) onOpenXiulian()
+            },
+            onOpenCultivation = {
                 if (homeEntrancesInteractive) progressOpen = true
             },
-            onToggleTask = {
-                if (homeEntrancesInteractive) taskExpanded = !taskExpanded
+            onOpenLetters = {
+                if (homeEntrancesInteractive) onOpenChallenge()
             },
             onOpenSettings = {
                 if (homeEntrancesInteractive) onOpenSettings()
             },
+            hasUnreadLetters = hasUnreadLetters,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(
@@ -195,46 +255,6 @@ fun Home1Screen(
                     translationY = homeEntrancesTranslationY
                 },
         )
-
-        // 任务展开栏(Rectangle 187.png 背景 + "挑战"选项)
-        if (taskExpanded) {
-            // 1) Rectangle 187 背景(浅透明,仅看轮廓)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-65).dp, y = 100.dp)
-                    .size(width = 60.dp, height = 36.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_task_dropdown_bg),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(0.2f),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-            // 2) "挑战"文本 + 右箭头(独立定位,和"任务"同一X轴)
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-40).dp, y = 110.dp)
-                    .clickable(onClick = onOpenChallenge),  // ← 点击跳转挑战页
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "挑战",
-                    color = Color.Black,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 9.sp),
-                )
-                Spacer(modifier = Modifier.width(3.dp))
-                Image(
-                    painter = painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    modifier = Modifier.size(12.dp),
-                )
-            }
-        }
 
         // 用户提供的无行囊叉腰熊猫；行囊继续使用下方独立组件。
         Box(
@@ -248,12 +268,6 @@ fun Home1Screen(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
-            Box(
-                modifier = Modifier
-                    .offset(x = 25.dp)
-                    .size(width = 150.dp, height = HomePandaLayout.Height)
-                    .clickable(onClick = onPandaClick),
-            )
         }
 
         // 行囊与另外三个入口复用相同组件、宽高和文字样式。
@@ -262,9 +276,9 @@ fun Home1Screen(
             text = "行囊",
             x = 119.dp, y = 610.dp,
             width = 55.dp, height = 90.dp,
-            entranceAlpha = homeEntrancesAlpha,
-            entranceTranslationY = homeEntrancesTranslationY,
-            entranceEnabled = homeEntrancesInteractive,
+            entranceAlpha = luggageEntrance.alpha.value,
+            entranceTranslationY = luggageEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = luggageEntrance.isInteractive(),
             onClick = onOpenLuggage,
         )
 
@@ -276,9 +290,9 @@ fun Home1Screen(
             text = "修炼",
             x = 83.dp, y = 234.dp,
             width = 55.dp, height = 90.dp,
-            entranceAlpha = homeEntrancesAlpha,
-            entranceTranslationY = homeEntrancesTranslationY,
-            entranceEnabled = homeEntrancesInteractive,
+            entranceAlpha = xiulianEntrance.alpha.value,
+            entranceTranslationY = xiulianEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = xiulianEntrance.isInteractive(),
             onClick = onOpenXiulian,
         )
 
@@ -288,9 +302,9 @@ fun Home1Screen(
             text = "大会",
             x = 156.dp, y = 351.dp,
             width = 55.dp, height = 90.dp,
-            entranceAlpha = homeEntrancesAlpha,
-            entranceTranslationY = homeEntrancesTranslationY,
-            entranceEnabled = homeEntrancesInteractive,
+            entranceAlpha = dahuiEntrance.alpha.value * if (dahuiEnabled) 1f else 0.45f,
+            entranceTranslationY = dahuiEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = dahuiEntrance.isInteractive() && dahuiEnabled,
             onClick = onOpenDahui,
         )
 
@@ -300,14 +314,14 @@ fun Home1Screen(
             text = "作品创作",
             x = 300.dp, y = 350.dp,
             width = 55.dp, height = 90.dp,
-            entranceAlpha = homeEntrancesAlpha,
-            entranceTranslationY = homeEntrancesTranslationY,
-            entranceEnabled = homeEntrancesInteractive,
+            entranceAlpha = zaowuEntrance.alpha.value,
+            entranceTranslationY = zaowuEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = zaowuEntrance.isInteractive(),
             onClick = onOpenZaowu,
         )
     }
 
-    // 学习进度弹窗(由"进度"图标触发)
+    // 修为弹窗由顶部“修为”入口触发。
     if (progressOpen) {
         ProgressModal(
             onClose      = { progressOpen = false },
@@ -345,7 +359,7 @@ fun Home1Screen(
  * 整个 Box 是点击区,文字会居中显示。
  */
 @Composable
-private fun DecorButton(
+fun DecorButton(
     imageRes: Int,
     text: String,
     x: androidx.compose.ui.unit.Dp,

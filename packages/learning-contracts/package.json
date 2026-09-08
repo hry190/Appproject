@@ -1,0 +1,11 @@
+{
+  "name": "@jiqiao-jianghu/learning-contracts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "修炼页后端 API contracts and fetch client",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  }
+}

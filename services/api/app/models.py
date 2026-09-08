@@ -307,7 +307,9 @@ Index("ix_auth_audit_event_type_created", AuthAuditEvent.event_type, AuthAuditEv
 
 # Domain models are imported here so Alembic and test metadata discover them.
 from app.domains.catalog import models as _catalog_models  # noqa: E402,F401
+from app.domains.conference import models as _conference_models  # noqa: E402,F401
 from app.domains.creations import models as _creation_models  # noqa: E402,F401
+from app.domains.distribution import models as _distribution_models  # noqa: E402,F401
 from app.domains.learning import models as _learning_models  # noqa: E402,F401
 from app.domains.media import models as _media_models  # noqa: E402,F401
 from app.domains.mistakes import models as _mistake_models  # noqa: E402,F401

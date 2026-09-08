@@ -5,7 +5,8 @@ import binascii
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from datetime import timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
 from app.core.security import utcnow
-from app.domains.catalog.models import ManualPage
+from app.domains.catalog.models import ManualPage, ManualPrerequisite, ManualVolume
 from app.domains.learning.contracts import (
     EvidenceAwardPublic,
     EvidenceCategory,
@@ -52,6 +53,20 @@ from app.domains.learning.models import (
     TrialVersion,
     UserLearningStats,
 )
+from app.domains.learning.page_contracts import (
+    BackMountainRecommendationPublic,
+    LearningBookPublic,
+    LearningOverviewPublic,
+    LearningRouteMatchPublic,
+    LearningRoutePublic,
+    LessonReadEventAccepted,
+    MigrationEvidenceApproved,
+    MigrationEvidenceCreate,
+    MigrationEvidenceSubmitted,
+    TeachingEvidenceAccepted,
+    TeachingEvidenceCreate,
+)
+from app.domains.creations.models import CreationProject, CreationVersion
 from app.domains.learning.rules import (
     advance_progress,
     shanghai_calendar_date,
@@ -113,6 +128,211 @@ class LearningService:
         self.db = db
         self.mistakes = MistakeService(db=db)
 
+    def get_learning_overview(self, user: User) -> LearningOverviewPublic:
+        """Return the single projection needed to render 悟书环 and 后山入口."""
+        rows = self.db.execute(
+            select(ManualPage, ManualVolume, ManualProgress)
+            .join(ManualVolume, ManualVolume.id == ManualPage.volume_id)
+            .outerjoin(
+                ManualProgress,
+                (ManualProgress.manual_page_id == ManualPage.id)
+                & (ManualProgress.user_id == user.id),
+            )
+            .where(
+                ManualPage.is_listed.is_(True),
+                ManualVolume.is_listed.is_(True),
+            )
+            .order_by(ManualPage.page_no)
+        ).all()
+        page_ids = [page.id for page, _volume, _progress in rows]
+        evidence_counts: dict[uuid.UUID, int] = {}
+        if page_ids:
+            evidence_rows = self.db.execute(
+                select(LearningEvidence.manual_page_id, func.count(LearningEvidence.id))
+                .where(
+                    LearningEvidence.user_id == user.id,
+                    LearningEvidence.manual_page_id.in_(page_ids),
+                    LearningEvidence.validation_status == EvidenceValidationStatus.VALID,
+                )
+                .group_by(LearningEvidence.manual_page_id)
+            ).all()
+            evidence_counts = {
+                page_id: int(count) for page_id, count in evidence_rows if page_id
+            }
+
+        now = utcnow()
+        review_cutoff = now - timedelta(days=14)
+        books: list[LearningBookPublic] = []
+        for page, volume, progress in rows:
+            state = progress.state if progress else ManualProgressState.UNSEEN
+            updated_at = progress.updated_at if progress else None
+            comparable_updated_at = (
+                updated_at.replace(tzinfo=timezone.utc)
+                if updated_at is not None and updated_at.tzinfo is None
+                else updated_at
+            )
+            books.append(
+                LearningBookPublic(
+                    manual_page_id=page.id,
+                    page_no=page.page_no,
+                    style_no=page.style_no,
+                    title=page.title,
+                    volume_no=volume.number,
+                    volume_title=volume.title,
+                    state=state,
+                    state_label=self._state_label(state),
+                    evidence_count=evidence_counts.get(page.id, 0),
+                    review_due=(
+                        state != ManualProgressState.UNSEEN
+                        and updated_at is not None
+                        and comparable_updated_at < review_cutoff
+                    ),
+                    updated_at=updated_at,
+                )
+            )
+
+        recommended = next(
+            (book for book in books if book.state == ManualProgressState.UNSEEN),
+            next(
+                (book for book in books if book.review_due),
+                books[0] if books else None,
+            ),
+        )
+        return LearningOverviewPublic(
+            recommended_lesson_id=(recommended.manual_page_id if recommended else None),
+            books=books,
+            back_mountain=(
+                BackMountainRecommendationPublic(
+                    volume_no=recommended.volume_no,
+                    lesson_id=recommended.manual_page_id,
+                    reason=(
+                        "沿主线学习下一招，完成漫画、预测与试炼"
+                        if recommended.state == ManualProgressState.UNSEEN
+                        else "温习这一招，巩固已经获得的学习证据"
+                    ),
+                    available=True,
+                )
+                if recommended
+                else None
+            ),
+        )
+
+    def route_learning_question(
+        self,
+        user: User,
+        query: str,
+        *,
+        limit: int = 3,
+    ) -> LearningRoutePublic:
+        """Use an explainable catalog search as the first Content Router version."""
+        normalized = " ".join(query.strip().split())
+        if not normalized:
+            raise ApiError(400, "QUERY_REQUIRED", "请输入想要了解的问题")
+        terms = [term.lower() for term in normalized.split() if term]
+        query_aliases = {
+            "说错话": ["幻觉", "流畅生成", "核验", "上下文"],
+            "为什么会说错话": ["幻觉", "流畅生成", "核验"],
+            "ai": ["大模型", "语言模型", "生成"],
+            "预测": ["判断", "变量", "试炼"],
+        }
+        for trigger, aliases in query_aliases.items():
+            if trigger in normalized.lower():
+                terms.extend(aliases)
+        rows = self.db.execute(
+            select(ManualPage, ManualVolume, ManualProgress)
+            .join(ManualVolume, ManualVolume.id == ManualPage.volume_id)
+            .outerjoin(
+                ManualProgress,
+                (ManualProgress.manual_page_id == ManualPage.id)
+                & (ManualProgress.user_id == user.id),
+            )
+            .where(
+                ManualPage.is_listed.is_(True),
+                ManualVolume.is_listed.is_(True),
+            )
+        ).all()
+        ranked: list[tuple[int, int, ManualPage, ManualVolume, ManualProgress | None]] = []
+        for page, volume, progress in rows:
+            haystack = " ".join(
+                [
+                    page.title,
+                    page.core_logic,
+                    page.life_hook,
+                    page.interaction_evidence,
+                    volume.title,
+                    volume.core_domain,
+                ]
+            ).lower()
+            score = sum(haystack.count(term) for term in terms)
+            if score:
+                ranked.append((score, -page.page_no, page, volume, progress))
+        ranked.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        selected = ranked[:limit]
+        selected_ids = [page.id for _score, _order, page, _volume, _progress in selected]
+        prerequisite_rows = self.db.execute(
+            select(ManualPrerequisite.manual_page_id, ManualPrerequisite.prerequisite_page_id)
+            .where(ManualPrerequisite.manual_page_id.in_(selected_ids))
+        ).all() if selected_ids else []
+        prerequisite_by_page: dict[uuid.UUID, list[uuid.UUID]] = {}
+        for page_id, prerequisite_id in prerequisite_rows:
+            prerequisite_by_page.setdefault(page_id, []).append(prerequisite_id)
+        prerequisite_states: dict[uuid.UUID, ManualProgressState] = {}
+        prerequisite_ids = [item for values in prerequisite_by_page.values() for item in values]
+        if prerequisite_ids:
+            progress_rows = self.db.execute(
+                select(ManualProgress.manual_page_id, ManualProgress.state).where(
+                    ManualProgress.user_id == user.id,
+                    ManualProgress.manual_page_id.in_(prerequisite_ids),
+                )
+            ).all()
+            prerequisite_states = {page_id: state for page_id, state in progress_rows}
+        matches = []
+        for _score, _page_order, page, volume, progress in selected:
+            prerequisites = prerequisite_by_page.get(page.id, [])
+            available = all(
+                self._state_rank(prerequisite_states.get(item, ManualProgressState.UNSEEN))
+                >= self._state_rank(ManualProgressState.LEARNED)
+                for item in prerequisites
+            )
+            matches.append(
+                LearningRouteMatchPublic(
+                    lesson_id=page.id,
+                    volume_no=volume.number,
+                    volume_title=volume.title,
+                    title=page.title,
+                    state=progress.state if progress else ManualProgressState.UNSEEN,
+                    available=available,
+                    prerequisites=prerequisites,
+                    recommended_reason=(
+                        f"这招围绕“{page.core_logic}”展开，适合继续沿后山主线学习。"
+                        if available
+                        else "先完成前置招式，再来参悟这一招。"
+                    ),
+                    match_source="catalog_keyword",
+                )
+            )
+        return LearningRoutePublic(query=normalized, matches=matches)
+
+    @staticmethod
+    def _state_label(state: ManualProgressState) -> str:
+        return {
+            ManualProgressState.UNSEEN: "未闻",
+            ManualProgressState.DISCOVERED: "偶得",
+            ManualProgressState.LEARNED: "习得",
+            ManualProgressState.MASTERED: "悟得",
+            ManualProgressState.TEACHING: "传习",
+        }[state]
+
+    @staticmethod
+    def _state_rank(state: ManualProgressState) -> int:
+        return {
+            ManualProgressState.UNSEEN: 0,
+            ManualProgressState.DISCOVERED: 1,
+            ManualProgressState.LEARNED: 2,
+            ManualProgressState.MASTERED: 3,
+            ManualProgressState.TEACHING: 4,
+        }[state]
+
     def get_trial(self, trial_id: uuid.UUID) -> TrialPublic:
         row = self.db.execute(
             select(Trial, TrialVersion)
@@ -136,6 +356,296 @@ class LearningService:
             manual_page_id=trial.manual_page_id,
             current_version=self._version_public(version),
         )
+
+    def record_lesson_read(
+        self,
+        user: User,
+        lesson_id: uuid.UUID,
+        idempotency_key: str,
+    ) -> LessonReadEventAccepted:
+        page = self.db.scalar(
+            select(ManualPage).where(
+                ManualPage.id == lesson_id,
+                ManualPage.is_listed.is_(True),
+            )
+        )
+        if page is None:
+            raise ApiError(404, "LESSON_NOT_FOUND", "秘籍不存在或暂未开放")
+        existing = self.db.scalar(
+            select(LearningEvent).where(
+                LearningEvent.user_id == user.id,
+                LearningEvent.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is not None:
+            return LessonReadEventAccepted(
+                event_id=existing.id,
+                lesson_id=lesson_id,
+                state=self._current_state(user.id, lesson_id),
+                processed_at=self._as_utc(existing.occurred_at),
+            )
+        now = utcnow()
+        event = LearningEvent(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            event_type=LearningEventType.COMIC_PAGE_OPENED,
+            source_type="LESSON",
+            source_id=lesson_id,
+            manual_page_id=lesson_id,
+            rule_version=page.content_version,
+            payload={"content_version": page.content_version},
+            idempotency_key=idempotency_key,
+            occurred_at=now,
+        )
+        self.db.add(event)
+        self.db.commit()
+        return LessonReadEventAccepted(
+            event_id=event.id,
+            lesson_id=lesson_id,
+            state=self._current_state(user.id, lesson_id),
+            processed_at=now,
+        )
+
+    def submit_migration_evidence(
+        self,
+        user: User,
+        lesson_id: uuid.UUID,
+        payload: MigrationEvidenceCreate,
+        idempotency_key: str,
+    ) -> MigrationEvidenceSubmitted:
+        page = self.db.scalar(
+            select(ManualPage).where(
+                ManualPage.id == lesson_id,
+                ManualPage.is_listed.is_(True),
+            )
+        )
+        if page is None:
+            raise ApiError(404, "LESSON_NOT_FOUND", "秘籍不存在或暂未开放")
+        if lesson_id not in payload.used_lessons:
+            raise ApiError(422, "LESSON_NOT_USED", "迁移证据必须关联当前秘籍")
+        version_row = self.db.execute(
+            select(CreationVersion, CreationProject)
+            .join(CreationProject, CreationProject.id == CreationVersion.project_id)
+            .where(
+                CreationVersion.id == payload.creation_version_id,
+                CreationProject.owner_user_id == user.id,
+            )
+        ).one_or_none()
+        if version_row is None:
+            raise ApiError(404, "CREATION_VERSION_NOT_FOUND", "作品版本不存在")
+        current_state = self._current_state(user.id, lesson_id)
+        if current_state not in {
+            ManualProgressState.LEARNED,
+            ManualProgressState.MASTERED,
+            ManualProgressState.TEACHING,
+        }:
+            raise ApiError(409, "PREREQUISITE_REQUIRED", "先完成本页试炼，再提交迁移证据")
+        existing = self.db.scalar(
+            select(LearningEvent).where(
+                LearningEvent.user_id == user.id,
+                LearningEvent.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is not None:
+            evidence_id = uuid.UUID(str(existing.payload["evidence_id"]))
+            evidence = self.db.get(LearningEvidence, evidence_id)
+            return MigrationEvidenceSubmitted(
+                evidence_id=evidence_id,
+                lesson_id=lesson_id,
+                creation_version_id=payload.creation_version_id,
+                validation_status=(evidence.validation_status.value if evidence else "PENDING_REVIEW"),
+                current_state=current_state,
+                processed_at=self._as_utc(existing.occurred_at),
+            )
+        now = utcnow()
+        evidence = LearningEvidence(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            category=EvidenceCategory.CRAFT,
+            evidence_type="MIGRATION_SUBMITTED",
+            source_type="CREATION_VERSION",
+            source_id=payload.creation_version_id,
+            manual_page_id=lesson_id,
+            summary="提交了将秘籍用于作品的迁移证据",
+            rule_version="migration-v1",
+            validation_status=EvidenceValidationStatus.PENDING_REVIEW,
+            created_at=now,
+        )
+        event = LearningEvent(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            event_type=LearningEventType.TRANSFER_EVIDENCE_SUBMITTED,
+            source_type="CREATION_VERSION",
+            source_id=payload.creation_version_id,
+            manual_page_id=lesson_id,
+            rule_version="migration-v1",
+            payload={
+                "evidence_id": str(evidence.id),
+                "used_lessons": [str(item) for item in payload.used_lessons],
+                "revision_reason": payload.revision_reason,
+            },
+            idempotency_key=idempotency_key,
+            occurred_at=now,
+        )
+        self.db.add_all([evidence, event])
+        self.db.commit()
+        return MigrationEvidenceSubmitted(
+            evidence_id=evidence.id,
+            lesson_id=lesson_id,
+            creation_version_id=payload.creation_version_id,
+            validation_status=evidence.validation_status.value,
+            current_state=current_state,
+            processed_at=now,
+        )
+
+    def approve_migration_evidence(
+        self,
+        evidence_id: uuid.UUID,
+    ) -> MigrationEvidenceApproved:
+        evidence = self.db.get(LearningEvidence, evidence_id)
+        if evidence is None or evidence.evidence_type != "MIGRATION_SUBMITTED":
+            raise ApiError(404, "EVIDENCE_NOT_FOUND", "迁移证据不存在")
+        if evidence.manual_page_id is None:
+            raise ApiError(409, "EVIDENCE_INVALID", "迁移证据缺少秘籍关联")
+        now = utcnow()
+        current = self._current_state(evidence.user_id, evidence.manual_page_id)
+        if evidence.validation_status == EvidenceValidationStatus.VALID:
+            return MigrationEvidenceApproved(
+                evidence_id=evidence.id,
+                lesson_id=evidence.manual_page_id,
+                state=current,
+                changed=False,
+                processed_at=now,
+            )
+        evidence.validation_status = EvidenceValidationStatus.VALID
+        evidence.validated_at = now
+        event = LearningEvent(
+            id=uuid.uuid4(),
+            user_id=evidence.user_id,
+            event_type=LearningEventType.TRANSFER_EVIDENCE_APPROVED,
+            source_type=evidence.source_type,
+            source_id=evidence.source_id,
+            manual_page_id=evidence.manual_page_id,
+            rule_version=evidence.rule_version,
+            payload={"evidence_id": str(evidence.id)},
+            idempotency_key=f"migration-approved:{evidence.id}",
+            occurred_at=now,
+        )
+        self.db.add(event)
+        self.db.flush()
+        change = self._apply_progress(
+            user=self.db.get(User, evidence.user_id),
+            manual_page_id=evidence.manual_page_id,
+            event=event,
+            evidence=evidence,
+            occurred_at=now,
+        )
+        self.db.commit()
+        return MigrationEvidenceApproved(
+            evidence_id=evidence.id,
+            lesson_id=evidence.manual_page_id,
+            state=change.current_state,
+            changed=change.changed,
+            processed_at=now,
+        )
+
+    def submit_teaching_evidence(
+        self,
+        user: User,
+        lesson_id: uuid.UUID,
+        payload: TeachingEvidenceCreate,
+        idempotency_key: str,
+    ) -> TeachingEvidenceAccepted:
+        page = self.db.scalar(
+            select(ManualPage).where(
+                ManualPage.id == lesson_id,
+                ManualPage.is_listed.is_(True),
+            )
+        )
+        if page is None:
+            raise ApiError(404, "LESSON_NOT_FOUND", "秘籍不存在或暂未开放")
+        current = self._current_state(user.id, lesson_id)
+        if current not in {ManualProgressState.MASTERED, ManualProgressState.TEACHING}:
+            raise ApiError(409, "PREREQUISITE_REQUIRED", "先完成迁移证据审核，再提交传习讲解")
+        existing = self.db.scalar(
+            select(LearningEvent).where(
+                LearningEvent.user_id == user.id,
+                LearningEvent.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is not None:
+            evidence_id = uuid.UUID(str(existing.payload["evidence_id"]))
+            return TeachingEvidenceAccepted(
+                evidence_id=evidence_id,
+                lesson_id=lesson_id,
+                validation_status="VALID",
+                current_state=current,
+                changed=False,
+                processed_at=self._as_utc(existing.occurred_at),
+            )
+        now = utcnow()
+        evidence = LearningEvidence(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            category=EvidenceCategory.CHIVALRY,
+            evidence_type="STRUCTURED_REVIEW_ACCEPTED",
+            source_type="STRUCTURED_REVIEW",
+            source_id=uuid.uuid4(),
+            manual_page_id=lesson_id,
+            summary="完成了结构化讲解并记录学习者反馈",
+            rule_version="teaching-v1",
+            validation_status=EvidenceValidationStatus.VALID,
+            created_at=now,
+            validated_at=now,
+        )
+        event = LearningEvent(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            event_type=LearningEventType.STRUCTURED_REVIEW_ACCEPTED,
+            source_type="STRUCTURED_REVIEW",
+            source_id=evidence.source_id,
+            manual_page_id=lesson_id,
+            rule_version="teaching-v1",
+            payload={
+                "evidence_id": str(evidence.id),
+                "explanation": payload.explanation,
+                "application_example": payload.application_example,
+                "learner_feedback": payload.learner_feedback,
+            },
+            idempotency_key=idempotency_key,
+            occurred_at=now,
+        )
+        self.db.add_all([evidence, event])
+        self.db.flush()
+        change = self._apply_progress(
+            user=user,
+            manual_page_id=lesson_id,
+            event=event,
+            evidence=evidence,
+            occurred_at=now,
+        )
+        self.db.commit()
+        return TeachingEvidenceAccepted(
+            evidence_id=evidence.id,
+            lesson_id=lesson_id,
+            validation_status=evidence.validation_status.value,
+            current_state=change.current_state,
+            changed=change.changed,
+            processed_at=now,
+        )
+
+    def _current_state(self, user_id: uuid.UUID, lesson_id: uuid.UUID) -> ManualProgressState:
+        progress = self.db.scalar(
+            select(ManualProgress).where(
+                ManualProgress.user_id == user_id,
+                ManualProgress.manual_page_id == lesson_id,
+            )
+        )
+        return progress.state if progress else ManualProgressState.UNSEEN
+
+    @staticmethod
+    def _as_utc(value: datetime) -> datetime:
+        return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
 
     def submit_attempt(
         self,
