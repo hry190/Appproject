@@ -63,6 +63,8 @@ import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
+import com.jueqiao.jianghu.ui.screens.shilian2.Shilian2Screen
+import com.jueqiao.jianghu.ui.screens.shilian3.Shilian3Screen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
@@ -339,11 +341,22 @@ fun JianghuNavHost(
                 onOpenSettings = { navController.navigate(Routes.Settings) },
                 onOpenTask     = { /* TODO:任务页 */ },
                 onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
-                onOpenShilian  = { navController.navigate(Routes.Shilian) },
             )
         }
         composable(Routes.Shilian) {
             ShilianScreen(
+                onBack = { navController.popBackStack() },
+                onOpenShilian2 = { navController.navigate(Routes.Shilian2) },
+            )
+        }
+        composable(Routes.Shilian2) {
+            Shilian2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenShilian3 = { navController.navigate(Routes.Shilian3) },
+            )
+        }
+        composable(Routes.Shilian3) {
+            Shilian3Screen(
                 onBack = { navController.popBackStack() },
             )
         }
@@ -351,6 +364,7 @@ fun JianghuNavHost(
             Gunlun1Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
+                onOpenShilian = { navController.navigate(Routes.Shilian) },
             )
         }
         composable(Routes.Gunlun2) {

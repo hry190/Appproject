@@ -27,12 +27,13 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * 滚轮1 页 — 修炼页 → "前往后院"按钮跳转目标。
  *
  * 重构后:用 StandardGunlunScaffold 复用背景 + 熊猫(不可点击) + 返回按钮。
- * 本文件只剩页独有的元素:后山按钮 + 修炼按钮 + 跳转气泡。
+ * 本文件只剩页独有的元素:后山按钮 + 修炼按钮(可点击跳试炼页) + 跳转气泡。
  */
 @Composable
 fun Gunlun1Screen(
     onBack: () -> Unit = {},
     onOpenGunlun2: () -> Unit = {},
+    onOpenShilian: () -> Unit = {},
 ) {
     // 熊猫在滚轮1 不可点击(叶子页),不传 onPandaClick
     StandardGunlunScaffold(onBack = onBack) {
@@ -92,35 +93,39 @@ fun Gunlun1Screen(
             )
         }
 
-        // 未标题-150.png — "修炼"按钮的背景图像
+        // 未标题-150.png — "修炼"按钮(背景图像 + 文字,点击跳转到试炼页)
         //   (X=35, Y=548, W=55, H=117)
-        Image(
-            painter = painterResource(R.drawable.img_gunlun1_untitled_150),
-            contentDescription = null,
+        Box(
             modifier = Modifier
                 .offset(x = 35.dp, y = 548.dp)
-                .size(width = 55.dp, height = 117.dp),
-            contentScale = ContentScale.FillBounds,
-        )
-
-        // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 16, 白色, YaHei)
-        Column(
-            modifier = Modifier
-                .offset(x = 31.dp, y = 548.dp)
-                .size(width = 55.dp, height = 117.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .size(width = 55.dp, height = 117.dp)
+                .clickable(onClick = onOpenShilian),
         ) {
-            Text(
-                text = "修",
-                color = Color.White,
-                style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
+            Image(
+                painter = painterResource(R.drawable.img_gunlun1_untitled_150),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
             )
-            Text(
-                text = "炼",
-                color = Color.White,
-                style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
-            )
+            // "修\n炼" 竖排文字(在未标题-150.png 上,X=35, Y=548, 字号 16, 白色, YaHei)— 左移 5dp(先左移10,再右移5)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(x = (-5).dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "修",
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
+                )
+                Text(
+                    text = "炼",
+                    color = Color.White,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
+                )
+            }
         }
     }
 }

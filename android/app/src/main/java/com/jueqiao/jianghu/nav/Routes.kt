@@ -15,6 +15,8 @@ object Routes {
     const val Home1     = "home1"
     const val Xiulian   = "xiulian"
     const val Shilian   = "shilian"
+    const val Shilian2  = "shilian2"
+    const val Shilian3  = "shilian3"
     const val Gunlun1  = "gunlun1"
     const val Gunlun2  = "gunlun2"
     const val Gunlun3  = "gunlun3"
