@@ -65,11 +65,13 @@ import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
 import com.jueqiao.jianghu.ui.screens.shilian2.Shilian2Screen
 import com.jueqiao.jianghu.ui.screens.shilian3.Shilian3Screen
+import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
+import com.jueqiao.jianghu.ui.screens.houshan.HoushanScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
 import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
 import com.jueqiao.jianghu.ui.screens.gunlun3.Gunlun3Screen
@@ -358,6 +360,22 @@ fun JianghuNavHost(
         composable(Routes.Shilian3) {
             Shilian3Screen(
                 onBack = { navController.popBackStack() },
+                onOpenUnfinished = { navController.navigate(Routes.Unfinished) },
+            )
+        }
+        composable(Routes.Unfinished) {
+            UnfinishedScreen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun1 = {
+                    navController.navigate(Routes.Gunlun1) {
+                        popUpTo(Routes.Gunlun1) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(Routes.Houshan) {
+            HoushanScreen(
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.Gunlun1) {
@@ -365,6 +383,7 @@ fun JianghuNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
                 onOpenShilian = { navController.navigate(Routes.Shilian) },
+                onOpenHoushan = { navController.navigate(Routes.Houshan) },
             )
         }
         composable(Routes.Gunlun2) {

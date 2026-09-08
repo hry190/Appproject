@@ -26,7 +26,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼3 页 — 试炼2 页 → 点击"返回"按钮或物理返回键回到试炼2。
+ * 试炼3 页 — 试炼2 页 → 点击"返回"按钮回到试炼2;点击标签2-4 之外的空白区域跳转未完待续页。
  *
  * 布局:
  *   - 全屏背景图(试炼转换.png)
@@ -34,12 +34,13 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
- *   - 标签4 图像(X=105, Y=330, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
+ *   - 标签4 图像(X=105, Y=295, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
  *   - 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)
  */
 @Composable
 fun Shilian3Screen(
     onBack: () -> Unit = {},
+    onOpenUnfinished: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -56,12 +57,12 @@ fun Shilian3Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 内容层(避开系统导航条)— clickable({}) 拦截空白点击,防止任何事件冒泡
+        // 内容层(避开系统导航条)— 标签2/3/4 区域不消费点击(让父 Box 接收,触发跳未完待续)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .clickable(onClick = {}),
+                .clickable(onClick = onOpenUnfinished),
         ) {
             // 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)— 在熊猫上层
             Image(
@@ -115,7 +116,7 @@ fun Shilian3Screen(
                 )
             }
 
-            // "标签4" 图像(未标题-1-恢复的-恢复的 4.png,X=105, Y=330, W=30, H=53.5)
+            // "标签4" 图像(未标题-1-恢复的-恢复的 4.png,X=105, Y=295, W=30, H=53.5)
             Box(
                 modifier = Modifier
                     .offset(x = 105.dp, y = 295.dp)
