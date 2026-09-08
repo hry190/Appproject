@@ -49,6 +49,7 @@ fun XiulianScreen(
     onOpenProgress: () -> Unit = {},
     onOpenTask: () -> Unit = {},
     onOpenGunlun1: () -> Unit = {},
+    onOpenShilian: () -> Unit = {},
 ) {
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen    by remember { mutableStateOf(false) }
@@ -105,7 +106,7 @@ fun XiulianScreen(
                 .rotate(15.3f),
         )
 
-        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=22,字号 16,白色)
+        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=22,字号 16,白色)— 点击跳试炼页
         Text(
             text = "试炼",
             color = Color.White,
@@ -113,7 +114,8 @@ fun XiulianScreen(
             modifier = Modifier
                 .offset(x = 271.dp, y = 814.dp)
                 .size(width = 43.dp, height = 22.dp)
-                .rotate(26f),
+                .rotate(26f)
+                .clickable(onClick = onOpenShilian),
         )
 
         // Rectangle 18.png(X=120, Y=389, W=168, H=140)

@@ -62,6 +62,7 @@ import com.jueqiao.jianghu.ui.screens.login.MistGatherMillis
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
+import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
@@ -338,6 +339,12 @@ fun JianghuNavHost(
                 onOpenSettings = { navController.navigate(Routes.Settings) },
                 onOpenTask     = { /* TODO:任务页 */ },
                 onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
+                onOpenShilian  = { navController.navigate(Routes.Shilian) },
+            )
+        }
+        composable(Routes.Shilian) {
+            ShilianScreen(
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.Gunlun1) {
