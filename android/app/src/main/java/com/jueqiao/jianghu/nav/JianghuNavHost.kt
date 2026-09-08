@@ -75,6 +75,23 @@ import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
+import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
+import com.jueqiao.jianghu.ui.screens.shilian2.Shilian2Screen
+import com.jueqiao.jianghu.ui.screens.shilian3.Shilian3Screen
+import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
+import com.jueqiao.jianghu.ui.screens.houshan.HoushanScreen
+import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
+import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
+import com.jueqiao.jianghu.ui.screens.gunlun3.Gunlun3Screen
+import com.jueqiao.jianghu.ui.screens.gunlun4.Gunlun4Screen
+import com.jueqiao.jianghu.ui.screens.gunlun5.Gunlun5Screen
+import com.jueqiao.jianghu.ui.screens.gunlun6.Gunlun6Screen
+import com.jueqiao.jianghu.ui.screens.gunlun7.Gunlun7Screen
+import com.jueqiao.jianghu.ui.screens.gunlun8.Gunlun8Screen
+import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
+import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
+import com.jueqiao.jianghu.ui.screens.gunlun11.Gunlun11Screen
+import com.jueqiao.jianghu.ui.screens.gunlun12.Gunlun12Screen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodDraftDto
@@ -362,7 +379,8 @@ fun JianghuNavHost(
                 onOpenLuggage  = { navController.navigate(Routes.Luggage) },
                 onOpenManuals  = { navController.navigate(Routes.luggageManuals(null)) },
                 onOpenLearning = { navController.navigate(Routes.LuggageGrowth) },
-                onOpenTrials   = { navController.navigate(Routes.LuggageMistakes) },
+                onOpenTrials   = { navController.navigate(Routes.Shilian) },
+                onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
                 onOpenRecommendedManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
                 learningOverview = luggageDetailState.learningOverview,
                 onOpenWendao   = { navController.navigate(Routes.Home1) },
@@ -375,6 +393,108 @@ fun JianghuNavHost(
                 },
                 hasUnreadLetters = conferenceState.unreadLetterCount > 0,
             )
+        }
+        composable(Routes.Shilian) {
+            ShilianScreen(
+                onBack = { navController.popBackStack() },
+                onOpenShilian2 = { navController.navigate(Routes.Shilian2) },
+            )
+        }
+        composable(Routes.Shilian2) {
+            Shilian2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenShilian3 = { navController.navigate(Routes.Shilian3) },
+            )
+        }
+        composable(Routes.Shilian3) {
+            Shilian3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenUnfinished = { navController.navigate(Routes.Unfinished) },
+            )
+        }
+        composable(Routes.Unfinished) {
+            UnfinishedScreen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun1 = {
+                    navController.navigate(Routes.Gunlun1) {
+                        popUpTo(Routes.Gunlun1) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(Routes.Houshan) {
+            HoushanScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.Gunlun1) {
+            Gunlun1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
+                onOpenShilian = { navController.navigate(Routes.Shilian) },
+                onOpenHoushan = { navController.navigate(Routes.Houshan) },
+            )
+        }
+        composable(Routes.Gunlun2) {
+            Gunlun2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun3 = { navController.navigate(Routes.Gunlun3) },
+            )
+        }
+        composable(Routes.Gunlun3) {
+            Gunlun3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun4 = { navController.navigate(Routes.Gunlun4) },
+            )
+        }
+        composable(Routes.Gunlun4) {
+            Gunlun4Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun5 = { navController.navigate(Routes.Gunlun5) },
+            )
+        }
+        composable(Routes.Gunlun5) {
+            Gunlun5Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun6 = { navController.navigate(Routes.Gunlun6) },
+            )
+        }
+        composable(Routes.Gunlun6) {
+            Gunlun6Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun7 = { navController.navigate(Routes.Gunlun7) },
+            )
+        }
+        composable(Routes.Gunlun7) {
+            Gunlun7Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun8 = { navController.navigate(Routes.Gunlun8) },
+            )
+        }
+        composable(Routes.Gunlun8) {
+            Gunlun8Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) },
+            )
+        }
+        composable(Routes.Gunlun9) {
+            Gunlun9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun10 = { navController.navigate(Routes.Gunlun10) },
+            )
+        }
+        composable(Routes.Gunlun10) {
+            Gunlun10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun11 = { navController.navigate(Routes.Gunlun11) },
+            )
+        }
+        composable(Routes.Gunlun11) {
+            Gunlun11Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun12 = { navController.navigate(Routes.Gunlun12) },
+            )
+        }
+        composable(Routes.Gunlun12) {
+            Gunlun12Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(

@@ -30,4 +30,16 @@ class RoutesTest {
             Routes.YanwuchangVideoCommentExpanded,
         )
     }
+
+    @Test
+    fun learningDestinationsIncludeWheelTrialAndBackMountainFlow() {
+        assertEquals("xiulian", Routes.Xiulian)
+        assertEquals("gunlun1", Routes.Gunlun1)
+        assertEquals("shilian", Routes.Shilian)
+        assertEquals("shilian2", Routes.Shilian2)
+        assertEquals("shilian3", Routes.Shilian3)
+        assertEquals("houshan", Routes.Houshan)
+        assertEquals("unfinished", Routes.Unfinished)
+        assertEquals("gunlun12", Routes.Gunlun12)
+    }
 }

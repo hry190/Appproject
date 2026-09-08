@@ -46,6 +46,7 @@ fun XiulianScreen(
     onOpenManuals: () -> Unit = onOpenLuggage,
     onOpenLearning: () -> Unit = onOpenLuggage,
     onOpenTrials: () -> Unit = onOpenLuggage,
+    onOpenGunlun1: () -> Unit = {},
     onOpenRecommendedManual: (String) -> Unit = {},
     learningOverview: LearningOverviewDto? = null,
     onOpenWendao: () -> Unit = onBack,
@@ -92,7 +93,8 @@ fun XiulianScreen(
             contentDescription = "修炼",
             modifier = Modifier
                 .offset(x = 131.dp, y = 358.dp)
-                .size(width = 55.dp, height = 90.dp),
+                .size(width = 55.dp, height = 90.dp)
+                .clickable(onClick = onOpenGunlun1),
             contentScale = ContentScale.Fit,
         )
 
