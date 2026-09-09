@@ -319,21 +319,25 @@ fun ManualDetailScreen(
     state: LuggageDetailState,
     onBack: () -> Unit,
     onLoad: (String) -> Unit,
+    onOpenTrial: (String) -> Unit,
 ) {
     LaunchedEffect(manualId) { onLoad(manualId) }
     LuggagePaperScreen("秘籍详情", onBack) {
         DetailStateBanner(state) { onLoad(manualId) }
-        state.manualDetail?.let { ManualDetailContent(it) }
+        state.manualDetail?.let { ManualDetailContent(it, onOpenTrial) }
     }
 }
 
 @Composable
-private fun ManualDetailContent(bundle: ManualDetailBundle) {
+private fun ManualDetailContent(bundle: ManualDetailBundle, onOpenTrial: (String) -> Unit) {
     val item = bundle.manual
     SectionCard {
         Text("《${item.title}》", color = DetailInk, fontFamily = YaHei, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("第${item.volumeNo}卷 · 当前${item.progressLabel}", color = DetailSage, fontFamily = YaHei)
         Text(item.coreLogic, color = DetailInk, fontFamily = YaHei, fontSize = 14.sp)
+        item.trialId?.let { trialId ->
+            PaperButton("开始本页试炼") { onOpenTrial(trialId) }
+        }
     }
     SectionCard {
         Text("生活连接", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
@@ -540,6 +544,74 @@ fun RetryTrialScreen(
 }
 
 @Composable
+fun LearningTrialScreen(
+    trialId: String,
+    state: LuggageDetailState,
+    onBack: () -> Unit,
+    onLoad: (String) -> Unit,
+    onSubmit: (String?, String, String) -> Unit,
+    onComplete: () -> Unit,
+) {
+    var prediction by remember { mutableStateOf<String?>(null) }
+    var answer by remember { mutableStateOf<String?>(null) }
+    var explanation by remember { mutableStateOf("") }
+    LaunchedEffect(trialId) { onLoad(trialId) }
+    LuggagePaperScreen("本页试炼", onBack) {
+        DetailStateBanner(state) { onLoad(trialId) }
+        val trial = state.trial
+        if (trial != null) {
+            val version = trial.currentVersion
+            val property = version.answerSchema.getAsJsonObject("properties")
+                ?.entrySet()?.firstOrNull()
+            val options = property?.value?.asJsonObject?.getAsJsonArray("enum")
+                ?.map { it.asString }.orEmpty()
+            SectionCard {
+                Text(trial.title, color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                Text(version.prompt, color = DetailInk, fontFamily = YaHei, fontSize = 14.sp)
+            }
+            if (version.predictionRequired) {
+                SectionCard {
+                    Text(version.predictionPrompt, color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                    AnswerOptions(options, prediction) { prediction = it }
+                }
+            }
+            SectionCard {
+                Text("正式答案", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                AnswerOptions(options, answer) { answer = it }
+                if (version.explanationRequired) {
+                    OutlinedTextField(
+                        value = explanation,
+                        onValueChange = { explanation = it },
+                        label = { Text("说明你的判断依据") },
+                        supportingText = { Text("至少 ${version.minExplanationLength} 个字") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                val ready = answer != null &&
+                    (!version.predictionRequired || prediction != null) &&
+                    (!version.explanationRequired || explanation.trim().length >= version.minExplanationLength)
+                PaperButton("提交试炼") {
+                    if (ready) onSubmit(prediction, answer.orEmpty(), explanation)
+                }
+                if (!ready) Text("请完成预测、答案和解释后再提交", color = DetailMuted, fontFamily = YaHei, fontSize = 11.sp)
+            }
+        }
+        state.trialResult?.let { result ->
+            SectionCard {
+                Text(
+                    if (result.passed) "试炼通过" else "还需要再巩固",
+                    color = if (result.passed) DetailSage else Color(0xFF8C4D3D),
+                    fontFamily = YaHei,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text("得分 ${result.score.toInt()}/${result.maxScore.toInt()}", color = DetailMuted, fontFamily = YaHei)
+                PaperButton("返回秘籍") { onComplete() }
+            }
+        }
+    }
+}
+
+@Composable
 private fun AnswerOptions(options: List<String>, selected: String?, onSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         options.forEach { option ->
@@ -597,7 +669,12 @@ private fun CreationRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f).clickable { onOpen(project.id) }) {
                 Text(project.title, color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
-                Text("${creationStatusLabel(project.displayStatus)} · 版本 ${project.currentVersionNumber ?: 0}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
+                Text(
+                    "${creationStageLabel(project.currentStage)} · ${creationStatusLabel(project.displayStatus)} · 版本 ${project.currentVersionNumber ?: 0}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 12.sp,
+                )
                 project.latestPublication?.returnReasonSummary?.let {
                     Text("退回原因：$it", color = Color(0xFF8C4D3D), fontFamily = YaHei, fontSize = 12.sp)
                 }
@@ -640,6 +717,15 @@ private fun CreationDetailContent(
     SectionCard {
         Text(bundle.project.title, color = DetailInk, fontFamily = YaHei, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("状态：${creationStatusLabel(bundle.project.displayStatus)}", color = DetailSage, fontFamily = YaHei)
+        Text("当前工法阶段：${creationStageLabel(bundle.project.currentStage)}", color = DetailSage, fontFamily = YaHei)
+        bundle.project.latestPublication?.let { publication ->
+            Text(
+                "本次去向：${publicationVisibilityLabel(publication.visibility)} · ${creationStatusLabel(publication.status)}",
+                color = DetailMuted,
+                fontFamily = YaHei,
+                fontSize = 13.sp,
+            )
+        }
         bundle.project.latestPublication?.returnReasonSummary?.let { Text("退回原因：$it", color = Color(0xFF8C4D3D), fontFamily = YaHei) }
         PaperButton("继续创作/修订") { onContinue(bundle.project.id) }
         if (bundle.project.latestPublication?.status == "PUBLISHED") {
@@ -652,6 +738,35 @@ private fun CreationDetailContent(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PaperButton("取消") { confirmDelete = false }
                 PaperButton("确认删除") { onDelete(bundle.project.id) }
+            }
+        }
+    }
+    SectionCard {
+        Text("创作工法", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        val method = bundle.method
+        if (method == null) {
+            Text("尚未确认创作工法", color = DetailMuted)
+        } else {
+            Text(method.name, color = DetailSage, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+            Text("目标：${method.goal}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
+            Text("形式：${method.format}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
+            method.steps.forEachIndexed { index, step ->
+                Text("${index + 1}. $step", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
+            }
+        }
+    }
+    SectionCard {
+        Text("阶段脉络", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        if (bundle.stageEvents.isEmpty()) {
+            Text("尚无阶段变动记录", color = DetailMuted)
+        } else {
+            bundle.stageEvents.forEach { event ->
+                Text(
+                    "${creationStageLabel(event.fromStage)} → ${creationStageLabel(event.toStage)} · ${event.reason} · ${displayDate(event.createdAt)}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 12.sp,
+                )
             }
         }
     }
@@ -671,12 +786,50 @@ private fun CreationDetailContent(
         }
     }
     SectionCard {
+        Text("作品说明与隐私自查", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        val seal = bundle.sealCheck
+        if (seal == null) {
+            Text("尚未完成封卷说明", color = DetailMuted)
+        } else {
+            Text("作品说明：${seal.workDescription}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
+            Text("学习复盘：${seal.learningReflection}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
+            Text("下次改进：${seal.nextImprovement}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
+            Text(
+                "隐私自查：身份 ${checkLabel(seal.identityPrivacyConfirmed)} · 联系方式 ${checkLabel(seal.contactPrivacyConfirmed)} · 肖像权限 ${checkLabel(seal.portraitRightsConfirmed)}",
+                color = DetailMuted,
+                fontFamily = YaHei,
+                fontSize = 12.sp,
+            )
+            Text(
+                if (seal.status == "LOCKED") "已随提交版本锁定" else "状态：${seal.status}",
+                color = DetailSage,
+                fontFamily = YaHei,
+                fontSize = 12.sp,
+            )
+        }
+    }
+    SectionCard {
         Text("人机分工与来源谱", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
         val provenance = bundle.provenance
         if (provenance == null) Text("尚未填写来源谱", color = DetailMuted) else {
             Text("我的贡献：${provenance.humanContributionSummary}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
             Text("AI辅助：${if (provenance.aiAssistanceUsed) "是" else "否"} · AIGC标识：${if (provenance.aigcLabelDeclared) "已声明" else "未声明"}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
             Text("素材记录 ${provenance.items.size} 项 · 未解决授权 ${if (provenance.unresolvedRights) "有" else "无"}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
+            provenance.items.forEach { item ->
+                val sourceDetail = when (item.itemType) {
+                    "AI_CONTRIBUTION" -> listOfNotNull(item.aiProvider, item.aiModel, item.aiToolAction)
+                        .joinToString(" / ")
+                    "EXTERNAL_MATERIAL" -> listOfNotNull(item.sourceAuthor, item.sourceUrl)
+                        .joinToString(" / ")
+                    else -> "本人原创"
+                }
+                Text(
+                    "${item.contributionType}：${item.description} · ${item.licenseType}${sourceDetail.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 12.sp,
+                )
+            }
         }
     }
     bundle.moderationCase?.let { moderation ->
@@ -836,3 +989,22 @@ private fun creationStatusLabel(value: String): String = when (value) {
     "WITHDRAWN" -> "已撤回"
     else -> value
 }
+
+private fun creationStageLabel(value: String): String = when (value) {
+    "IDEATION" -> "构思"
+    "DRAFT" -> "草图/脚本"
+    "PRODUCTION" -> "制作"
+    "TEST" -> "测试"
+    "SEAL" -> "说明/封卷"
+    else -> value
+}
+
+private fun publicationVisibilityLabel(value: String): String = when (value) {
+    "PRIVATE" -> "只保存给自己"
+    "GUARDIAN_ONLY" -> "家长/监护人"
+    "CLASSROOM" -> "老师/班级"
+    "COMMUNITY" -> "知行流/社区"
+    else -> value
+}
+
+private fun checkLabel(checked: Boolean): String = if (checked) "已确认" else "未确认"

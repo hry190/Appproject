@@ -1,12 +1,24 @@
 package com.jueqiao.jianghu.ui.screens.chuangzuodangan
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -14,48 +26,133 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+private enum class ArchiveIntroStage {
+    Quiet,
+    Opening,
+    Open,
+    Closing,
+}
+
+enum class CreationArchiveEntry {
+    Works,
+    OriginalRecords,
+    VersionRecords,
+    CoachRecords,
+}
+
 /**
  * 创作档案页面 — 背景为 D:\图\创作档案.png。
- * 元素仅保留:背景 / 返回 / 教练辅助组 / 创作档案组,与 Shengtu/Picture/Yaoosu/ChatResult 顶部三组同款。
- * 创作档案组不做可点击,避免自跳死循环。
+ * 顶部仅保留创作台与创作档案叶签；页面内返回创作台统一使用左侧叶签。
+ * 系统返回键仍由 onBack 处理。
  */
 @Composable
 fun ChuangzuodanganScreen(
     onBack: () -> Unit = {},
-    onCreateWork: () -> Unit = {},
-    onOpenChuangzuodangan2: () -> Unit = {},
-    onOpenChuangzuodangan3: () -> Unit = {},
-    onOpenChuangzuodangan5: () -> Unit = {},
-    onOpenChuangzuodangan6: () -> Unit = {},
+    onOpenCreationDesk: () -> Unit = {},
 ) {
-    // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
+    val creationTabInteractionSource = remember { MutableInteractionSource() }
+    val creationTabPressed by creationTabInteractionSource.collectIsPressedAsState()
+    val creationTabScale by animateFloatAsState(
+        targetValue = if (creationTabPressed) 0.96f else 1f,
+        animationSpec = tween(140),
+        label = "档案页创作台叶签按压",
+    )
+    var introStage by remember { mutableStateOf(ArchiveIntroStage.Quiet) }
+    var activeEntry by remember { mutableStateOf<CreationArchiveEntry?>(null) }
+    var transitionLocked by remember { mutableStateOf(false) }
+    val transitionScope = rememberCoroutineScope()
+    val transitionProgress = remember { Animatable(0f) }
+    val mistDrift by rememberInfiniteTransition(label = "创作档案云烟漂移").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4_600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "云烟横向漂移",
+    )
+
+    val detailProgress = transitionProgress.value
+    val flowerProgress = smoothProgress(segmentProgress(detailProgress, 0.02f, 0.48f))
+    val mistProgress = smoothProgress(segmentProgress(detailProgress, 0.30f, 0.72f))
+    val contentProgress = smoothProgress(segmentProgress(detailProgress, 0.58f, 0.88f))
+    val pandaProgress = smoothProgress(segmentProgress(detailProgress, 0.42f, 0.66f))
+    val bottomPatchProgress = smoothProgress(segmentProgress(detailProgress, 0.12f, 0.48f))
+
+    // 详情态在当前荷塘页内收起；普通态再离开创作档案页。
+    fun closeArchiveOrBack() {
+        when (introStage) {
+            ArchiveIntroStage.Open -> {
+                if (transitionLocked) return
+                transitionLocked = true
+                introStage = ArchiveIntroStage.Closing
+                transitionScope.launch {
+                    transitionProgress.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(1_900, easing = FastOutSlowInEasing),
+                    )
+                    activeEntry = null
+                    introStage = ArchiveIntroStage.Quiet
+                    transitionLocked = false
+                }
+            }
+
+            ArchiveIntroStage.Quiet -> onBack()
+            ArchiveIntroStage.Opening,
+            ArchiveIntroStage.Closing,
+            -> Unit
+        }
+    }
+
+    // 拦截系统返回键 — 行为与页面左上角返回按钮一致
     BackHandler(enabled = true) {
-        onBack()
+        closeArchiveOrBack()
+    }
+
+    fun openArchiveEntry(entry: CreationArchiveEntry) {
+        if (transitionLocked || introStage != ArchiveIntroStage.Quiet) return
+        activeEntry = entry
+        transitionLocked = true
+        introStage = ArchiveIntroStage.Opening
+        transitionScope.launch {
+            transitionProgress.snapTo(0f)
+            transitionProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(2_800, easing = FastOutSlowInEasing),
+            )
+            introStage = ArchiveIntroStage.Open
+            transitionLocked = false
+        }
     }
 
     Box(
@@ -63,11 +160,30 @@ fun ChuangzuodanganScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案.png)— 不再点击,改成点气泡跳转
+        // 背景始终保持同一张荷塘图，避免整页 Crossfade 带来的闪白。
+        // 详情背景只在底部荷叶区域逐渐覆盖原荷苞，为盛开过程腾出干净的花心位置。
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        Image(
+            painter = painterResource(R.drawable.img_chuangzuodangan3_bg),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = bottomPatchProgress }
+                .drawWithContent {
+                    clipRect(
+                        left = 0f,
+                        top = 520.dp.toPx(),
+                        right = 230.dp.toPx(),
+                        bottom = 770.dp.toPx(),
+                    ) {
+                        this@drawWithContent.drawContent()
+                    }
+                },
             contentScale = ContentScale.Crop,
         )
 
@@ -77,12 +193,12 @@ fun ChuangzuodanganScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
+            // 返回当前档案页（详情态关闭雾气，普通态返回创作台上一页）。
             Box(
                 modifier = Modifier
-                    .offset(x = 20.dp, y = 55.dp)
+                    .offset(x = 20.dp, y = 41.dp)
                     .size(32.dp)
-                    .clickable(onClick = onBack),
+                    .clickable(onClick = ::closeArchiveOrBack),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -93,46 +209,61 @@ fun ChuangzuodanganScreen(
                 )
             }
 
-            // 未标题-2 23.png(教练辅助装饰)
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_23),
-                contentDescription = null,
+            // 档案页交换叶签状态：创作台恢复普通态，创作档案使用高亮放大态。
+            Box(
                 modifier = Modifier
-                    .offset(x = 57.dp, y = 45.dp)
+                    .align(Alignment.TopCenter)
+                    .offset(x = (-45).dp, y = 23.dp)
+                    .size(width = 160.dp, height = 58.dp)
+                    .graphicsLayer {
+                        scaleX = creationTabScale
+                        scaleY = creationTabScale
+                    }
+                    .clickable(
+                        interactionSource = creationTabInteractionSource,
+                        indication = null,
+                        onClick = onOpenCreationDesk,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_gongfang_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(width = 132.dp, height = 48.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    text = "创作台",
+                    color = Color(0xFF294A2E),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(x = 103.dp, y = 23.dp)
                     .size(width = 160.dp, height = 58.dp),
-                contentScale = ContentScale.Fit,
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_gongfang_23),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    text = "创作档案",
+                    color = Color(0xFF294A2E),
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                )
+            }
 
-            // 未标题-2 24.png(创作档案装饰) — 此页面不做可点击,避免自跳死循环
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_24),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 240.dp, y = 45.dp)
-                    .size(width = 157.dp, height = 58.dp),
-                contentScale = ContentScale.Fit,
-            )
-
-            // "教练辅助" 标签
-            Text(
-                text = "教练辅助",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 93.dp, y = 58.dp)
-                    .size(width = 71.dp, height = 18.dp),
-            )
-
-            // "创作档案" 标签 — 此页面不做可点击,避免自跳死循环
-            Text(
-                text = "创作档案",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 287.dp, y = 58.dp)
-                    .size(width = 71.dp, height = 18.dp),
-            )
-
+            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
 // 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
 val arcText = "修改版本记录"
 val arcN = arcText.length
@@ -152,21 +283,16 @@ for (i in 0 until arcN) {
             fontSize = 16.sp,
         ),
         modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
+            .offset(
+                x = charX.dp,
+                y = charY.dp,
+            )
+            .rotate(rot)
+            .graphicsLayer { alpha = 1f - 0.78f * flowerProgress },
     )
 }
 
-// 透明可点击 Box:覆盖"修改版本记录"6 字的实际渲染区域
-//   charX 范围 275.735 ~ 396.735,charY 范围 334.4 ~ 455.4
-//   用 (275, 372) size (122, 122) — 紧贴字符外接矩形
-Box(
-    modifier = Modifier
-        .offset(x = 275.dp, y = 372.dp)
-        .size(width = 122.dp, height = 122.dp)
-        .clickable(onClick = onOpenChuangzuodangan5),
-)
-
+// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
 // 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
 // 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
@@ -212,21 +338,16 @@ for (i in 0 until chuangyuanN) {
             brush = brush,
         ),
         modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
+            .offset(
+                x = charX.dp,
+                y = charY.dp,
+            )
+            .rotate(rot)
+            .graphicsLayer { alpha = 1f - flowerProgress },
     )
 }
 
-// 透明可点击 Box:覆盖"原创记录"4 字的实际渲染区域
-//   charX 范围 55 ~ 100.32,charY 范围 321.19 ~ 350.055
-//   用 (43, 320) size (70, 53) — 紧贴字符外接矩形 + padding(宽度 +8,高度 +5)
-Box(
-    modifier = Modifier
-        .offset(x = 43.dp, y = 320.dp)
-        .size(width = 70.dp, height = 53.dp)
-        .clickable(onClick = onOpenChuangzuodangan6),
-)
-
+// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
 // 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
 val xuanzeText = "选择作品查看"
 val xuanzeN = xuanzeText.length
@@ -255,12 +376,16 @@ for (i in 0 until xuanzeN) {
             fontSize = 12.sp,
         ),
         modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
+            .offset(
+                x = charX.dp,
+                y = charY.dp,
+            )
+            .rotate(rot)
+            .graphicsLayer { alpha = 1f },
     )
 }
 
-// AI教练辅助记录 — 整组可点击跳 Chuangzuodangan3
+// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -303,52 +428,189 @@ for (i in 0 until aiN) {
             brush = brush,
         ),
         modifier = Modifier
-            .offset(x = charX.dp, y = charY.dp)
-            .rotate(rot),
+            .offset(
+                x = charX.dp,
+                y = charY.dp,
+            )
+            .rotate(rot)
+            .graphicsLayer { alpha = 1f },
     )
 }
 
-// AI 教练辅助记录透明点击覆盖层(48-167, 692-752)— 接 Chuangzuodangan3
-Box(
-    modifier = Modifier
-        .offset(x = 48.dp, y = 692.dp)
-        .size(width = 119.dp, height = 60.dp)
-        .clickable(onClick = onOpenChuangzuodangan3),
-)
+// 四个入口均在当前荷塘页面内展开：花苞盛开、雾气扩散、内容浮现。
+// 只有安静态允许再次选择入口，避免动画期间误触。
+val archiveEntriesEnabled = introStage == ArchiveIntroStage.Quiet
+ArchiveEntryHotspot(
+    x = 0.dp,
+    y = 143.dp,
+    width = 120.dp,
+    height = 110.dp,
+    enabled = archiveEntriesEnabled,
+) { openArchiveEntry(CreationArchiveEntry.Works) }
+ArchiveEntryHotspot(
+    x = 18.dp,
+    y = 333.dp,
+    width = 117.dp,
+    height = 96.dp,
+    enabled = archiveEntriesEnabled,
+) { openArchiveEntry(CreationArchiveEntry.OriginalRecords) }
+ArchiveEntryHotspot(
+    x = 226.dp,
+    y = 384.dp,
+    width = 125.dp,
+    height = 130.dp,
+    enabled = archiveEntriesEnabled,
+) { openArchiveEntry(CreationArchiveEntry.VersionRecords) }
+ArchiveEntryHotspot(
+    x = 3.dp,
+    y = 666.dp,
+    width = 128.dp,
+    height = 162.dp,
+    enabled = archiveEntriesEnabled,
+) { openArchiveEntry(CreationArchiveEntry.CoachRecords) }
 
-// 未标题-1 72.png(X=201, Y=584, W=212, H=245)
+// 详情内容始终叠加在同一张背景上，通过同一条进度曲线完成开合，避免页面闪动。
 Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
+    painter = painterResource(R.drawable.img_chuangzuodangan3_rect245),
     contentDescription = null,
     modifier = Modifier
-        .offset(x = 201.dp, y = 584.dp)
-        .size(width = 212.dp, height = 245.dp),
+        .fillMaxWidth()
+        .offset(y = 55.dp)
+        .graphicsLayer {
+            alpha = mistProgress * 0.88f
+            scaleX = 0.92f + 0.08f * mistProgress
+            scaleY = 0.92f + 0.08f * mistProgress
+            translationX = (mistDrift - 0.5f) * 8.dp.toPx()
+        },
+    contentScale = ContentScale.FillWidth,
+)
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = (35f + mistDrift * 10f).dp, y = (434f + (1f - mistDrift) * 5f).dp)
+        .size(width = 193.dp, height = 203.dp)
+        .graphicsLayer { alpha = mistProgress * 0.78f },
     contentScale = ContentScale.Fit,
 )
 
-// 气泡(整体可点击跳 Chuangzuodangan2)— Rectangle 186.png(X=138, Y=555, W=132, H=69)+ 文字
-Box(
-    modifier = Modifier
-        .offset(x = 138.dp, y = 555.dp)
-        .size(width = 132.dp, height = 69.dp)
-        .clickable(onClick = onOpenChuangzuodangan2),
-) {
-    Image(
-        painter = painterResource(R.drawable.img_chuangzuodangan_rect186),
-        contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.FillBounds,
-    )
-    // 气泡上的文字(X=151, Y=566, W=116, H=40)—"点击花苞查看的经历哦!"
-    Text(
-        text = "点击花苞查看的经历哦!",
-        color = Color.Black,
-        style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-        modifier = Modifier
-            .offset(x = 13.dp, y = 11.dp)  // 相对气泡左上(X=151-138=13, Y=566-555=11)
-            .size(width = 116.dp, height = 40.dp),
-    )
+val detailText = when (activeEntry) {
+    CreationArchiveEntry.Works -> "《未命名作品》\n当前阶段：创作草稿\n点击荷花可继续编辑作品"
+    CreationArchiveEntry.OriginalRecords -> "9点32分18秒，记录灵感来源\n9点36分42秒，确定创作方向\n9点41分05秒，补充关键细节"
+    CreationArchiveEntry.VersionRecords -> "V1，完成主题草稿\nV2，调整主体构图\nV3，保留当前创作版本"
+    CreationArchiveEntry.CoachRecords, null -> "9点39分36秒，提示确认主题\n9点45分32秒，提出构图建议\n9点50分01秒，引导修改细节"
 }
+Text(
+    text = detailText,
+    color = Color.Black,
+    style = TextStyle(
+        fontFamily = YaHei,
+        fontSize = 14.sp,
+        lineHeight = 21.sp,
+    ),
+    modifier = Modifier
+        .offset(x = 117.dp, y = (346f + (1f - contentProgress) * 12f).dp)
+        .size(width = 189.dp, height = 72.dp)
+        .graphicsLayer { alpha = contentProgress },
+)
+
+// 只有目标荷花在花苞位置逐渐展开，花心固定在荷叶上，避免缩放跳动。
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
+    contentDescription = "打开创作档案",
+    modifier = Modifier
+        .offset(x = 8.dp, y = 556.dp)
+        .size(width = 214.dp, height = 172.dp)
+        .graphicsLayer {
+            alpha = flowerProgress
+            val bloomScale = 0.18f + 0.82f * flowerProgress
+            scaleX = bloomScale
+            scaleY = 0.24f + 0.76f * flowerProgress
+            translationY = (1f - flowerProgress) * 10.dp.toPx()
+            rotationZ = -2.5f * (1f - flowerProgress)
+        },
+    contentScale = ContentScale.Fit,
+)
+
+// 熊猫姿态也随荷花完成交接，开合过程不会出现两只熊猫重影。
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
+    contentDescription = "创作档案引导熊猫",
+    modifier = Modifier
+        .offset(x = 201.dp, y = 584.dp)
+        .size(width = 212.dp, height = 245.dp)
+        .graphicsLayer { alpha = 1f - pandaProgress },
+    contentScale = ContentScale.Fit,
+)
+Image(
+    painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
+    contentDescription = null,
+    modifier = Modifier
+        .offset(x = 204.dp, y = 667.dp)
+        .size(width = 200.dp, height = 222.dp)
+        .graphicsLayer {
+            alpha = pandaProgress
+            translationY = (1f - pandaProgress) * 8.dp.toPx()
+        },
+    contentScale = ContentScale.Fit,
+)
+
+// 详情态气泡复用首页同款纸笺样式，提示用户再次点击荷花关闭。
+HomeGuideBubble(
+    text = "关闭页面请\n再次点击荷花\n即可",
+    tailPointsRight = true,
+    modifier = Modifier
+        .offset(x = 260.dp, y = 622.dp)
+        .size(width = 155.dp, height = 88.dp)
+        .graphicsLayer {
+            alpha = contentProgress
+            val bubbleScale = 0.92f + 0.08f * contentProgress
+            scaleX = bubbleScale
+            scaleY = bubbleScale
+        },
+)
+
+// 四个入口的点击区域复用同一套开花流程；打开后只允许点击荷花关闭。
+ArchiveEntryHotspot(
+    x = 0.dp,
+    y = 535.dp,
+    width = 230.dp,
+    height = 220.dp,
+    enabled = introStage == ArchiveIntroStage.Open,
+) { closeArchiveOrBack() }
         }
     }
+}
+
+private fun segmentProgress(value: Float, start: Float, end: Float): Float {
+    if (end <= start) return 1f
+    return ((value - start) / (end - start)).coerceIn(0f, 1f)
+}
+
+private fun smoothProgress(value: Float): Float {
+    val clamped = value.coerceIn(0f, 1f)
+    return clamped * clamped * (3f - 2f * clamped)
+}
+
+@Composable
+private fun BoxScope.ArchiveEntryHotspot(
+    x: Dp,
+    y: Dp,
+    width: Dp,
+    height: Dp,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier
+            .offset(x = x, y = y)
+            .size(width = width, height = height)
+            .clickable(
+                interactionSource = interactionSource,
+                enabled = enabled,
+                indication = null,
+                onClick = onClick,
+            ),
+    )
 }

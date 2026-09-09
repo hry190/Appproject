@@ -42,6 +42,49 @@ class CreationMediaType(str, enum.Enum):
     MIXED_MEDIA = "MIXED_MEDIA"
 
 
+class CreationStage(str, enum.Enum):
+    IDEATION = "IDEATION"
+    DRAFT = "DRAFT"
+    PRODUCTION = "PRODUCTION"
+    TEST = "TEST"
+    SEAL = "SEAL"
+
+
+class CreationIntentStatus(str, enum.Enum):
+    ANALYZED = "ANALYZED"
+    CONVERTED = "CONVERTED"
+    EXPIRED = "EXPIRED"
+
+
+class CreationToolKind(str, enum.Enum):
+    COACH_REVIEW = "COACH_REVIEW"
+
+
+class CreationToolCallStatus(str, enum.Enum):
+    PROPOSED = "PROPOSED"
+    COMPLETED = "COMPLETED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+
+
+class CreationTestResult(str, enum.Enum):
+    PASSED = "PASSED"
+    NEEDS_REVISION = "NEEDS_REVISION"
+    BLOCKED = "BLOCKED"
+
+
+class CreationIssueSeverity(str, enum.Enum):
+    NOTE = "NOTE"
+    IMPORTANT = "IMPORTANT"
+    BLOCKING = "BLOCKING"
+
+
+class CreationIssueStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    RESOLVED = "RESOLVED"
+
+
 class LayerKind(str, enum.Enum):
     DRAWING = "DRAWING"
     TEXT = "TEXT"
@@ -60,6 +103,48 @@ class ProvenanceStatus(str, enum.Enum):
     DRAFT = "DRAFT"
     COMPLETE = "COMPLETE"
     LOCKED = "LOCKED"
+
+
+class CreationSealStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    COMPLETE = "COMPLETE"
+    LOCKED = "LOCKED"
+
+
+class ImageGenerationJobStatus(str, enum.Enum):
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    SAFETY_CHECK = "SAFETY_CHECK"
+    VERSIONING = "VERSIONING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+class ImageGenerationSize(str, enum.Enum):
+    SQUARE = "SQUARE"
+    PORTRAIT = "PORTRAIT"
+    LANDSCAPE = "LANDSCAPE"
+
+
+class ImageGenerationQuality(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class CreationExportFormat(str, enum.Enum):
+    PNG = "PNG"
+    JPEG = "JPEG"
+
+
+class CreationExportJobStatus(str, enum.Enum):
+    QUEUED = "QUEUED"
+    RENDERING = "RENDERING"
+    SAFETY_CHECK = "SAFETY_CHECK"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
 
 
 class ProvenanceItemType(str, enum.Enum):
@@ -95,6 +180,18 @@ class CreationChangeAction(str, enum.Enum):
     LEARNING_CARD_UPDATED = "LEARNING_CARD_UPDATED"
     PROVENANCE_UPDATED = "PROVENANCE_UPDATED"
     SUBMITTED = "SUBMITTED"
+    METHOD_UPDATED = "METHOD_UPDATED"
+    STAGE_TRANSITIONED = "STAGE_TRANSITIONED"
+    TOOL_CALL_RECORDED = "TOOL_CALL_RECORDED"
+    TEST_RECORDED = "TEST_RECORDED"
+    TEST_ISSUE_UPDATED = "TEST_ISSUE_UPDATED"
+    SEAL_CHECK_UPDATED = "SEAL_CHECK_UPDATED"
+    IMAGE_GENERATION_REQUESTED = "IMAGE_GENERATION_REQUESTED"
+    IMAGE_GENERATION_COMPLETED = "IMAGE_GENERATION_COMPLETED"
+    IMAGE_GENERATION_FAILED = "IMAGE_GENERATION_FAILED"
+    EXPORT_REQUESTED = "EXPORT_REQUESTED"
+    EXPORT_COMPLETED = "EXPORT_COMPLETED"
+    EXPORT_FAILED = "EXPORT_FAILED"
 
 
 class CreationProject(Base):
@@ -103,6 +200,15 @@ class CreationProject(Base):
         CheckConstraint(
             "current_version_number IS NULL OR current_version_number >= 1",
             name="current_version_number_positive",
+        ),
+        UniqueConstraint(
+            "owner_user_id",
+            "create_idempotency_key",
+            name="uq_creation_projects_owner_create_idempotency",
+        ),
+        UniqueConstraint(
+            "source_intent_id",
+            name="uq_creation_projects_source_intent",
         ),
     )
 
@@ -126,6 +232,28 @@ class CreationProject(Base):
         nullable=False,
     )
     current_version_number: Mapped[int | None] = mapped_column(Integer)
+    source_intent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("creation_intents.id", ondelete="SET NULL"), index=True
+    )
+    derivative_authorization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "conference_derivative_authorizations.id",
+            name="fk_creation_projects_derivative_authorization_id",
+            ondelete="SET NULL",
+            use_alter=True,
+        ),
+        index=True,
+    )
+    current_stage: Mapped[CreationStage] = mapped_column(
+        Enum(CreationStage, native_enum=False, length=20),
+        default=CreationStage.IDEATION,
+        nullable=False,
+    )
+    stage_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    create_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    create_request_fingerprint: Mapped[str | None] = mapped_column(String(64))
     row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
@@ -133,11 +261,196 @@ class CreationProject(Base):
     )
 
 
+class CreationIntent(Base):
+    __tablename__ = "creation_intents"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    attachment_refs: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    attachment_asset_ids: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    manual_page_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    resource_links: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    status: Mapped[CreationIntentStatus] = mapped_column(
+        Enum(CreationIntentStatus, native_enum=False, length=16),
+        default=CreationIntentStatus.ANALYZED,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class IntentAnalysis(Base):
+    __tablename__ = "creation_intent_analyses"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    intent_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_intents.id", ondelete="CASCADE"), index=True
+    )
+    schema_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    suggestion: Mapped[dict] = mapped_column(JSON, nullable=False)
+    confidence: Mapped[str] = mapped_column(String(12), nullable=False)
+    safety_flags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    model_ref: Mapped[str] = mapped_column(String(80), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CreationMethod(Base):
+    __tablename__ = "creation_methods"
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id", "version_number", name="uq_creation_methods_project_version"
+        ),
+        CheckConstraint("version_number >= 1", name="version_number_positive"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    goal: Mapped[str] = mapped_column(Text, nullable=False)
+    audience: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    format: Mapped[str] = mapped_column(String(40), nullable=False)
+    steps: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    resource_links: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    source_asset_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    manual_page_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CreationStageEvent(Base):
+    __tablename__ = "creation_stage_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    actor_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), index=True
+    )
+    from_stage: Mapped[CreationStage] = mapped_column(
+        Enum(CreationStage, native_enum=False, length=20), nullable=False
+    )
+    to_stage: Mapped[CreationStage] = mapped_column(
+        Enum(CreationStage, native_enum=False, length=20), nullable=False
+    )
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CreationToolCall(Base):
+    __tablename__ = "creation_tool_calls"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_user_id",
+            "proposal_idempotency_key",
+            name="uq_creation_tool_calls_owner_proposal_idempotency",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    creation_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="CASCADE"), index=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    kind: Mapped[CreationToolKind] = mapped_column(
+        Enum(CreationToolKind, native_enum=False, length=24), nullable=False
+    )
+    status: Mapped[CreationToolCallStatus] = mapped_column(
+        Enum(CreationToolCallStatus, native_enum=False, length=16), nullable=False
+    )
+    input_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    prompt_summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    effect_summary: Mapped[str] = mapped_column(String(500), nullable=False)
+    external_data_shared: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    output_snapshot: Mapped[dict | None] = mapped_column(JSON)
+    executor_ref: Mapped[str | None] = mapped_column(String(80))
+    proposal_idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    proposal_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    decision_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    decision_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    proposed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CreationTestRecord(Base):
+    __tablename__ = "creation_test_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    creation_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="CASCADE"), index=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    scenario: Mapped[str] = mapped_column(String(500), nullable=False)
+    result: Mapped[CreationTestResult] = mapped_column(
+        Enum(CreationTestResult, native_enum=False, length=24), nullable=False
+    )
+    notes: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CreationTestIssue(Base):
+    __tablename__ = "creation_test_issues"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    test_record_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_test_records.id", ondelete="CASCADE"), index=True
+    )
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    severity: Mapped[CreationIssueSeverity] = mapped_column(
+        Enum(CreationIssueSeverity, native_enum=False, length=16), nullable=False
+    )
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[CreationIssueStatus] = mapped_column(
+        Enum(CreationIssueStatus, native_enum=False, length=16), nullable=False
+    )
+    resolution_summary: Mapped[str | None] = mapped_column(String(500))
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class CreationVersion(Base):
     __tablename__ = "creation_versions"
     __table_args__ = (
         UniqueConstraint(
             "project_id", "version_number", name="uq_creation_versions_project_version"
+        ),
+        UniqueConstraint(
+            "project_id",
+            "create_idempotency_key",
+            name="uq_creation_versions_project_create_idempotency",
         ),
         CheckConstraint("version_number >= 1", name="version_number_positive"),
         CheckConstraint("layer_count >= 1", name="layer_count_positive"),
@@ -163,7 +476,123 @@ class CreationVersion(Base):
     preview_asset_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
     change_summary: Mapped[str] = mapped_column(String(500), nullable=False)
     modification_reason: Mapped[str | None] = mapped_column(String(500))
+    create_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    create_request_fingerprint: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ImageGenerationJob(Base):
+    __tablename__ = "image_generation_jobs"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_user_id",
+            "idempotency_key",
+            name="uq_image_generation_jobs_owner_idempotency",
+        ),
+        CheckConstraint(
+            "progress_percent >= 0 AND progress_percent <= 100",
+            name="progress_percent_range",
+        ),
+        CheckConstraint("retry_count >= 0", name="retry_count_nonnegative"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    parent_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="RESTRICT"), index=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    size: Mapped[ImageGenerationSize] = mapped_column(
+        Enum(ImageGenerationSize, native_enum=False, length=16), nullable=False
+    )
+    quality: Mapped[ImageGenerationQuality] = mapped_column(
+        Enum(ImageGenerationQuality, native_enum=False, length=16), nullable=False
+    )
+    status: Mapped[ImageGenerationJobStatus] = mapped_column(
+        Enum(ImageGenerationJobStatus, native_enum=False, length=20), nullable=False
+    )
+    progress_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    provider_ref: Mapped[str] = mapped_column(String(40), nullable=False)
+    model_ref: Mapped[str] = mapped_column(String(120), nullable=False)
+    external_data_shared: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    output_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="SET NULL"), index=True
+    )
+    output_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="SET NULL"), index=True
+    )
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    error_summary: Mapped[str | None] = mapped_column(String(500))
+    retryable: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    quota_charged: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    last_retry_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    last_retry_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class CreationExportJob(Base):
+    __tablename__ = "creation_export_jobs"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_user_id",
+            "idempotency_key",
+            name="uq_creation_export_jobs_owner_idempotency",
+        ),
+        CheckConstraint(
+            "progress_percent >= 0 AND progress_percent <= 100",
+            name="progress_percent_range",
+        ),
+        CheckConstraint("output_scale >= 1 AND output_scale <= 2", name="output_scale_range"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), index=True
+    )
+    creation_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="RESTRICT"), index=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    format: Mapped[CreationExportFormat] = mapped_column(
+        Enum(CreationExportFormat, native_enum=False, length=8), nullable=False
+    )
+    output_scale: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[CreationExportJobStatus] = mapped_column(
+        Enum(CreationExportJobStatus, native_enum=False, length=20), nullable=False
+    )
+    progress_percent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    output_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="SET NULL"), index=True
+    )
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    error_summary: Mapped[str | None] = mapped_column(String(500))
+    idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
 
 
 class CreationChangeLog(Base):
@@ -270,6 +699,29 @@ class ProvenanceItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class CreationSealCheck(Base):
+    __tablename__ = "creation_seal_checks"
+
+    creation_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="CASCADE"), primary_key=True
+    )
+    work_description: Mapped[str] = mapped_column(Text, nullable=False)
+    learning_reflection: Mapped[str] = mapped_column(Text, nullable=False)
+    next_improvement: Mapped[str] = mapped_column(Text, nullable=False)
+    identity_privacy_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    contact_privacy_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    portrait_rights_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    status: Mapped[CreationSealStatus] = mapped_column(
+        Enum(CreationSealStatus, native_enum=False, length=16), nullable=False
+    )
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
 class Publication(Base):
     __tablename__ = "publications"
     __table_args__ = (
@@ -289,6 +741,9 @@ class Publication(Base):
     )
     owner_user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    classroom_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("classrooms.id", ondelete="SET NULL"), index=True
     )
     status: Mapped[PublicationStatus] = mapped_column(
         Enum(PublicationStatus, native_enum=False, length=24), nullable=False
@@ -331,4 +786,24 @@ Index(
     Publication.owner_user_id,
     Publication.status,
     Publication.updated_at,
+)
+Index(
+    "ix_image_generation_jobs_owner_created",
+    ImageGenerationJob.owner_user_id,
+    ImageGenerationJob.created_at,
+)
+Index(
+    "ix_image_generation_jobs_project_status",
+    ImageGenerationJob.project_id,
+    ImageGenerationJob.status,
+)
+Index(
+    "ix_creation_export_jobs_owner_created",
+    CreationExportJob.owner_user_id,
+    CreationExportJob.created_at,
+)
+Index(
+    "ix_creation_export_jobs_version_status",
+    CreationExportJob.creation_version_id,
+    CreationExportJob.status,
 )

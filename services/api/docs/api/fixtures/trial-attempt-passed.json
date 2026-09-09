@@ -1,0 +1,14 @@
+{
+  "attempt_id": "10000000-0000-0000-0000-000000000001",
+  "trial_id": "20000000-0000-0000-0000-000000000001",
+  "trial_version_id": "30000000-0000-0000-0000-000000000001",
+  "result": "PASSED",
+  "score": 1.0,
+  "max_score": 1.0,
+  "passed": true,
+  "feedback_codes": ["PASS_CLEAR_REASONING"],
+  "progress_changes": [],
+  "evidence_awards": [],
+  "mistake": null,
+  "processed_at": "2026-09-08T10:05:00Z"
+}

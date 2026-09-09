@@ -2,195 +2,194 @@ package com.jueqiao.jianghu.ui.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.luggage.ClassroomDto
+import com.jueqiao.jianghu.luggage.PublicationFeedItemDto
+import com.jueqiao.jianghu.ui.components.PublicationFeedCard
 import com.jueqiao.jianghu.ui.theme.YaHei
 
-/**
- * 首页挑战页 — 点击首页1的"任务"展开栏里的"挑战"文本进入。
- * 基于 Figma 设计 node-id=342-2392 实现。
- * 布局:背景竹林 + 4 个快捷图标 + 滚动条"最新挑战"卡片 + 熊猫 + 对话气泡"聪明的你,一起来完成挑战吧"。
- */
 @Composable
 fun ChallengeScreen(
+    inbox: List<PublicationFeedItemDto> = emptyList(),
+    inboxLoading: Boolean = false,
+    inboxError: String? = null,
+    canLoadMore: Boolean = false,
+    classrooms: List<ClassroomDto> = emptyList(),
+    classroomLoading: Boolean = false,
+    classroomMessage: String? = null,
+    oneTimeJoinCode: String? = null,
+    isAdult: Boolean = false,
+    onRefresh: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
+    onCreateClassroom: (String) -> Unit = {},
+    onJoinClassroom: (String) -> Unit = {},
+    onDismissJoinCode: () -> Unit = {},
     onBack: () -> Unit = {},
-    onOpenLuggage: () -> Unit = {},
-    onOpenZaowu: () -> Unit = {},
+    onOpenWendao: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenProgress: () -> Unit = {},
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .clickable(onClick = onBack),  // 点击空白处返回首页1
-    ) {
-        // 背景(竹林)
+    var classInput by rememberSaveable { mutableStateOf("") }
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Image(
             painter = painterResource(R.drawable.img_home_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )
-
-        // 内容层(避开系统导航条)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.navigationBars),
-        ) {
-        // 顶部右侧 4 个快捷图标(从左到右:作品/进度/任务/设置)
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = (-12).dp, y = 71.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_works,
-                label = "作品",
-                onClick = { /* TODO */ },
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_progress,
-                label = "进度",
-                onClick = onOpenProgress,
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_task,
-                label = "任务",
-                onClick = { /* TODO */ },
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_settings,
-                label = "设置",
-                onClick = onOpenSettings,
-            )
-        }
-
-        // 滚动条卡片:左=20, top=165, w=372, h=304
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 165.dp)
-                .size(width = 372.dp, height = 304.dp)
-                .clip(RoundedCornerShape(bottomStart = 100.dp, bottomEnd = 100.dp)),
-        ) {
-            // 弹窗背景图(u.png)
-            Image(
-                painter = painterResource(R.drawable.img_challenge_text_bg),
-                contentDescription = null,
+        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+            Surface(color = Color(0xFFF4F0DB).copy(alpha = 0.92f), shadowElevation = 4.dp) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("书信 · 作品来信", fontFamily = YaHei, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                        Text("家长与班级创建者在这里查看已通过审核的作品", fontFamily = YaHei, style = MaterialTheme.typography.labelMedium)
+                    }
+                    IconButton(onClick = onRefresh, enabled = !inboxLoading && !classroomLoading) {
+                        Icon(Icons.Default.Refresh, contentDescription = "刷新来信与班级")
+                    }
+                }
+            }
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
-            )
-
-            // "最新挑战"标题(相对卡片定位)
-            Text(
-                text = "最新挑战",
-                color = Color.Black,
-                style = TextStyle(
-                    fontFamily = YaHei,
-                    fontSize = 20.sp,
-                    letterSpacing = 2.sp,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 147.dp, top = 38.dp),
-            )
-
-            // "完成" + 描述(点状分隔)
-            Text(
-                text = "完成\n。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。。",
-                color = Color.Black,
-                style = TextStyle(
-                    fontFamily = YaHei,
-                    fontSize = 14.sp,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 54.dp, top = 87.dp),
-            )
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    ClassroomPanel(
+                        isAdult = isAdult,
+                        input = classInput,
+                        onInputChange = { classInput = it },
+                        classrooms = classrooms,
+                        loading = classroomLoading,
+                        message = classroomMessage,
+                        joinCode = oneTimeJoinCode,
+                        onSubmit = {
+                            if (isAdult) onCreateClassroom(classInput) else onJoinClassroom(classInput)
+                        },
+                        onDismissJoinCode = onDismissJoinCode,
+                    )
+                }
+                item { Text("最新作品", fontFamily = YaHei, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
+                when {
+                    inboxLoading && inbox.isEmpty() -> item {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    }
+                    inboxError != null && inbox.isEmpty() -> item {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Text(inboxError, fontFamily = YaHei)
+                            Button(onClick = onRefresh) { Text("重新载入", fontFamily = YaHei) }
+                        }
+                    }
+                    inbox.isEmpty() -> item { Text("暂无新的作品来信", fontFamily = YaHei, color = Color(0xFF526354)) }
+                    else -> {
+                        items(inbox, key = { it.publicationId }) { PublicationFeedCard(it) }
+                        if (canLoadMore) item {
+                            Button(onClick = onLoadMore, enabled = !inboxLoading, modifier = Modifier.fillMaxWidth()) {
+                                Text(if (inboxLoading) "载入中…" else "查看更多", fontFamily = YaHei)
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+}
 
-        // 对话气泡"聪明的你,一起来完成挑战吧"(Compose 自绘:圆角矩形+小三角尾巴)
-        Box(
-            modifier = Modifier
-                .offset(x = 121.dp, y = 477.dp)
-                .size(width = 135.dp, height = 74.dp),
-        ) {
-            // 1. 尾巴(小三角,指向左下,放在最底层)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 14.dp, bottom = 0.dp)
-                    .size(width = 12.dp, height = 10.dp)
-                    .background(Color(0xFFF5E8D4).copy(alpha = 0.92f))
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 12.dp,
-                        bottomStart = 0.dp,
-                        bottomEnd = 12.dp,
-                    )),
+@Composable
+private fun ClassroomPanel(
+    isAdult: Boolean,
+    input: String,
+    onInputChange: (String) -> Unit,
+    classrooms: List<ClassroomDto>,
+    loading: Boolean,
+    message: String?,
+    joinCode: String?,
+    onSubmit: () -> Unit,
+    onDismissJoinCode: () -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F3E5).copy(alpha = 0.95f)),
+        shape = RoundedCornerShape(18.dp),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(if (isAdult) "我创建的班级" else "加入班级", fontFamily = YaHei, fontWeight = FontWeight.Bold)
+            OutlinedTextField(
+                value = input,
+                onValueChange = { onInputChange(if (isAdult) it.take(80) else it.take(12).uppercase()) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(if (isAdult) "班级名称" else "8 位邀请码", fontFamily = YaHei) },
             )
-            // 2. 气泡主体(圆角矩形,坐在尾巴上面)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 8.dp)  // 留出尾巴空间
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF5E8D4).copy(alpha = 0.92f)),
-            )
-            // 3. 文本(最上层)
-            Text(
-                text = "聪明的你,\n一起来完成挑战吧",
-                color = Color.Black,
-                style = TextStyle(
+            Button(
+                onClick = onSubmit,
+                enabled = !loading && input.trim().length >= if (isAdult) 1 else 6,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(if (isAdult) "创建班级" else "确认加入", fontFamily = YaHei) }
+            if (loading) CircularProgressIndicator()
+            message?.let { Text(it, fontFamily = YaHei, color = Color(0xFF49644A)) }
+            joinCode?.let {
+                Surface(color = Color(0xFFE3EFD8), shape = RoundedCornerShape(12.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("一次性显示的邀请码", fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                        Text(it, fontFamily = YaHei, style = MaterialTheme.typography.headlineSmall)
+                        Text("请现在交给学生；列表不会再次显示邀请码。", fontFamily = YaHei, style = MaterialTheme.typography.bodySmall)
+                        OutlinedButton(onClick = onDismissJoinCode) { Text("我已保存", fontFamily = YaHei) }
+                    }
+                }
+            }
+            classrooms.forEach { classroom ->
+                Text(
+                    "${classroom.name} · ${if (classroom.role == "OWNER") "我创建的" else classroom.teacherNickname} · ${classroom.memberCount} 人",
                     fontFamily = YaHei,
-                    fontSize = 14.sp,
-                ),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-            )
-        }
-
-        // 熊猫角色(58.png,X=217, Y=520)
-        Image(
-            painter = painterResource(R.drawable.img_challenge_panda),
-            contentDescription = null,
-            modifier = Modifier
-                .offset(x = 217.dp, y = 520.dp)
-                .size(width = 200.dp, height = 334.dp),
-            contentScale = ContentScale.Fit,
-        )
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
     }
 }

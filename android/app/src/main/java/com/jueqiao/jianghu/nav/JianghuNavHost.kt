@@ -28,13 +28,24 @@ import com.jueqiao.jianghu.auth.AuthOperation
 import com.jueqiao.jianghu.auth.AuthViewModel
 import com.jueqiao.jianghu.auth.AuthViewModelFactory
 import com.jueqiao.jianghu.auth.VerificationPurpose
+import com.jueqiao.jianghu.creation.CreationViewModel
+import com.jueqiao.jianghu.creation.CreationViewModelFactory
+import com.jueqiao.jianghu.distribution.DistributionViewModel
+import com.jueqiao.jianghu.distribution.DistributionViewModelFactory
+import com.jueqiao.jianghu.conference.ConferenceViewModel
+import com.jueqiao.jianghu.conference.ConferenceViewModelFactory
 import com.jueqiao.jianghu.luggage.LuggageViewModel
 import com.jueqiao.jianghu.luggage.LuggageViewModelFactory
 import com.jueqiao.jianghu.luggage.PrivacySettingsPatchDto
 import com.jueqiao.jianghu.luggage.RetrySessionDto
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
-import com.jueqiao.jianghu.ui.screens.chatresult.ChatResultScreen
 import com.jueqiao.jianghu.ui.screens.dahui.DahuiScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceCollectionsScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceHubScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceLettersScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceMatchScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceRequestsScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceWorkScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
 import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
@@ -47,6 +58,7 @@ import com.jueqiao.jianghu.ui.screens.luggage.CreationsScreen
 import com.jueqiao.jianghu.ui.screens.luggage.EvidenceScreen
 import com.jueqiao.jianghu.ui.screens.luggage.ManualDetailScreen
 import com.jueqiao.jianghu.ui.screens.luggage.ManualsScreen
+import com.jueqiao.jianghu.ui.screens.luggage.LearningTrialScreen
 import com.jueqiao.jianghu.ui.screens.luggage.MistakeDetailScreen
 import com.jueqiao.jianghu.ui.screens.luggage.MistakesScreen
 import com.jueqiao.jianghu.ui.screens.luggage.PrivacySafetyScreen
@@ -62,15 +74,11 @@ import com.jueqiao.jianghu.ui.screens.login.MistGatherMillis
 import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
+import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
 import com.jueqiao.jianghu.ui.screens.shilian2.Shilian2Screen
 import com.jueqiao.jianghu.ui.screens.shilian3.Shilian3Screen
 import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
-import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
-import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
-import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
-import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
-import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.houshan.HoushanScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
 import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
@@ -84,15 +92,20 @@ import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
 import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
 import com.jueqiao.jianghu.ui.screens.gunlun11.Gunlun11Screen
 import com.jueqiao.jianghu.ui.screens.gunlun12.Gunlun12Screen
+import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
+import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
+import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodDraftDto
+import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodPlan
+import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
-import com.jueqiao.jianghu.ui.screens.picture.PictureScreen
-import com.jueqiao.jianghu.ui.screens.yaosu.YaosuScreen
+import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan2.Chuangzuodangan2Screen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan3.Chuangzuodangan3Screen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan4.Chuangzuodangan4Screen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan5.Chuangzuodangan5Screen
-import com.jueqiao.jianghu.ui.screens.chuangzuodangan6.Chuangzuodangan6Screen
+import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideobrowserecord.YanwuchangVideoBrowseRecordScreen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment1Screen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComment2Screen
+import com.jueqiao.jianghu.ui.screens.yanwuchangvideomy.YanwuchangVideoMyScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -106,17 +119,40 @@ fun JianghuNavHost(
     }
     val authViewModel: AuthViewModel = viewModel(factory = authFactory)
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val luggageFactory = remember(application) {
         LuggageViewModelFactory(application.luggageRepository)
     }
     val luggageViewModel: LuggageViewModel = viewModel(factory = luggageFactory)
     val luggageState by luggageViewModel.uiState.collectAsStateWithLifecycle()
     val luggageDetailState by luggageViewModel.detailState.collectAsStateWithLifecycle()
+    val creationFactory = remember(application) {
+        CreationViewModelFactory(application, application.luggageRepository)
+    }
+    val creationViewModel: CreationViewModel = viewModel(factory = creationFactory)
+    val creationState by creationViewModel.state.collectAsStateWithLifecycle()
+    val distributionFactory = remember(application) {
+        DistributionViewModelFactory(application.luggageRepository)
+    }
+    val distributionViewModel: DistributionViewModel = viewModel(factory = distributionFactory)
+    val distributionState by distributionViewModel.state.collectAsStateWithLifecycle()
+    val conferenceFactory = remember(application) {
+        ConferenceViewModelFactory(application.luggageRepository)
+    }
+    val conferenceViewModel: ConferenceViewModel = viewModel(factory = conferenceFactory)
+    val conferenceState by conferenceViewModel.state.collectAsStateWithLifecycle()
     val transitionScope = rememberCoroutineScope()
     val loginContentAlpha = remember { Animatable(1f) }
     val mistPhase = remember { Animatable(0f) }
     var loginTransitionRunning by remember { mutableStateOf(false) }
     var animateHomeQuickActionsOnNextEntry by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentUser?.id) {
+        conferenceViewModel.reset()
+        creationViewModel.clearDerivative()
+        conferenceViewModel.loadCapabilities()
+        if (currentUser != null) conferenceViewModel.syncLetters()
+    }
 
     val startLoginTransition: (String) -> Unit = { destination ->
         if (!loginTransitionRunning) {
@@ -182,14 +218,9 @@ fun JianghuNavHost(
         composable(Routes.Login) {
             LoginScreen(
                 onLogin         = { phone, password ->
-                    authViewModel.login(phone, password) { response ->
-                        val destination = if (response.nextAction == "SHOW_GUIDE") {
-                            Routes.Home
-                        } else {
-                            Routes.Home1
-                        }
+                    authViewModel.login(phone, password) {
                         animateHomeQuickActionsOnNextEntry = true
-                        startLoginTransition(destination)
+                        startLoginTransition(Routes.Home)
                     }
                 },
                 onOpenForgot    = {
@@ -313,6 +344,7 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Home1) {
+            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             Home1Screen(
                 animateQuickActionsEntrance = animateHomeQuickActionsOnNextEntry,
                 quickActionsEntranceReady = !loginTransitionRunning,
@@ -321,28 +353,45 @@ fun JianghuNavHost(
                 },
                 onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
                 onOpenLuggage   = { navController.navigate(Routes.Luggage) },
+                // 每次从首页进入作品创作都创建新的引导页实例，确保气泡与工坊入口重置。
                 onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
                 onOpenSettings  = { navController.navigate(Routes.Settings) },
-                onOpenChallenge = { navController.navigate(Routes.Challenge) },
-                onOpenDahui     = { navController.navigate(Routes.Dahui) },
-                onPandaClick    = {
-                    // 跳 Home 并重置状态,保证 chatStep 从 1 开始
-                    navController.navigate(Routes.Home) {
-                        popUpTo(Routes.Home) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                onOpenChallenge = {
+                    navController.navigate(
+                        if (conferenceState.conferenceEnabled == false) {
+                            Routes.Challenge
+                        } else {
+                            Routes.DahuiLetters
+                        },
+                    )
                 },
+                onOpenDahui     = { navController.navigate(Routes.Dahui) },
+                dahuiEnabled = conferenceState.conferenceEnabled != false,
+                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
             )
         }
 
         composable(Routes.Xiulian)  {
+            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
+            LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
             XiulianScreen(
                 onBack         = { navController.popBackStack() },
                 onOpenLuggage  = { navController.navigate(Routes.Luggage) },
-                onOpenZaowu    = { navController.navigate(Routes.Zaowu) },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenTask     = { /* TODO:任务页 */ },
+                onOpenManuals  = { navController.navigate(Routes.luggageManuals(null)) },
+                onOpenLearning = { navController.navigate(Routes.LuggageGrowth) },
+                onOpenTrials   = { navController.navigate(Routes.Shilian) },
                 onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
+                onOpenRecommendedManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
+                learningOverview = luggageDetailState.learningOverview,
+                onOpenWendao   = { navController.navigate(Routes.Home1) },
+                onOpenSettings = { navController.navigate(Routes.Settings) },
+                onOpenLetters  = {
+                    navController.navigate(
+                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
+                        else Routes.DahuiLetters,
+                    )
+                },
+                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
             )
         }
         composable(Routes.Shilian) {
@@ -374,9 +423,7 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Houshan) {
-            HoushanScreen(
-                onBack = { navController.popBackStack() },
-            )
+            HoushanScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun1) {
             Gunlun1Screen(
@@ -447,105 +494,272 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Gunlun12) {
-            Gunlun12Screen(
-                onBack = { navController.popBackStack() },
-            )
+            Gunlun12Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
                 onBack         = {
-                    // 直接跳到首页1
+                    // 引导页的页面返回与系统返回都直接回首页，并移除本次引导实例。
                     navController.navigate(Routes.Home1) {
+                        popUpTo(Routes.Home1) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                onOpenGongfang = {
+                    // 进入创作台时移除引导页，保证任何返回路径都不会重新露出引导页。
+                    navController.navigate(Routes.Gongfang) {
                         popUpTo(Routes.Zaowu) { inclusive = true }
                     }
                 },
-                onOpenGongfang = { navController.navigate(Routes.Gongfang) },
             )
         }
         composable(Routes.Dahui) {
             DahuiScreen(
                 onBack = { navController.popBackStack() },
-                onOpenYanwuchang = { navController.navigate(Routes.Yanwuchang) },
+                onOpenArena = { navController.navigate(Routes.Yanwuchang) },
             )
         }
-        // 演武场首页(从大会页"演武场"文字进入) + 演武场视频(从演武场"作品"进入)
         composable(Routes.Yanwuchang) {
             YanwuchangScreen(
                 onBack = { navController.popBackStack() },
+                onOpenWuhui = { navController.navigate(Routes.DahuiArena) },
                 onOpenYanwuchangVideo = { navController.navigate(Routes.YanwuchangVideo) },
             )
         }
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
                 onBack = { navController.popBackStack() },
+                onOpenComment = { navController.navigate(Routes.YanwuchangVideoComment) },
+                onOpenMy = { navController.navigate(Routes.YanwuchangVideoMy) },
             )
         }
-        composable(Routes.Gongfang) {
-            GongfangScreen(
-                onBack   = {
-                    // 直接跳到作品创作页
-                    navController.navigate(Routes.Zaowu) {
-                        popUpTo(Routes.Gongfang) { inclusive = true }
-                    }
+        composable(Routes.YanwuchangVideoMy) {
+            YanwuchangVideoMyScreen(
+                onBack = { navController.popBackStack() },
+                onOpenWorks = {
+                    navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)
                 },
-                onSearch = { query ->
-                    if (query.isNotBlank()) {
-                        navController.navigate(Routes.chatResult(query))
-                    }
+                onOpenLikes = { /* No likes-list endpoint yet. */ },
+                onOpenBrowseRecord = {
+                    navController.navigate(Routes.YanwuchangVideoBrowseRecord)
                 },
-                onContinueWork = { workId ->
-                    // TODO: 后续补 EditWorkScreen 时改成
-                    //   navController.navigate(Routes.editWork(workId))
-                },
-                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+                onOpenMyClass = { /* No class-detail destination yet. */ },
             )
         }
-
+        composable(Routes.YanwuchangVideoBrowseRecord) {
+            YanwuchangVideoBrowseRecordScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.YanwuchangVideoComment) {
+            YanwuchangVideoComment1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenExpanded = {
+                    navController.navigate(Routes.YanwuchangVideoCommentExpanded)
+                },
+            )
+        }
+        composable(Routes.YanwuchangVideoCommentExpanded) {
+            YanwuchangVideoComment2Screen(
+                onBackToHome = {
+                    navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)
+                },
+                onBackToComment = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.DahuiArena) {
+            ConferenceHubScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadFeed,
+                onLoadMore = { conferenceViewModel.loadFeed(append = true) },
+                onOpenWork = { navController.navigate(Routes.dahuiWork(it)) },
+                onOpenCollections = { navController.navigate(Routes.DahuiCollections) },
+                onOpenRequests = { navController.navigate(Routes.DahuiRequests) },
+                onOpenLetters = { navController.navigate(Routes.DahuiLetters) },
+                onOpenMatch = { navController.navigate(Routes.DahuiMatch) },
+            )
+        }
         composable(
-            Routes.ChatResultPattern,
-            arguments = listOf(navArgument("query") {
-                type = NavType.StringType
-                defaultValue = ""
-            }),
+            Routes.DahuiWorkPattern,
+            arguments = listOf(navArgument("publicationId") { type = NavType.StringType }),
         ) { entry ->
-            val encoded = entry.arguments?.getString("query") ?: ""
-            val query = java.net.URLDecoder.decode(encoded, Charsets.UTF_8.name())
-            ChatResultScreen(
-                query = query,
-                onBack = {
-                    // 直接跳到工坊页(避开 popBackStack 在 startDestination 上的不可靠行为)
-                    navController.navigate(Routes.Gongfang) {
-                        popUpTo(Routes.ChatResultPattern) { inclusive = true }
-                    }
+            val publicationId = entry.arguments?.getString("publicationId").orEmpty()
+            ConferenceWorkScreen(
+                publicationId = publicationId,
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadWork,
+                onAddCollection = conferenceViewModel::addCollection,
+                onCreateReview = conferenceViewModel::createReview,
+                onDecideReview = conferenceViewModel::decideReview,
+                onAdoptReview = conferenceViewModel::adoptReview,
+                onReportReview = conferenceViewModel::reportReview,
+                onCreateDerivativeRequest = conferenceViewModel::createDerivativeRequest,
+                onOpenRevision = { projectId ->
+                    navController.navigate(Routes.creationEditorProject(projectId))
                 },
-                onSearch = { newQuery ->
-                    if (newQuery.isNotBlank()) {
-                        navController.navigate(Routes.chatResult(newQuery))
-                    }
-                },
-                onContinueWork = { workId ->
-                    // TODO: 后续接 EditWorkScreen
-                },
-                onCreateWork = { navController.navigate(Routes.Shengtu) },
-                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+                onMessageShown = conferenceViewModel::clearMessage,
             )
         }
-
-        composable(Routes.Shengtu) {
-            ShengtuScreen(
-                onBack      = {
-                    android.util.Log.d("Shengtu", "onBack called, popping")
-                    val popped = navController.popBackStack()
-                    android.util.Log.d("Shengtu", "popBackStack returned: $popped")
-                    if (!popped) {
-                        android.util.Log.w("Shengtu", "Stack empty, navigating to ChatResult manually")
-                        navController.navigate(Routes.chatResult("")) {
-                            popUpTo(Routes.Shengtu) { inclusive = true }
+        composable(Routes.DahuiCollections) {
+            ConferenceCollectionsScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadCollections,
+                onRemove = conferenceViewModel::removeCollection,
+                onOpenWork = { navController.navigate(Routes.dahuiWork(it)) },
+            )
+        }
+        composable(Routes.DahuiRequests) {
+            ConferenceRequestsScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadDerivativeRequests,
+                onDecision = conferenceViewModel::decideDerivativeRequest,
+                onRevoke = conferenceViewModel::revokeDerivativeAuthorization,
+                onOpenWork = { navController.navigate(Routes.dahuiWork(it)) },
+                onCreateDerivative = { authorizationId, sourceTitle ->
+                    creationViewModel.beginDerivative(authorizationId, sourceTitle)
+                    navController.navigate(Routes.Gongfang)
+                },
+            )
+        }
+        composable(Routes.DahuiMatch) {
+            ConferenceMatchScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadMatch,
+                onJoin = conferenceViewModel::joinMatch,
+                onExit = conferenceViewModel::exitMatch,
+                onReport = { matchId, reason -> conferenceViewModel.reportMatch(matchId, reason) },
+                onSubmitAnswer = conferenceViewModel::submitMatchAnswer,
+                onCreateEvaluation = conferenceViewModel::createMatchEvaluation,
+                onCreateReflection = conferenceViewModel::createMatchReflection,
+                onStartNewMatch = conferenceViewModel::clearCompletedMatch,
+                onMessageShown = conferenceViewModel::clearMessage,
+            )
+        }
+        composable(
+            Routes.DahuiMatchPattern,
+            arguments = listOf(navArgument("matchId") { type = NavType.StringType }),
+        ) { entry ->
+            ConferenceMatchScreen(
+                state = conferenceState,
+                directMatchId = entry.arguments?.getString("matchId"),
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadMatch,
+                onJoin = conferenceViewModel::joinMatch,
+                onExit = conferenceViewModel::exitMatch,
+                onReport = { matchId, reason -> conferenceViewModel.reportMatch(matchId, reason) },
+                onSubmitAnswer = conferenceViewModel::submitMatchAnswer,
+                onCreateEvaluation = conferenceViewModel::createMatchEvaluation,
+                onCreateReflection = conferenceViewModel::createMatchReflection,
+                onStartNewMatch = {
+                    conferenceViewModel.clearCompletedMatch()
+                    navController.navigate(Routes.DahuiMatch) { launchSingleTop = true }
+                },
+                onMessageShown = conferenceViewModel::clearMessage,
+            )
+        }
+        composable(Routes.DahuiLetters) {
+            ConferenceLettersScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadLetters,
+                onOpenLetter = { letter ->
+                    conferenceViewModel.readLetter(letter)
+                    when (letter.navigationTarget) {
+                        "CONFERENCE_WORK" -> letter.navigationId?.let {
+                            navController.navigate(Routes.dahuiWork(it))
+                        }
+                        "CONFERENCE_MATCH" -> letter.navigationId?.let {
+                            navController.navigate(Routes.dahuiMatch(it))
+                        }
+                        "DERIVATIVE_REQUESTS" ->
+                            navController.navigate(Routes.DahuiRequests)
+                        else -> when (letter.actionType) {
+                            "CONFERENCE_MATCH" -> letter.actionId?.let {
+                                navController.navigate(Routes.dahuiMatch(it))
+                            }
+                            "DERIVATIVE_REQUEST", "DERIVATIVE_AUTHORIZATION" ->
+                                navController.navigate(Routes.DahuiRequests)
+                            "CONFERENCE_REVIEW" -> navController.navigate(Routes.DahuiArena)
                         }
                     }
                 },
-                onCreateWork = { navController.navigate(Routes.Picture) },
-                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+                onOpenPublicationInbox = { navController.navigate(Routes.Challenge) },
+            )
+        }
+        composable(Routes.Gongfang) {
+            val recentWorks = creationState.recentProjects
+                .asSequence()
+                .mapNotNull { it.toCreationResumeItem() }
+                .distinctBy { it.projectId }
+                .take(2)
+                .toList()
+            val openCreationArchive = {
+                navController.navigate(Routes.Chuangzuodangan) {
+                    launchSingleTop = true
+                }
+            }
+            val analysisNotice = when {
+                creationState.intentAnalysis?.safetyFlags?.contains(
+                    "POSSIBLE_PERSONAL_INFORMATION"
+                ) == true -> "提示：请检查并移除电话、住址、学校全名等个人信息。"
+                creationState.intentAnalysis?.safetyFlags?.contains(
+                    "MVP_MEDIA_FALLBACK"
+                ) == true -> "当前版本先按图文作品落地；互动、视频能力将在后续阶段接入。"
+                creationState.intentAnalysis?.questions?.isNotEmpty() == true ->
+                    creationState.intentAnalysis?.questions?.first()
+                else -> null
+            }
+            GongfangScreen(
+                onBack   = {
+                    creationViewModel.clearDerivative()
+                    // 创作台的页面返回与系统返回都直接回首页，同时移除引导页与创作台。
+                    navController.navigate(Routes.Home1) {
+                        popUpTo(Routes.Home1) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+                // 新版创作流程在工坊页内展开，不再跳转到旧的搜索结果页。
+                onAnalyzeIntent = creationViewModel::analyzeIntent,
+                onContinueWork = { workId ->
+                    navController.navigate(Routes.shengtuProject(workId))
+                },
+                onOpenChuangzuodangan = openCreationArchive,
+                onOpenAllWorks = openCreationArchive,
+                recentWorks = recentWorks,
+                recentWorksLoading = creationState.loadingRecent,
+                recentWorksMessage = creationState.recentError,
+                derivativeSourceTitle = creationState.derivativeSourceTitle,
+                onClearDerivative = creationViewModel::clearDerivative,
+                onLoadRecentWorks = creationViewModel::loadRecentProjects,
+                manualSources = creationState.manualSources,
+                manualSourcesLoading = creationState.loadingManualSources,
+                manualSourcesMessage = creationState.manualSourceError,
+                onLoadCreationSources = creationViewModel::loadCreationSources,
+                uploadingSketch = creationState.uploadingSketch,
+                sketchSourceAssetId = creationState.sketchSource?.assetId,
+                sketchSourceMessage = creationState.sketchSourceMessage,
+                onUploadSketch = creationViewModel::uploadSketch,
+                analyzingIntent = creationState.analyzingIntent,
+                creationMethod = creationState.intentAnalysis
+                    ?.methodDraft
+                    ?.toCreationMethodPlan(),
+                analysisMessage = creationState.analysisError,
+                creatingProject = creationState.creatingProject,
+                createProjectMessage = creationState.createError ?: analysisNotice,
+                onConfirmNewProject = { title, idea, method ->
+                    creationViewModel.createProject(
+                        title,
+                        idea,
+                        method.toCreationMethodDraftDto(),
+                    ) { project ->
+                        navController.navigate(Routes.shengtuProject(project.id))
+                    }
+                },
             )
         }
 
@@ -554,9 +768,28 @@ fun JianghuNavHost(
             arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
         ) { entry ->
             val projectId = entry.arguments?.getString("projectId").orEmpty()
+            LaunchedEffect(projectId) {
+                luggageViewModel.loadCreationDetail(projectId)
+                creationViewModel.loadCreationSources()
+                distributionViewModel.loadClassrooms()
+            }
             val bundle = luggageDetailState.creationDetail
                 ?.takeIf { it.project.id == projectId }
             val latestVersion = bundle?.versions?.maxByOrNull { it.versionNumber }
+            val currentPublication = bundle?.project?.latestPublication
+                ?.takeIf { it.creationVersionId == latestVersion?.id }
+            val bundleGeneration = bundle?.imageGenerations?.items?.firstOrNull()
+            val visibleGeneration = creationState.generationJob
+                ?.takeIf { it.projectId == projectId }
+                ?: bundleGeneration
+            LaunchedEffect(projectId, bundleGeneration?.id, bundleGeneration?.status) {
+                bundleGeneration?.let { job ->
+                    creationViewModel.resumeImageGeneration(job) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        luggageViewModel.refresh(force = true)
+                    }
+                }
+            }
             val initialPrompt = latestVersion?.layers
                 ?.firstOrNull { it.kind == "TEXT" && !it.textContent.isNullOrBlank() }
                 ?.textContent
@@ -565,24 +798,217 @@ fun JianghuNavHost(
                 projectId = projectId,
                 projectTitle = bundle?.project?.title,
                 currentVersionNumber = latestVersion?.versionNumber,
+                currentVersionId = latestVersion?.id,
+                currentStage = bundle?.project?.currentStage,
+                toolCalls = bundle?.toolCalls.orEmpty(),
+                testRecords = bundle?.testRecords.orEmpty(),
+                manualSources = creationState.manualSources,
+                methodManualPageIds = bundle?.method?.manualPageIds.orEmpty(),
+                initialMethodSummary = bundle?.method?.let { method ->
+                    buildString {
+                        append(method.name)
+                        append("：")
+                        append(method.goal)
+                        if (method.steps.isNotEmpty()) {
+                            append("\n")
+                            append(method.steps.joinToString(" → "))
+                        }
+                    }
+                },
+                learningCard = bundle?.learningCard,
+                provenance = bundle?.provenance,
+                sealCheck = bundle?.sealCheck,
+                imageGenerations = bundle?.imageGenerations,
+                activeGeneration = visibleGeneration,
+                publicationStatus = currentPublication?.status,
+                publicationId = currentPublication?.id,
+                publicationVisibility = currentPublication?.visibility,
+                classrooms = distributionState.classrooms,
                 initialPrompt = initialPrompt,
+                savingDraft = creationState.savingDraft,
+                draftSaveMessage = creationState.draftSaveMessage
+                    ?.takeIf { creationState.draftMessageProjectId == projectId },
+                workflowBusy = creationState.workflowBusy,
+                workflowMessage = creationState.workflowMessage
+                    ?.takeIf { creationState.workflowMessageProjectId == projectId },
+                generationBusy = creationState.generationBusy &&
+                    creationState.generationProjectId == projectId,
+                generationMessage = creationState.generationMessage
+                    ?.takeIf { creationState.generationProjectId == projectId },
+                onSaveDraft = { prompt ->
+                    creationViewModel.saveTextDraft(
+                        projectId = projectId,
+                        parentVersionId = latestVersion?.id,
+                        prompt = prompt,
+                    ) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                    }
+                },
+                onRequestCoach = { prompt ->
+                    creationViewModel.requestCoachReview(projectId, prompt) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                    }
+                },
+                onDecideCoach = { call, approve ->
+                    creationViewModel.decideCoachReview(call, approve) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                    }
+                },
+                onRequestImageGeneration = { prompt, size, quality ->
+                    val project = bundle?.project
+                    val version = latestVersion
+                    if (project != null && version != null) {
+                        creationViewModel.requestImageGeneration(
+                            projectId = projectId,
+                            parentVersionId = version.id,
+                            expectedProjectRevision = project.rowVersion,
+                            prompt = prompt,
+                            size = size,
+                            quality = quality,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                            luggageViewModel.refresh(force = true)
+                            conferenceViewModel.invalidateFeed()
+                        }
+                    }
+                },
+                onRetryImageGeneration = { job ->
+                    creationViewModel.retryImageGeneration(job) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        luggageViewModel.refresh(force = true)
+                    }
+                },
+                onEnterTest = {
+                    bundle?.project?.let { project ->
+                        creationViewModel.moveCreationStage(
+                            project = project,
+                            toStage = "TEST",
+                            reason = "当前版本制作完成，开始真实场景测试",
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onRecordTest = { scenario, result, notes, finding ->
+                    latestVersion?.let { version ->
+                        creationViewModel.recordCreationTest(
+                            projectId = projectId,
+                            creationVersionId = version.id,
+                            scenario = scenario,
+                            result = result,
+                            notes = notes,
+                            finding = finding,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onResolveIssue = { issue, resolution ->
+                    creationViewModel.resolveCreationTestIssue(issue, resolution) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                    }
+                },
+                onEnterSeal = {
+                    bundle?.project?.let { project ->
+                        creationViewModel.moveCreationStage(
+                            project = project,
+                            toStage = "SEAL",
+                            reason = "当前版本复测通过，且测试问题已经全部关闭",
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onSaveLearningCard = { form ->
+                    latestVersion?.let { version ->
+                        creationViewModel.saveLearningCard(
+                            projectId = projectId,
+                            versionId = version.id,
+                            manualPageIds = form.manualPageIds,
+                            methodSummary = form.methodSummary,
+                            unresolvedQuestionsText = form.unresolvedQuestions,
+                            questionsConfirmed = form.questionsConfirmed,
+                            rowVersion = bundle?.learningCard?.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onSubmitMigrationEvidence = { manualPageIds, revisionReason ->
+                    latestVersion?.let { version ->
+                        creationViewModel.submitMigrationEvidence(
+                            projectId = projectId,
+                            creationVersionId = version.id,
+                            manualPageIds = manualPageIds,
+                            revisionReason = revisionReason,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onSaveProvenance = { form ->
+                    latestVersion?.let { version ->
+                        creationViewModel.saveProvenance(
+                            projectId = projectId,
+                            versionId = version.id,
+                            humanSummary = form.humanSummary,
+                            aiUsed = form.aiUsed,
+                            aiSummary = form.aiSummary,
+                            aiProvider = form.aiProvider,
+                            aiModel = form.aiModel,
+                            aiAction = form.aiAction,
+                            promptSummary = form.promptSummary,
+                            aiResultModified = form.aiResultModified,
+                            aigcLabelDeclared = form.aigcLabelDeclared,
+                            externalSourceUrl = form.externalSourceUrl,
+                            externalSourceAuthor = form.externalSourceAuthor,
+                            externalLicense = form.externalLicense,
+                            unresolvedRights = form.unresolvedRights,
+                            rowVersion = bundle?.provenance?.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onSaveSealCheck = { form ->
+                    latestVersion?.let { version ->
+                        creationViewModel.saveSealCheck(
+                            projectId = projectId,
+                            versionId = version.id,
+                            workDescription = form.workDescription,
+                            learningReflection = form.learningReflection,
+                            nextImprovement = form.nextImprovement,
+                            identityPrivacyConfirmed = form.identityPrivacyConfirmed,
+                            contactPrivacyConfirmed = form.contactPrivacyConfirmed,
+                            portraitRightsConfirmed = form.portraitRightsConfirmed,
+                            rowVersion = bundle?.sealCheck?.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                        }
+                    }
+                },
+                onSubmit = { visibility, classroomId ->
+                    latestVersion?.let { version ->
+                        creationViewModel.submitCreation(
+                            projectId = projectId,
+                            versionId = version.id,
+                            visibility = visibility,
+                            targetClassroomId = classroomId,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                            luggageViewModel.refresh(force = true)
+                        }
+                    }
+                },
+                onOpenPublishedWork = { publicationId ->
+                    navController.navigate(Routes.dahuiWork(publicationId))
+                },
+                onCreateWork = {
+                    if (latestVersion != null) {
+                        navController.navigate(Routes.creationEditorProject(projectId))
+                    }
+                },
                 onBack = { navController.popBackStack() },
-                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
-            )
-        }
-
-        composable(Routes.Picture) {
-            PictureScreen(
-                onBack      = { navController.popBackStack() },
-                onCreateWork = { navController.navigate(Routes.Yaosu) },
-                onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
-            )
-        }
-
-        composable(Routes.Yaosu) {
-            YaosuScreen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
                 onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
             )
         }
@@ -590,55 +1016,25 @@ fun JianghuNavHost(
         composable(Routes.Chuangzuodangan) {
             ChuangzuodanganScreen(
                 onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-                onOpenChuangzuodangan2 = { navController.navigate(Routes.Chuangzuodangan2) },
-                onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
-                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
-                onOpenChuangzuodangan6 = { navController.navigate(Routes.Chuangzuodangan6) },
+                onOpenCreationDesk = {
+                    val returnedToDesk = navController.popBackStack(
+                        route = Routes.Gongfang,
+                        inclusive = false,
+                    )
+                    if (!returnedToDesk) {
+                        navController.navigate(Routes.Gongfang) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
             )
         }
 
-        composable(Routes.Chuangzuodangan2) {
-            Chuangzuodangan2Screen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-                onOpenChuangzuodangan3 = { navController.navigate(Routes.Chuangzuodangan3) },
-                onOpenChuangzuodangan5 = { navController.navigate(Routes.Chuangzuodangan5) },
-                onOpenChuangzuodangan6 = { navController.navigate(Routes.Chuangzuodangan6) },
-            )
-        }
-
-        composable(Routes.Chuangzuodangan3) {
-            Chuangzuodangan3Screen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-                onOpenChuangzuodangan4 = { navController.navigate(Routes.Chuangzuodangan4) },
-            )
-        }
-
-        composable(Routes.Chuangzuodangan4) {
-            Chuangzuodangan4Screen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-            )
-        }
-
-        composable(Routes.Chuangzuodangan5) {
-            Chuangzuodangan5Screen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-            )
-        }
-        composable(Routes.Chuangzuodangan6) {
-            Chuangzuodangan6Screen(
-                onBack = { navController.popBackStack() },
-                onCreateWork = { /* TODO: 后续 */ },
-            )
-        }
 
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {
             LaunchedEffect(Unit) { luggageViewModel.refresh() }
+            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             LuggageScreen(
                 uiState = luggageState,
                 onBack = { navController.popBackStack() },
@@ -666,6 +1062,61 @@ fun JianghuNavHost(
                 onContinueCreation = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
                 onOpenEvidence = { navController.navigate(Routes.LuggageEvidence) },
                 onOpenPrivacy = { navController.navigate(Routes.LuggagePrivacySafety) },
+                onOpenLetters = {
+                    navController.navigate(
+                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
+                        else Routes.DahuiLetters,
+                    )
+                },
+                onOpenSettings = { navController.navigate(Routes.Settings) },
+                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+            )
+        }
+
+        composable(
+            Routes.CreationEditorProjectPattern,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            LaunchedEffect(projectId) {
+                creationViewModel.loadEditor(projectId)
+            }
+            val belongsToProject = creationState.editorProjectId == projectId
+            val currentVersion = creationState.editorVersions
+                .takeIf { belongsToProject }
+                ?.maxByOrNull { it.versionNumber }
+            CreationEditorScreen(
+                projectTitle = creationState.editorProject
+                    ?.takeIf { belongsToProject }
+                    ?.title,
+                version = currentVersion,
+                assets = creationState.editorAssets.takeIf { belongsToProject }.orEmpty(),
+                loading = creationState.editorLoading && belongsToProject,
+                saving = creationState.editorSaving && belongsToProject,
+                message = creationState.editorMessage.takeIf { belongsToProject },
+                diff = creationState.editorDiff.takeIf { belongsToProject },
+                exportBusy = creationState.editorExportBusy && belongsToProject,
+                exportJob = creationState.editorExportJob.takeIf { belongsToProject },
+                exportMessage = creationState.editorExportMessage.takeIf { belongsToProject },
+                onBack = { navController.popBackStack() },
+                onReload = { creationViewModel.loadEditor(projectId) },
+                onSave = { parent, layers, reason ->
+                    creationViewModel.saveEditorVersion(
+                        projectId = projectId,
+                        parent = parent,
+                        layers = layers,
+                        modificationReason = reason,
+                    ) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        luggageViewModel.refresh(force = true)
+                        conferenceState.work
+                            ?.takeIf { it.projectId == projectId }
+                            ?.let { conferenceViewModel.loadWork(it.publicationId) }
+                    }
+                },
+                onCompare = creationViewModel::compareEditorWithPrevious,
+                onExport = creationViewModel::exportEditorVersion,
+                onDismissDiff = creationViewModel::clearEditorDiff,
             )
         }
 
@@ -729,6 +1180,24 @@ fun JianghuNavHost(
                 state = luggageDetailState,
                 onBack = { navController.popBackStack() },
                 onLoad = luggageViewModel::loadManualDetail,
+                onOpenTrial = { trialId -> navController.navigate(Routes.learningTrial(trialId)) },
+            )
+        }
+
+        composable(
+            Routes.LearningTrialPattern,
+            arguments = listOf(navArgument("trialId") { type = NavType.StringType }),
+        ) { entry ->
+            val trialId = entry.arguments?.getString("trialId").orEmpty()
+            LearningTrialScreen(
+                trialId = trialId,
+                state = luggageDetailState,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadLearningTrial,
+                onSubmit = { prediction, answer, explanation ->
+                    luggageViewModel.submitLearningTrial(trialId, prediction, answer, explanation)
+                },
+                onComplete = { navController.popBackStack() },
             )
         }
 
@@ -883,11 +1352,18 @@ fun JianghuNavHost(
 
         // 设置页(Figma 设计) — 点击首页1的"设置"图标跳转
         composable(Routes.Settings) {
+            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             SettingsScreen(
                 onBack             = { navController.popBackStack() },
-                onOpenWorks        = { navController.navigate(Routes.Zaowu) },
-                onOpenTask         = { navController.navigate(Routes.Challenge) },
+                onOpenWendao       = { navController.navigate(Routes.Home1) },
+                onOpenLetters      = {
+                    navController.navigate(
+                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
+                        else Routes.DahuiLetters,
+                    )
+                },
                 onOpenLuggage      = { navController.navigate(Routes.Luggage) },
+                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
                 onOpenAccount      = { navController.navigate(Routes.SettingsAccount) },
                 onOpenMessage      = { navController.navigate(Routes.SettingsMessage) },
                 onOpenGeneral      = { navController.navigate(Routes.SettingsGeneral) },
@@ -959,11 +1435,27 @@ fun JianghuNavHost(
             SettingsDetailScreen(SettingsPage.DataRecovery, onBack = { navController.popBackStack() })
         }
 
-        // 首页挑战页(Figma 设计) — 点击"任务"展开栏的"挑战"文本跳转
+        // 书信中的切磋来信可进入挑战页。
         composable(Routes.Challenge) {
+            LaunchedEffect(Unit) { distributionViewModel.refreshInboxAndClassrooms() }
             ChallengeScreen(
-                onBack        = { navController.popBackStack() },
-                onOpenZaowu   = { navController.navigate(Routes.Zaowu) },
+                inbox = distributionState.inbox,
+                inboxLoading = distributionState.inboxLoading,
+                inboxError = distributionState.inboxError,
+                canLoadMore = distributionState.inboxCursor != null,
+                classrooms = distributionState.classrooms,
+                classroomLoading = distributionState.classroomLoading,
+                classroomMessage = distributionState.classroomMessage,
+                oneTimeJoinCode = distributionState.oneTimeJoinCode,
+                isAdult = currentUser?.ageBand == "ADULT",
+                onRefresh = distributionViewModel::refreshInboxAndClassrooms,
+                onLoadMore = { distributionViewModel.loadInbox(loadMore = true) },
+                onCreateClassroom = distributionViewModel::createClassroom,
+                onJoinClassroom = distributionViewModel::joinClassroom,
+                onDismissJoinCode = distributionViewModel::clearOneTimeJoinCode,
+                onBack = { navController.popBackStack() },
+                onOpenWendao = { navController.navigate(Routes.Xiulian) },
+                onOpenSettings = { navController.navigate(Routes.Settings) },
                 onOpenProgress = { /* TODO:进度弹窗或页面 */ },
             )
         }

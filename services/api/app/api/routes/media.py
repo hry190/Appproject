@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, Header, Request, Response, status
 
 from app.api.dependencies import (
     get_current_user,
@@ -35,6 +35,27 @@ def create_upload_intent(
     service: MediaService = Depends(get_media_service),
 ) -> UploadIntentPublic:
     return service.create_upload_intent(user, payload)
+
+
+@router.put(
+    "/uploads/{upload_id}/object",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+async def put_development_upload_object(
+    upload_id: uuid.UUID,
+    request: Request,
+    content_type: str = Header(alias="Content-Type", min_length=1, max_length=80),
+    user: User = Depends(get_current_user),
+    service: MediaService = Depends(get_media_service),
+) -> Response:
+    service.put_development_upload_object(
+        user,
+        upload_id,
+        await request.body(),
+        content_type,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

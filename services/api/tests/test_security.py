@@ -65,5 +65,36 @@ def test_production_configuration_accepts_explicit_secure_values() -> None:
         media_virus_scanner="clamav",
         minio_secret_key="production-minio-secret-value",
         internal_worker_token="production-internal-worker-token-long-enough-123",
+        image_generation_provider="disabled",
+        conference_judge_provider="disabled",
     )
     assert settings.environment == "production"
+
+
+def test_production_conference_judge_rejects_development_and_plain_http() -> None:
+    secure = {
+        "environment": "production",
+        "database_url": "postgresql+psycopg://app:secret@db/app",
+        "allowed_hosts": ["api.example.test"],
+        "jwt_secret": "production-jwt-secret-that-is-long-and-random-enough",
+        "phone_encryption_key": Fernet.generate_key().decode(),
+        "phone_lookup_key": "production-phone-lookup-key-at-least-32-characters",
+        "verification_code_key": "production-code-digest-key-at-least-32-characters",
+        "fixed_verification_code": None,
+        "sms_provider": "tencent",
+        "media_storage_provider": "minio",
+        "media_virus_scanner": "clamav",
+        "minio_secret_key": "production-minio-secret-value",
+        "internal_worker_token": "production-internal-worker-token-long-enough-123",
+        "image_generation_provider": "disabled",
+    }
+    with pytest.raises(ValidationError, match="conference judging"):
+        Settings(_env_file=None, **secure)
+    with pytest.raises(ValidationError, match="must use HTTPS"):
+        Settings(
+            _env_file=None,
+            **secure,
+            conference_judge_provider="webhook",
+            conference_judge_webhook_url="http://judge.example.test/evaluate",
+            conference_judge_webhook_token="production-judge-token",
+        )

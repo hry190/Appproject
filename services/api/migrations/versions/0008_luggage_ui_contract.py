@@ -16,20 +16,19 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "user_learning_stats",
-        sa.Column(
-            "lifetime_practice_days",
-            sa.Integer(),
-            nullable=False,
-            server_default="0",
-        ),
-    )
-    op.create_check_constraint(
-        "ck_user_learning_stats_practice_days_non_negative",
-        "user_learning_stats",
-        "lifetime_practice_days >= 0",
-    )
+    with op.batch_alter_table("user_learning_stats") as batch_op:
+        batch_op.add_column(
+            sa.Column(
+                "lifetime_practice_days",
+                sa.Integer(),
+                nullable=False,
+                server_default="0",
+            )
+        )
+        batch_op.create_check_constraint(
+            "ck_user_learning_stats_practice_days_non_negative",
+            "lifetime_practice_days >= 0",
+        )
 
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
@@ -64,17 +63,17 @@ def upgrade() -> None:
             )
         )
 
-    op.alter_column(
-        "user_learning_stats",
-        "lifetime_practice_days",
-        server_default=None,
-    )
+    with op.batch_alter_table("user_learning_stats") as batch_op:
+        batch_op.alter_column(
+            "lifetime_practice_days",
+            server_default=None,
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "ck_user_learning_stats_practice_days_non_negative",
-        "user_learning_stats",
-        type_="check",
-    )
-    op.drop_column("user_learning_stats", "lifetime_practice_days")
+    with op.batch_alter_table("user_learning_stats") as batch_op:
+        batch_op.drop_constraint(
+            "ck_user_learning_stats_practice_days_non_negative",
+            type_="check",
+        )
+        batch_op.drop_column("lifetime_practice_days")

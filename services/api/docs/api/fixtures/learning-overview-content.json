@@ -1,0 +1,37 @@
+{
+  "recommended_lesson_id": "00000000-0000-0000-0000-000000000001",
+  "books": [
+    {
+      "manual_page_id": "00000000-0000-0000-0000-000000000001",
+      "page_no": 1,
+      "style_no": 1,
+      "title": "为什么模型会说错话",
+      "volume_no": 1,
+      "volume_title": "识局",
+      "state": "LEARNED",
+      "state_label": "习得",
+      "evidence_count": 2,
+      "review_due": false,
+      "updated_at": "2026-09-08T10:00:00Z"
+    },
+    {
+      "manual_page_id": "00000000-0000-0000-0000-000000000002",
+      "page_no": 2,
+      "style_no": 2,
+      "title": "先问自己缺什么",
+      "volume_no": 1,
+      "volume_title": "识局",
+      "state": "UNSEEN",
+      "state_label": "未闻",
+      "evidence_count": 0,
+      "review_due": false,
+      "updated_at": null
+    }
+  ],
+  "back_mountain": {
+    "volume_no": 1,
+    "lesson_id": "00000000-0000-0000-0000-000000000002",
+    "reason": "完成上一课后，沿前置关系继续修炼",
+    "available": true
+  }
+}

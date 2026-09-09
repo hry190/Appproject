@@ -58,7 +58,7 @@ import com.jueqiao.jianghu.luggage.LuggageMistakeSectionDto
 import com.jueqiao.jianghu.luggage.LuggageProfileDto
 import com.jueqiao.jianghu.luggage.LuggageResponseDto
 import com.jueqiao.jianghu.luggage.LuggageUiState
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
 import com.jueqiao.jianghu.ui.theme.YaHei
 import coil.compose.AsyncImage
@@ -105,6 +105,9 @@ fun LuggageScreen(
     onContinueCreation: (String) -> Unit = {},
     onOpenEvidence: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenLetters: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+    hasUnreadLetters: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
     var manualFilter by rememberSaveable { mutableStateOf<String?>(null) }
@@ -126,17 +129,16 @@ fun LuggageScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            Row(
+            HomeQuickActions(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(x = (-12).dp, y = 71.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                QuickActionItem(R.drawable.img_icon_works, "作品", onOpenZaowu)
-                QuickActionItem(R.drawable.img_icon_progress, "进度", onOpenGrowth)
-                QuickActionItem(R.drawable.img_icon_task, "任务", {})
-                QuickActionItem(R.drawable.img_icon_settings, "设置", onOpenPrivacy)
-            }
+                onOpenWendao = onBack,
+                onOpenCultivation = onOpenGrowth,
+                onOpenLetters = onOpenLetters,
+                onOpenSettings = onOpenSettings,
+                hasUnreadLetters = hasUnreadLetters,
+            )
 
             SettingsPaperSurface(
                 modifier = Modifier

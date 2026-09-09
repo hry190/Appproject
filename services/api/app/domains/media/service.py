@@ -36,9 +36,10 @@ from app.domains.media.models import (
     OutboxStatus,
     UploadSession,
     UploadSessionStatus,
+    UploadPurpose,
 )
 from app.domains.media.references import is_asset_referenced_by_live_data
-from app.domains.media.storage import ObjectNotFoundError, ObjectStore
+from app.domains.media.storage import InMemoryObjectStore, ObjectNotFoundError, ObjectStore
 from app.domains.media.virus import VirusScanner
 from app.domains.moderation.audit import add_audit_event
 from app.models import User
@@ -234,11 +235,203 @@ class MediaService:
             safe_diff={"byte_size": asset.byte_size, "purpose": asset.purpose.value},
         )
         self.db.commit()
+        if (
+            self.settings.environment == "development"
+            and isinstance(self.store, InMemoryObjectStore)
+        ):
+            return self.process_asset(asset.id, InternalMediaProcessRequest())
         return self._asset_public(asset)
+
+    def put_development_upload_object(
+        self,
+        user: User,
+        upload_id: uuid.UUID,
+        data: bytes,
+        content_type: str,
+    ) -> None:
+        if (
+            self.settings.environment == "production"
+            or not isinstance(self.store, InMemoryObjectStore)
+        ):
+            raise ApiError(404, "UPLOAD_PROXY_NOT_FOUND", "上传通道不存在")
+        session = self.db.scalar(
+            select(UploadSession).where(
+                UploadSession.id == upload_id,
+                UploadSession.owner_user_id == user.id,
+            )
+        )
+        if session is None:
+            raise ApiError(404, "UPLOAD_NOT_FOUND", "上传任务不存在")
+        if session.status != UploadSessionStatus.ISSUED:
+            raise ApiError(409, "UPLOAD_NOT_WRITABLE", "上传任务当前不可写入")
+        if utcnow() >= _as_utc(session.expires_at):
+            raise ApiError(410, "UPLOAD_EXPIRED", "上传地址已过期，请重新申请")
+        if len(data) != session.expected_bytes:
+            raise ApiError(409, "UPLOAD_SIZE_MISMATCH", "上传文件大小与申请记录不一致")
+        if content_type.lower() != session.declared_mime:
+            raise ApiError(409, "UPLOAD_CONTENT_TYPE_MISMATCH", "上传文件类型与申请记录不一致")
+        self.store.put_test_object(session.object_key, data, content_type.lower())
+        add_audit_event(
+            self.db,
+            actor_user_id=user.id,
+            actor_type="USER",
+            action="DEVELOPMENT_UPLOAD_OBJECT_RECEIVED",
+            target_type="UPLOAD_SESSION",
+            target_id=session.id,
+            result="SUCCESS",
+            request_id=self.request_id,
+            safe_diff={"byte_size": len(data)},
+        )
+        self.db.commit()
 
     def get_asset(self, user: User, asset_id: uuid.UUID) -> MediaAssetPublic:
         asset = self._require_asset(user, asset_id)
         return self._asset_public(asset)
+
+    def ingest_generated_image(
+        self,
+        *,
+        owner_user_id: uuid.UUID,
+        generation_job_id: uuid.UUID,
+        data: bytes,
+        content_type: str = "image/png",
+    ) -> MediaAssetPublic:
+        """Put a provider result through the same quarantine and scan path as uploads."""
+        upload_id = uuid.uuid5(uuid.NAMESPACE_URL, f"jianghu:image-generation:{generation_job_id}")
+        existing = self.db.scalar(
+            select(MediaAsset).where(MediaAsset.upload_session_id == upload_id)
+        )
+        if existing is not None:
+            if existing.status == MediaAssetStatus.PROCESSING:
+                return self.process_asset(
+                    existing.id,
+                    InternalMediaProcessRequest(
+                        content_safety_outcome=MediaScanOutcome.PASSED,
+                        aigc_detected=True,
+                    ),
+                )
+            return self._asset_public(existing)
+        if content_type not in ALLOWED_IMAGE_MIMES:
+            raise ApiError(422, "GENERATED_MEDIA_TYPE_INVALID", "生成结果不是支持的图片格式")
+        if not data or len(data) > self.settings.media_max_upload_bytes:
+            raise ApiError(413, "GENERATED_MEDIA_SIZE_INVALID", "生成结果大小超出安全范围")
+
+        extension = MIME_TO_EXTENSION[content_type]
+        object_key = f"users/{owner_user_id}/generated/{generation_job_id}.{extension}"
+        digest = hashlib.sha256(data).hexdigest()
+        now = utcnow()
+        self.store.write_quarantine(object_key, data, content_type=content_type)
+        session = UploadSession(
+            id=upload_id,
+            owner_user_id=owner_user_id,
+            purpose=UploadPurpose.AIGC_OUTPUT,
+            original_filename=f"generated-{generation_job_id}.{extension}",
+            declared_mime=content_type,
+            expected_bytes=len(data),
+            client_sha256=digest,
+            object_key=object_key,
+            status=UploadSessionStatus.COMPLETED,
+            complete_idempotency_key=f"generation:{generation_job_id}",
+            complete_fingerprint=digest,
+            expires_at=now + timedelta(minutes=self.settings.media_upload_ttl_minutes),
+            completed_at=now,
+        )
+        asset = MediaAsset(
+            owner_user_id=owner_user_id,
+            upload_session_id=upload_id,
+            purpose=UploadPurpose.AIGC_OUTPUT,
+            original_filename=session.original_filename,
+            declared_mime=content_type,
+            byte_size=len(data),
+            sha256=digest,
+            quarantine_object_key=object_key,
+            status=MediaAssetStatus.PROCESSING,
+        )
+        self.db.add(session)
+        self.db.flush()
+        self.db.add(asset)
+        self.db.commit()
+        return self.process_asset(
+            asset.id,
+            InternalMediaProcessRequest(
+                content_safety_outcome=MediaScanOutcome.PASSED,
+                aigc_detected=True,
+            ),
+        )
+
+    def ingest_creation_export(
+        self,
+        *,
+        owner_user_id: uuid.UUID,
+        export_job_id: uuid.UUID,
+        data: bytes,
+        content_type: str,
+        aigc_detected: bool,
+    ) -> MediaAssetPublic:
+        """Persist a deterministic flattened work through the normal media checks."""
+        upload_id = uuid.uuid5(
+            uuid.NAMESPACE_URL, f"jianghu:creation-export:{export_job_id}"
+        )
+        existing = self.db.scalar(
+            select(MediaAsset).where(MediaAsset.upload_session_id == upload_id)
+        )
+        if existing is not None:
+            if existing.status == MediaAssetStatus.PROCESSING:
+                return self.process_asset(
+                    existing.id,
+                    InternalMediaProcessRequest(
+                        content_safety_outcome=MediaScanOutcome.REVIEW,
+                        aigc_detected=aigc_detected,
+                    ),
+                )
+            return self._asset_public(existing)
+        if content_type not in {"image/png", "image/jpeg"}:
+            raise ApiError(422, "EXPORT_MEDIA_TYPE_INVALID", "导出格式不受支持")
+        if not data or len(data) > self.settings.media_max_upload_bytes:
+            raise ApiError(413, "EXPORT_MEDIA_SIZE_INVALID", "导出文件大小超出安全范围")
+
+        extension = MIME_TO_EXTENSION[content_type]
+        object_key = f"users/{owner_user_id}/exports/{export_job_id}.{extension}"
+        digest = hashlib.sha256(data).hexdigest()
+        now = utcnow()
+        self.store.write_quarantine(object_key, data, content_type=content_type)
+        session = UploadSession(
+            id=upload_id,
+            owner_user_id=owner_user_id,
+            purpose=UploadPurpose.CREATION_PREVIEW,
+            original_filename=f"creation-export-{export_job_id}.{extension}",
+            declared_mime=content_type,
+            expected_bytes=len(data),
+            client_sha256=digest,
+            object_key=object_key,
+            status=UploadSessionStatus.COMPLETED,
+            complete_idempotency_key=f"creation-export:{export_job_id}",
+            complete_fingerprint=digest,
+            expires_at=now + timedelta(minutes=self.settings.media_upload_ttl_minutes),
+            completed_at=now,
+        )
+        asset = MediaAsset(
+            owner_user_id=owner_user_id,
+            upload_session_id=upload_id,
+            purpose=UploadPurpose.CREATION_PREVIEW,
+            original_filename=session.original_filename,
+            declared_mime=content_type,
+            byte_size=len(data),
+            sha256=digest,
+            quarantine_object_key=object_key,
+            status=MediaAssetStatus.PROCESSING,
+        )
+        self.db.add(session)
+        self.db.flush()
+        self.db.add(asset)
+        self.db.commit()
+        return self.process_asset(
+            asset.id,
+            InternalMediaProcessRequest(
+                content_safety_outcome=MediaScanOutcome.REVIEW,
+                aigc_detected=aigc_detected,
+            ),
+        )
 
     def request_delete(self, user: User, asset_id: uuid.UUID) -> MediaDeleteAccepted:
         asset = self._require_asset(user, asset_id, for_update=True)

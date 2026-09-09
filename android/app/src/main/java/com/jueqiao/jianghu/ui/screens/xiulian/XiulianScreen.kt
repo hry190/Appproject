@@ -3,9 +3,7 @@ package com.jueqiao.jianghu.ui.screens.xiulian
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -26,11 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.QuickActionItem
+import com.jueqiao.jianghu.luggage.LearningOverviewDto
+import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.screens.home.ProgressModal
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -43,11 +43,16 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun XiulianScreen(
     onBack: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
-    onOpenZaowu: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
-    onOpenProgress: () -> Unit = {},
-    onOpenTask: () -> Unit = {},
+    onOpenManuals: () -> Unit = onOpenLuggage,
+    onOpenLearning: () -> Unit = onOpenLuggage,
+    onOpenTrials: () -> Unit = onOpenLuggage,
     onOpenGunlun1: () -> Unit = {},
+    onOpenRecommendedManual: (String) -> Unit = {},
+    learningOverview: LearningOverviewDto? = null,
+    onOpenWendao: () -> Unit = onBack,
+    onOpenSettings: () -> Unit = {},
+    onOpenLetters: () -> Unit = {},
+    hasUnreadLetters: Boolean = false,
 ) {
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen    by remember { mutableStateOf(false) }
@@ -72,7 +77,7 @@ fun XiulianScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // Group 17.png(左侧装饰,35.84, 501, 138.16×245)
+            // Group 17.png(左侧装饰,135.84, 501, 138.16×245)
         Image(
             painter = painterResource(R.drawable.img_xiulian_group17),
             contentDescription = null,
@@ -82,45 +87,95 @@ fun XiulianScreen(
             contentScale = ContentScale.Fit,
         )
 
-        // Rectangle 18.png(X=120, Y=389, W=168, H=140)
+        // 修炼按钮(未标题-1 50.png,X=141, Y=368, W=55, H=90)
         Image(
-            painter = painterResource(R.drawable.img_xiulian_rectangle_18),
-            contentDescription = null,
+            painter = painterResource(R.drawable.img_xiulian_group128),
+            contentDescription = "修炼",
             modifier = Modifier
-                .offset(x = 120.dp, y = 389.dp)
-                .size(width = 168.dp, height = 140.dp),
-            contentScale = ContentScale.FillBounds,
-        )
-
-        // Rectangle 18.png 气泡内文字(X=138, Y=401, W=138, H=58,字号 14,黑色)
-        Text(
-            text = "后院竹静风清水淡，乃是绝佳修炼之地，随我前往吧",
-            color = Color.Black,
-            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier
-                .offset(x = 138.dp, y = 401.dp)
-                .size(width = 138.dp, height = 58.dp),
-        )
-
-        // Vector 579.png 按钮(X=183.69, Y=482.22, W=89.6, H=20.56)— 点击跳滚轮1
-        Image(
-            painter = painterResource(R.drawable.img_xiulian_vector_579),
-            contentDescription = "前往后院",
-            modifier = Modifier
-                .offset(x = 183.69.dp, y = 482.22.dp)
-                .size(width = 89.6.dp, height = 25.6.dp)
+                .offset(x = 131.dp, y = 358.dp)
+                .size(width = 55.dp, height = 90.dp)
                 .clickable(onClick = onOpenGunlun1),
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
         )
-        // Vector 579.png 按钮文字(X=200.49, Y=484, W=56, H=17,字号 14,黑色,居中于按钮)
+
+        // "修\n炼" 标签(X=150, Y=378,字号 12) — 在图标之上
         Text(
-            text = "前往后院",
-            color = Color.Black,
-            style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier
-                .offset(x = 200.49.dp, y = 484.dp)
-                .size(width = 56.dp, height = 25.dp),
+            text = "修\n炼",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier.offset(x = 150.dp, y = 378.dp),
         )
+
+        // "秘籍" 旋转标签(X=104.5, Y=785.5, rotation -23.36° 逆时针, W=48, H=25,字号 20,白色)
+        Text(
+            text = "秘籍",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+            modifier = Modifier
+                .offset(x = 104.5.dp, y = 785.5.dp)
+                .size(width = 72.dp, height = 40.dp)
+                .rotate(-23.36f)
+                .clickable(onClick = onOpenManuals),
+        )
+
+        // "学习" 旋转标签(X=238, Y=691, rotation 15.3° 顺时针, W=48, H=25,字号 20,白色)
+        Text(
+            text = "学习",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+            modifier = Modifier
+                .offset(x = 238.dp, y = 691.dp)
+                .size(width = 72.dp, height = 40.dp)
+                .rotate(15.3f)
+                .clickable(onClick = onOpenLearning),
+        )
+
+        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=18,字号 16,白色)
+        Text(
+            text = "试炼",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
+            modifier = Modifier
+                .offset(x = 271.dp, y = 814.dp)
+                .size(width = 68.dp, height = 36.dp)
+                .rotate(26f)
+                .clickable(onClick = onOpenTrials),
+        )
+
+        // 6.png 作为气泡背景(118, 453, 175×79)
+        Box(
+            modifier = Modifier
+                .offset(x = 118.dp, y = 453.dp)
+                .size(width = 175.dp, height = 79.dp),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_xiulian_6),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            // 气泡文本
+            val recommendation = learningOverview?.books?.firstOrNull {
+                it.manualPageId == learningOverview.recommendedLessonId
+            }
+            Text(
+                text = recommendation?.let {
+                    "下一招：${it.title}\n${learningOverview?.backMountain?.reason ?: "打开秘籍继续修炼"}"
+                } ?: "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
+                color = Color.Black,
+                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
+            if (recommendation != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onOpenRecommendedManual(recommendation.manualPageId) },
+                )
+            }
+        }
 
         // 左上角:返回按钮(Return.png,点击回到首页1)
         Box(
@@ -138,38 +193,21 @@ fun XiulianScreen(
             )
         }
 
-        // 顶部右侧 4 个快捷图标
-        Row(
+        // 所有页面共用的顶部快捷入口：问道、修为、书信、设置。
+        HomeQuickActions(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = (-12).dp, y = 71.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_works,
-                label = "作品",
-                onClick = onOpenZaowu,
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_progress,
-                label = "进度",
-                onClick = { progressOpen = true },
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_task,
-                label = "任务",
-                onClick = onOpenTask,
-            )
-            QuickActionItem(
-                iconRes = R.drawable.img_icon_settings,
-                label = "设置",
-                onClick = onOpenSettings,
-            )
-        }
+            onOpenWendao = onOpenWendao,
+            onOpenCultivation = { progressOpen = true },
+            onOpenLetters = onOpenLetters,
+            onOpenSettings = onOpenSettings,
+            hasUnreadLetters = hasUnreadLetters,
+        )
         }
     }
 
-    // 学习进度弹窗(由"进度"图标触发)
+    // 学习进度弹窗由顶部“修为”入口触发。
     if (progressOpen) {
         ProgressModal(
             onClose       = { progressOpen = false },

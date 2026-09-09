@@ -1,9 +1,13 @@
 package com.jueqiao.jianghu.ui.screens.chuangzuodangan3
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -48,6 +53,7 @@ import kotlin.math.sin
 @Composable
 fun Chuangzuodangan3Screen(
     onBack: () -> Unit = {},
+    onOpenCreationDesk: () -> Unit = {},
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan4: () -> Unit = {},
 ) {
@@ -55,6 +61,13 @@ fun Chuangzuodangan3Screen(
     BackHandler(enabled = true) {
         onBack()
     }
+    val creationTabInteractionSource = remember { MutableInteractionSource() }
+    val creationTabPressed by creationTabInteractionSource.collectIsPressedAsState()
+    val creationTabScale by animateFloatAsState(
+        targetValue = if (creationTabPressed) 0.96f else 1f,
+        animationSpec = tween(140),
+        label = "档案页创作台叶签按压",
+    )
 
     Box(
         modifier = Modifier
@@ -75,63 +88,73 @@ fun Chuangzuodangan3Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回按钮(从 ChatResultScreen 复用:X=20, Y=55, 点击区 32×32)
             Box(
-                modifier = Modifier
-                    .offset(x = 20.dp, y = 55.dp)
-                    .size(32.dp)
-                    .clickable(onClick = onBack),
+                modifier = Modifier.align(Alignment.TopCenter).offset(x = (-45).dp, y = 23.dp)
+                    .size(width = 160.dp, height = 58.dp)
+                    .graphicsLayer {
+                        scaleX = creationTabScale
+                        scaleY = creationTabScale
+                    }
+                    .clickable(
+                        interactionSource = creationTabInteractionSource,
+                        indication = null,
+                        onClick = onOpenCreationDesk,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_gongfang_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(R.drawable.img_gongfang_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(width = 132.dp, height = 48.dp),
                     contentScale = ContentScale.Fit,
+                )
+                Text("创作台", color = Color(0xFF294A2E), style = TextStyle(fontFamily = YaHei, fontSize = 16.sp))
+            }
+
+            Box(
+                modifier = Modifier.align(Alignment.TopCenter).offset(x = 103.dp, y = 23.dp)
+                    .size(width = 160.dp, height = 58.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_gongfang_23),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    "创作档案",
+                    color = Color(0xFF294A2E),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 18.sp, fontWeight = FontWeight.Bold),
                 )
             }
 
-            // 未标题-2 23.png(教练辅助装饰)
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_23),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 57.dp, y = 45.dp)
-                    .size(width = 160.dp, height = 58.dp),
-                contentScale = ContentScale.Fit,
-            )
+            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
+// 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
+val arcText = "修改版本记录"
+val arcN = arcText.length
+for (i in 0 until arcN) {
+    val t = i.toFloat() / (arcN - 1).toFloat()
+    val arcAngleRad = (200.0 - 90.0 * t) * PI / 180.0
+    val charX = (276.0 + 60.235 + 60.5 * cos(arcAngleRad)).toFloat()
+    val charY = (325.5 + 69.4 + 60.5 * sin(arcAngleRad)).toFloat()
+    // 单字旋转:不跟弧度,首字 51° CW,末字 0°,每字向逆时针递减 51°/5 = 10.2°
+    val rot = 51f * (arcN - 1 - i) / (arcN - 1).toFloat()
 
-            // 未标题-2 24.png(创作档案装饰) — 此页面不做可点击,避免自跳死循环
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_24),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 240.dp, y = 45.dp)
-                    .size(width = 157.dp, height = 58.dp),
-                contentScale = ContentScale.Fit,
-            )
+    Text(
+        text = arcText[i].toString(),
+        color = Color(0xFF437349),
+        style = TextStyle(
+            fontFamily = YaHei,
+            fontSize = 16.sp,
+        ),
+        modifier = Modifier
+            .offset(x = charX.dp, y = charY.dp)
+            .rotate(rot),
+    )
+}
 
-            // "教练辅助" 标签
-            Text(
-                text = "教练辅助",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 93.dp, y = 58.dp)
-                    .size(width = 71.dp, height = 18.dp),
-            )
-
-            // "创作档案" 标签 — 此页面不做可点击,避免自跳死循环
-            Text(
-                text = "创作档案",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                modifier = Modifier
-                    .offset(x = 287.dp, y = 58.dp)
-                    .size(width = 71.dp, height = 18.dp),
-            )
-
-
+// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
 // 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
 // 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
 // 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
@@ -182,26 +205,10 @@ for (i in 0 until chuangyuanN) {
     )
 }
 
-// 位置 7 槽位(AI A-I 间距压缩 50%) + 旋转 5 槽位(《/熊、AI、画/》 各共享)
-// 90° 弧 6 间隔均分(其中 AI 之间 0.5 间距)
-val xuanzeText = "《熊猫AI绘画》"
+// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
+// 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
+val xuanzeText = "选择作品查看"
 val xuanzeN = xuanzeText.length
-// 位置映射(8 字 → 7 槽位,AI A-I 间距压缩):
-//   i=0 《→ 0, i=1 熊 → 1, i=2 猫 → 2, i=3 A → 3,
-//   i=4 I → 3.5(A 与 I 半间距), i=5 绘 → 4, i=6 画 → 5, i=7 》→ 6
-val xuanzePosSlots = floatArrayOf(0f, 1f, 2f, 3f, 3.5f, 4f, 5f, 6f)
-val xuanzePosN = 7
-// 旋转映射(8 字 → 5 槽位):《/熊、AI、画/》 各共享一个旋转角度
-//   i=0 《 → rot 0(同 熊)
-//   i=1 熊 → rot 0(同 《)
-//   i=2 猫 → rot 1
-//   i=3 A  → rot 2(同 I)
-//   i=4 I  → rot 2(同 A)
-//   i=5 绘 → rot 3
-//   i=6 画 → rot 4(同 》)
-//   i=7 》→ rot 4
-val xuanzeRotSlots = intArrayOf(0, 0, 1, 2, 2, 3, 4, 4)
-val xuanzeRotN = 5
 val xuanzeBaseX = 45f                // "选" 的 X
 val xuanzeBaseY = 137f               // "选" 的 Y
 val xuanzeCenterX = xuanzeBaseX      // -2 — 圆心 X(直接在"选"正下方)
@@ -209,16 +216,15 @@ val xuanzeCenterY = xuanzeBaseY + 50f  // 193 — 圆心 Y
 val xuanzeRadius = 50f               // 半径(让"选"在弧顶)
 val xuanzeFirstRot = 25f             // 首字 25° CW
 val xuanzeLastRot = 80f              // 末字 80° CW
-val xuanzeColor = Color.Black
+val xuanzeColor = Color(0xFF62704E)
 for (i in 0 until xuanzeN) {
+    val t = i.toFloat() / (xuanzeN - 1).toFloat()
     // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
-    val tPos = xuanzePosSlots[i] / (xuanzePosN - 1).toFloat()
-    val tRot = xuanzeRotSlots[i].toFloat() / (xuanzeRotN - 1).toFloat()
-    val arcAngleDeg = -90f + 90f * tPos
+    val arcAngleDeg = -90f + 90f * t
     val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
     val charX = (xuanzeCenterX + xuanzeRadius * cos(arcAngleRad)).toFloat()
     val charY = (xuanzeCenterY + xuanzeRadius * sin(arcAngleRad)).toFloat()
-    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * tRot
+    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * t
 
     Text(
         text = xuanzeText[i].toString(),
@@ -233,7 +239,7 @@ for (i in 0 until xuanzeN) {
     )
 }
 
-// AI教练辅助记录 — 整组可点击跳 Chuangzuodangan3
+// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3(创作档案3 也保留作为导航目标之一)
 // 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
 // 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
 val aiText = "AI教练辅助记录"
@@ -281,11 +287,11 @@ for (i in 0 until aiN) {
     )
 }
 
-// 雾气+文本整组可点击跳 Chuangzuodangan4(下移 30,Y 55→85)
+// 雾气+文本整组可点击跳 Chuangzuodangan4
 Box(
     modifier = Modifier
         .fillMaxWidth()
-        .offset(y = 85.dp)
+        .offset(y = 55.dp)
         .clickable(onClick = onOpenChuangzuodangan4),
 ) {
     // Rectangle 245.png — 雾气,宽度=屏幕宽度,高度等比缩放,Y=55
@@ -296,7 +302,7 @@ Box(
         contentScale = ContentScale.FillWidth,
     )
 
-    // 雾气上的文本(X居中, Y=376, W=189, H=58, 14sp, 黑色)
+    // 雾气上的文本(X居中, Y=346, W=189, H=58, 14sp, 黑色)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,7 +318,7 @@ Box(
     }
 }
 
-// image 64.png(X=204, Y=667, W=200, H=222)— 熊猫图
+// image 64.png(X=204, Y=687, W=190, H=212)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
     contentDescription = null,
@@ -322,7 +328,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 61.png(X=35, Y=434, W=193, H=203)— 飘雾
+// image 61.png(X=35, Y=484, W=193, H=203)— 飘雾
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
     contentDescription = null,
@@ -332,7 +338,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 52.png(X=8, Y=556, W=214, H=172)— 莲花图
+// image 52.png(X=14, Y=596, W=214, H=172)— 莲花图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
     contentDescription = null,
@@ -342,7 +348,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Rectangle 16.png(X=269, Y=622, W=128, H=68)— 气泡
+// Rectangle 16.png(X=279, Y=622, W=128, H=68)— 气泡
 Box(
     modifier = Modifier
         .offset(x = 269.dp, y = 622.dp)
@@ -354,7 +360,7 @@ Box(
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.FillBounds,
     )
-    // 气泡文字,居中:101×40
+    // 气泡文字,居中:101×36
     Text(
         text = "可以试试点击荷花查看详情",
         color = Color.Black,

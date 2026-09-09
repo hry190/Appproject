@@ -9,9 +9,15 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api.routes.account import router as account_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.catalog import router as catalog_router
+from app.api.routes.conference import (
+    internal_router as conference_internal_router,
+    router as conference_router,
+)
 from app.api.routes.creations import router as creations_router
+from app.api.routes.distribution import router as distribution_router
 from app.api.routes.health import router as health_router
 from app.api.routes.learning import router as learning_router
+from app.api.routes.learning_page import router as learning_page_router
 from app.api.routes.luggage import router as luggage_router
 from app.api.routes.media import router as media_router
 from app.api.routes.meta import router as meta_router
@@ -36,6 +42,7 @@ from app.domains.luggage.cache import (
     LuggageCache,
     RedisLuggageCache,
 )
+from app.domains.creations.image_generation import build_image_generator
 from app.domains.media.storage import build_object_store
 from app.domains.media.virus import build_virus_scanner
 from app.sms import SmsProvider, build_sms_provider
@@ -77,6 +84,7 @@ def create_app(
     application.state.sms_provider = sms_provider or build_sms_provider(resolved)
     application.state.object_store = build_object_store(resolved)
     application.state.virus_scanner = build_virus_scanner(resolved)
+    application.state.image_generator = build_image_generator(resolved)
 
     redis_client: Redis | None = None
     if verification_store is None or rate_limiter is None:
@@ -119,7 +127,11 @@ def create_app(
     application.include_router(profiles_router)
     application.include_router(catalog_router)
     application.include_router(creations_router)
+    application.include_router(distribution_router)
+    application.include_router(conference_router)
+    application.include_router(conference_internal_router)
     application.include_router(learning_router)
+    application.include_router(learning_page_router)
     application.include_router(mistakes_router)
     application.include_router(media_router)
     application.include_router(moderation_router)
@@ -131,7 +143,14 @@ def create_app(
     application.include_router(account_router)
 
     application.add_middleware(
-        RequestSizeLimitMiddleware, max_bytes=resolved.max_request_bytes
+        RequestSizeLimitMiddleware,
+        max_bytes=resolved.max_request_bytes,
+        development_upload_max_bytes=(
+            resolved.media_max_upload_bytes
+            if resolved.environment != "production"
+            and resolved.media_storage_provider == "memory"
+            else None
+        ),
     )
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(

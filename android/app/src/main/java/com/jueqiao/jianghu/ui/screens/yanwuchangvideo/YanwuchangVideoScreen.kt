@@ -5,23 +5,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,65 +34,62 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.ResponsiveDesignCanvas
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 演武场视频首页 + 4 个学科分类页 — 统一 Composable(已按其他页 safe-area 模式适配)
+ * 演武场视频首页 + 4 个学科分类页 — 统一 Composable
  *
- * 结构(三段式):
- *   - Tier 1(外层 Box):全屏背景(img_yanwuchang_video_bg)
- *   - Tier 2(内层 Box):windowInsetsPadding(navigationBars) 避开系统导航条
- *     - 顶部行:返回 + 5 Tabs + 搜索(横向中轴 Y=92)
- *     - 视频内容:中心播放按钮 / 右侧操作列 / 用户名+标题 / 进度条
- *   - Tier 3(外层 Box 子节点):底部独立导航条(作品/我的)
- *     - Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding()
- *     - 内容(渐变背景 + 按钮)总高 85dp,加上 navigationBarsPadding 抵消系统导航条
+ * 顶部 5 个 Tab + 搜索图标与返回键同一行(横向中轴 Y≈92 对齐):
+ *   - 默认态:14sp,容器 29×21dp,无背景
+ *   - 选中态(当前页):20sp,容器 56×28dp(4 个学科)/ 40×21dp(推荐),
+ *     文字背景图(62×47dp,横向放置)
  *
- * 元素定位(BoxScope 相对定位,与设计稿 412×917 对应,safe-area 869dp):
- *   - 顶部行:绝对 offset(X=20, Y=41~95),与其他页一致
- *   - 中心播放:align(Center)+offset 微调
- *   - 右侧操作列:align(CenterEnd)+offset,Box 内部按设计稿坐标转相对定位
- *   - 用户名/标题/进度:align(BottomStart)+offset(y=-X)— 让出底部 85dp 给独立导航条
+ * 行为:
+ *   - 5 个页面(推荐/艺术/科学/数学/语文)布局与内容完全相同
+ *   - 区别仅在 [selectedCategory] 参数:哪个 Tab 高亮
+ *   - "推荐" Tab 默认即选中态(主入口页)
+ *   - 4 个学科 Tab 互相跳转;"推荐" 回到主入口
  *
- * 5 个 Tab / 选中态 / 默认态 / 搜索 等行为不变,见 [CategoryTab]。
- *
- * @param selectedCategory   当前页所属 Tab 名称("推荐" / "艺术" / "科学" / "数学" / "语文")
  * @param onBack             左上角返回 / 系统返回键回调
- * @param onOpenArt          顶部"艺术" Tab 点击回调
- * @param onOpenScience      顶部"科学" Tab 点击回调
- * @param onOpenMath         顶部"数学" Tab 点击回调
- * @param onOpenChinese      顶部"语文" Tab 点击回调
- * @param onOpenRecommend    顶部"推荐" Tab 点击回调
+ * @param onOpenComment      点击"评论"图标 — 跳转至演武场视频评论1页
+ * @param onOpenMy           点击底部导航栏"我的"图标 — 跳转至演武场视频"我的"页
+ *
+ * 注意:5 个 Tab 共享同一个 Composable 实例,Tab 切换通过内部状态完成,
+ *      不调用 NavController.navigate,避免页面重建和明显的切换动画。
+ *      这也意味着 isLiked/isFavorited 等状态在 Tab 切换时不会丢失。
  */
 @Composable
 fun YanwuchangVideoScreen(
-    selectedCategory: String = "推荐",
-    onBack:          () -> Unit = {},
-    onOpenArt:       () -> Unit = {},
-    onOpenScience:   () -> Unit = {},
-    onOpenMath:      () -> Unit = {},
-    onOpenChinese:   () -> Unit = {},
-    onOpenRecommend: () -> Unit = {},
+    onBack: () -> Unit = {},
+    onOpenComment: () -> Unit = {},
+    onOpenMy: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到演武场首页)
     BackHandler(enabled = true) {
         onBack()
     }
 
-    // 点赞状态(参考 cai 分支:false = 空心, true = 实心 + 计数 +1)
-    var isLiked by remember { mutableStateOf(false) }
-    var likeCount by remember { mutableStateOf(500) }
+    // 顶部 5 个 Tab 的选中状态 — 在 Composable 内部维护,避免 Tab 切换时重建页面
+    //   可选值:"推荐" / "艺术" / "科学" / "数学" / "语文",默认 "推荐"
+    var selectedCategory by rememberSaveable { mutableStateOf("推荐") }
 
-    // 收藏状态(参考 cai 分支:false = 仅空心星, true = 中心叠加 Vector 600 标记 + 计数 +1)
-    var isFavorited by remember { mutableStateOf(false) }
-    var favoriteCount by remember { mutableStateOf(500) }
+    // 点赞状态:false = 空心(原 img_yanwuchang_video_like),true = 实心(ic_like_filled)
+    // 计数:点赞后 +1(500 → 501)
+    var isLiked by rememberSaveable { mutableStateOf(false) }
+    var likeCount by rememberSaveable { mutableIntStateOf(500) }
+
+    // 收藏状态:false = 仅空心星,true = 空心星 + Vector 600 中心叠加(视觉实心)
+    // 计数:收藏后 +1(500 → 501)
+    var isFavorited by rememberSaveable { mutableStateOf(false) }
+    var favoriteCount by rememberSaveable { mutableIntStateOf(500) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // ===== Tier 1: 全屏背景图(image 24.png, 412×917, 圆角 5dp)=====
+        // 全屏背景图(image 24.png, 412×917, 圆角 5dp)
         Image(
             painter = painterResource(R.drawable.img_yanwuchang_video_bg),
             contentDescription = null,
@@ -105,15 +99,15 @@ fun YanwuchangVideoScreen(
             contentScale = ContentScale.Crop,
         )
 
-        // ===== Tier 2: 内容层(避开系统导航条)=====
-        Box(
+        // 内容层(避开系统导航条)
+        ResponsiveDesignCanvas(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // ----- 左上角返回按钮(32×32dp 容器,内含 24×24dp 图标)-----
-            //   容器中心 Y=92(图标 24dp 居中:76+4=80 顶,80+24=104 底,中心 92)
-            //   5 个 Tab 与搜索图标横向中轴线对齐 Y=92
+            // ===== 左上角返回按钮(32×32dp 容器,内含 24×24dp 图标) =====
+            //   - 容器中心 Y=92(图标 24dp 居中:76+4=80 顶,80+24=104 底,中心 92)
+            //   - 5 个 Tab 与搜索图标横向中轴线对齐 Y=92(详见下方 CategoryTab 注释)
             Box(
                 modifier = Modifier
                     .offset(x = 20.dp, y = 76.dp)
@@ -129,45 +123,59 @@ fun YanwuchangVideoScreen(
                 )
             }
 
-            // ----- 顶部 5 个 Tab(均与返回键同一行 / 横向中轴 Y=92)-----
+            // ===== 顶部 5 个 Tab(均与返回键同一行 / 横向中轴 Y=92) =====
+            // 位置布局(以设计稿 412 宽为基准):
+            //   - "艺术"   X= 69
+            //   - "科学"   X=134
+            //   - "数学"   X=199
+            //   - "语文"   X=264
+            //   - "推荐"   X=329  (29dp 宽,右沿 358;56dp 宽右沿 385,距搜索 X=383 留 2dp 间距)
+            //   - 搜索图标 X=383
+            // 选中态 4 个学科 + "推荐" Tab 背景位置:背景宽 62 vs 文字容器宽 56,
+            // 左右各 (62-56)/2 = 3dp 内边距,所有 Tab 文字容器尺寸统一为 56×28dp
+            // 以保证 20sp 文字完整显示并在背景图内垂直居中
+
             // "艺术" Tab
             CategoryTab(
-                text         = "艺术",
-                x            = 69.dp,
-                isSelected   = selectedCategory == "艺术",
-                onClick      = onOpenArt,
+                text       = "艺术",
+                x          = 69.dp,
+                isSelected = selectedCategory == "艺术",
+                onClick    = { selectedCategory = "艺术" },
             )
             // "科学" Tab
             CategoryTab(
-                text         = "科学",
-                x            = 134.dp,
-                isSelected   = selectedCategory == "科学",
-                onClick      = onOpenScience,
+                text       = "科学",
+                x          = 134.dp,
+                isSelected = selectedCategory == "科学",
+                onClick    = { selectedCategory = "科学" },
             )
             // "数学" Tab
             CategoryTab(
-                text         = "数学",
-                x            = 199.dp,
-                isSelected   = selectedCategory == "数学",
-                onClick      = onOpenMath,
+                text       = "数学",
+                x          = 199.dp,
+                isSelected = selectedCategory == "数学",
+                onClick    = { selectedCategory = "数学" },
             )
             // "语文" Tab
             CategoryTab(
-                text         = "语文",
-                x            = 264.dp,
-                isSelected   = selectedCategory == "语文",
-                onClick      = onOpenChinese,
+                text       = "语文",
+                x          = 264.dp,
+                isSelected = selectedCategory == "语文",
+                onClick    = { selectedCategory = "语文" },
             )
-            // "推荐" Tab — 与 4 个学科 Tab 共用同一渲染逻辑
+            // "推荐" Tab — 与 4 个学科 Tab 共用同一渲染逻辑(默认态 / 选中态)
+            //   - 选中态:文字 56×28dp, 20sp,带 62×47dp 背景
+            //   - 默认态:文字 29×21, 14sp,无背景
+            //   - X=322:让背景图(宽 62)右沿 381 与搜索图标(383)留 2dp 间距
             CategoryTab(
-                text         = "推荐",
-                x            = 329.dp,
-                isSelected   = selectedCategory == "推荐",
-                onClick      = onOpenRecommend,
-                isRecommend  = true,
+                text        = "推荐",
+                x           = 322.dp,
+                isSelected  = selectedCategory == "推荐",
+                onClick     = { selectedCategory = "推荐" },
+                isRecommend = true,
             )
 
-            // ----- 搜索图标(19×19dp, Y=83 让 19dp 容器中心 Y=92.5)-----
+            // 搜索图标(19×19dp, Y=83 让 19dp 容器中心 Y=92.5,与返回键图标中心 Y=92 对齐)
             Image(
                 painter = painterResource(R.drawable.ic_yanwuchang_video_search),
                 contentDescription = "搜索",
@@ -178,310 +186,15 @@ fun YanwuchangVideoScreen(
                 colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
             )
 
-            // ===== 视频内容(5 个页面完全相同)=====
-            // ----- 中心装饰圆 + 播放按钮(相对屏幕中心)-----
-            //   原 (X=163, Y=395, 84×84),中心 (205, 437)
-            //   safe-area 中心 (206, 434.5),偏移 (-1, +2.5)
-            Image(
-                painter = painterResource(R.drawable.ellipse_30),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(x = -1.dp, y = 2.5.dp)
-                    .size(width = 84.dp, height = 84.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color(0xFFD9D9D9), BlendMode.SrcIn),
-                alpha = 0.54f,
-            )
-            //   原 (X=181, Y=412, 51×49),中心 (206.5, 436.5)
-            //   偏移 (+0.5, +2)
-            Image(
-                painter = painterResource(R.drawable.polygon_3),
-                contentDescription = "播放",
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(x = 0.5.dp, y = 2.dp)
-                    .size(width = 51.dp, height = 49.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color(0xFFF6F6F6), BlendMode.SrcIn),
-                alpha = 1f,
-            )
-
-            // ----- 右侧操作列(头像 + 点赞/评论/收藏/分享 + 嘴部装饰)— 相对 safe-area 中心 -----
-            //   原设计稿(412×917, Y=444~761,整体上挪 80dp 让出底部 85dp 导航条)
-            //   Box 总高 317,中心 Y=522.5;safe-area 中心 434.5,纵向偏移 +88
-            //   X:列最右 X=407(parentW=412 - 5),Box 宽 40,左沿 367
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .offset(x = -5.dp, y = 88.dp)
-                    .size(width = 40.dp, height = 317.dp),
-            ) {
-                // 头像(原 X=367, Y=444, 40×40)— Box 内 (0, 0)
-                Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_avatar),
-                    contentDescription = "头像",
-                    modifier = Modifier
-                        .offset(x = 0.dp, y = 0.dp)
-                        .size(width = 40.dp, height = 40.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFF6B1B1), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 嘴部装饰线 Vector 593(原中心 379,456)— Box 内 (10.5, 8)
-                Image(
-                    painter = painterResource(R.drawable.vector_593),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = 10.5.dp, y = 8.dp)
-                        .size(width = 3.dp, height = 8.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 嘴部装饰线 Vector 594(原中心 395,454)— Box 内 (26.5, 5)
-                Image(
-                    painter = painterResource(R.drawable.vector_594),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = 26.5.dp, y = 5.dp)
-                        .size(width = 3.dp, height = 10.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 嘴部装饰线 Vector 595(原 X=382, Y=471)— Box 内 (15, 27)
-                Image(
-                    painter = painterResource(R.drawable.vector_595),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = 15.dp, y = 27.dp)
-                        .size(width = 16.dp, height = 5.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 点赞图标(原 X=374, Y=500, 30×28)— Box 内 (7, 56)
-                //   空心 = ic_like_outline;已点赞 = ic_like_filled;点击切换状态,计数 +1 / -1
-                Image(
-                    painter = painterResource(
-                        if (isLiked) R.drawable.ic_like_filled
-                        else R.drawable.ic_like_outline
-                    ),
-                    contentDescription = if (isLiked) "已点赞" else "点赞",
-                    modifier = Modifier
-                        .offset(x = 7.dp, y = 56.dp)
-                        .size(width = 30.dp, height = 28.dp)
-                        .clickable {
-                            isLiked = !isLiked
-                            likeCount += if (isLiked) 1 else -1
-                        },
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 点赞 — 已点赞(实心)时,在图标周围显示 4 根装饰线
-                //   容器 6×7.98dp,corner radius 3(原 PNG 预渲染)
-                //   填充 #EEC4B9,不透明度 100%,各自带旋转角度
-                //   Box 相对坐标(由 cai 绝对坐标 (368,505)/(376,497)/(394,497)/(401,506)
-                //     减去图标中心 (389, 514) + 我们的图标中心 (22, 70))
-                if (isLiked) {
-                    Image(
-                        painter = painterResource(R.drawable.rectangle_199),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 1.dp, y = 61.dp)
-                            .size(width = 6.dp, height = 7.98.dp)
-                            .rotate(-49.73f),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.rectangle_200),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 9.dp, y = 53.dp)
-                            .size(width = 6.dp, height = 7.98.dp)
-                            .rotate(-32.48f),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.rectangle_201),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 27.dp, y = 53.dp)
-                            .size(width = 6.dp, height = 7.98.dp)
-                            .rotate(-35.96f),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.rectangle_202),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 34.dp, y = 62.dp)
-                            .size(width = 6.dp, height = 7.98.dp)
-                            .rotate(-69.34f),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-                }
-                // 点赞数(原 X=378, Y=532, 22×16)— Box 内 (11, 88)
-                //   Compose Text 驱动(初值 500,点赞后 501),数字变化零缩放
-                Text(
-                    text  = likeCount.toString(),
-                    color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-                    modifier = Modifier
-                        .offset(x = 11.dp, y = 88.dp)
-                        .size(width = 22.dp, height = 16.dp),
-                )
-                // 评论图标(原 X=374, Y=571, 31×31)— Box 内 (7, 127)
-                Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_comment),
-                    contentDescription = "评论",
-                    modifier = Modifier
-                        .offset(x = 7.dp, y = 127.dp)
-                        .size(width = 31.dp, height = 31.dp),
-                    contentScale = ContentScale.Fit,
-                    alpha = 1f,
-                )
-                // 评论数(原 X=378, Y=603, 22×16)— Box 内 (11, 159)
-                Image(
-                    painter = painterResource(R.drawable.text_500),
-                    contentDescription = "评论数",
-                    modifier = Modifier
-                        .offset(x = 11.dp, y = 159.dp)
-                        .size(width = 22.dp, height = 16.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 收藏图标(原 X=372, Y=640, 34×34)— Box 内 (5, 196)
-                //   点击切换状态,已收藏时计数 +1(500 → 501)
-                Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_favorite),
-                    contentDescription = if (isFavorited) "已收藏" else "收藏",
-                    modifier = Modifier
-                        .offset(x = 5.dp, y = 196.dp)
-                        .size(width = 34.dp, height = 34.dp)
-                        .clickable {
-                            isFavorited = !isFavorited
-                            favoriteCount += if (isFavorited) 1 else -1
-                        },
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 收藏 — 已收藏时,Vector 600 标记叠加在图标中心(16×15dp)— Box 内 (14, 205.5)
-                //   收藏图标在 Box 内 (5, 196) size 34×34,中心 (22, 213)
-                //   叠加层 size 16×15,中心对齐图标中心 → top-left (14, 205.5)
-                if (isFavorited) {
-                    Image(
-                        painter = painterResource(R.drawable.vector_600),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .offset(x = 14.dp, y = 205.5.dp)
-                            .size(width = 16.dp, height = 15.dp),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
-                        alpha = 1f,
-                    )
-                }
-                // 收藏数(原 X=378, Y=674, 22×16)— Box 内 (11, 230)
-                //   Compose Text 驱动(初值 500,收藏后 501),数字变化零缩放
-                Text(
-                    text  = favoriteCount.toString(),
-                    color = Color.White,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-                    modifier = Modifier
-                        .offset(x = 11.dp, y = 230.dp)
-                        .size(width = 22.dp, height = 16.dp),
-                )
-                // 分享图标(原 X=374, Y=713, 32×28)— Box 内 (7, 269)
-                Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_share),
-                    contentDescription = "分享",
-                    modifier = Modifier
-                        .offset(x = 7.dp, y = 269.dp)
-                        .size(width = 32.dp, height = 28.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFF7FA889), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-                // 分享数(原 X=378, Y=745, 22×16)— Box 内 (11, 301)
-                Image(
-                    painter = painterResource(R.drawable.text_500),
-                    contentDescription = "分享数",
-                    modifier = Modifier
-                        .offset(x = 11.dp, y = 301.dp)
-                        .size(width = 22.dp, height = 16.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
-                    alpha = 1f,
-                )
-            }
-
-            // ----- 用户名 / 视频标题(相对 safe-area 底部,上挪 80dp 让出底部条)-----
-            //   原 (X=17, Y=745, 97×32) → Y=665, 底沿 697,距 safe-area 底(869)172dp
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_username),
-                contentDescription = "用户名",
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = 17.dp, y = -172.dp)
-                    .size(width = 97.dp, height = 32.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
-                alpha = 1f,
-            )
-            //   原 (X=22, Y=788, 160×21) → Y=708, 底沿 729,距 safe-area 底 140dp
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_video_title),
-                contentDescription = "视频标题",
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = 22.dp, y = -140.dp)
-                    .size(width = 160.dp, height = 21.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color(0xFFD0D0D0), BlendMode.SrcIn),
-                alpha = 1f,
-            )
-            // ----- 视频进度条(相对 safe-area 底部)-----
-            //   原 (X=20, Y=818, 372×8) → Y=738, 底沿 746,距 safe-area 底 123dp
-            Image(
-                painter = painterResource(R.drawable.group_177),
-                contentDescription = "视频进度",
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = 20.dp, y = -123.dp)
-                    .size(width = 372.dp, height = 8.dp),
-                contentScale = ContentScale.Fit,
-            )
-        }
-
-        // ===== Tier 3: 底部独立导航条(作品 + 我的)— 不在 safe-area 内,独立绘制 =====
-        //   Modifier.align(Alignment.BottomCenter) 吸在外层 Box 底部
-        //   .fillMaxWidth() 宽度跟随屏幕(原硬编码 412dp,改为响应式)
-        //   .wrapContentHeight() 高度由内容决定(85dp 渐变背景)
-        //   .navigationBarsPadding() 底部加 nav bar 高度 padding,让"作品/我的"内容浮在系统导航条上方
+        // ===== 底部导航栏(412×85dp,竖向渐变 #8A9E7E → #81A879)=====
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .navigationBarsPadding(),
+                .size(width = 412.dp, height = 85.dp),
         ) {
-            // 渐变背景(竖向 #8A9E7E → #81A879,固定 85dp 高)
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(85.dp)
+                    .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
@@ -490,27 +203,35 @@ fun YanwuchangVideoScreen(
                             ),
                         ),
                     ),
+            )
+            // "作品"按钮
+            Image(
+                painter = painterResource(R.drawable.img_yanwuchang_video_works),
+                contentDescription = "作品",
+                modifier = Modifier
+                    .offset(x = 90.dp, y = 0.dp)
+                    .size(width = 58.93.dp, height = 54.49.dp),
+                contentScale = ContentScale.Fit,
+            )
+            // "我的"按钮(爪子图标 + 文字),点击进入演武场视频"我的"页
+            //   容器位置 (296, 8), 28×52dp 命中范围
+            //   内部用 Box 局部坐标系 — 图标 (0, 0) 27×26,文字 (0, 26) 28×18
+            Box(
+                modifier = Modifier
+                    .offset(x = 296.dp, y = 8.dp)
+                    .size(width = 28.dp, height = 44.dp)
+                    .clickable(onClick = onOpenMy),
             ) {
-                // "作品"按钮(X=90, Y=0, 58.93×54.49)
+                // "我的"图标(爪子)
                 Image(
-                    painter = painterResource(R.drawable.img_yanwuchang_video_works),
-                    contentDescription = "作品",
-                    modifier = Modifier
-                        .offset(x = 90.dp, y = 0.dp)
-                        .size(width = 58.93.dp, height = 54.49.dp),
-                    contentScale = ContentScale.Fit,
-                )
-                // "我的"图标(X=296, Y=8, 27×26)
-                Image(
-                    painter = painterResource(R.drawable.ic_yanwuchang_video_people),
+                    painter = painterResource(R.drawable.ic_yanwuchang_video_me_paw),
                     contentDescription = "我的",
                     modifier = Modifier
-                        .offset(x = 296.dp, y = 8.dp)
                         .size(width = 27.dp, height = 26.dp),
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
                 )
-                // "我的"文字(X=296, Y=34, 28×18, 14sp White)
+                // "我的"文字
                 Text(
                     text  = "我的",
                     color = Color.White,
@@ -519,10 +240,278 @@ fun YanwuchangVideoScreen(
                         fontSize   = 14.sp,
                     ),
                     modifier = Modifier
-                        .offset(x = 296.dp, y = 34.dp)
+                        .offset(y = 26.dp)
                         .size(width = 28.dp, height = 18.dp),
                 )
             }
+        }
+
+        // ===== 视频内容(5 个页面完全相同)=====
+        // 用户名 / 标题
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_username),
+            contentDescription = "用户名",
+            modifier = Modifier
+                .offset(x = 17.dp, y = 745.dp)
+                .size(width = 97.dp, height = 32.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_title),
+            contentDescription = "视频标题",
+            modifier = Modifier
+                .offset(x = 22.dp, y = 788.dp)
+                .size(width = 160.dp, height = 21.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFD0D0D0), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 头像
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_avatar),
+            contentDescription = "头像",
+            modifier = Modifier
+                .offset(x = 367.dp, y = 444.dp)
+                .size(width = 40.dp, height = 40.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFF6B1B1), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 头像嘴部装饰线 — Vector 593 / 594 / 595
+        //   中心点按 Figma 坐标直接放置(以设计稿 412dp 宽为基准)
+        //   尺寸取 PNG 原生像素(dp);填充白色 #FFFFFF,不透明度 100%
+        //   Vector 595 横向放置
+        // Vector 593: 中心 (379, 456), 原生 3×8dp
+        Image(
+            painter = painterResource(R.drawable.vector_593),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = (379 - 3 / 2).dp, y = (456 - 8 / 2).dp)
+                .size(width = 3.dp, height = 8.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // Vector 594: 中心 (395, 454), 原生 3×10dp
+        Image(
+            painter = painterResource(R.drawable.vector_594),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = (395 - 3 / 2).dp, y = (454 - 10 / 2).dp)
+                .size(width = 3.dp, height = 10.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // Vector 595: 位置 (382, 471), 原生 16×5dp,横向放置
+        //   注:X:382, Y:471 表示线条左上角定位(非中心点)
+        Image(
+            painter = painterResource(R.drawable.vector_595),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 382.dp, y = 471.dp)
+                .size(width = 16.dp, height = 5.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 点赞 — 点击切换空心/实心,数字同步 +1/-1
+        //   容器固定 30×28dp;空心和实心都使用 ColorFilter.tint(#81A084) 保持视觉一致
+        //   实心时整体 100% 不透明,填充色统一为 #81A084
+        Image(
+            painter = painterResource(
+                if (isLiked) R.drawable.ic_like_filled
+                else R.drawable.ic_like_outline
+            ),
+            contentDescription = if (isLiked) "已点赞" else "点赞",
+            modifier = Modifier
+                .offset(x = 374.dp, y = 500.dp)
+                .size(width = 30.dp, height = 28.dp)
+                .clickable {
+                    isLiked = !isLiked
+                    likeCount += if (isLiked) 1 else -1
+                },
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 点赞 — 已点赞(实心)时,在图标周围显示 4 根装饰线
+        //   容器 6×7.98dp,corner radius 3(原 PNG 预渲染)
+        //   填充 #EEC4B9,不透明度 100%,各自带旋转角度
+        if (isLiked) {
+            // Rectangle 199: 位置 (368, 505),旋转 -49.73°
+            Image(
+                painter = painterResource(R.drawable.rectangle_199),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 368.dp, y = 505.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
+                    .rotate(-49.73f),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+            // Rectangle 200: 位置 (376, 497),旋转 -32.48°
+            Image(
+                painter = painterResource(R.drawable.rectangle_200),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 376.dp, y = 497.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
+                    .rotate(-32.48f),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+            // Rectangle 201: 位置 (394, 497),旋转 -35.96°
+            Image(
+                painter = painterResource(R.drawable.rectangle_201),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 394.dp, y = 497.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
+                    .rotate(-35.96f),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+            // Rectangle 202: 位置 (401, 506),旋转 -69.34°
+            Image(
+                painter = painterResource(R.drawable.rectangle_202),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 401.dp, y = 506.dp)
+                    .size(width = 6.dp, height = 7.98.dp)
+                    .rotate(-69.34f),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFFEEC4B9), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+        }
+        // 点赞 — 数字 (500 / 501, 22×16dp 容器, 12sp 白色, 不透明度 100%)
+        //   使用 Compose Text 而非 PNG,字号/位置/尺寸完全由 style 决定,数字变化时零缩放
+        Text(
+            text  = likeCount.toString(),
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier
+                .offset(x = 378.dp, y = 532.dp)
+                .size(width = 22.dp, height = 16.dp),
+        )
+        // 小爱心 + 数字 已移除(避免与主点赞按钮重复)
+        // 评论 — 点击跳转到演武场视频评论1页
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_comment),
+            contentDescription = "评论",
+            modifier = Modifier
+                .offset(x = 374.dp, y = 571.dp)
+                .size(width = 31.dp, height = 31.dp)
+                .clickable(onClick = onOpenComment),
+            contentScale = ContentScale.Fit,
+            alpha = 1f,
+        )
+        // 评论 — 数字 "500" (Text 渲染, 12sp 白色, 22×16dp 容器, 不透明度 100%)
+        Text(
+            text  = "500",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier
+                .offset(x = 378.dp, y = 603.dp)
+                .size(width = 22.dp, height = 16.dp),
+        )
+        // 收藏 — 点击在图标中央叠加 Vector 600 标记,数字同步 +1/-1
+        //   容器固定 34×34dp;始终显示空心星 img_yanwuchang_video_favorite(#81A084)
+        //   已收藏时,在星图标中心(381, 649.5)叠加 Vector 600(16×15dp)使其视觉上"实心"
+        //   不透明度 100%,填充色统一 #81A084
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_favorite),
+            contentDescription = if (isFavorited) "已收藏" else "收藏",
+            modifier = Modifier
+                .offset(x = 372.dp, y = 640.dp)
+                .size(width = 34.dp, height = 34.dp)
+                .clickable {
+                    isFavorited = !isFavorited
+                    favoriteCount += if (isFavorited) 1 else -1
+                },
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 收藏 — 已收藏时,Vector 600 标记叠加在图标中心(16×15dp,容器内居中)
+        if (isFavorited) {
+            Image(
+                painter = painterResource(R.drawable.vector_600),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 381.dp, y = 649.5.dp)
+                    .size(width = 16.dp, height = 15.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color(0xFF81A084), BlendMode.SrcIn),
+                alpha = 1f,
+            )
+        }
+        // 收藏 — 数字 (500 / 501, 22×16dp 容器, 12sp 白色, 不透明度 100%)
+        //   使用 Compose Text 而非 PNG,字号/位置/尺寸完全由 style 决定,数字变化时零缩放
+        Text(
+            text  = favoriteCount.toString(),
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier
+                .offset(x = 378.dp, y = 674.dp)
+                .size(width = 22.dp, height = 16.dp),
+        )
+        // 分享
+        Image(
+            painter = painterResource(R.drawable.img_yanwuchang_video_share),
+            contentDescription = "分享",
+            modifier = Modifier
+                .offset(x = 374.dp, y = 713.dp)
+                .size(width = 32.dp, height = 28.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFF7FA889), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 分享 — 数字 "500" (Text 渲染, 12sp 白色, 22×16dp 容器, 不透明度 100%)
+        Text(
+            text  = "500",
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+            modifier = Modifier
+                .offset(x = 378.dp, y = 745.dp)
+                .size(width = 22.dp, height = 16.dp),
+        )
+        // 中心装饰圆形 + 播放按钮
+        Image(
+            painter = painterResource(R.drawable.ellipse_30),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 163.dp, y = 395.dp)
+                .size(width = 84.dp, height = 84.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFD9D9D9), BlendMode.SrcIn),
+            alpha = 0.54f,
+        )
+        Image(
+            painter = painterResource(R.drawable.polygon_3),
+            contentDescription = "播放",
+            modifier = Modifier
+                .offset(x = 181.dp, y = 412.dp)
+                .size(width = 51.dp, height = 49.dp),
+            contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(Color(0xFFF6F6F6), BlendMode.SrcIn),
+            alpha = 1f,
+        )
+        // 视频进度条
+        Image(
+            painter = painterResource(R.drawable.group_177),
+            contentDescription = "视频进度",
+            modifier = Modifier
+                .offset(x = 20.dp, y = 818.dp)
+                .size(width = 372.dp, height = 8.dp),
+            contentScale = ContentScale.Fit,
+        )
         }
     }
 }
@@ -530,18 +519,23 @@ fun YanwuchangVideoScreen(
 /**
  * 顶部 Tab — 4 个学科 + "推荐" 共用此渲染逻辑
  *
+ * 布局统一以中轴 Y=92dp 为锚点(与左上角返回键、搜索图标同一行)
+ *
  * 选中态(当前页):
- *   - 4 个学科:20sp / 56×28dp,背景 62×47dp
- *   - "推荐"  :20sp / 40×21dp,背景 62×47dp(用户要求文字完全包含在图标内)
+ *   - 4 个学科 + "推荐":20sp / 56×28dp 文字容器,垂直居中于 62×47dp 背景图
+ *   - 背景图 62×47dp,Y=68.5 (中心 92),完全包住 56×28dp 文字
+ *   - 文字 Y=78 (中心 92),在背景图内垂直居中
+ *   - "推荐" 文字容器宽度同样 56dp(与其他学科一致),保证 20sp 完整显示
  *
  * 默认态:
- *   - 4 个学科 + "推荐":14sp / 29×21dp,无背景
+ *   - 4 个学科 + "推荐":14sp / 29×21dp 文字容器,Y=81.5 (中心 92)
+ *   - 无背景
  *
  * @param text         Tab 文字
  * @param x            Tab 文字容器左边缘 X 坐标
  * @param isSelected   是否为当前选中页
  * @param onClick      点击切换回调
- * @param isRecommend  是否是"推荐" Tab(决定选中态容器尺寸:40×21 vs 56×28)
+ * @param isRecommend  是否是"推荐" Tab(目前仅影响默认态/选中态的视觉差异,尺寸统一)
  */
 @Composable
 private fun CategoryTab(
@@ -553,51 +547,39 @@ private fun CategoryTab(
 ) {
     if (isSelected) {
         // 选中态:文字背景 `img_yanwuchang_video_recommend_bg.png` 横向放置 62×47dp
-        //   - 背景中心对齐文字中心;背景宽 62
-        //   - 4 个学科:文字宽 56,左右各 (62-56)/2 = 3dp 内边距,偏移 = x - 3
-        //   - "推荐"  :文字宽 40,左右各 (62-40)/2 = 11dp 内边距,偏移 = x - 11
-        val padX = if (isRecommend) 11.dp else 3.dp
+        //   - 背景中心 Y=92,Y_top=68.5,Y_bottom=115.5
+        //   - 文字宽 56,左侧内边距 6dp(背景向左偏 3dp,呈现"背景图包围文字"且整体略偏左的视觉效果)
+        //   - 右侧内边距 (62-56)-6 = 0dp
+        val padX = 6.dp
         Image(
             painter = painterResource(R.drawable.img_yanwuchang_video_recommend_bg),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = x - padX, y = 56.dp)
+                .offset(x = x - padX, y = 68.5.dp)
                 .size(width = 62.dp, height = 47.dp),
             contentScale = ContentScale.Fit,
             alpha = 0.7f,
         )
-        // 选中态文字:20sp
-        //   - 4 个学科:容器 56×28dp,Y=66(底沿 94 ≈ 返回键图标中心 92 + 2dp)
-        //   - "推荐"  :容器 40×21dp,Y=69(底沿 90,贴合背景底沿 56+47=103 内偏上,文字视觉居中于背景)
-        if (isRecommend) {
-            Text(
-                text  = text,
-                color = Color.White,
-                style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
-                modifier = Modifier
-                    .offset(x = x, y = 69.dp)
-                    .size(width = 40.dp, height = 21.dp)
-                    .clickable(onClick = onClick),
-            )
-        } else {
-            Text(
-                text  = text,
-                color = Color.White,
-                style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
-                modifier = Modifier
-                    .offset(x = x, y = 66.dp)
-                    .size(width = 56.dp, height = 28.dp)
-                    .clickable(onClick = onClick),
-            )
-        }
+        // 选中态文字:20sp,容器 56×28dp
+        //   - 文字垂直居中于背景图(背景中心 Y=92,文字高 28,Y_top=78)
+        //   - 5 个 Tab 文字容器尺寸完全一致,确保"推荐" 20sp 文字完整显示
+        Text(
+            text  = text,
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
+            modifier = Modifier
+                .offset(x = x, y = 78.dp)
+                .size(width = 56.dp, height = 28.dp)
+                .clickable(onClick = onClick),
+        )
     } else {
-        // 默认态:14sp,容器 29×21dp,Y=74(容器底沿 Y=95 ≈ 返回键图标中心 92 + 3dp,视觉对齐)
+        // 默认态:14sp,容器 29×21dp,Y=81.5(容器中心 Y=92,与返回键/搜索键同中轴)
         Text(
             text  = text,
             color = Color.White,
             style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
             modifier = Modifier
-                .offset(x = x, y = 74.dp)
+                .offset(x = x, y = 81.5.dp)
                 .size(width = 29.dp, height = 21.dp)
                 .clickable(onClick = onClick),
         )

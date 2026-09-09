@@ -33,7 +33,13 @@ class ObjectStore(Protocol):
 
     def read_quarantine(self, object_key: str) -> bytes: ...
 
+    def write_quarantine(
+        self, object_key: str, data: bytes, *, content_type: str
+    ) -> None: ...
+
     def write_private(self, object_key: str, data: bytes, *, content_type: str) -> None: ...
+
+    def read_private(self, object_key: str) -> bytes: ...
 
     def presign_private_download(self, object_key: str, *, expires: timedelta) -> str: ...
 
@@ -74,8 +80,19 @@ class InMemoryObjectStore:
         except KeyError as exc:
             raise ObjectNotFoundError(object_key) from exc
 
+    def write_quarantine(
+        self, object_key: str, data: bytes, *, content_type: str
+    ) -> None:
+        self.quarantine[object_key] = (data, content_type)
+
     def write_private(self, object_key: str, data: bytes, *, content_type: str) -> None:
         self.private[object_key] = (data, content_type)
+
+    def read_private(self, object_key: str) -> bytes:
+        try:
+            return self.private[object_key][0]
+        except KeyError as exc:
+            raise ObjectNotFoundError(object_key) from exc
 
     def presign_private_download(self, object_key: str, *, expires: timedelta) -> str:
         if object_key not in self.private:
@@ -168,6 +185,17 @@ class MinioObjectStore:
                 response.close()
                 response.release_conn()
 
+    def write_quarantine(
+        self, object_key: str, data: bytes, *, content_type: str
+    ) -> None:
+        self.client.put_object(
+            self.quarantine_bucket,
+            object_key,
+            io.BytesIO(data),
+            len(data),
+            content_type=content_type,
+        )
+
     def write_private(self, object_key: str, data: bytes, *, content_type: str) -> None:
         self.client.put_object(
             self.private_bucket,
@@ -176,6 +204,22 @@ class MinioObjectStore:
             len(data),
             content_type=content_type,
         )
+
+    def read_private(self, object_key: str) -> bytes:
+        from minio.error import S3Error
+
+        response = None
+        try:
+            response = self.client.get_object(self.private_bucket, object_key)
+            return response.read()
+        except S3Error as exc:
+            if exc.code in {"NoSuchKey", "NoSuchObject", "NotFound"}:
+                raise ObjectNotFoundError(object_key) from exc
+            raise
+        finally:
+            if response is not None:
+                response.close()
+                response.release_conn()
 
     def presign_private_download(self, object_key: str, *, expires: timedelta) -> str:
         return self.signing_client.presigned_get_object(

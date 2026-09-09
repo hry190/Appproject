@@ -1,0 +1,16 @@
+{
+  "query": "AI 为什么会说错话",
+  "matches": [
+    {
+      "lesson_id": "00000000-0000-0000-0000-000000000001",
+      "volume_no": 1,
+      "volume_title": "识局",
+      "title": "为什么模型会说错话",
+      "state": "LEARNED",
+      "available": true,
+      "prerequisites": [],
+      "recommended_reason": "命中问题关键词，可直接复习并进入试炼",
+      "match_source": "catalog_keyword"
+    }
+  ]
+}

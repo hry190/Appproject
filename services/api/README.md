@@ -1,6 +1,6 @@
 # 机巧江湖 API
 
-当前已实现账户与设置基础能力，以及行囊阶段 1-5：用户资料、十卷五十页目录、收藏、版本化试炼、学习证据、秘籍进度、修炼统计、错题重练、作品不可变版本、学习卡、来源谱、隔离上传、媒体安全处理、缩略图、审核、申诉、撤回、隐私设置和真实行囊聚合。行囊聚合使用 30 秒 Redis 短缓存，领域事务提交后按用户精确失效；Redis 故障时自动回源 PostgreSQL。
+当前已实现账户与设置基础能力，以及行囊阶段 1-5：用户资料、十卷五十页目录、收藏、版本化试炼、学习证据、秘籍进度、修炼统计、错题重练、作品不可变版本、学习卡、来源谱、隔离上传、媒体安全处理、缩略图、审核、申诉、撤回、隐私设置、作品分发和大会社区互动。行囊聚合使用 30 秒 Redis 短缓存，领域事务提交后按用户精确失效；Redis 故障时自动回源 PostgreSQL。
 
 ## 本地运行
 
@@ -70,26 +70,48 @@
 - `GET /v1/profile/badges`
 - `GET /v1/manuals`
 - `GET /v1/manuals/{manual_page_id}`
+- `GET /v1/learning/overview`
+- `GET /v1/learning/route?q=`
+- `GET /v1/lessons/{lesson_id}` (与 manuals 详情兼容)
 - `PUT|DELETE /v1/manuals/{manual_page_id}/favorite`
 - `GET /v1/me/luggage`
 - `GET /v1/meta/capabilities`
 - `GET /v1/trials/{trial_id}`
 - `POST /v1/trials/{trial_id}/attempts`
+- `POST /v1/lessons/{lesson_id}/read-events`
+- `POST /v1/lessons/{lesson_id}/migration-evidence`
+- `POST /v1/lessons/{lesson_id}/teaching-evidence`
+- `POST /v1/internal/learning/evidence/{evidence_id}/approve`
 - `GET /v1/me/learning-stats`
 - `GET /v1/manuals/{manual_page_id}/evidence`
 - `GET /v1/manuals/{manual_page_id}/learning-history`
 - `GET /v1/mistakes`
 - `GET /v1/mistakes/{mistake_id}`
 - `POST /v1/mistakes/{mistake_id}/retry-sessions`
+- `POST /v1/creation-intents:analyze`
 - `POST /v1/creation-projects`
 - `GET /v1/me/creation-projects`
 - `GET|PATCH /v1/creation-projects/{project_id}`
 - `DELETE /v1/creation-projects/{project_id}`
 - `GET|POST /v1/creation-projects/{project_id}/versions`
+- `GET|POST /v1/creation-projects/{project_id}/image-generations`
+- `GET /v1/image-generation-jobs/{job_id}`
+- `POST /v1/image-generation-jobs/{job_id}/retry`
+- `GET|PUT /v1/creation-projects/{project_id}/method`
+- `POST /v1/creation-projects/{project_id}/stage-transitions`
+- `GET /v1/creation-projects/{project_id}/stage-events`
+- `GET|POST /v1/creation-projects/{project_id}/tool-calls`
+- `POST /v1/creation-tool-calls/{tool_call_id}/decision`
+- `GET|POST /v1/creation-projects/{project_id}/test-records`
+- `POST /v1/creation-test-issues/{issue_id}/resolve`
 - `GET /v1/creation-projects/{project_id}/change-logs`
 - `GET /v1/creation-versions/{version_id}`
+- `GET /v1/creation-versions/{version_id}/diff`
+- `GET|POST /v1/creation-versions/{version_id}/exports`
+- `GET /v1/creation-export-jobs/{job_id}`
 - `GET|PUT /v1/creation-versions/{version_id}/learning-card`
 - `GET|PUT /v1/creation-versions/{version_id}/provenance-manifest`
+- `GET|PUT /v1/creation-versions/{version_id}/seal-check`
 - `POST /v1/creation-projects/{project_id}/submissions`
 - `POST /v1/uploads/intents`
 - `POST /v1/uploads/{upload_id}/complete`
@@ -100,6 +122,36 @@
 - `POST /v1/moderation-cases/{case_id}/appeals`
 - `GET /v1/me/moderation-appeals`
 - `GET|PATCH /v1/me/privacy-settings`
+- `POST /v1/classrooms`
+- `POST /v1/classrooms:join`
+- `GET /v1/me/classrooms`
+- `GET /v1/me/publication-inbox`
+- `GET /v1/community/feed`
+- `GET /v1/conference/feed`
+- `GET /v1/conference/publications/{publication_id}`
+- `GET|POST /v1/conference/publications/{publication_id}/reviews`
+- `POST /v1/conference/reviews/{review_id}/decision`
+- `POST /v1/conference/reviews/{review_id}/adoption`
+- `PUT|DELETE /v1/conference/collections/{publication_id}`
+- `GET /v1/conference/me/collections`
+- `POST /v1/conference/derivative-requests`
+- `GET /v1/conference/me/derivative-requests`
+- `POST /v1/conference/derivative-requests/{request_id}/decision`
+- `POST /v1/conference/derivative-authorizations/{authorization_id}/revoke`
+- `GET|POST|DELETE /v1/conference/match-queue`
+- `GET /v1/conference/matches/{match_id}`
+- `POST /v1/conference/matches/{match_id}/answers`
+- `GET /v1/conference/matches/{match_id}/result`
+- `POST /v1/conference/matches/{match_id}/evaluations`
+- `POST /v1/conference/matches/{match_id}/reflections`
+- `POST /v1/conference/matches/{match_id}/reports`
+- `GET /v1/conference/letters`
+- `PUT /v1/conference/letters/{letter_id}/read`
+- `GET /v1/internal/conference/matches/pending-judgment`
+- `POST /v1/internal/conference/matches/{match_id}/judgment`
+- `POST /v1/internal/conference/matches/{match_id}/teacher-evaluations`
+- `GET /v1/internal/conference/match-reports`
+- `POST /v1/internal/conference/match-reports/{report_id}/decision`
 
 前端字段、成功响应、错误码和未满 14 周岁注册分支见
 [`docs/auth-integration.md`](docs/auth-integration.md)；设置页当前接入状态、字段和后续页面接入方式见
@@ -112,8 +164,15 @@
 [`docs/learning-mistakes-integration.md`](docs/learning-mistakes-integration.md)。
 作品版本、学习卡、来源谱和提交审核接入见
 [`docs/creation-provenance-integration.md`](docs/creation-provenance-integration.md)。
+创作意图、可编辑工法、五阶段流转与 Android 创作台接入见
+[`docs/creation-workflow-integration.md`](docs/creation-workflow-integration.md)。
 媒体、审核、申诉、隐私和部署接入见
 [`docs/media-moderation-privacy-integration.md`](docs/media-moderation-privacy-integration.md)。
 阶段 5 的缓存、失效、负载门禁和 Android 预留接入见
 [`docs/luggage-stage5-integration.md`](docs/luggage-stage5-integration.md) 与
 [`docs/android-luggage-integration.md`](docs/android-luggage-integration.md)。
+大会作品流、互动、改造授权和匿名切磋的接口预留见
+[`docs/conference-integration.md`](docs/conference-integration.md)，后端写入检查与上线优化建议见
+[`docs/conference-backend-review-report.md`](docs/conference-backend-review-report.md)。
+作品审核后的家长/班级分发、班级邀请码、作品收件箱与 Android 接入见
+[`docs/publication-distribution-integration.md`](docs/publication-distribution-integration.md)。
