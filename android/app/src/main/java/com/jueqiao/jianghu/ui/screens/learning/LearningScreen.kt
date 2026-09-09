@@ -26,6 +26,7 @@ import com.jueqiao.jianghu.R
  * 布局:
  *   - 全屏背景图(Android Compact - 109.png)
  *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)
+ *   - 中央竖向元素(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)
  */
 @Composable
 fun LearningScreen(
@@ -63,6 +64,21 @@ fun LearningScreen(
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
                     contentDescription = "返回",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
+
+            // 中央竖向元素(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = 124.dp)
+                    .size(width = 83.76.dp, height = 563.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_learning_group_281),
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
