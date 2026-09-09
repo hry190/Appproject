@@ -429,8 +429,10 @@ fun JianghuNavHost(
             Gunlun1Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
-                onOpenShilian = { navController.navigate(Routes.Shilian) },
-                onOpenHoushan = { navController.navigate(Routes.Houshan) },
+                // 滚轮1 的"修\n炼"按钮 → 学习1 页 (HoushanScreen)
+                onOpenLearning1 = { navController.navigate(Routes.Houshan) },
+                // 滚轮1 的"后\n山"按钮 → 后山1 页 (ShilianScreen, 原试炼1)
+                onOpenHoushan1 = { navController.navigate(Routes.Shilian) },
             )
         }
         composable(Routes.Gunlun2) {

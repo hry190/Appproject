@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.jueqiao.jianghu.R
 
 /**
- * 后山 页 — 滚轮1 → 点击"后山"按钮跳转目标。
+ * 学习1 页 — 滚轮1 → 点击"修炼"按钮跳转目标。
  *
  * 布局:
  *   - 全屏背景图(Android Compact - 109.png)

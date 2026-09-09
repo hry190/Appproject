@@ -1,4 +1,4 @@
-﻿package com.jueqiao.jianghu.ui.screens.shilian
+package com.jueqiao.jianghu.ui.screens.shilian
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -27,7 +27,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼页 — 滚轮1 → 点击"修炼"按钮跳转目标。
+ * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
  *
  * 布局:
  *   - 全屏背景图(试炼.png)

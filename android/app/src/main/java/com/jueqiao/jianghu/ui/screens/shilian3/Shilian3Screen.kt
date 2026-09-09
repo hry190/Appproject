@@ -26,7 +26,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼3 页 — 试炼2 页 → 点击"返回"按钮回到试炼2;点击标签2-4 之外的空白区域跳转未完待续页。
+ * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
  *
  * 布局:
  *   - 全屏背景图(试炼转换.png)

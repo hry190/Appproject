@@ -1,4 +1,4 @@
-﻿package com.jueqiao.jianghu.ui.screens.shilian2
+package com.jueqiao.jianghu.ui.screens.shilian2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -26,9 +26,9 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼2 页 — 试炼1 页 → 点击"气泡"跳转目标。
+ * 后山2 页 — 后山1 页 → 点击"气泡"跳转目标。
  *
- * 与试炼1 页的差异:
+ * 与后山1 页的差异:
  *   - 没有气泡 Rectangle156.png 及其文本
  * 复制自 ShilianScreen.kt,移除气泡。
  */

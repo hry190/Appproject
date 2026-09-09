@@ -33,18 +33,18 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun1Screen(
     onBack: () -> Unit = {},
     onOpenGunlun2: () -> Unit = {},
-    onOpenShilian: () -> Unit = {},
-    onOpenHoushan: () -> Unit = {},
+    onOpenLearning1: () -> Unit = {},
+    onOpenHoushan1: () -> Unit = {},
 ) {
     // 熊猫在滚轮1 不可点击(叶子页),不传 onPandaClick
     StandardGunlunScaffold(onBack = onBack) {
-        // 未标题-1 50.png — "后山"按钮(背景图像 + 文字,点击跳转到后山页)
+        // 未标题-1 50.png — "后山"按钮(背景图像 + 文字,点击跳转到后山1页 = ShilianScreen)
         //   (X=247, Y=165, W=55, H≈117.12 按 PNG 比例 85x181 算出)
         Box(
             modifier = Modifier
                 .offset(x = 247.dp, y = 165.dp)
                 .size(width = 55.dp, height = 117.12.dp)
-                .clickable(onClick = onOpenHoushan),
+                .clickable(onClick = onOpenHoushan1),
         ) {
             Image(
                 painter = painterResource(R.drawable.img_gunlun1_untitled_1_50),
@@ -98,13 +98,13 @@ fun Gunlun1Screen(
             )
         }
 
-        // 未标题-150.png — "修炼"按钮(背景图像 + 文字,点击跳转到试炼页)
+        // 未标题-150.png — "修炼"按钮(背景图像 + 文字,点击跳转到学习1页 = HoushanScreen)
         //   (X=35, Y=548, W=55, H=117)
         Box(
             modifier = Modifier
                 .offset(x = 35.dp, y = 548.dp)
                 .size(width = 55.dp, height = 117.dp)
-                .clickable(onClick = onOpenShilian),
+                .clickable(onClick = onOpenLearning1),
         ) {
             Image(
                 painter = painterResource(R.drawable.img_gunlun1_untitled_150),
