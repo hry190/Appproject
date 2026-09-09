@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.shilian
+package com.jueqiao.jianghu.ui.screens.houshan2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
@@ -27,31 +26,26 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
+ * 后山2 页 — 后山1 页 → 点击"气泡"跳转目标。
  *
- * 布局:
- *   - 全屏背景图(试炼.png)
- *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)
- *   - 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
- *   - 标签1 图像(X=-13, Y=570, W=106, H=188)+ 文字"识机真决"(父 Box 内 X=46, Y=54, W=14, H=80)+ 文字"炼"(父 Box 内 X=48, Y=27, W=12, H=16)
- *   - 标签2 图像(X=168, Y=345, W=74, H=131)+ 文字"拆招心法"(父 Box 内 X=32, Y=34, W=14, H=80)+ 文字"炼"(父 Box 内 X=32, Y=17, W=12, H=16)
- *   - 标签3 图像(X=113, Y=322, W=50, H=88)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14)
- *   - 标签4 图像(X=151, Y=248, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14)
- *   - 气泡 Rectangle156.png(X=136, Y=508, W=177, H=107)+ 文字"御剑穿行..."
+ * 与后山1 页的差异:
+ *   - 没有气泡 Rectangle156.png 及其文本
+ * 复制自 Houshan1Screen.kt,移除气泡。
  */
 @Composable
-fun ShilianScreen(
+fun Houshan2Screen(
     onBack: () -> Unit = {},
-    onOpenShilian2: () -> Unit = {},
+    onOpenHoushan3: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .clickable(onClick = onOpenHoushan3),
     ) {
-        // 全屏背景图(试炼.png)
+        // 全屏背景图(后山页背景.png)
         Image(
             painter = painterResource(R.drawable.img_shilian_bg),
             contentDescription = null,
@@ -65,16 +59,6 @@ fun ShilianScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
-            Image(
-                painter = painterResource(R.drawable.img_shilian_panda),
-                contentDescription = "熊猫",
-                modifier = Modifier
-                    .offset(x = 184.dp, y = 621.dp)
-                    .size(width = 210.dp, height = 192.dp),
-                contentScale = ContentScale.FillBounds,
-            )
-
             // "标签1" 图像(未标题-1-恢复的-恢复的 4.png,X=-13, Y=570, W=106, H=188)
             Box(
                 modifier = Modifier
@@ -203,32 +187,7 @@ fun ShilianScreen(
                 )
             }
 
-            // Rectangle156.png 气泡(X=136, Y=508, W=177, H=107)— 点击跳转到试炼2 页
-            Box(
-                modifier = Modifier
-                    .offset(x = 136.dp, y = 508.dp)
-                    .size(width = 177.dp, height = 107.dp)
-                    .clickable(onClick = onOpenShilian2),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shilian_rect156),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-                // 气泡文本(字号 14, 黑色, YaHei)
-                Text(
-                    text = "御剑穿行云雾群山，\n每一座山峰皆是试炼。来，选一座山峰，开启你的修行试炼！",
-                    color = Color.Black,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                )
-            }
-
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)— 点击回到修炼页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)— 点击回到后山1 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

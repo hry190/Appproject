@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.shilian3
+package com.jueqiao.jianghu.ui.screens.houshan3
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -29,8 +29,8 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
  *
  * 布局:
- *   - 全屏背景图(试炼转换.png)
- *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自试炼2 页)— 屏幕空白点击无效
+ *   - 全屏背景图(后山3 转换.png)
+ *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)— 屏幕空白点击无效
  *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
@@ -38,7 +38,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)
  */
 @Composable
-fun Shilian3Screen(
+fun Houshan3Screen(
     onBack: () -> Unit = {},
     onOpenUnfinished: () -> Unit = {},
 ) {
@@ -49,7 +49,7 @@ fun Shilian3Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(试炼转换.png)
+        // 全屏背景图(后山3 转换.png)
         Image(
             painter = painterResource(R.drawable.img_shilian2_bg),
             contentDescription = null,
@@ -96,7 +96,7 @@ fun Shilian3Screen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
-                // "万象谱" 竖排文字(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10, 黑色, YaHei)— 相对位置参照试炼2 标签3
+                // "万象谱" 竖排文字(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10, 黑色, YaHei)— 相对位置参照后山2 标签3
                 Text(
                     text = "万\n象\n谱",
                     color = Color.Black,
@@ -105,7 +105,7 @@ fun Shilian3Screen(
                         .offset(x = 20.5.dp, y = 25.dp)
                         .size(width = 12.dp, height = 60.dp),
                 )
-                // "炼" 文字(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6, 颜色 #385816, YaHei)— 相对位置参照试炼2 标签3
+                // "炼" 文字(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6, 颜色 #385816, YaHei)— 相对位置参照后山2 标签3
                 Text(
                     text = "炼",
                     color = Color(0xFF385816),
@@ -128,7 +128,7 @@ fun Shilian3Screen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
-                // "寻径迷踪步" 竖排文字(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4, 黑色, YaHei)— 相对位置参照试炼2 标签4
+                // "寻径迷踪步" 竖排文字(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4, 黑色, YaHei)— 相对位置参照后山2 标签4
                 Text(
                     text = "寻\n径\n迷\n踪\n步",
                     color = Color.Black,
@@ -137,7 +137,7 @@ fun Shilian3Screen(
                         .offset(x = 13.5.dp, y = 14.dp)
                         .size(width = 12.dp, height = 60.dp),
                 )
-                // "炼" 文字(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4, 颜色 #385816, YaHei)— 相对位置参照试炼2 标签4
+                // "炼" 文字(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4, 颜色 #385816, YaHei)— 相对位置参照后山2 标签4
                 Text(
                     text = "炼",
                     color = Color(0xFF385816),
@@ -160,7 +160,7 @@ fun Shilian3Screen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
-                // "拆招心法" 竖排文字(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14, 黑色, YaHei)— 相对位置参照试炼2 标签2
+                // "拆招心法" 竖排文字(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14, 黑色, YaHei)— 相对位置参照后山2 标签2
                 Text(
                     text = "拆\n招\n心\n法",
                     color = Color.Black,
@@ -169,7 +169,7 @@ fun Shilian3Screen(
                         .offset(x = 43.dp, y = 48.dp)
                         .size(width = 14.dp, height = 80.dp),
                 )
-                // "炼" 文字(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12, 颜色 #385816, YaHei)— 相对位置参照试炼2 标签2
+                // "炼" 文字(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12, 颜色 #385816, YaHei)— 相对位置参照后山2 标签2
                 Text(
                     text = "炼",
                     color = Color(0xFF385816),
@@ -180,7 +180,7 @@ fun Shilian3Screen(
                 )
             }
 
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自试炼2 页)— 点击回到试炼2 页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)— 点击回到后山2 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.houshan
+package com.jueqiao.jianghu.ui.screens.learning
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,10 +25,10 @@ import com.jueqiao.jianghu.R
  *
  * 布局:
  *   - 全屏背景图(Android Compact - 109.png)
- *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与试炼页面一致)
+ *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)
  */
 @Composable
-fun HoushanScreen(
+fun LearningScreen(
     onBack: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
@@ -52,7 +52,7 @@ fun HoushanScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与试炼页面一致)— 点击回到滚轮1 页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)— 点击回到滚轮1 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
