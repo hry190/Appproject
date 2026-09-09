@@ -94,6 +94,7 @@ import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
 import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
 import com.jueqiao.jianghu.ui.screens.gunlun11.Gunlun11Screen
 import com.jueqiao.jianghu.ui.screens.gunlun12.Gunlun12Screen
+import com.jueqiao.jianghu.ui.screens.gunlun13.Gunlun13Screen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodDraftDto
@@ -520,7 +521,13 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Gunlun12) {
-            Gunlun12Screen(onBack = { navController.popBackStack() })
+            Gunlun12Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) },
+            )
+        }
+        composable(Routes.Gunlun13) {
+            Gunlun13Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
