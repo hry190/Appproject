@@ -26,11 +26,15 @@ import com.jueqiao.jianghu.R
  * 布局:
  *   - 全屏背景图(Android Compact - 109.png)
  *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)
- *   - 中央竖向元素(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)
+ *   - 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2
+ *
+ * 资源来源:D:\图\Group 281.png(图床里的"卷轴"素材)。
+ * 该 Box 用 .clickable + contentDescription 给 TalkBack 提供"卷轴 → 学习2"的语义。
  */
 @Composable
 fun LearningScreen(
     onBack: () -> Unit = {},
+    onOpenLearning2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -69,16 +73,19 @@ fun LearningScreen(
                 )
             }
 
-            // 中央竖向元素(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)
+            // 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2。
+            // 该元素是 clickable 的入口,contentDescription 必须给 TalkBack 一个有意义文本。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 124.dp)
-                    .size(width = 83.76.dp, height = 563.dp),
+                    .size(width = 83.76.dp, height = 563.dp)
+                    .clickable(onClick = onOpenLearning2),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_learning_group_281),
-                    contentDescription = null,
+                    // 卷轴 + 跳转目标,让 TalkBack 朗读为"卷轴,点击进入学习2"
+                    contentDescription = "卷轴,点击进入学习2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
