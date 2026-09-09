@@ -23,6 +23,7 @@
 | [README.md](./README.md) | 本索引 | - |
 | [SESSION-LOG-2026-09-07.md](./SESSION-LOG-2026-09-07.md) | 2026-09-07 dev 环境调试会话 | 2026-09-07 |
 | [SESSION-LOG-2026-09-08.md](./SESSION-LOG-2026-09-08.md) | 2026-09-08 滚轮1-12 + 试炼1-3 + 未完待续/后山页 | 2026-09-08 |
+| [SESSION-LOG-2026-09-09.md](./SESSION-LOG-2026-09-09.md) | 2026-09-09 环境清理: NTFS缓存异常 + Gradle JDK冲突 + 重新clone | 2026-09-09 |
 
 **项目根目录的文档**(不属于 docs/ 但常参考):
 - [DEV-SETUP.md](../DEV-SETUP.md) — dev 环境完整配置流程
