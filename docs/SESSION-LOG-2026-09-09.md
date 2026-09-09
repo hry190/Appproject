@@ -200,3 +200,77 @@ PS> git status
 2. **Gradle JDK 永远设 jbr-21**,不要用 Embedded JDK
 3. 遇到文件系统诡异问题时,直接**重启电脑**(90% 解决)
 4. 备份策略:`docs/` 写会话日志,`git` 频繁 commit,drawable 在替换前先备份到 `D:\图\` 之外的位置
+
+---
+
+## 同日续(下午场)— 真机登录 "暂时无法连接江湖驿站" 根因 + 修复
+
+### ⚠️ 关键事实,以后必记
+
+**本项目 dev 环境是 USB 真机,不是模拟器。** 用户使用 **小米 K50 Pro (`21908b7a`)** 通过 USB 连接 PC 做开发。这影响下面所有网络相关配置的默认值:
+
+| 项 | 真机(本项目) | 模拟器 |
+|---|---|---|
+| 访问 PC 的 host loopback | `127.0.0.1`(需 `adb reverse`)| `10.0.2.2`(自动) |
+| 默认 `AUTH_BASE_URL` | **必须** `http://127.0.0.1:8010/` | `http://10.0.2.2:8010/` |
+| 是否需要 `adb reverse` | 是(每次插拔/重启都重设) | 否 |
+| 设备 ID 形式 | `adb devices` 显示的序列号 | `emulator-5554` |
+
+**任何新人接手时,务必先问清楚"用的是真机还是模拟器",再决定 `AUTH_BASE_URL` 怎么写。**
+
+---
+
+### 问题:登录提示 "暂时无法连接江湖驿站"
+
+- 用户报告:用账号密码登录,App 报 "暂时无法连接江湖驿站,请检查网络后重试"
+- 这是 `AuthApi.kt:194` / `:238` 在 `IOException` 时抛的 `NETWORK_UNAVAILABLE` — **HTTP 请求根本没到服务器**,不是账号错误。
+
+### 排查过程
+
+1. **后端容器**:6 个全部 healthy,`/healthz` 返回 `{"status":"ok"}` ✅
+2. **测试账号**:`13800138000` / `Test1234!` 用 curl 直连后端能登录成功(返回 200 + user info) ✅
+3. **adb reverse**:`UsbFfs tcp:8010 tcp:8010` 已设置 ✅
+4. **手机内部连通性测试**(关键!):
+   ```
+   adb -s 21908b7a shell curl http://127.0.0.1:8010/healthz  → HTTP 200 ✅
+   adb -s 21908b7a shell curl http://10.0.2.2:8010/healthz  → HTTP 000 (timeout) ❌
+   ```
+5. **App 配置**:`android/app/build.gradle.kts:16` 默认 `authBaseUrl = "http://10.0.2.2:8010/"` — **这就是模拟器地址!真机访问不到**
+
+### 根因
+
+App 编译时把 `AUTH_BASE_URL` 烧成了模拟器地址 `10.0.2.2`,但用户跑在 USB 真机,所有请求都被路由到不存在的 IP。
+
+### 修复方案
+
+在 `android/local.properties` 末尾加一行(覆盖默认值):
+
+```properties
+AUTH_BASE_URL=http://127.0.0.1:8010/
+```
+
+然后在 Android Studio 里 **Sync Gradle → Run** 重装 App 即可。
+
+`network_security_config.xml` 已经白名单了 `127.0.0.1` / `localhost`,**不需要改网络安全配置**。
+
+### 验证清单(用户改完后)
+
+- [ ] `cat android/local.properties | grep AUTH_BASE_URL` 看到新值
+- [ ] Android Studio Sync 后,`BuildConfig.AUTH_BASE_URL` 应为 `http://127.0.0.1:8010/`
+- [ ] Run 到手机,登录 `13800138000` / `Test1234!` 不再报错
+- [ ] 看到 `next_action: ENTER_APP` 进入主页
+
+---
+
+### 顺手确认的事(本次会话)
+
+| 项 | 状态 | 来源 |
+|---|---|---|
+| 后端启动 | ✅ 6 容器 healthy | `docker ps --filter name=jianghu` |
+| adb 设备 | ✅ `21908b7a device` | `adb devices` |
+| adb reverse | ✅ `UsbFfs tcp:8010 tcp:8010` | `adb reverse --list` |
+| `/healthz` | ✅ `{"status":"ok"}` | 注意是 `/healthz`,不是 `/health`(404) |
+| 测试账号 | ✅ 13800138000 / Test1234! | curl POST `/v1/auth/login/password` 返回 200 |
+| 文件系统缓存 | ✅ 仍干净(无重复文件) | grep 检查 `HoushanScreen.kt` 等 |
+| JDK | ⚠️ `JAVA_HOME=C:\Program Files\Java\jdk-25.0.3`(系统默认) | 项目必须用 jbr-21 |
+| Gradle JDK | ⏳ 未设置(IDE 未启动) | 需用户在 AS 中手动设 |
