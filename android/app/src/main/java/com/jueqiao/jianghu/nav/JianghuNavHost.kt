@@ -444,7 +444,10 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.PendingUnlock) {
-            PendingUnlockScreen(onBack = { navController.popBackStack() })
+            PendingUnlockScreen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun1 = { navController.navigate(Routes.Gunlun1) },
+            )
         }
         composable(Routes.Gunlun1) {
             Gunlun1Screen(

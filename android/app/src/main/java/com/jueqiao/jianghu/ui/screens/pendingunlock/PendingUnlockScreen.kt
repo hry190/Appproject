@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.pendingunlock
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -27,7 +28,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 图像 image 134.png(X=-1, Y=40, W=954, H=784)— 书框
  *   - 图像 Android Compact - 124.png(全屏,书框上层)
  *   - 熊猫图像 image 307.png(X=-7, Y=563, W=250, H=330)
- *   - "待解锁"文字图像(待解锁.png,X=158, Y=150, W=96, H=338)— 中央纵向书名样式
+ *   - "待解锁"文字图像(待解锁.png,X=158, Y=150, W=96, H=338)— 中央纵向书名样式,**点击跳滚轮1**
  *   - "前往解锁"按钮(未标题-2 23.png,X=222, Y=725, W=160, H=58)
  *   - "前往解锁"文本(字号 16,色 #605718,X=265, Y=738, W=81, H=21)— 在按钮上层
  *
@@ -43,6 +44,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun PendingUnlockScreen(
     onBack: () -> Unit = {},
+    onOpenGunlun1: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -89,12 +91,14 @@ fun PendingUnlockScreen(
 
         // "待解锁"文字图像(待解锁.png,X=158, Y=150, W=96, H=338)— 中央纵向。
         // Y=150–488 在书框 Y=40–824 范围内,不与熊猫(Y=560–890)Y 重叠。
+        // **点击跳滚轮1** — 沿用 UnfinishedScreen "未完待续" 文字图像的入口模式。
         Image(
             painter = painterResource(R.drawable.img_pendingunlock_text),
             contentDescription = "待解锁",
             modifier = Modifier
                 .offset(x = 158.dp, y = 150.dp)
-                .size(width = 96.dp, height = 338.dp),
+                .size(width = 96.dp, height = 338.dp)
+                .clickable(onClick = onOpenGunlun1),
             contentScale = ContentScale.FillBounds,
         )
 
