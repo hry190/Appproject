@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.learning
+package com.jueqiao.jianghu.ui.screens.learning2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -12,29 +12,34 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 学习1 页 — 滚轮1 → 点击"修炼"按钮跳转目标。
+ * 学习2 页 — 学习1 → 点击 Group 281 卷轴跳转目标。
  *
- * 布局:
+ * 布局(与学习1 视觉一致 + 中央卷轴):
  *   - 全屏背景图(Android Compact - 109.png)
- *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)
- *   - 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2
+ *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与学习1 一致)
+ *   - 中央卷轴(image 174.png,X 轴居中, Y=124, W=407, H=563)
+ *   - 顶部文本(生活问题推荐:\n机器人为什么会认错物体?,字号 24,黑色,X=68, Y=190, W=292, H=64)
  *
- * 资源来源:D:\图\Group 281.png(图床里的"卷轴"素材)。
- * 该 Box 用 .clickable + contentDescription 给 TalkBack 提供"卷轴 → 学习2"的语义。
+ * 资源来源:
+ *   - 背景 / 返回按钮与学习1 同源
+ *   - 中央卷轴:D:\图\image 174.png(需复制为 res/drawable-nodpi/img_learning_image_174.png)
  */
 @Composable
-fun LearningScreen(
+fun Learning2Screen(
     onBack: () -> Unit = {},
-    onOpenLearning2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -43,7 +48,7 @@ fun LearningScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(Android Compact - 109.png)
+        // 全屏背景图(Android Compact - 109.png,与学习1 一致)
         Image(
             painter = painterResource(R.drawable.img_houshan_bg),
             contentDescription = null,
@@ -57,7 +62,7 @@ fun LearningScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)— 点击回到滚轮1 页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与学习1 一致)— 点击回到学习1 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -73,23 +78,33 @@ fun LearningScreen(
                 )
             }
 
-            // 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2。
-            // 该元素是 clickable 的入口,contentDescription 必须给 TalkBack 一个有意义文本。
+            // 中央卷轴(image 174.png,X 轴居中, Y=124, W=407, H=563)。
+            // 当前为静态展示元素,后续如需可点击跳学习3 再加 .clickable + onOpenLearning3。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 124.dp)
-                    .size(width = 83.76.dp, height = 563.dp)
-                    .clickable(onClick = onOpenLearning2),
+                    .size(width = 407.dp, height = 563.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_learning_group_281),
-                    // 卷轴 + 跳转目标,让 TalkBack 朗读为"卷轴,点击进入学习2"
-                    contentDescription = "卷轴,点击进入学习2",
+                    painter = painterResource(R.drawable.img_learning_image_174),
+                    contentDescription = "中央卷轴",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
+
+            // 顶部文本(2 行,字号 24,黑色,X=68, Y=190, W=292, H=64)。
+            // 字体用项目统一的 YaHei,与 houshan1 等屏保持一致。
+            Text(
+                text = "生活问题推荐:\n机器人为什么会认错物体?",
+                color = Color.Black,
+                fontSize = 24.sp,
+                fontFamily = YaHei,
+                modifier = Modifier
+                    .offset(x = 68.dp, y = 190.dp)
+                    .size(width = 292.dp, height = 64.dp),
+            )
         }
     }
 }

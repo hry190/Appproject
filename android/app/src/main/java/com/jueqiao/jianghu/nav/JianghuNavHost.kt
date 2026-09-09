@@ -86,6 +86,7 @@ import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
 import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
 import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
 import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
+import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
 import com.jueqiao.jianghu.ui.screens.gunlun8.Gunlun8Screen
 import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
 import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
@@ -423,7 +424,13 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Houshan) {
-            LearningScreen(onBack = { navController.popBackStack() })
+            LearningScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLearning2 = { navController.navigate(Routes.Learning2) },
+            )
+        }
+        composable(Routes.Learning2) {
+            Learning2Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun1) {
             Gunlun1Screen(

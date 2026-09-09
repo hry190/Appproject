@@ -23,7 +23,8 @@
 | [README.md](./README.md) | 本索引 | - |
 | [SESSION-LOG-2026-09-07.md](./SESSION-LOG-2026-09-07.md) | 2026-09-07 dev 环境调试会话 | 2026-09-07 |
 | [SESSION-LOG-2026-09-08.md](./SESSION-LOG-2026-09-08.md) | 2026-09-08 滚轮1-12 + 试炼1-3 + 未完待续/后山页 | 2026-09-08 |
-| [SESSION-LOG-2026-09-09.md](./SESSION-LOG-2026-09-09.md) | 2026-09-09 环境清理: NTFS缓存异常 + Gradle JDK冲突 + 重新clone | 2026-09-09 |
+| [SESSION-LOG-2026-09-09.md](./SESSION-LOG-2026-09-09.md) | 2026-09-09 环境清理 + 登录连不上根因 + 多维度扫描 + 学习2 页面 | 2026-09-09 |
+| [CODE-AUDIT-2026-09-09.md](./CODE-AUDIT-2026-09-09.md) | 2026-09-09 多维度代码扫描结果(103 个 finding + 8 个优先行动) | 2026-09-09 |
 
 **项目根目录的文档**(不属于 docs/ 但常参考):
 - [DEV-SETUP.md](../DEV-SETUP.md) — dev 环境完整配置流程
@@ -47,6 +48,7 @@
 | 会话记录 | `SESSION-LOG-YYYY-MM-DD.md` | 每次长跑调试结束(≥30 分钟) |
 | 决策记录 | `DECISIONS.md` | 做了重要的架构 / 设计决策 |
 | 故障排查 | `TROUBLESHOOTING.md` | 解决了一个反复出现的问题,值得记录 |
+| 代码审计 | `CODE-AUDIT-YYYY-MM-DD.md` | 多维度代码扫描结果快照(下次扫描另起一份,可用 diff 看趋势) |
 | Sprint 计划 | `SPRINT-YYYY-MM-DD.md` | 启动一个多步骤功能开发 |
 
 每类文档第一行写明:
