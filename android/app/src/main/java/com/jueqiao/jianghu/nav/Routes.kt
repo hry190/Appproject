@@ -35,6 +35,8 @@ object Routes {
     const val Gunlun11 = "gunlun11"
     const val Gunlun12 = "gunlun12"
     const val Gunlun13 = "gunlun13"
+    const val Gunlun14 = "gunlun14"
+    const val Gunlun15 = "gunlun15"
     const val Luggage   = "luggage"
     const val LuggageBadges = "luggage/badges"
     const val LuggageGrowth = "luggage/growth"
