@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -37,18 +38,22 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun6Screen(
     onBack: () -> Unit = {},
     onOpenGunlun7: () -> Unit = {},
+    onOpenVolume1: () -> Unit = {},
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
         onPandaClick = onOpenGunlun7,
     ) {
         // "秘籍" 图像(未标题-2-恢复的 1.png,X=135, Y=221, W=155, H=147)
+        // ⚠ 位于"介绍"左侧(X=135 < X=283)— 用户提示这是"已解锁9"。
+        // 保险方案:与下面 X=321 的"已解锁秘籍9"Image 一起 clickable → Volume1,避免歧义。
         Image(
             painter = painterResource(R.drawable.img_gunlun2_untitled_2_recovered_1),
             contentDescription = "秘籍",
             modifier = Modifier
                 .offset(x = 135.dp, y = 221.dp)
-                .size(width = 155.dp, height = 147.dp),
+                .size(width = 155.dp, height = 147.dp)
+                .clickable(onClick = onOpenVolume1),
             contentScale = ContentScale.FillBounds,
         )
 
@@ -133,7 +138,7 @@ fun Gunlun6Screen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // 已解锁秘籍9 图像(未标题-9.png,X=321, Y=205, W=93, H=92)
+        // 已解锁秘籍9 图像(未标题-9.png,X=321, Y=205, W=93, H=92)— 静态装饰,不可点击。
         Image(
             painter = painterResource(R.drawable.img_gunlun5_untitled_2_33),
             contentDescription = "已解锁秘籍9",
