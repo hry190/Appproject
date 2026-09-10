@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume1part5
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +32,7 @@ import com.jueqiao.jianghu.R
  *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— **复用第一卷-2 书框素材**(与第一卷 / 第一卷-3 / 第一卷-4 的 Group 255 不同)
  *   - 图1(image 238.png,X=19, Y=135, W=344, H=322)— 上半区域
  *   - 图2(image 239.png,X=19, Y=490, W=344, H=302)— 下半区域
- *   - 标题文本"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 顶层
+ *   - 标题文本"感知-推理-行动闭环"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 顶层
  *
  * 与第一卷-2 的差别:**相同**的书框(Group 256);**不同**的图1/图2 素材。
  *
@@ -44,6 +45,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume1Part5Screen(
     onBack: () -> Unit = {},
+    onOpenVolume1Part6: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -111,15 +113,16 @@ fun Volume1Part5Screen(
                 )
             }
 
-            // 标题"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与第一卷同位置同样式
+            // 标题"感知-推理-行动闭环"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与第一卷同位置同样式,点击跳第一卷-6。
             Text(
-                text = "规则与学习的区别",
+                text = "感知-推理-行动闭环",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume1Part6),
             )
         }
     }
