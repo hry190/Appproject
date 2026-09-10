@@ -105,6 +105,7 @@ import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodPlan
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
+import com.jueqiao.jianghu.ui.screens.volume1.Volume1Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
@@ -501,7 +502,11 @@ fun JianghuNavHost(
             Gunlun6Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun7 = { navController.navigate(Routes.Gunlun7) },
+                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
+        }
+        composable(Routes.Volume1) {
+            Volume1Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun7) {
             Gunlun7Screen(
