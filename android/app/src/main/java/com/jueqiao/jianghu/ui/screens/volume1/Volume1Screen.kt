@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume1
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume1Screen(
     onBack: () -> Unit = {},
+    onOpenVolume1Part2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -74,7 +76,7 @@ fun Volume1Screen(
             )
         }
 
-        // 标题"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)
+        // 标题"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 点击跳第一卷-2。
         Text(
             text = "规则与学习的区别",
             color = Color.Black,
@@ -82,7 +84,8 @@ fun Volume1Screen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .offset(x = 110.dp, y = 67.dp)
-                .size(width = 192.dp, height = 32.dp),
+                .size(width = 192.dp, height = 32.dp)
+                .clickable(onClick = onOpenVolume1Part2),
         )
 
         // 图1(image 233.png,X=19, Y=143, W=361, H=279)— 在书框之上、上半区域。
