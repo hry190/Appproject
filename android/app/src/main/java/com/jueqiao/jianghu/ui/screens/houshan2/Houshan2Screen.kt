@@ -1,4 +1,4 @@
-﻿package com.jueqiao.jianghu.ui.screens.shilian2
+package com.jueqiao.jianghu.ui.screens.houshan2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -26,16 +26,16 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼2 页 — 试炼1 页 → 点击"气泡"跳转目标。
+ * 后山2 页 — 后山1 页 → 点击"气泡"跳转目标。
  *
- * 与试炼1 页的差异:
+ * 与后山1 页的差异:
  *   - 没有气泡 Rectangle156.png 及其文本
- * 复制自 ShilianScreen.kt,移除气泡。
+ * 复制自 Houshan1Screen.kt,移除气泡。
  */
 @Composable
-fun Shilian2Screen(
+fun Houshan2Screen(
     onBack: () -> Unit = {},
-    onOpenShilian3: () -> Unit = {},
+    onOpenHoushan3: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -43,9 +43,9 @@ fun Shilian2Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .clickable(onClick = onOpenShilian3),
+            .clickable(onClick = onOpenHoushan3),
     ) {
-        // 全屏背景图(试炼.png)
+        // 全屏背景图(后山页背景.png)
         Image(
             painter = painterResource(R.drawable.img_shilian_bg),
             contentDescription = null,
@@ -187,7 +187,7 @@ fun Shilian2Screen(
                 )
             }
 
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)— 点击回到试炼1 页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)— 点击回到后山1 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

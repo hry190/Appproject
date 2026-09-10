@@ -1,4 +1,4 @@
-﻿package com.jueqiao.jianghu.ui.screens.shilian
+package com.jueqiao.jianghu.ui.screens.houshan1
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -27,10 +27,10 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 试炼页 — 滚轮1 → 点击"修炼"按钮跳转目标。
+ * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
  *
  * 布局:
- *   - 全屏背景图(试炼.png)
+ *   - 全屏背景图(后山页背景.png)
  *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)
  *   - 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
  *   - 标签1 图像(X=-13, Y=570, W=106, H=188)+ 文字"识机真决"(父 Box 内 X=46, Y=54, W=14, H=80)+ 文字"炼"(父 Box 内 X=48, Y=27, W=12, H=16)
@@ -40,9 +40,9 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 气泡 Rectangle156.png(X=136, Y=508, W=177, H=107)+ 文字"御剑穿行..."
  */
 @Composable
-fun ShilianScreen(
+fun Houshan1Screen(
     onBack: () -> Unit = {},
-    onOpenShilian2: () -> Unit = {},
+    onOpenHoushan2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -51,7 +51,7 @@ fun ShilianScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(试炼.png)
+        // 全屏背景图(后山页背景.png)
         Image(
             painter = painterResource(R.drawable.img_shilian_bg),
             contentDescription = null,
@@ -203,12 +203,12 @@ fun ShilianScreen(
                 )
             }
 
-            // Rectangle156.png 气泡(X=136, Y=508, W=177, H=107)— 点击跳转到试炼2 页
+            // Rectangle156.png 气泡(X=136, Y=508, W=177, H=107)— 点击跳转到后山2 页
             Box(
                 modifier = Modifier
                     .offset(x = 136.dp, y = 508.dp)
                     .size(width = 177.dp, height = 107.dp)
-                    .clickable(onClick = onOpenShilian2),
+                    .clickable(onClick = onOpenHoushan2),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_rect156),

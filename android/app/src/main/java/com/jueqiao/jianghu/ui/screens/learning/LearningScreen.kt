@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.houshan
+package com.jueqiao.jianghu.ui.screens.learning
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -21,15 +21,20 @@ import androidx.compose.ui.unit.dp
 import com.jueqiao.jianghu.R
 
 /**
- * 后山 页 — 滚轮1 → 点击"后山"按钮跳转目标。
+ * 学习1 页 — 滚轮1 → 点击"修炼"按钮跳转目标。
  *
  * 布局:
  *   - 全屏背景图(Android Compact - 109.png)
- *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与试炼页面一致)
+ *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)
+ *   - 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2
+ *
+ * 资源来源:D:\图\Group 281.png(图床里的"卷轴"素材)。
+ * 该 Box 用 .clickable + contentDescription 给 TalkBack 提供"卷轴 → 学习2"的语义。
  */
 @Composable
-fun HoushanScreen(
+fun LearningScreen(
     onBack: () -> Unit = {},
+    onOpenLearning2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -52,7 +57,7 @@ fun HoushanScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与试炼页面一致)— 点击回到滚轮1 页
+            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,与后山页面一致)— 点击回到滚轮1 页
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -63,6 +68,24 @@ fun HoushanScreen(
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
                     contentDescription = "返回",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
+
+            // 中央竖向卷轴(Group 281.png,X 轴居中, Y=124, W=83.76, H=563)— 点击跳学习2。
+            // 该元素是 clickable 的入口,contentDescription 必须给 TalkBack 一个有意义文本。
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = 124.dp)
+                    .size(width = 83.76.dp, height = 563.dp)
+                    .clickable(onClick = onOpenLearning2),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_learning_group_281),
+                    // 卷轴 + 跳转目标,让 TalkBack 朗读为"卷轴,点击进入学习2"
+                    contentDescription = "卷轴,点击进入学习2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )

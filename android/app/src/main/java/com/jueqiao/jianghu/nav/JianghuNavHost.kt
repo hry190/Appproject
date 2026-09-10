@@ -75,11 +75,6 @@ import com.jueqiao.jianghu.ui.screens.privacy.PrivacyScreen
 import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
-import com.jueqiao.jianghu.ui.screens.shilian.ShilianScreen
-import com.jueqiao.jianghu.ui.screens.shilian2.Shilian2Screen
-import com.jueqiao.jianghu.ui.screens.shilian3.Shilian3Screen
-import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
-import com.jueqiao.jianghu.ui.screens.houshan.HoushanScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
 import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
 import com.jueqiao.jianghu.ui.screens.gunlun3.Gunlun3Screen
@@ -87,17 +82,34 @@ import com.jueqiao.jianghu.ui.screens.gunlun4.Gunlun4Screen
 import com.jueqiao.jianghu.ui.screens.gunlun5.Gunlun5Screen
 import com.jueqiao.jianghu.ui.screens.gunlun6.Gunlun6Screen
 import com.jueqiao.jianghu.ui.screens.gunlun7.Gunlun7Screen
+import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
+import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
+import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
+import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
+import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
+import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
+import com.jueqiao.jianghu.ui.screens.learning4.Learning4Screen
+import com.jueqiao.jianghu.ui.screens.pendingunlock.PendingUnlockScreen
 import com.jueqiao.jianghu.ui.screens.gunlun8.Gunlun8Screen
 import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
 import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
 import com.jueqiao.jianghu.ui.screens.gunlun11.Gunlun11Screen
 import com.jueqiao.jianghu.ui.screens.gunlun12.Gunlun12Screen
+import com.jueqiao.jianghu.ui.screens.gunlun13.Gunlun13Screen
+import com.jueqiao.jianghu.ui.screens.gunlun14.Gunlun14Screen
+import com.jueqiao.jianghu.ui.screens.gunlun15.Gunlun15Screen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodDraftDto
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodPlan
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
+import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
+import com.jueqiao.jianghu.ui.screens.volume1.Volume1Screen
+import com.jueqiao.jianghu.ui.screens.volume1part2.Volume1Part2Screen
+import com.jueqiao.jianghu.ui.screens.volume1part3.Volume1Part3Screen
+import com.jueqiao.jianghu.ui.screens.volume1part4.Volume1Part4Screen
+import com.jueqiao.jianghu.ui.screens.volume1part5.Volume1Part5Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
@@ -395,19 +407,19 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Shilian) {
-            ShilianScreen(
+            Houshan1Screen(
                 onBack = { navController.popBackStack() },
-                onOpenShilian2 = { navController.navigate(Routes.Shilian2) },
+                onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
             )
         }
         composable(Routes.Shilian2) {
-            Shilian2Screen(
+            Houshan2Screen(
                 onBack = { navController.popBackStack() },
-                onOpenShilian3 = { navController.navigate(Routes.Shilian3) },
+                onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
             )
         }
         composable(Routes.Shilian3) {
-            Shilian3Screen(
+            Houshan3Screen(
                 onBack = { navController.popBackStack() },
                 onOpenUnfinished = { navController.navigate(Routes.Unfinished) },
             )
@@ -423,14 +435,47 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Houshan) {
-            HoushanScreen(onBack = { navController.popBackStack() })
+            LearningScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLearning2 = { navController.navigate(Routes.Learning2) },
+            )
+        }
+        composable(Routes.Learning2) {
+            Learning2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenLearning3 = { navController.navigate(Routes.Learning3) },
+                onOpenLearning4 = { navController.navigate(Routes.Learning4) },
+            )
+        }
+        composable(Routes.Learning3) {
+            Learning3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
+            )
+        }
+        composable(Routes.Learning4) {
+            Learning4Screen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.Learning3) {
+            Learning3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
+            )
+        }
+        composable(Routes.PendingUnlock) {
+            PendingUnlockScreen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun1 = { navController.navigate(Routes.Gunlun1) },
+            )
         }
         composable(Routes.Gunlun1) {
             Gunlun1Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
-                onOpenShilian = { navController.navigate(Routes.Shilian) },
-                onOpenHoushan = { navController.navigate(Routes.Houshan) },
+                // 滚轮1 的"修\n炼"按钮 → 学习1 页 (LearningScreen)
+                onOpenLearning1 = { navController.navigate(Routes.Houshan) },
+                // 滚轮1 的"后\n山"按钮 → 后山1 页 (Houshan1Screen, 原 ShilianScreen)
+                onOpenHoushan1 = { navController.navigate(Routes.Shilian) },
             )
         }
         composable(Routes.Gunlun2) {
@@ -461,7 +506,35 @@ fun JianghuNavHost(
             Gunlun6Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun7 = { navController.navigate(Routes.Gunlun7) },
+                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
+        }
+        composable(Routes.Volume1) {
+            Volume1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume1Part2 = { navController.navigate(Routes.Volume1Part2) },
+            )
+        }
+        composable(Routes.Volume1Part2) {
+            Volume1Part2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume1Part3 = { navController.navigate(Routes.Volume1Part3) },
+            )
+        }
+        composable(Routes.Volume1Part3) {
+            Volume1Part3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume1Part4 = { navController.navigate(Routes.Volume1Part4) },
+            )
+        }
+        composable(Routes.Volume1Part4) {
+            Volume1Part4Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume1Part5 = { navController.navigate(Routes.Volume1Part5) },
+            )
+        }
+        composable(Routes.Volume1Part5) {
+            Volume1Part5Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun7) {
             Gunlun7Screen(
@@ -494,7 +567,25 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Gunlun12) {
-            Gunlun12Screen(onBack = { navController.popBackStack() })
+            Gunlun12Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) },
+            )
+        }
+        composable(Routes.Gunlun13) {
+            Gunlun13Screen(
+                onBack = { navController.popBackStack() },
+                onPandaClick = { navController.navigate(Routes.Gunlun14) },
+            )
+        }
+        composable(Routes.Gunlun14) {
+            Gunlun14Screen(
+                onBack = { navController.popBackStack() },
+                onPandaClick = { navController.navigate(Routes.Gunlun15) },
+            )
+        }
+        composable(Routes.Gunlun15) {
+            Gunlun15Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(

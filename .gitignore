@@ -8,6 +8,12 @@
 app/build/
 **/build/
 
+# IntelliJ / Android Studio
+# workspace.xml 已被旧 commit 跟踪,这里只对未来文件生效
+# 移除跟踪需要团队协调(第二步),暂不 git rm --cached
+.idea/
+*.iml
+
 # Python API local state
 **/.venv/
 **/__pycache__/
