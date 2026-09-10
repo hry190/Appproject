@@ -56,6 +56,7 @@
 | 故障排查 | `TROUBLESHOOTING.md` | 解决了一个反复出现的问题,值得记录 |
 | 代码审计 | `CODE-AUDIT-YYYY-MM-DD.md` | 多维度代码扫描结果快照(下次扫描另起一份,可用 diff 看趋势) |
 | Sprint 计划 | `SPRINT-YYYY-MM-DD.md` | 启动一个多步骤功能开发 |
+| 分支合并 SOP | `MERGE-WORKFLOW.md` | 合并任何分支前必读(侦察 → 评估 → 建议 → 合并)|
 
 每类文档第一行写明:
 ```markdown
