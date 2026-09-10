@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume1part3
+package com.jueqiao.jianghu.ui.screens.volume1part4
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,25 +25,25 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第一卷-3 页 — 第一卷-2 → 点击"规则与学习的区别"标题跳转目标。
+ * 第一卷-4 页 — 第一卷-3 → 点击"规则与学习的区别"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷同源
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与第一卷-2 的 Group 256 不同)
- *   - 图1(image 231.png,X=19, Y=155, W=351, H=279)— 上半区域
- *   - 图2(image 232.png,X=19, Y=489, W=353, H=283)— 下半区域
+ *   - 图1(image 237.png,X=19, Y=131, W=356, H=329)— 上半区域
+ *   - 图2(image 236.png,X=19, Y=492, W=356, H=335)— 下半区域
  *   - 标题文本"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 顶层
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 231.png(已复制为 res/drawable-nodpi/img_volume1part3_image_231.png)
- *   - 图2:D:\图\image 232.png(已复制为 res/drawable-nodpi/img_volume1part3_image_232.png)
+ *   - 图1:D:\图\image 237.png(已复制为 res/drawable-nodpi/img_volume1part4_image_237.png)
+ *   - 图2:D:\图\image 236.png(已复制为 res/drawable-nodpi/img_volume1part4_image_236.png)
  */
 @Composable
-fun Volume1Part3Screen(
+fun Volume1Part4Screen(
     onBack: () -> Unit = {},
-    onOpenVolume1Part4: () -> Unit = {},
+    onOpenVolume1Part5: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -81,37 +81,37 @@ fun Volume1Part3Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 图1(image 231.png,X=19, Y=155, W=351, H=279)— 在书框之上、上半区域。
+            // 图1(image 237.png,X=19, Y=131, W=356, H=329)— 在书框之上、上半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 19.dp, y = 155.dp)
-                    .size(width = 351.dp, height = 279.dp),
+                    .offset(x = 19.dp, y = 131.dp)
+                    .size(width = 356.dp, height = 329.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume1part3_image_231),
+                    painter = painterResource(R.drawable.img_volume1part4_image_237),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 232.png,X=19, Y=489, W=353, H=283)— 在书框之上、下半区域。
+            // 图2(image 236.png,X=19, Y=492, W=356, H=335)— 在书框之上、下半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 19.dp, y = 489.dp)
-                    .size(width = 353.dp, height = 283.dp),
+                    .offset(x = 19.dp, y = 492.dp)
+                    .size(width = 356.dp, height = 335.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume1part3_image_232),
+                    painter = painterResource(R.drawable.img_volume1part4_image_236),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 标题"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与第一卷同位置同样式,点击跳第一卷-4。
+            // 标题"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与第一卷同位置同样式,点击跳第一卷-5。
             Text(
                 text = "规则与学习的区别",
                 color = Color.Black,
@@ -120,7 +120,7 @@ fun Volume1Part3Screen(
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 192.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume1Part4),
+                    .clickable(onClick = onOpenVolume1Part5),
             )
         }
     }
