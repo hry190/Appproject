@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -15,9 +18,11 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.jueqiao.jianghu.nav.JianghuNavHost
+import com.jueqiao.jianghu.ui.components.NoRippleIndication
 import com.jueqiao.jianghu.ui.screens.settings.SettingsPreferences
 import com.jueqiao.jianghu.ui.theme.JianghuTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -44,7 +49,11 @@ class MainActivity : ComponentActivity() {
                     fontScale = baseDensity.fontScale * if (settings.largeText) 1.12f else 1f,
                 )
             }
-            CompositionLocalProvider(LocalDensity provides scaledDensity) {
+            CompositionLocalProvider(
+                LocalDensity provides scaledDensity,
+                LocalIndication provides NoRippleIndication,
+                LocalRippleConfiguration provides null,
+            ) {
                 JianghuTheme {
                     JianghuNavHost(navController = navController)
                 }

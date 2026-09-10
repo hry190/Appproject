@@ -1,115 +1,343 @@
 package com.jueqiao.jianghu.ui.screens.chuangzuodangan
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.luggage.CreationDetailBundle
+import com.jueqiao.jianghu.luggage.CreationProjectDto
 import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
+import com.jueqiao.jianghu.ui.components.NoRippleIndication
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-private enum class ArchiveIntroStage {
-    Quiet,
-    Opening,
-    Open,
-    Closing,
+private enum class ArchiveIntroStage { Quiet, Opening, Open, Closing }
+
+private enum class ArchiveGuideStage { AwaitingFirstTap, BubbleVisible, Ready }
+
+private val ArchiveInk = Color(0xFF3E6847)
+private val ArchiveMuted = Color(0xFF63765D)
+private val ArchivePanel = Color(0xDDF4EEDB)
+private val ArchivePanelSelected = Color(0xE4E5EFCB)
+private val ArchivePanelBorder = Color(0x856A865D)
+
+enum class CreationArchiveEntry { Works, OriginalRecords, VersionRecords, CoachRecords }
+
+private data class ArchiveWork(
+    val projectId: String,
+    val title: String,
+    val stage: String,
+    val updatedAt: String,
+    val description: String?,
+    val versionNumber: Int?,
+)
+
+/** 每个记录入口拥有自己的花朵、雾气、熊猫、文案和关闭热区。 */
+private data class ArchiveDetailSpec(
+    val cloudRes: Int,
+    val cloudY: Float,
+    val lotusRes: Int,
+    val lotusX: Float,
+    val lotusY: Float,
+    val lotusWidth: Float,
+    val lotusHeight: Float,
+    val smokeRes: Int?,
+    val smokeX: Float,
+    val smokeY: Float,
+    val smokeWidth: Float,
+    val smokeHeight: Float,
+    val pandaRes: Int,
+    val pandaX: Float,
+    val pandaY: Float,
+    val pandaWidth: Float,
+    val pandaHeight: Float,
+    val textX: Float,
+    val textY: Float,
+    val textWidth: Float,
+    val textHeight: Float,
+    val bubbleX: Float,
+    val bubbleY: Float,
+    val bubbleWidth: Float,
+    val bubbleHeight: Float,
+)
+
+/** 选择作品是父级承接层，只包含自己的雾气和作品卡片，不引用三朵记录荷花。 */
+private val archiveWorkPickerCloud = R.drawable.img_chuangzuodangan6_rect24
+
+private fun archiveDetailSpec(entry: CreationArchiveEntry): ArchiveDetailSpec? = when (entry) {
+    CreationArchiveEntry.Works -> null
+    CreationArchiveEntry.OriginalRecords -> ArchiveDetailSpec(
+        cloudRes = R.drawable.img_chuangzuodangan6_rect24,
+        cloudY = 208f,
+        lotusRes = R.drawable.img_chuangzuodangan6_image54,
+        lotusX = -8f,
+        lotusY = 233f,
+        lotusWidth = 132f,
+        lotusHeight = 106f,
+        smokeRes = R.drawable.img_chuangzuodangan6_image57,
+        smokeX = 10f,
+        smokeY = 203f,
+        smokeWidth = 282f,
+        smokeHeight = 173f,
+        pandaRes = R.drawable.img_chuangzuodangan4_image62,
+        pandaX = 174f,
+        pandaY = 646f,
+        pandaWidth = 204f,
+        pandaHeight = 219f,
+        textX = 96f,
+        textY = 380f,
+        textWidth = 230f,
+        textHeight = 110f,
+        bubbleX = 250f,
+        bubbleY = 540f,
+        bubbleWidth = 170f,
+        bubbleHeight = 104f,
+    )
+    CreationArchiveEntry.VersionRecords -> ArchiveDetailSpec(
+        cloudRes = R.drawable.img_chuangzuodangan5_rect25,
+        cloudY = 118f,
+        lotusRes = R.drawable.img_chuangzuodangan5_image52,
+        lotusX = 278f,
+        lotusY = 365f,
+        lotusWidth = 124f,
+        lotusHeight = 100f,
+        smokeRes = R.drawable.img_chuangzuodangan5_image59,
+        smokeX = 124f,
+        smokeY = 369f,
+        smokeWidth = 276f,
+        smokeHeight = 102f,
+        pandaRes = R.drawable.img_chuangzuodangan4_image62,
+        pandaX = 174f,
+        pandaY = 646f,
+        pandaWidth = 204f,
+        pandaHeight = 219f,
+        textX = 96f,
+        textY = 250f,
+        textWidth = 235f,
+        textHeight = 120f,
+        bubbleX = 24f,
+        bubbleY = 540f,
+        bubbleWidth = 170f,
+        bubbleHeight = 104f,
+    )
+    CreationArchiveEntry.CoachRecords -> ArchiveDetailSpec(
+        cloudRes = R.drawable.img_chuangzuodangan3_rect245,
+        cloudY = 55f,
+        lotusRes = R.drawable.img_chuangzuodangan3_image52,
+        lotusX = 8f,
+        lotusY = 556f,
+        lotusWidth = 214f,
+        lotusHeight = 172f,
+        smokeRes = R.drawable.img_chuangzuodangan3_image61,
+        smokeX = 35f,
+        smokeY = 434f,
+        smokeWidth = 193f,
+        smokeHeight = 203f,
+        pandaRes = R.drawable.img_chuangzuodangan3_image64,
+        pandaX = 204f,
+        pandaY = 667f,
+        pandaWidth = 200f,
+        pandaHeight = 222f,
+        textX = 117f,
+        textY = 346f,
+        textWidth = 189f,
+        textHeight = 90f,
+        bubbleX = 24f,
+        bubbleY = 560f,
+        bubbleWidth = 170f,
+        bubbleHeight = 104f,
+    )
 }
 
-enum class CreationArchiveEntry {
-    Works,
-    OriginalRecords,
-    VersionRecords,
-    CoachRecords,
-}
-
-/**
- * 创作档案页面 — 背景为 D:\图\创作档案.png。
- * 顶部仅保留创作台与创作档案叶签；页面内返回创作台统一使用左侧叶签。
- * 系统返回键仍由 onBack 处理。
- */
 @Composable
 fun ChuangzuodanganScreen(
     onBack: () -> Unit = {},
+    guideSessionKey: String = "guest",
     onOpenCreationDesk: () -> Unit = {},
+    onContinueWork: (String) -> Unit = {},
+    onWithdrawWork: (String) -> Unit = {},
+    onDeleteWork: (String) -> Unit = {},
+    onAppealWork: (String, String, String) -> Unit = { _, _, _ -> },
+    recentWorks: List<CreationProjectDto> = emptyList(),
+    recentWorksLoading: Boolean = false,
+    recentWorksMessage: String? = null,
+    continuingProjectId: String? = null,
+    continueMessage: String? = null,
+    onRetryRecentWorks: () -> Unit = {},
+    archiveDetail: CreationDetailBundle? = null,
+    archiveDetailProjectId: String? = null,
+    archiveDetailLoading: Boolean = false,
+    archiveDetailMessage: String? = null,
+    onArchiveWorkSelected: (String) -> Unit = {},
+    onRetryArchiveDetail: () -> Unit = {},
 ) {
-    val creationTabInteractionSource = remember { MutableInteractionSource() }
-    val creationTabPressed by creationTabInteractionSource.collectIsPressedAsState()
+    val context = LocalContext.current
+    val guidePreferences = remember(context) {
+        context.getSharedPreferences("creation_archive_guides", android.content.Context.MODE_PRIVATE)
+    }
+    val guidePreferenceKey = remember(guideSessionKey) { "archive_intro:$guideSessionKey" }
+    var guideCompleted by rememberSaveable(guideSessionKey) {
+        mutableStateOf(guidePreferences.getBoolean(guidePreferenceKey, false))
+    }
+    val creationTabSource = remember { MutableInteractionSource() }
+    val creationTabPressed by creationTabSource.collectIsPressedAsState()
     val creationTabScale by animateFloatAsState(
-        targetValue = if (creationTabPressed) 0.96f else 1f,
+        targetValue = if (creationTabPressed) .96f else 1f,
         animationSpec = tween(140),
-        label = "档案页创作台叶签按压",
+        label = "创作台叶签按压",
     )
     var introStage by remember { mutableStateOf(ArchiveIntroStage.Quiet) }
+    var guideStage by remember(guideSessionKey) {
+        mutableStateOf(
+            if (guideCompleted) ArchiveGuideStage.Ready else ArchiveGuideStage.AwaitingFirstTap
+        )
+    }
+    var selectedProjectId by remember { mutableStateOf<String?>(null) }
     var activeEntry by remember { mutableStateOf<CreationArchiveEntry?>(null) }
+    var showMoreActions by rememberSaveable { mutableStateOf(false) }
     var transitionLocked by remember { mutableStateOf(false) }
     val transitionScope = rememberCoroutineScope()
     val transitionProgress = remember { Animatable(0f) }
-    val mistDrift by rememberInfiniteTransition(label = "创作档案云烟漂移").animateFloat(
+    val guideTapSource = remember { MutableInteractionSource() }
+    val mistDrift by rememberInfiniteTransition(label = "档案云烟漂移").animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(4_600, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "云烟横向漂移",
+        label = "档案云烟横向漂移",
     )
-
+    val archiveWorks = remember(recentWorks) {
+        recentWorks
+            .filter { it.status == "ACTIVE" }
+            .distinctBy { it.id }
+            .map { project ->
+                ArchiveWork(
+                    projectId = project.id,
+                    title = project.title,
+                    stage = archiveProjectStatusLabel(project),
+                    updatedAt = project.updatedAt.take(10),
+                    description = project.description,
+                    versionNumber = project.currentVersionNumber,
+                )
+            }
+    }
+    val selectedWork = archiveWorks
+        .firstOrNull { it.projectId == selectedProjectId }
+        ?.let { work ->
+            val appealPending = archiveDetail
+                ?.takeIf { it.project.id == work.projectId }
+                ?.moderationAppeals
+                ?.any { it.status == "PENDING" } == true
+            if (appealPending) work.copy(stage = "申诉处理中") else work
+        }
+    val detailSpec = activeEntry?.let(::archiveDetailSpec)
     val detailProgress = transitionProgress.value
-    val flowerProgress = smoothProgress(segmentProgress(detailProgress, 0.02f, 0.48f))
-    val mistProgress = smoothProgress(segmentProgress(detailProgress, 0.30f, 0.72f))
-    val contentProgress = smoothProgress(segmentProgress(detailProgress, 0.58f, 0.88f))
-    val pandaProgress = smoothProgress(segmentProgress(detailProgress, 0.42f, 0.66f))
-    val bottomPatchProgress = smoothProgress(segmentProgress(detailProgress, 0.12f, 0.48f))
+    val flowerProgress = smoothProgress(segmentProgress(detailProgress, .02f, .48f))
+    val mistProgress = smoothProgress(segmentProgress(detailProgress, .30f, .72f))
+    val contentProgress = smoothProgress(segmentProgress(detailProgress, .58f, .88f))
+    val pandaProgress = smoothProgress(segmentProgress(detailProgress, .42f, .66f))
+    val guideBubbleProgress by animateFloatAsState(
+        targetValue = if (guideStage == ArchiveGuideStage.BubbleVisible) 1f else 0f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "档案引导气泡",
+    )
+    val guideTextProgress by animateFloatAsState(
+        targetValue = if (guideStage == ArchiveGuideStage.Ready) 1f else 0f,
+        animationSpec = tween(620, easing = FastOutSlowInEasing),
+        label = "档案入口文字",
+    )
+    val childTextProgress = guideTextProgress * if (selectedWork == null) 0f else 1f
+    // 使用详情开合进度恢复主页面内容，避免 Closing -> Quiet 时文字突然跳出。
+    val baseEntryOpacity = 1f - smoothProgress(segmentProgress(detailProgress, .08f, .52f))
+    val worksLabelProgress = guideTextProgress * staggerProgress(baseEntryOpacity, 0f, .42f)
+    val originalLabelProgress = childTextProgress * staggerProgress(baseEntryOpacity, .12f, .58f)
+    val versionLabelProgress = childTextProgress * staggerProgress(baseEntryOpacity, .28f, .76f)
+    val coachLabelProgress = childTextProgress * staggerProgress(baseEntryOpacity, .44f, .94f)
 
-    // 详情态在当前荷塘页内收起；普通态再离开创作档案页。
+    fun resetGuide() {
+        guideStage = if (guideCompleted) ArchiveGuideStage.Ready else ArchiveGuideStage.AwaitingFirstTap
+        selectedProjectId = null
+        activeEntry = null
+    }
+
     fun closeArchiveOrBack() {
         when (introStage) {
             ArchiveIntroStage.Open -> {
@@ -117,42 +345,58 @@ fun ChuangzuodanganScreen(
                 transitionLocked = true
                 introStage = ArchiveIntroStage.Closing
                 transitionScope.launch {
-                    transitionProgress.animateTo(
-                        targetValue = 0f,
-                        animationSpec = tween(1_900, easing = FastOutSlowInEasing),
-                    )
+                    transitionProgress.animateTo(0f, tween(1_900, easing = FastOutSlowInEasing))
                     activeEntry = null
                     introStage = ArchiveIntroStage.Quiet
                     transitionLocked = false
                 }
             }
-
-            ArchiveIntroStage.Quiet -> onBack()
-            ArchiveIntroStage.Opening,
-            ArchiveIntroStage.Closing,
-            -> Unit
+            ArchiveIntroStage.Quiet -> {
+                resetGuide()
+                onBack()
+            }
+            ArchiveIntroStage.Opening, ArchiveIntroStage.Closing -> Unit
         }
     }
 
-    // 拦截系统返回键 — 行为与页面左上角返回按钮一致
-    BackHandler(enabled = true) {
-        closeArchiveOrBack()
-    }
-
     fun openArchiveEntry(entry: CreationArchiveEntry) {
-        if (transitionLocked || introStage != ArchiveIntroStage.Quiet) return
+        if (
+            transitionLocked ||
+            introStage != ArchiveIntroStage.Quiet ||
+            guideStage != ArchiveGuideStage.Ready ||
+            (entry != CreationArchiveEntry.Works && selectedWork == null)
+        ) return
         activeEntry = entry
         transitionLocked = true
         introStage = ArchiveIntroStage.Opening
         transitionScope.launch {
             transitionProgress.snapTo(0f)
-            transitionProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(2_800, easing = FastOutSlowInEasing),
-            )
+            transitionProgress.animateTo(1f, tween(2_800, easing = FastOutSlowInEasing))
             introStage = ArchiveIntroStage.Open
             transitionLocked = false
         }
+    }
+
+    fun chooseArchiveWork(work: ArchiveWork) {
+        if (
+            transitionLocked ||
+            introStage != ArchiveIntroStage.Open ||
+            activeEntry != CreationArchiveEntry.Works
+        ) return
+        selectedProjectId = work.projectId
+        onArchiveWorkSelected(work.projectId)
+        transitionLocked = true
+        introStage = ArchiveIntroStage.Closing
+        transitionScope.launch {
+            transitionProgress.animateTo(0f, tween(1_300, easing = FastOutSlowInEasing))
+            activeEntry = null
+            introStage = ArchiveIntroStage.Quiet
+            transitionLocked = false
+        }
+    }
+
+    BackHandler(enabled = true) {
+        if (showMoreActions) showMoreActions = false else closeArchiveOrBack()
     }
 
     Box(
@@ -160,44 +404,32 @@ fun ChuangzuodanganScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 背景始终保持同一张荷塘图，避免整页 Crossfade 带来的闪白。
-        // 详情背景只在底部荷叶区域逐渐覆盖原荷苞，为盛开过程腾出干净的花心位置。
-        Image(
-            painter = painterResource(R.drawable.img_chuangzuodangan_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
-        Image(
-            painter = painterResource(R.drawable.img_chuangzuodangan3_bg),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = bottomPatchProgress }
-                .drawWithContent {
-                    clipRect(
-                        left = 0f,
-                        top = 520.dp.toPx(),
-                        right = 230.dp.toPx(),
-                        bottom = 770.dp.toPx(),
-                    ) {
-                        this@drawWithContent.drawContent()
-                    }
-                },
-            contentScale = ContentScale.Crop,
-        )
-
-        // 内容层(避开系统导航条)
+        ArchiveWaterBackground(Modifier.fillMaxSize())
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 返回当前档案页（详情态关闭雾气，普通态返回创作台上一页）。
+            // 新账号首次轻触完成引导；之后再次进入直接可操作。
             Box(
                 modifier = Modifier
-                    .offset(x = 20.dp, y = 41.dp)
-                    .size(32.dp)
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = guideTapSource,
+                        indication = null,
+                        enabled = introStage == ArchiveIntroStage.Quiet &&
+                            guideStage != ArchiveGuideStage.Ready,
+                    ) {
+                        guideStage = ArchiveGuideStage.Ready
+                        guideCompleted = true
+                        guidePreferences.edit().putBoolean(guidePreferenceKey, true).apply()
+                    },
+            )
+
+            Box(
+                modifier = Modifier
+                    .offset(20.dp, 41.dp)
+                    .size(48.dp)
                     .clickable(onClick = ::closeArchiveOrBack),
                 contentAlignment = Alignment.Center,
             ) {
@@ -205,391 +437,893 @@ fun ChuangzuodanganScreen(
                     painter = painterResource(R.drawable.img_gongfang_return),
                     contentDescription = "返回",
                     modifier = Modifier.size(24.dp),
-                    contentScale = ContentScale.Fit,
                 )
             }
 
-            // 档案页交换叶签状态：创作台恢复普通态，创作档案使用高亮放大态。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(x = (-45).dp, y = 23.dp)
-                    .size(width = 160.dp, height = 58.dp)
+                    .offset((-45).dp, 23.dp)
+                    .size(160.dp, 58.dp)
                     .graphicsLayer {
                         scaleX = creationTabScale
                         scaleY = creationTabScale
                     }
                     .clickable(
-                        interactionSource = creationTabInteractionSource,
+                        interactionSource = creationTabSource,
                         indication = null,
-                        onClick = onOpenCreationDesk,
+                        onClick = {
+                            resetGuide()
+                            onOpenCreationDesk()
+                        },
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_gongfang_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(width = 132.dp, height = 48.dp),
-                    contentScale = ContentScale.Fit,
+                    contentDescription = "打开创作台",
+                    modifier = Modifier.size(132.dp, 48.dp),
                 )
-                Text(
-                    text = "创作台",
-                    color = Color(0xFF294A2E),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
-                )
+                Text("创作台", color = ArchiveInk, fontFamily = YaHei, fontSize = 16.sp)
             }
 
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(x = 103.dp, y = 23.dp)
-                    .size(width = 160.dp, height = 58.dp),
+                    .offset(103.dp, 23.dp)
+                    .size(160.dp, 58.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_gongfang_23),
-                    contentDescription = null,
+                    contentDescription = "当前页面：创作档案",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.FillBounds,
                 )
                 Text(
-                    text = "创作档案",
-                    color = Color(0xFF294A2E),
-                    style = TextStyle(
-                        fontFamily = YaHei,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    "创作档案",
+                    color = ArchiveInk,
+                    fontFamily = YaHei,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
-            // 修改版本记录.png(X=226, Y=384.5, W=120.47, H=126.12)
-// 弧形文字:6 字沿弧线排列,首字 51° 顺时针,每字向逆时针递减 10.2°,末字回 0°(整体 -51°)
-val arcText = "修改版本记录"
-val arcN = arcText.length
-for (i in 0 until arcN) {
-    val t = i.toFloat() / (arcN - 1).toFloat()
-    val arcAngleRad = (200.0 - 90.0 * t) * PI / 180.0
-    val charX = (276.0 + 60.235 + 60.5 * cos(arcAngleRad)).toFloat()
-    val charY = (325.5 + 69.4 + 60.5 * sin(arcAngleRad)).toFloat()
-    // 单字旋转:不跟弧度,首字 51° CW,末字 0°,每字向逆时针递减 51°/5 = 10.2°
-    val rot = 51f * (arcN - 1 - i) / (arcN - 1).toFloat()
-
-    Text(
-        text = arcText[i].toString(),
-        color = Color(0xFF437349),
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 16.sp,
-        ),
-        modifier = Modifier
-            .offset(
-                x = charX.dp,
-                y = charY.dp,
+            ArchiveNaturalCues(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = .82f - .12f * flowerProgress },
             )
-            .rotate(rot)
-            .graphicsLayer { alpha = 1f - 0.78f * flowerProgress },
-    )
-}
 
-// 原创记录.png(X=18, Y=333, W=116.5, H=94.11)
-// 圆心在"原"上方 50 单位;"原"保持在原位,其余三字绕圆心排布
-// 旋转:首字 0°,末字 -45°,每字向逆时针递减 15°
-// 颜色:从左到右 浅黄绿(#B8D878) → 深草绿(#5A8A3A),每字内水平渐变
-val chuangyuanText = "原创记录"
-val chuangyuanN = chuangyuanText.length
-val chuangyuanBaseX = 48f + 12f          // 55 — "原" 的 X
-val chuangyuanBaseY = 303f + 47.055f     // 350.055 — "原" 的 Y
-val chuangyuanCenterX = chuangyuanBaseX  // 55 — 圆心 X(直接在"原"上方)
-val chuangyuanCenterY = chuangyuanBaseY - 50f  // 300.055 — 圆心 Y
-val chuangyuanRadius = 50f               // 半径(正好让"原"在弧底)
-// 4 字角度分布(math 度):90°, 70°, 50°, 25°(从"原"顺时针往上排)
-val chuangyuanAnglesDeg = listOf(90f, 70f, 50f, 25f)
-val chuangyuanFirstRot = 0f
-val chuangyuanLastRot = -45f
-val chuangyuanGradientStart = Color(0xFFB8D878)  // 浅黄绿 light yellow-green
-val chuangyuanGradientEnd   = Color(0xFF5A8A3A)  // 深草绿 dark grass green
-for (i in 0 until chuangyuanN) {
-    val t = i.toFloat() / (chuangyuanN - 1).toFloat()
-    val arcAngleRad = chuangyuanAnglesDeg[i].toDouble() * PI / 180.0
-    val charX = (chuangyuanCenterX + chuangyuanRadius * cos(arcAngleRad)).toFloat()
-    val charY = (chuangyuanCenterY + chuangyuanRadius * sin(arcAngleRad)).toFloat()
-    val rot = chuangyuanFirstRot + (chuangyuanLastRot - chuangyuanFirstRot) * t
-    // 每字内部水平渐变:取该字在整体渐变中的"切片"(左 t 到右 t)
-    val rightT = (i + 1).toFloat() / (chuangyuanN - 1).toFloat()
-    fun lerpColor(start: Color, end: Color, tt: Float) = Color(
-        red   = start.red   + (end.red   - start.red)   * tt,
-        green = start.green + (end.green - start.green) * tt,
-        blue  = start.blue  + (end.blue  - start.blue)  * tt,
-        alpha = 1f,
-    )
-    val brush = Brush.horizontalGradient(
-        colors = listOf(
-            lerpColor(chuangyuanGradientStart, chuangyuanGradientEnd, t),
-            lerpColor(chuangyuanGradientStart, chuangyuanGradientEnd, rightT),
-        ),
-    )
-
-    Text(
-        text = chuangyuanText[i].toString(),
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 16.sp,
-            brush = brush,
-        ),
-        modifier = Modifier
-            .offset(
-                x = charX.dp,
-                y = charY.dp,
+            ArchiveArcLabel(
+                text = "选择作品查看",
+                centerX = 45f,
+                centerY = 193f,
+                radius = 50f,
+                startAngle = -90f,
+                sweepAngle = 90f,
+                fontSize = 12.sp,
+                color = ArchiveInk,
+                rotationOffset = 180f,
+                alpha = worksLabelProgress,
             )
-            .rotate(rot)
-            .graphicsLayer { alpha = 1f - flowerProgress },
-    )
-}
-
-// 选择作品查看.png(X=-2, Y=143, W=103, H=101)
-// 6 字绕圆心排布,圆心在"选"下方 50 单位,首字 25° 顺时针,末字 80° 顺时针
-val xuanzeText = "选择作品查看"
-val xuanzeN = xuanzeText.length
-val xuanzeBaseX = 45f                // "选" 的 X
-val xuanzeBaseY = 137f               // "选" 的 Y
-val xuanzeCenterX = xuanzeBaseX      // -2 — 圆心 X(直接在"选"正下方)
-val xuanzeCenterY = xuanzeBaseY + 50f  // 193 — 圆心 Y
-val xuanzeRadius = 50f               // 半径(让"选"在弧顶)
-val xuanzeFirstRot = 25f             // 首字 25° CW
-val xuanzeLastRot = 80f              // 末字 80° CW
-val xuanzeColor = Color(0xFF62704E)
-for (i in 0 until xuanzeN) {
-    val t = i.toFloat() / (xuanzeN - 1).toFloat()
-    // 弧度角:从 -90°(正上方,即"选"位置)扫到 0°(正右方),90° 总扫角
-    val arcAngleDeg = -90f + 90f * t
-    val arcAngleRad = arcAngleDeg.toDouble() * PI / 180.0
-    val charX = (xuanzeCenterX + xuanzeRadius * cos(arcAngleRad)).toFloat()
-    val charY = (xuanzeCenterY + xuanzeRadius * sin(arcAngleRad)).toFloat()
-    val rot = xuanzeFirstRot + (xuanzeLastRot - xuanzeFirstRot) * t
-
-    Text(
-        text = xuanzeText[i].toString(),
-        color = xuanzeColor,
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 12.sp,
-        ),
-        modifier = Modifier
-            .offset(
-                x = charX.dp,
-                y = charY.dp,
+            ArchiveArcLabel(
+                text = "原创记录",
+                centerX = 61f,
+                centerY = 294f,
+                radius = 58f,
+                startAngle = 90f,
+                sweepAngle = -54f,
+                fontSize = 16.sp,
+                color = ArchiveInk,
+                alpha = originalLabelProgress,
             )
-            .rotate(rot)
-            .graphicsLayer { alpha = 1f },
-    )
-}
-
-// AI教练辅助记录.png(X=3, Y=666, W=126.5, H=162.3)— 整组可点击跳 Chuangzuodangan3
-// 8 字绕圆心排布,圆心在"助"上方 70 单位;首字 A/I 51° CW,"助" 0° 锚点,末字 -20°
-// 颜色:前 3 字墨绿(#2E7D32),后 5 字浅绿(#81C784)
-val aiText = "AI教练辅助记录"
-val aiN = aiText.length
-val aiBaseX = 114f                  // "助" 的 X
-val aiBaseY = 735f                 // "助" 的 Y
-val aiCenterX = aiBaseX            // 75 — 圆心 X(直接在"助"正上方)
-val aiCenterY = aiBaseY - 70f      // 680 — 圆心 Y("助"上方 70)
-val aiRadius = 70f                 // 半径(让"助"在弧底)
-// 8 字角度分布:从 A(155° 左侧)→ 助(90° 底)→ 录(60° 右侧)
-val aiAnglesDeg = listOf(155f, 145f, 135f, 120f, 105f, 90f, 75f, 60f)
-// 旋转:前两字同 75°(原 51°),中间 4 字线性到 0°,后两字线性到 -20°
-val aiRotations = listOf(75f, 75f, 56.25f, 37.5f, 18.75f, 0f, -10f, -20f)
-val aiGradientStart = Color(0xFF4A5D3A)  // 墨绿 dark olive green
-val aiGradientEnd = Color(0xFF3D8A4A)    // 翠绿 emerald green
-for (i in 0 until aiN) {
-    val arcAngleRad = aiAnglesDeg[i].toDouble() * PI / 180.0
-    val charX = (aiCenterX + aiRadius * cos(arcAngleRad)).toFloat()
-    val charY = (aiCenterY + aiRadius * sin(arcAngleRad)).toFloat()
-    val rot = aiRotations[i]
-    // 每字内部水平渐变:取该字在整体渐变中的"切片"(左 t 到右 t)
-    val leftT = i.toFloat() / (aiN - 1).toFloat()
-    val rightT = (i + 1).toFloat() / (aiN - 1).toFloat()
-    fun lerpColor(start: Color, end: Color, t: Float) = Color(
-        red   = start.red   + (end.red   - start.red)   * t,
-        green = start.green + (end.green - start.green) * t,
-        blue  = start.blue  + (end.blue  - start.blue)  * t,
-        alpha = 1f,
-    )
-    val brush = Brush.horizontalGradient(
-        colors = listOf(lerpColor(aiGradientStart, aiGradientEnd, leftT),
-                        lerpColor(aiGradientStart, aiGradientEnd, rightT)),
-    )
-
-    Text(
-        text = aiText[i].toString(),
-        style = TextStyle(
-            fontFamily = YaHei,
-            fontSize = 16.sp,
-            brush = brush,
-        ),
-        modifier = Modifier
-            .offset(
-                x = charX.dp,
-                y = charY.dp,
+            ArchiveArcLabel(
+                text = "修改版本记录",
+                centerX = 358f,
+                centerY = 388f,
+                radius = 64f,
+                startAngle = 175f,
+                sweepAngle = -90f,
+                fontSize = 16.sp,
+                color = ArchiveInk,
+                alpha = versionLabelProgress,
             )
-            .rotate(rot)
-            .graphicsLayer { alpha = 1f },
+            ArchiveArcLabel(
+                text = "创作教练记录",
+                centerX = 145f,
+                centerY = 650f,
+                radius = 64f,
+                startAngle = 160f,
+                sweepAngle = -105f,
+                fontSize = 16.sp,
+                color = ArchiveInk,
+                alpha = coachLabelProgress,
+            )
+
+            selectedWork?.let { work ->
+                ArchiveCurrentWorkBadge(
+                    work = work,
+                    onContinue = { onContinueWork(work.projectId) },
+                    onMore = { showMoreActions = true },
+                    continuing = continuingProjectId == work.projectId,
+                    continueMessage = continueMessage,
+                    modifier = Modifier
+                        // 保留左右安全边距，避免雾气牌的边缘被屏幕裁切。
+                        .offset(116.dp, 94.dp)
+                        .size(282.dp, 154.dp)
+                        .graphicsLayer {
+                            alpha = childTextProgress * staggerProgress(baseEntryOpacity, .05f, .50f)
+                        }
+                        .zIndex(15f),
+                )
+            }
+
+            val entriesEnabled = introStage == ArchiveIntroStage.Quiet &&
+                guideStage == ArchiveGuideStage.Ready
+            ArchiveEntryHotspot(
+                x = 0.dp,
+                y = 143.dp,
+                width = 120.dp,
+                height = 110.dp,
+                enabled = entriesEnabled,
+                feedbackCenterX = 53.dp,
+                feedbackCenterY = 54.dp,
+                feedbackRadius = 58.dp,
+                actionLabel = "选择作品",
+            ) { openArchiveEntry(CreationArchiveEntry.Works) }
+            ArchiveChildEntryHotspots(
+                enabled = entriesEnabled && selectedWork != null,
+                actionLabel = "查看原创记录",
+                onClick = { openArchiveEntry(CreationArchiveEntry.OriginalRecords) },
+                flowerX = 34.dp,
+                flowerY = 255.dp,
+                flowerWidth = 90.dp,
+                flowerHeight = 92.dp,
+                textX = 18.dp,
+                textY = 333.dp,
+                textWidth = 117.dp,
+                textHeight = 96.dp,
+            )
+            ArchiveChildEntryHotspots(
+                enabled = entriesEnabled && selectedWork != null,
+                actionLabel = "查看修改版本记录",
+                onClick = { openArchiveEntry(CreationArchiveEntry.VersionRecords) },
+                // 右侧花苞在原画中的实际中心约为 (350dp, 402dp)。
+                flowerX = 300.dp,
+                flowerY = 352.dp,
+                flowerWidth = 100.dp,
+                flowerHeight = 100.dp,
+                textX = 226.dp,
+                textY = 384.dp,
+                textWidth = 125.dp,
+                textHeight = 130.dp,
+            )
+            ArchiveChildEntryHotspots(
+                enabled = entriesEnabled && selectedWork != null,
+                actionLabel = "查看创作教练记录",
+                onClick = { openArchiveEntry(CreationArchiveEntry.CoachRecords) },
+                flowerX = 80.dp,
+                flowerY = 588.dp,
+                flowerWidth = 130.dp,
+                flowerHeight = 105.dp,
+                textX = 3.dp,
+                textY = 666.dp,
+                textWidth = 128.dp,
+                textHeight = 162.dp,
+            )
+
+            Image(
+                painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
+                contentDescription = "创作档案引导熊猫",
+                modifier = Modifier
+                    .offset(201.dp, 584.dp)
+                    .size(212.dp, 245.dp)
+                    .graphicsLayer { alpha = 1f - pandaProgress },
+                contentScale = ContentScale.Fit,
+            )
+
+            if (activeEntry == CreationArchiveEntry.Works) {
+                // 选择作品专用承接层：只有自己的雾气和后端作品卡片。
+                Image(
+                    painter = painterResource(archiveWorkPickerCloud),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(654.dp)
+                        .offset(y = 142.dp)
+                        .graphicsLayer {
+                            alpha = mistProgress * .92f
+                            scaleX = .94f + .06f * mistProgress
+                            scaleY = .94f + .06f * mistProgress
+                            translationX = (mistDrift - .5f) * 7.dp.toPx()
+                        }
+                        .zIndex(20f),
+                    contentScale = ContentScale.FillBounds,
+                )
+                ArchiveWorkPickerContent(
+                    works = archiveWorks,
+                    selectedProjectId = selectedProjectId,
+                    loading = recentWorksLoading,
+                    message = recentWorksMessage,
+                    onRetry = onRetryRecentWorks,
+                    modifier = Modifier
+                        .offset(86.dp, 344.dp)
+                        .size(250.dp, 360.dp)
+                        .graphicsLayer { alpha = contentProgress }
+                        .zIndex(21f),
+                    onSelect = ::chooseArchiveWork,
+                )
+                // 作品选择页保留右下角熊猫承接画面，雾气展开后再淡入，避免与列表抢层。
+                Image(
+                    painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
+                    contentDescription = "作品选择页熊猫",
+                    modifier = Modifier
+                        .offset(204.dp, 667.dp)
+                        .size(200.dp, 222.dp)
+                        .graphicsLayer {
+                            alpha = contentProgress * .98f
+                            val scale = .94f + .06f * contentProgress
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                        .zIndex(23f),
+                    contentScale = ContentScale.Fit,
+                )
+            }
+
+            detailSpec?.let { spec ->
+                // 固定层级：荷花先开，云雾覆盖在荷花之上，再出现烟丝与后端文字。
+                Image(
+                    painter = painterResource(spec.lotusRes),
+                    contentDescription = "关闭当前档案记录",
+                    modifier = Modifier
+                        .offset(spec.lotusX.dp, spec.lotusY.dp)
+                        .size(spec.lotusWidth.dp, spec.lotusHeight.dp)
+                        .graphicsLayer {
+                            alpha = flowerProgress
+                            scaleX = .18f + .82f * flowerProgress
+                            scaleY = .24f + .76f * flowerProgress
+                            transformOrigin = TransformOrigin(.5f, .82f)
+                            translationY = (1f - flowerProgress) * 10.dp.toPx()
+                            rotationZ = -2.5f * (1f - flowerProgress)
+                        }
+                        .zIndex(30f),
+                    contentScale = ContentScale.Fit,
+                )
+                Image(
+                    painter = painterResource(spec.cloudRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = spec.cloudY.dp)
+                        .graphicsLayer {
+                            alpha = mistProgress * .88f
+                            scaleX = .92f + .08f * mistProgress
+                            scaleY = .92f + .08f * mistProgress
+                            translationX = (mistDrift - .5f) * 8.dp.toPx()
+                        }
+                        .zIndex(31f),
+                    contentScale = ContentScale.FillWidth,
+                )
+                spec.smokeRes?.let { smokeRes ->
+                    Image(
+                        painter = painterResource(smokeRes),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .offset(
+                                (spec.smokeX + mistDrift * 10f).dp,
+                                (spec.smokeY + (1f - mistDrift) * 5f).dp,
+                            )
+                            .size(spec.smokeWidth.dp, spec.smokeHeight.dp)
+                            .graphicsLayer {
+                                alpha = mistProgress * .78f
+                                scaleX = .94f + .06f * mistProgress
+                                scaleY = .94f + .06f * mistProgress
+                            }
+                            .zIndex(32f),
+                        contentScale = ContentScale.Fit,
+                    )
+                }
+                ArchiveDetailContent(
+                    entry = activeEntry ?: CreationArchiveEntry.OriginalRecords,
+                    work = selectedWork,
+                    detail = archiveDetail?.takeIf { it.project.id == selectedProjectId },
+                    loading = archiveDetailLoading && archiveDetailProjectId == selectedProjectId,
+                    message = archiveDetailMessage.takeIf { archiveDetailProjectId == selectedProjectId },
+                    onRetry = onRetryArchiveDetail,
+                    modifier = Modifier
+                        .offset(spec.textX.dp, spec.textY.dp)
+                        .size(spec.textWidth.dp, spec.textHeight.dp)
+                        .graphicsLayer { alpha = contentProgress }
+                        .zIndex(33f),
+                )
+                Image(
+                    painter = painterResource(spec.pandaRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .offset(spec.pandaX.dp, spec.pandaY.dp)
+                        .size(spec.pandaWidth.dp, spec.pandaHeight.dp)
+                        .graphicsLayer {
+                            alpha = pandaProgress
+                            translationY = (1f - pandaProgress) * 8.dp.toPx()
+                        }
+                        .zIndex(34f),
+                    contentScale = ContentScale.Fit,
+                )
+                ArchiveEntryHotspot(
+                    x = spec.lotusX.dp,
+                    y = spec.lotusY.dp,
+                    width = spec.lotusWidth.dp,
+                    height = spec.lotusHeight.dp,
+                    enabled = introStage == ArchiveIntroStage.Open,
+                    feedbackCenterX = (spec.lotusWidth * .5f).dp,
+                    feedbackCenterY = (spec.lotusHeight * .5f).dp,
+                    feedbackRadius = (minOf(spec.lotusWidth, spec.lotusHeight) * .48f).dp,
+                    zIndex = 36f,
+                    actionLabel = "关闭当前档案记录",
+                ) { closeArchiveOrBack() }
+            }
+
+            HomeGuideBubble(
+                text = "点击花苞查看\n经历哦！",
+                tailPointsRight = true,
+                modifier = Modifier
+                    .offset(46.dp, 532.dp)
+                    .size(210.dp, 112.dp)
+                    .graphicsLayer {
+                        alpha = if (introStage == ArchiveIntroStage.Quiet) guideBubbleProgress else 0f
+                        val scale = .94f + .06f * guideBubbleProgress
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .zIndex(40f),
+            )
+        }
+    }
+
+    if (showMoreActions && selectedWork != null) {
+        ArchiveMoreActionsSheet(
+            work = selectedWork,
+            detail = archiveDetail?.takeIf { it.project.id == selectedWork.projectId },
+            loading = archiveDetailLoading,
+            message = archiveDetailMessage,
+            onDismiss = { showMoreActions = false },
+            onRetry = onRetryArchiveDetail,
+            onWithdraw = {
+                showMoreActions = false
+                onWithdrawWork(selectedWork.projectId)
+            },
+            onDelete = {
+                showMoreActions = false
+                onDeleteWork(selectedWork.projectId)
+            },
+            onAppeal = { caseId, reason ->
+                showMoreActions = false
+                onAppealWork(selectedWork.projectId, caseId, reason)
+            },
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.ArchiveChildEntryHotspots(
+    enabled: Boolean,
+    actionLabel: String,
+    onClick: () -> Unit,
+    flowerX: Dp,
+    flowerY: Dp,
+    flowerWidth: Dp,
+    flowerHeight: Dp,
+    textX: Dp,
+    textY: Dp,
+    textWidth: Dp,
+    textHeight: Dp,
+) {
+    // 花苞与环绕文字共用一个连续热区，用户从任意位置按下都触发同一反馈与动作。
+    val groupX = minOf(flowerX, textX)
+    val groupY = minOf(flowerY, textY)
+    val groupRight = maxOf(flowerX + flowerWidth, textX + textWidth)
+    val groupBottom = maxOf(flowerY + flowerHeight, textY + textHeight)
+    ArchiveEntryHotspot(
+        x = groupX,
+        y = groupY,
+        width = groupRight - groupX,
+        height = groupBottom - groupY,
+        enabled = enabled,
+        feedbackCenterX = flowerX - groupX + flowerWidth / 2f,
+        feedbackCenterY = flowerY - groupY + flowerHeight / 2f,
+        feedbackRadius = minOf(flowerWidth, flowerHeight) * .62f,
+        actionLabel = actionLabel,
+        onClick = onClick,
     )
 }
 
-// 四个入口均在当前荷塘页面内展开：花苞盛开、雾气扩散、内容浮现。
-// 只有安静态允许再次选择入口，避免动画期间误触。
-val archiveEntriesEnabled = introStage == ArchiveIntroStage.Quiet
-ArchiveEntryHotspot(
-    x = 0.dp,
-    y = 143.dp,
-    width = 120.dp,
-    height = 110.dp,
-    enabled = archiveEntriesEnabled,
-) { openArchiveEntry(CreationArchiveEntry.Works) }
-ArchiveEntryHotspot(
-    x = 18.dp,
-    y = 333.dp,
-    width = 117.dp,
-    height = 96.dp,
-    enabled = archiveEntriesEnabled,
-) { openArchiveEntry(CreationArchiveEntry.OriginalRecords) }
-ArchiveEntryHotspot(
-    x = 226.dp,
-    y = 384.dp,
-    width = 125.dp,
-    height = 130.dp,
-    enabled = archiveEntriesEnabled,
-) { openArchiveEntry(CreationArchiveEntry.VersionRecords) }
-ArchiveEntryHotspot(
-    x = 3.dp,
-    y = 666.dp,
-    width = 128.dp,
-    height = 162.dp,
-    enabled = archiveEntriesEnabled,
-) { openArchiveEntry(CreationArchiveEntry.CoachRecords) }
-
-// 详情内容始终叠加在同一张背景上，通过同一条进度曲线完成开合，避免页面闪动。
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_rect245),
-    contentDescription = null,
-    modifier = Modifier
-        .fillMaxWidth()
-        .offset(y = 55.dp)
-        .graphicsLayer {
-            alpha = mistProgress * 0.88f
-            scaleX = 0.92f + 0.08f * mistProgress
-            scaleY = 0.92f + 0.08f * mistProgress
-            translationX = (mistDrift - 0.5f) * 8.dp.toPx()
-        },
-    contentScale = ContentScale.FillWidth,
-)
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = (35f + mistDrift * 10f).dp, y = (434f + (1f - mistDrift) * 5f).dp)
-        .size(width = 193.dp, height = 203.dp)
-        .graphicsLayer { alpha = mistProgress * 0.78f },
-    contentScale = ContentScale.Fit,
-)
-
-val detailText = when (activeEntry) {
-    CreationArchiveEntry.Works -> "《未命名作品》\n当前阶段：创作草稿\n点击荷花可继续编辑作品"
-    CreationArchiveEntry.OriginalRecords -> "9点32分18秒，记录灵感来源\n9点36分42秒，确定创作方向\n9点41分05秒，补充关键细节"
-    CreationArchiveEntry.VersionRecords -> "V1，完成主题草稿\nV2，调整主体构图\nV3，保留当前创作版本"
-    CreationArchiveEntry.CoachRecords, null -> "9点39分36秒，提示确认主题\n9点45分32秒，提出构图建议\n9点50分01秒，引导修改细节"
+@Composable
+private fun ArchiveArcLabel(
+    text: String,
+    centerX: Float,
+    centerY: Float,
+    radius: Float,
+    startAngle: Float,
+    sweepAngle: Float,
+    fontSize: TextUnit,
+    color: Color,
+    rotationOffset: Float = 0f,
+    alpha: Float,
+) {
+    val denominator = (text.length - 1).coerceAtLeast(1).toFloat()
+    text.forEachIndexed { index, char ->
+        val t = index / denominator
+        val angle = (startAngle + sweepAngle * t) * PI / 180.0
+        val charAlpha = staggerProgress(
+            value = alpha,
+            start = t * .34f,
+            end = .66f + t * .34f,
+        )
+        Text(
+            text = char.toString(),
+            color = color,
+            style = TextStyle(
+                fontFamily = YaHei,
+                fontSize = fontSize,
+                fontWeight = FontWeight.Medium,
+            ),
+            modifier = Modifier
+                .offset(
+                    x = (centerX + radius * cos(angle)).dp,
+                    y = (centerY + radius * sin(angle)).dp,
+                )
+                .rotate(startAngle + sweepAngle * t - 90f + rotationOffset)
+                .graphicsLayer {
+                    this.alpha = charAlpha
+                    translationY = (1f - charAlpha) * 3.dp.toPx()
+                },
+        )
+    }
 }
-Text(
-    text = detailText,
-    color = Color.Black,
-    style = TextStyle(
-        fontFamily = YaHei,
-        fontSize = 14.sp,
-        lineHeight = 21.sp,
-    ),
-    modifier = Modifier
-        .offset(x = 117.dp, y = (346f + (1f - contentProgress) * 12f).dp)
-        .size(width = 189.dp, height = 72.dp)
-        .graphicsLayer { alpha = contentProgress },
-)
 
-// 只有目标荷花在花苞位置逐渐展开，花心固定在荷叶上，避免缩放跳动。
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
-    contentDescription = "打开创作档案",
-    modifier = Modifier
-        .offset(x = 8.dp, y = 556.dp)
-        .size(width = 214.dp, height = 172.dp)
-        .graphicsLayer {
-            alpha = flowerProgress
-            val bloomScale = 0.18f + 0.82f * flowerProgress
-            scaleX = bloomScale
-            scaleY = 0.24f + 0.76f * flowerProgress
-            translationY = (1f - flowerProgress) * 10.dp.toPx()
-            rotationZ = -2.5f * (1f - flowerProgress)
-        },
-    contentScale = ContentScale.Fit,
-)
-
-// 熊猫姿态也随荷花完成交接，开合过程不会出现两只熊猫重影。
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
-    contentDescription = "创作档案引导熊猫",
-    modifier = Modifier
-        .offset(x = 201.dp, y = 584.dp)
-        .size(width = 212.dp, height = 245.dp)
-        .graphicsLayer { alpha = 1f - pandaProgress },
-    contentScale = ContentScale.Fit,
-)
-Image(
-    painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
-    contentDescription = null,
-    modifier = Modifier
-        .offset(x = 204.dp, y = 667.dp)
-        .size(width = 200.dp, height = 222.dp)
-        .graphicsLayer {
-            alpha = pandaProgress
-            translationY = (1f - pandaProgress) * 8.dp.toPx()
-        },
-    contentScale = ContentScale.Fit,
-)
-
-// 详情态气泡复用首页同款纸笺样式，提示用户再次点击荷花关闭。
-HomeGuideBubble(
-    text = "关闭页面请\n再次点击荷花\n即可",
-    tailPointsRight = true,
-    modifier = Modifier
-        .offset(x = 260.dp, y = 622.dp)
-        .size(width = 155.dp, height = 88.dp)
-        .graphicsLayer {
-            alpha = contentProgress
-            val bubbleScale = 0.92f + 0.08f * contentProgress
-            scaleX = bubbleScale
-            scaleY = bubbleScale
-        },
-)
-
-// 四个入口的点击区域复用同一套开花流程；打开后只允许点击荷花关闭。
-ArchiveEntryHotspot(
-    x = 0.dp,
-    y = 535.dp,
-    width = 230.dp,
-    height = 220.dp,
-    enabled = introStage == ArchiveIntroStage.Open,
-) { closeArchiveOrBack() }
+@Composable
+private fun ArchiveDetailContent(
+    entry: CreationArchiveEntry,
+    work: ArchiveWork?,
+    detail: CreationDetailBundle?,
+    loading: Boolean,
+    message: String?,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        when {
+            loading -> ArchiveDetailMessage("正在收拢这幅作品的创作轨迹…", Modifier.fillMaxSize())
+            message != null && detail == null -> ArchiveDetailError(message, onRetry)
+            detail == null -> ArchiveDetailMessage("这幅作品还没有可展示的记录", Modifier.fillMaxSize())
+            else -> {
+                val projectTitle = detail.project.title.ifBlank { work?.title ?: "当前作品" }
+                val lines = when (entry) {
+                    CreationArchiveEntry.OriginalRecords -> {
+                        val description = detail.project.description
+                            ?: detail.method?.goal
+                            ?: work?.description
+                            ?: "暂无作品说明"
+                        listOf(
+                            projectTitle,
+                            "创作目标：$description",
+                            "当前阶段：${archiveProjectStatusLabel(detail.project)}",
+                        )
+                    }
+                    CreationArchiveEntry.VersionRecords -> {
+                        val versions = detail.versions
+                            .sortedBy { it.versionNumber }
+                            .takeLast(4)
+                            .map { version ->
+                                "第 ${version.versionNumber} 版 · ${version.changeSummary.ifBlank { "已保存版本" }}"
+                            }
+                        listOf(projectTitle) + versions.ifEmpty { listOf("暂无版本记录") }
+                    }
+                    CreationArchiveEntry.CoachRecords -> {
+                        val calls = detail.toolCalls
+                            .sortedBy { it.proposedAt }
+                            .takeLast(4)
+                            .map { call ->
+                                "${call.proposedAt.take(16)} · ${call.effectSummary.ifBlank { call.promptSummary }}"
+                            }
+                        listOf(projectTitle) + calls.ifEmpty { listOf("暂无创作教练记录") }
+                    }
+                    CreationArchiveEntry.Works -> emptyList()
+                }
+                Text(
+                    text = (lines + "再次点击荷花即可关闭").joinToString("\n"),
+                    color = Color(0xFF263A2D),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 21.sp),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
 
-private fun segmentProgress(value: Float, start: Float, end: Float): Float {
-    if (end <= start) return 1f
-    return ((value - start) / (end - start)).coerceIn(0f, 1f)
+@Composable
+private fun ArchiveDetailMessage(text: String, modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Text(text, color = Color(0xFF4E6754), fontFamily = YaHei, fontSize = 14.sp)
+    }
 }
 
-private fun smoothProgress(value: Float): Float {
-    val clamped = value.coerceIn(0f, 1f)
-    return clamped * clamped * (3f - 2f * clamped)
+@Composable
+private fun ArchiveDetailError(message: String, onRetry: () -> Unit) {
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(message, color = Color(0xFF8C4D3D), fontFamily = YaHei, fontSize = 13.sp)
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .height(40.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xCC6F963F))
+                .clickable(onClick = onRetry),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("再试一次", color = Color.White, fontFamily = YaHei, fontSize = 13.sp)
+        }
+    }
+}
+
+@Composable
+private fun ArchiveWorkPickerContent(
+    works: List<ArchiveWork>,
+    selectedProjectId: String?,
+    loading: Boolean,
+    message: String?,
+    onRetry: () -> Unit,
+    onSelect: (ArchiveWork) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("选择一幅作品", color = Color(0xFF33412F), fontFamily = YaHei, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        if (loading) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .background(ArchivePanel, RoundedCornerShape(18.dp))
+                    .border(1.dp, ArchivePanelBorder, RoundedCornerShape(18.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = ArchiveInk,
+                        strokeWidth = 2.dp,
+                    )
+                    Text("正在收集作品…", color = ArchiveMuted, fontFamily = YaHei, fontSize = 11.sp)
+                }
+            }
+        } else if (message != null) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .background(ArchivePanel, RoundedCornerShape(18.dp))
+                    .border(1.dp, ArchivePanelBorder, RoundedCornerShape(18.dp))
+                    .clickable(onClick = onRetry),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(message, color = Color(0xFF8C4D3D), fontFamily = YaHei, fontSize = 11.sp)
+                    Text("点击重试", color = ArchiveInk, fontFamily = YaHei, fontSize = 11.sp)
+                }
+            }
+        } else if (works.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .background(ArchivePanel, RoundedCornerShape(18.dp))
+                    .border(1.dp, ArchivePanelBorder, RoundedCornerShape(18.dp))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("暂无已保存作品", color = ArchiveInk, fontFamily = YaHei, fontSize = 13.sp)
+                    Text("请先在创作台保存作品", color = ArchiveMuted, fontFamily = YaHei, fontSize = 11.sp)
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .height(250.dp),
+            ) {
+                items(works, key = { it.projectId }) { work ->
+                    val selected = work.projectId == selectedProjectId
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (selected) Color(0x52D7E5B9) else Color.Transparent)
+                            .semantics {
+                                contentDescription = "选择作品：${work.title}"
+                                role = Role.Button
+                            }
+                            .clickable(onClick = { onSelect(work) })
+                            .padding(horizontal = 18.dp, vertical = 10.dp),
+                    ) {
+                        Column {
+                            Text(work.title, color = ArchiveInk, fontFamily = YaHei, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = buildString {
+                                    append(work.stage)
+                                    work.versionNumber?.let { append(" · 第 $it 版") }
+                                    if (work.updatedAt.isNotBlank()) append(" · ${work.updatedAt}")
+                                },
+                                color = ArchiveMuted,
+                                fontFamily = YaHei,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(top = 3.dp),
+                            )
+                        }
+                    }
+                    if (work != works.last()) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 18.dp)
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color(0x4D5D7751)),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 当前作品承接牌使用完整雾气素材，让作品信息位于雾气可视中心。 */
+@Composable
+private fun ArchiveCurrentWorkBadge(
+    work: ArchiveWork,
+    onContinue: () -> Unit,
+    onMore: () -> Unit,
+    continuing: Boolean,
+    continueMessage: String?,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            // 使用与详情页相同的雾气素材，当前作品承接牌不再使用气泡图形。
+            painter = painterResource(R.drawable.img_chuangzuodangan_current_work_cloud),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 5.dp, vertical = 6.dp),
+            contentScale = ContentScale.FillBounds,
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 44.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                continueMessage?.takeIf { it.isNotBlank() } ?: "当前作品",
+                color = Color(0xFF5D7751),
+                fontFamily = YaHei,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                work.title,
+                color = Color(0xFF294F35),
+                fontFamily = YaHei,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = buildString {
+                    append(work.stage)
+                    work.versionNumber?.let { append(" · 第 $it 版") }
+                },
+                color = ArchiveMuted,
+                fontFamily = YaHei,
+                fontSize = 10.sp,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    onClick = onContinue,
+                    enabled = !continuing,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                ) {
+                    Text(if (continuing) "创建中…" else "继续创作", fontFamily = YaHei, fontSize = 12.sp)
+                }
+                OutlinedButton(
+                    onClick = onMore,
+                    enabled = !continuing,
+                    modifier = Modifier.width(72.dp).height(48.dp),
+                ) {
+                    Text("更多", fontFamily = YaHei, fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ArchiveMoreActionsSheet(
+    work: ArchiveWork,
+    detail: CreationDetailBundle?,
+    loading: Boolean,
+    message: String?,
+    onDismiss: () -> Unit,
+    onRetry: () -> Unit,
+    onWithdraw: () -> Unit,
+    onDelete: () -> Unit,
+    onAppeal: (String, String) -> Unit,
+) {
+    var confirmingDelete by rememberSaveable(work.projectId) { mutableStateOf(false) }
+    var confirmingWithdraw by rememberSaveable(work.projectId) { mutableStateOf(false) }
+    var appealReason by rememberSaveable(work.projectId) { mutableStateOf("") }
+    val publication = detail?.project?.latestPublication
+    val moderationCase = detail?.moderationCase
+    val latestAppeal = detail?.moderationAppeals?.firstOrNull()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFFF9F5E8),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = work.title,
+                color = ArchiveInk,
+                fontFamily = YaHei,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "这里只放不常用的作品管理操作。",
+                color = ArchiveMuted,
+                fontFamily = YaHei,
+                fontSize = 12.sp,
+            )
+            when {
+                loading -> Row(
+                    modifier = Modifier.height(48.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Text("正在确认可用操作…", fontFamily = YaHei, fontSize = 13.sp)
+                }
+                detail == null -> OutlinedButton(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                ) {
+                    Text(message ?: "重新加载作品状态", fontFamily = YaHei)
+                }
+                else -> {
+                    message?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, color = ArchiveInk, fontFamily = YaHei, fontSize = 12.sp)
+                    }
+                    if (publication?.status == "PUBLISHED") {
+                        if (!confirmingWithdraw) {
+                            OutlinedButton(
+                                onClick = { confirmingWithdraw = true },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                            ) {
+                                Text("撤回已发布作品", fontFamily = YaHei)
+                            }
+                        } else {
+                            Text(
+                                "撤回后将从班级或大会中移除，作品和版本仍会保留。",
+                                color = Color(0xFF8C3F35),
+                                fontFamily = YaHei,
+                                fontSize = 12.sp,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedButton(
+                                    onClick = { confirmingWithdraw = false },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                ) { Text("取消", fontFamily = YaHei) }
+                                Button(
+                                    onClick = onWithdraw,
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                ) { Text("确认撤回", fontFamily = YaHei) }
+                            }
+                        }
+                    }
+                    if (latestAppeal?.status == "PENDING") {
+                        Text(
+                            "申诉已提交，正在等待复核。无需重复提交。",
+                            color = ArchiveInk,
+                            fontFamily = YaHei,
+                            fontSize = 12.sp,
+                        )
+                    } else if (moderationCase?.canAppeal == true) {
+                        TextField(
+                            value = appealReason,
+                            onValueChange = { appealReason = it.take(500) },
+                            label = { Text("申诉说明", fontFamily = YaHei) },
+                            supportingText = { Text("请说明希望复核的原因", fontFamily = YaHei) },
+                            minLines = 2,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedButton(
+                            onClick = { onAppeal(moderationCase.id, appealReason.trim()) },
+                            enabled = appealReason.trim().length >= 10,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                        ) {
+                            Text("提交申诉", fontFamily = YaHei)
+                        }
+                    }
+                    if (!confirmingDelete && !confirmingWithdraw) {
+                        OutlinedButton(
+                            onClick = { confirmingDelete = true },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                        ) {
+                            Text("删除作品", fontFamily = YaHei, color = Color(0xFF8C3F35))
+                        }
+                    } else {
+                        Text(
+                            "删除后作品与已发布内容都会撤下，且不能恢复。",
+                            color = Color(0xFF8C3F35),
+                            fontFamily = YaHei,
+                            fontSize = 12.sp,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedButton(
+                                onClick = { confirmingDelete = false },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                            ) { Text("取消", fontFamily = YaHei) }
+                            Button(
+                                onClick = onDelete,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                            ) { Text("确认删除", fontFamily = YaHei) }
+                        }
+                    }
+                    if (
+                        publication?.status != "PUBLISHED" &&
+                        moderationCase?.canAppeal != true && latestAppeal == null &&
+                        !confirmingDelete
+                    ) {
+                        Text(
+                            "当前没有可撤回或可申诉的提交。",
+                            color = ArchiveMuted,
+                            fontFamily = YaHei,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -599,18 +1333,115 @@ private fun BoxScope.ArchiveEntryHotspot(
     width: Dp,
     height: Dp,
     enabled: Boolean,
+    feedbackCenterX: Dp,
+    feedbackCenterY: Dp,
+    feedbackRadius: Dp,
+    zIndex: Float = 10f,
+    actionLabel: String,
     onClick: () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val pressProgress by animateFloatAsState(
+        targetValue = if (pressed && enabled) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (pressed) 110 else 280,
+            easing = FastOutSlowInEasing,
+        ),
+        label = "档案入口自然按压反馈",
+    )
     Box(
         modifier = Modifier
-            .offset(x = x, y = y)
-            .size(width = width, height = height)
+            .offset(x, y)
+            .size(width, height)
+            .zIndex(zIndex)
+            .semantics {
+                contentDescription = actionLabel
+                role = Role.Button
+            }
+            .drawBehind {
+                if (pressProgress > 0f) {
+                    val center = Offset(feedbackCenterX.toPx(), feedbackCenterY.toPx())
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFFFF6C7).copy(alpha = .30f * pressProgress),
+                                Color(0xFFDCE9AE).copy(alpha = .18f * pressProgress),
+                                Color.Transparent,
+                            ),
+                            center = center,
+                            radius = feedbackRadius.toPx(),
+                        ),
+                        center = center,
+                        radius = feedbackRadius.toPx(),
+                    )
+                }
+            }
             .clickable(
-                interactionSource = interactionSource,
+                interactionSource = source,
+                indication = NoRippleIndication,
                 enabled = enabled,
-                indication = null,
                 onClick = onClick,
             ),
     )
+}
+
+private fun archiveProjectStatusLabel(project: CreationProjectDto): String {
+    val status = project.displayStatus.ifBlank {
+        project.latestPublication?.status ?: project.currentStage
+    }
+    return when (status) {
+        "IDEATION" -> "构思阶段"
+        "DRAFT" -> "草图阶段"
+        "PRODUCTION" -> "制作阶段"
+        "TEST" -> "测试阶段"
+        "SEAL" -> "封卷阶段"
+        "PENDING_CHECK", "PENDING_REVIEW", "SUBMITTED" -> "检查中"
+        "PENDING_HUMAN_REVIEW" -> "老师检查中"
+        "PUBLISHED" -> "已发布"
+        "RETURNED" -> "需要修改"
+        "RESTRICTED" -> "暂时不能发布"
+        "WITHDRAWN" -> "已撤回"
+        "REJECTED" -> "未通过检查"
+        "ACTIVE" -> workflowStageLabelForArchive(project.currentStage)
+        else -> workflowStageLabelForArchive(project.currentStage)
+    }
+}
+
+private fun workflowStageLabelForArchive(stage: String): String = when (stage) {
+    "IDEATION" -> "构思阶段"
+    "DRAFT" -> "草图阶段"
+    "PRODUCTION" -> "制作阶段"
+    "TEST" -> "测试阶段"
+    "SEAL" -> "封卷阶段"
+    else -> "创作中"
+}
+
+@Composable
+private fun ArchiveNaturalCues(modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val unit = 1.dp.toPx()
+        listOf(
+            Offset(66f * unit, 335f * unit),
+            Offset(82f * unit, 341f * unit),
+            Offset(94f * unit, 347f * unit),
+        ).forEach { center ->
+            drawCircle(Color(0xFFDFF2D2).copy(alpha = .42f), 5f * unit, center)
+            drawCircle(Color.White.copy(alpha = .62f), 1.25f * unit, Offset(center.x - 1.4f * unit, center.y - 1.8f * unit))
+        }
+        val body = Offset(327f * unit, 344f * unit)
+        drawLine(Color(0xFF745A35).copy(alpha = .48f), Offset(body.x, body.y - 10f * unit), Offset(body.x, body.y + 10f * unit), 1.2f * unit)
+        drawCircle(Color(0xFF8B6D3E).copy(alpha = .52f), 2f * unit, body)
+    }
+}
+
+private fun segmentProgress(value: Float, start: Float, end: Float): Float =
+    if (end <= start) 1f else ((value - start) / (end - start)).coerceIn(0f, 1f)
+
+private fun staggerProgress(value: Float, start: Float, end: Float): Float =
+    smoothProgress(segmentProgress(value, start, end))
+
+private fun smoothProgress(value: Float): Float {
+    val clamped = value.coerceIn(0f, 1f)
+    return clamped * clamped * (3f - 2f * clamped)
 }

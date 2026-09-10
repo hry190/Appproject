@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+from urllib.parse import urlsplit
 
 import pytest
 from fastapi import FastAPI
@@ -281,7 +282,13 @@ def test_media_upload_is_private_scanned_and_generates_signed_thumbnails(
     assert asset["height"] == 40
     assert asset["metadata_stripped"] is True
     assert asset["original_filename"] == "竹林.png"
-    assert asset["original_url"].startswith("memory://private/")
+    original_path = urlsplit(asset["original_url"]).path
+    assert original_path.startswith("/v1/media-downloads/")
+    downloaded = client.get(original_path)
+    assert downloaded.status_code == 200
+    assert downloaded.headers["content-type"].startswith("image/png")
+    assert downloaded.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert client.get(original_path + "broken").status_code == 404
     assert {item["kind"] for item in asset["derivatives"]} == {
         "THUMBNAIL_320",
         "THUMBNAIL_640",
@@ -298,7 +305,9 @@ def test_media_upload_is_private_scanned_and_generates_signed_thumbnails(
     assert luggage.status_code == 200, luggage.text
     thumbnail = luggage.json()["data"]["creations"]["items"][0]["thumbnail"]
     assert thumbnail["asset_id"] == asset["id"]
-    assert thumbnail["url"].startswith("memory://private/")
+    thumbnail_path = urlsplit(thumbnail["url"]).path
+    assert thumbnail_path.startswith("/v1/media-downloads/")
+    assert client.get(thumbnail_path).status_code == 200
     in_use = client.delete(f"/v1/media-assets/{asset['id']}", headers=owner)
     assert in_use.status_code == 409
     assert in_use.json()["error"]["code"] == "MEDIA_ASSET_IN_USE"

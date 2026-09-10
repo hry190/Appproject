@@ -26,6 +26,9 @@ class CreationDraftStore(context: Context) {
 
     object Keys {
         const val ImagePrompt = "image_prompt"
+        const val CreationTextDraft = "creation_text_draft"
+        const val CoachPrompt = "coach_prompt"
+        const val GenerationPrompt = "generation_prompt"
         const val PicturePrompt = "picture_prompt"
         const val ElementPrompt = "element_prompt"
     }

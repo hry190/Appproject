@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -84,6 +86,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.CreationWorkspaceTopBar
+import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 private val Ink = Color(0xFF294A2E)
@@ -197,7 +200,15 @@ fun GongfangScreen(
         }
     }
 
-    BackHandler { onBack() }
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    BackHandler {
+        if (imeVisible) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        } else {
+            onBack()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -396,7 +407,7 @@ private fun StartCreationContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            sourceStatus ?: "点“＋”可上传草图或带入已学秘籍；同门灵感等待授权能力",
+                            sourceStatus ?: "点“＋”可上传草图或带入已学秘籍；同门灵感将在获得许可后开放",
                             color = if (sourceStatus?.contains("失败") == true) {
                                 Color(0xFF8C4D3D)
                             } else {
@@ -785,7 +796,7 @@ private fun StartedCreationContent(
                     )
                     method?.let { plan ->
                         Text(
-                            "推荐：${creationMediaTypeLabel(plan.recommendedMediaType)} · 工具调用前会再次确认",
+                            "推荐：${creationMediaTypeLabel(plan.recommendedMediaType)} · 使用辅助功能前会请你确认",
                             color = MutedInk,
                             fontFamily = YaHei,
                             fontSize = 11.sp,
@@ -967,23 +978,13 @@ private fun InfoRow(icon: ImageVector, label: String, value: String) {
 
 @Composable
 private fun CoachBubble(text: String, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.height(78.dp), contentAlignment = Alignment.Center) {
-        Image(
-            painter = painterResource(R.drawable.img_gongfang_186),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds,
-        )
-        Text(
-            text,
-            color = Color(0xFF30362F),
-            fontFamily = YaHei,
-            fontSize = 14.sp,
-            lineHeight = 21.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        )
-    }
+    HomeGuideBubble(
+        text = text,
+        modifier = modifier.height(78.dp),
+        tailPointsRight = true,
+        horizontalPadding = 24.dp,
+        verticalPadding = 16.dp,
+    )
 }
 
 @Composable
