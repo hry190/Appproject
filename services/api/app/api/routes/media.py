@@ -87,6 +87,26 @@ def get_media_asset(
     return service.get_asset(user, asset_id)
 
 
+@router.get(
+    "/media-downloads/{token}",
+    response_class=Response,
+    include_in_schema=False,
+)
+def download_signed_media(
+    token: str,
+    service: MediaService = Depends(get_media_service),
+) -> Response:
+    data, content_type, remaining_seconds = service.read_signed_private_object(token)
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Cache-Control": f"private, max-age={min(remaining_seconds, 300)}",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
 @router.delete(
     "/media-assets/{asset_id}",
     response_model=MediaDeleteAccepted,

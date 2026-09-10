@@ -288,6 +288,15 @@ class MediaService:
         asset = self._require_asset(user, asset_id)
         return self._asset_public(asset)
 
+    def read_signed_private_object(self, token: str) -> tuple[bytes, str, int]:
+        """Resolve a short-lived media link without exposing a permanent public URL."""
+        if not isinstance(self.store, InMemoryObjectStore):
+            raise ApiError(404, "MEDIA_DOWNLOAD_NOT_FOUND", "媒体链接已失效")
+        try:
+            return self.store.read_signed_private(token)
+        except ObjectNotFoundError:
+            raise ApiError(404, "MEDIA_DOWNLOAD_NOT_FOUND", "媒体链接已失效") from None
+
     def ingest_generated_image(
         self,
         *,
@@ -639,9 +648,7 @@ class MediaService:
                     byte_size=item.byte_size,
                     url=self.store.presign_private_download(
                         item.storage_key,
-                        expires=timedelta(
-                            minutes=self.settings.media_download_ttl_minutes
-                        ),
+                        expires=timedelta(minutes=self.settings.media_download_ttl_minutes),
                     ),
                     expires_at=expires_at,
                 )
