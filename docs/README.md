@@ -21,14 +21,19 @@
 | 文件 | 用途 | 创建日期 |
 |---|---|---|
 | [README.md](./README.md) | 本索引 | - |
+| [ONBOARDING.md](./ONBOARDING.md) | 新人入门指南 — 环境/规范/陷阱/必读 | 2026-09-10 |
 | [SESSION-LOG-2026-09-07.md](./SESSION-LOG-2026-09-07.md) | 2026-09-07 dev 环境调试会话 | 2026-09-07 |
 | [SESSION-LOG-2026-09-08.md](./SESSION-LOG-2026-09-08.md) | 2026-09-08 滚轮1-12 + 试炼1-3 + 未完待续/后山页 | 2026-09-08 |
 | [SESSION-LOG-2026-09-09.md](./SESSION-LOG-2026-09-09.md) | 2026-09-09 环境清理 + 登录连不上根因 + 多维度扫描 + 学习2 页面 | 2026-09-09 |
-| [CODE-AUDIT-2026-09-09.md](./CODE-AUDIT-2026-09-09.md) | 2026-09-09 多维度代码扫描结果(103 个 finding + 8 个优先行动) | 2026-09-09 |
+| [SESSION-LOG-2026-09-10.md](./SESSION-LOG-2026-09-10.md) | 2026-09-10 学习/滚轮 6 新屏 + 修 dead button + v2 审计 | 2026-09-10 |
+| [CODE-AUDIT-2026-09-09.md](./CODE-AUDIT-2026-09-09.md) | v1 代码审计 — 103 个 finding + 8 个优先行动 | 2026-09-09 |
+| [CODE-AUDIT-2026-09-10.md](./CODE-AUDIT-2026-09-10.md) | v2 代码审计 — 68 个 finding(含 NEW/PERSISTED 标注) | 2026-09-10 |
+| [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 
 **项目根目录的文档**(不属于 docs/ 但常参考):
 - [DEV-SETUP.md](../DEV-SETUP.md) — dev 环境完整配置流程
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — 协作约定
+- [android/docs/screen-adaptation.md](../android/docs/screen-adaptation.md) — 屏幕适配方案(两段式/三段式 + 真机 dp 表)
 
 ---
 
@@ -45,6 +50,7 @@
 
 | 文档类型 | 命名 | 何时建 |
 |---|---|---|
+| 新人入门指南 | `ONBOARDING.md` | 项目首建,新人加入时 |
 | 会话记录 | `SESSION-LOG-YYYY-MM-DD.md` | 每次长跑调试结束(≥30 分钟) |
 | 决策记录 | `DECISIONS.md` | 做了重要的架构 / 设计决策 |
 | 故障排查 | `TROUBLESHOOTING.md` | 解决了一个反复出现的问题,值得记录 |
