@@ -16,6 +16,11 @@ app/build/
 **/*.db
 services/api/.env
 
+# Generated local acceptance evidence and scratch output
+artifacts/
+output/
+tmp/
+
 # Root-level dev cruft (per ENVIRONMENT.md §8.3 — not project files)
 clean_text.py
 write_vertical_text.py
