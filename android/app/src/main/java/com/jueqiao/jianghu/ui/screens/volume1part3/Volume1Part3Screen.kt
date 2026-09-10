@@ -29,8 +29,8 @@ import com.jueqiao.jianghu.R
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷同源
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与第一卷-2 的 Group 256 不同)
- *   - 图1(image 231.png,X=19, Y=155, W=361, H=279)— 上半区域
- *   - 图2(image 232.png,X=19, Y=489, W=363, H=353)— 下半区域
+ *   - 图1(image 231.png,X=19, Y=155, W=351, H=279)— 上半区域
+ *   - 图2(image 232.png,X=19, Y=489, W=353, H=283)— 下半区域
  *   - 标题文本"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 顶层
  *
  * 资源来源:
@@ -79,12 +79,12 @@ fun Volume1Part3Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 图1(image 231.png,X=19, Y=155, W=361, H=279)— 在书框之上、上半区域。
+            // 图1(image 231.png,X=19, Y=155, W=351, H=279)— 在书框之上、上半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 19.dp, y = 155.dp)
-                    .size(width = 361.dp, height = 279.dp),
+                    .size(width = 351.dp, height = 279.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume1part3_image_231),
@@ -94,12 +94,12 @@ fun Volume1Part3Screen(
                 )
             }
 
-            // 图2(image 232.png,X=19, Y=489, W=363, H=353)— 在书框之上、下半区域。
+            // 图2(image 232.png,X=19, Y=489, W=353, H=283)— 在书框之上、下半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 19.dp, y = 489.dp)
-                    .size(width = 363.dp, height = 353.dp),
+                    .size(width = 353.dp, height = 283.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume1part3_image_232),

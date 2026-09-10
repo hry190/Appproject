@@ -30,8 +30,8 @@ import com.jueqiao.jianghu.R
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)
  *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 横跨全屏略溢出
- *   - 图1(image 30.png,X=19, Y=133, W=388, H=331)— 上半区域
- *   - 图2(image 234.png,X=19, Y=494, W=362, H=280)— 下半区域
+ *   - 图1(image 30.png,X=19, Y=133, W=350, H=311)— 上半区域
+ *   - 图2(image 234.png,X=19, Y=494, W=352, H=280)— 下半区域
  *   - 标题文本"规则与学习的区别"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 顶层
  *
  * 与第一卷的差别:
@@ -87,7 +87,7 @@ fun Volume1Part2Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 图1(image 30.png,X=19, Y=133, W=388, H=331)— 在书框之上、上半区域。
+            // 图1(image 30.png,X=19, Y=133, W=350, H=311)— 在书框之上、上半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -102,7 +102,7 @@ fun Volume1Part2Screen(
                 )
             }
 
-            // 图2(image 234.png,X=19, Y=494, W=362, H=280)— 在书框之上、下半区域。
+            // 图2(image 234.png,X=19, Y=494, W=352, H=280)— 在书框之上、下半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
