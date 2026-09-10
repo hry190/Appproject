@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from datetime import timedelta
 import io
 import uuid
+from urllib.parse import urlsplit
 
 import pytest
 from fastapi import FastAPI
@@ -339,7 +340,11 @@ def test_creation_export_flattens_immutable_version_and_returns_safe_download(
     assert result["output_asset"]["purpose"] == "CREATION_PREVIEW"
     assert result["output_asset"]["width"] == 1600
     assert result["output_asset"]["height"] == 1200
-    assert result["output_asset"]["original_url"].startswith("memory://private/")
+    generated_path = urlsplit(result["output_asset"]["original_url"]).path
+    assert generated_path.startswith("/v1/media-downloads/")
+    generated_download = seeded_client.get(generated_path)
+    assert generated_download.status_code == 200
+    assert generated_download.headers["content-type"].startswith("image/png")
 
     with seeded_client.app.state.session_factory() as db:
         asset = db.get(MediaAsset, uuid.UUID(result["output_asset"]["id"]))

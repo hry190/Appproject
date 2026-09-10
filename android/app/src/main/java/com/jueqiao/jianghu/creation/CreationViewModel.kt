@@ -67,6 +67,8 @@ data class CreationDeskState(
     val derivativeSourceTitle: String? = null,
     val loadingRecent: Boolean = false,
     val recentError: String? = null,
+    val continuingProjectId: String? = null,
+    val continueMessage: String? = null,
     val analyzingIntent: Boolean = false,
     val intentAnalysis: CreationIntentAnalysisDto? = null,
     val analysisError: String? = null,
@@ -134,6 +136,7 @@ class CreationViewModel(
     private var pendingGenerationCommit: PendingCommit? = null
     private var pendingEditorCommit: PendingCommit? = null
     private var pendingExportCommit: PendingCommit? = null
+    private var pendingContinueCommit: PendingCommit? = null
 
     fun loadEditor(projectId: String) {
         if (_state.value.editorLoading && _state.value.editorProjectId == projectId) return
@@ -437,6 +440,73 @@ class CreationViewModel(
                 _state.value = _state.value.copy(
                     loadingRecent = false,
                     recentError = error.userMessage("最近作品暂时无法载入，请稍后重试"),
+                )
+            }
+        }
+    }
+
+    fun continueProject(
+        projectId: String,
+        onReady: (CreationVersionDto) -> Unit,
+    ) {
+        if (_state.value.continuingProjectId != null) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                continuingProjectId = projectId,
+                continueMessage = "正在创建新的修改版本…",
+            )
+            try {
+                val detail = repository.creationDetail(projectId)
+                val source = detail.versions.maxByOrNull { it.versionNumber }
+                    ?: error("这件作品还没有可继续的版本")
+                val signature = "continue|$projectId|${source.id}"
+                val commit = pendingContinueCommit
+                    ?.takeIf { it.signature == signature }
+                    ?: PendingCommit(signature, "android-continue-${UUID.randomUUID()}")
+                        .also { pendingContinueCommit = it }
+                val saved = repository.createCreationVersion(
+                    projectId = projectId,
+                    payload = CreationVersionCreateDto(
+                        parentVersionId = source.id,
+                        layers = source.layers,
+                        canvasWidth = source.canvasWidth,
+                        canvasHeight = source.canvasHeight,
+                        previewAssetId = source.previewAssetId,
+                        changeSummary = "从创作档案继续创作",
+                        modificationReason = "创建新的修改版本，保留原有版本和提交记录",
+                    ),
+                    idempotencyKey = commit.idempotencyKey,
+                )
+                var project = repository.creationProject(projectId)
+                if (project.currentStage != "PRODUCTION") {
+                    val transition = repository.transitionCreationStage(
+                        projectId = projectId,
+                        payload = CreationStageTransitionDto(
+                            fromStage = project.currentStage,
+                            toStage = "PRODUCTION",
+                            reason = "从创作档案创建新版本并继续制作",
+                            expectedRevision = project.rowVersion,
+                        ),
+                    )
+                    project = project.copy(
+                        currentStage = transition.currentStage,
+                        rowVersion = transition.projectRevision,
+                    )
+                }
+                _state.value = _state.value.copy(
+                    continuingProjectId = null,
+                    continueMessage = "已创建第 ${saved.versionNumber} 版，原版本仍保留",
+                    recentProjects = listOf(project) + _state.value.recentProjects
+                        .filterNot { it.id == project.id },
+                )
+                pendingContinueCommit = null
+                onReady(saved)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    continuingProjectId = null,
+                    continueMessage = error.userMessage("暂时无法继续创作，请稍后重试"),
                 )
             }
         }
@@ -826,7 +896,9 @@ class CreationViewModel(
                     scenario = scenario.trim(),
                     result = result,
                     notes = notes.trim(),
-                    findings = finding.trim().takeIf { it.isNotEmpty() }?.let {
+                    findings = finding.trim().takeIf {
+                        result != "PASSED" && it.isNotEmpty()
+                    }?.let {
                         listOf(
                             CreationTestFindingCreateDto(
                                 severity = if (result == "BLOCKED") "BLOCKING" else "IMPORTANT",
@@ -1019,6 +1091,65 @@ class CreationViewModel(
             )
             onComplete()
             "作品说明与隐私自查已保存"
+        }
+    }
+
+    @Suppress("LongParameterList")
+    fun saveSealReflectionPackage(
+        projectId: String,
+        versionId: String,
+        workDescription: String,
+        learningReflection: String,
+        nextImprovement: String,
+        identityPrivacyConfirmed: Boolean,
+        contactPrivacyConfirmed: Boolean,
+        portraitRightsConfirmed: Boolean,
+        sealRowVersion: Int?,
+        manualPageIds: List<String>,
+        methodSummary: String,
+        learningRowVersion: Int?,
+        onComplete: () -> Unit,
+    ) {
+        if (_state.value.workflowBusy) return
+        runWorkflow(projectId, "正在保存作品说明与学习收获…") {
+            repository.putCreationSealCheck(
+                versionId = versionId,
+                payload = CreationSealCheckPutDto(
+                    workDescription = workDescription.trim(),
+                    learningReflection = learningReflection.trim(),
+                    nextImprovement = nextImprovement.trim(),
+                    identityPrivacyConfirmed = identityPrivacyConfirmed,
+                    contactPrivacyConfirmed = contactPrivacyConfirmed,
+                    portraitRightsConfirmed = portraitRightsConfirmed,
+                    rowVersion = sealRowVersion,
+                ),
+            )
+            val lessons = manualPageIds.distinct()
+            repository.putLearningCard(
+                versionId = versionId,
+                payload = LearningCardPutDto(
+                    manualPageIds = lessons,
+                    methodSummary = methodSummary.trim().ifEmpty { learningReflection.trim() },
+                    unresolvedQuestions = emptyList(),
+                    questionsConfirmed = true,
+                    rowVersion = learningRowVersion,
+                ),
+            )
+            lessons.forEach { lessonId ->
+                val reason = "我在作品中运用了所选秘籍，并根据测试结果继续修改"
+                val keySeed = "$versionId|$lessonId|$reason"
+                repository.submitMigrationEvidence(
+                    lessonId = lessonId,
+                    payload = MigrationEvidenceCreateDto(
+                        creationVersionId = versionId,
+                        usedLessons = lessons,
+                        revisionReason = reason,
+                    ),
+                    idempotencyKey = "android-migration-${UUID.nameUUIDFromBytes(keySeed.toByteArray())}",
+                )
+            }
+            onComplete()
+            "作品说明与学习收获已保存"
         }
     }
 

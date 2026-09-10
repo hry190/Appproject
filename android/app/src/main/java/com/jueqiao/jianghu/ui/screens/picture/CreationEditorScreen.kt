@@ -747,7 +747,7 @@ private fun LayerInspector(
                     Text(layer.name, color = EditorInk, fontWeight = FontWeight.Bold)
                     Text(
                         if (layer.aigc) {
-                            if (aiModified) "AI 生成 · 已人工调整（保存时自动写入来源谱）"
+                            if (aiModified) "智能工具生成 · 已亲手调整（保存时自动记入来源记录）"
                             else "AI 生成 · 尚未人工调整"
                         } else {
                             "${layer.kind} · 第 ${layer.zIndex + 1} 层"

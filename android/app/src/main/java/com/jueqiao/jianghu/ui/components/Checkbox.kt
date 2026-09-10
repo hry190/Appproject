@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jueqiao.jianghu.R
@@ -38,6 +41,10 @@ fun AuthCheckbox(
                 color = AuthPalette.LinkOlive,
                 shape = CircleShape,
             )
+            .semantics {
+                contentDescription = "同意用户协议与隐私条款"
+                stateDescription = if (checked) "已同意" else "未同意"
+            }
             .clickable { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center,
     ) {

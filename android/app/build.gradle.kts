@@ -47,6 +47,14 @@ android {
         debug {
             isMinifyEnabled = false
         }
+        create("demo") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".demo"
+            matchingFallbacks += listOf("debug")
+            signingConfig = signingConfigs.getByName("debug")
+            // 比赛演示只连接随项目启动的隔离后端，不读取开发机 local.properties。
+            buildConfigField("String", "AUTH_BASE_URL", "http://10.0.2.2:8011/".asBuildConfigString())
+        }
         create("acceptance") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".acceptance"
@@ -55,6 +63,7 @@ android {
             buildConfigField("String", "AUTH_BASE_URL", "http://10.0.2.2:8011/".asBuildConfigString())
         }
     }
+    sourceSets.getByName("demo").manifest.srcFile("src/debug/AndroidManifest.xml")
     sourceSets.getByName("acceptance").manifest.srcFile("src/debug/AndroidManifest.xml")
 
     compileOptions {

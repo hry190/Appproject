@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     )
     media_upload_ttl_minutes: int = Field(default=15, ge=5, le=60)
     media_download_ttl_minutes: int = Field(default=5, ge=1, le=30)
+    # Local/demo storage must still return a browser/Android-readable signed URL.
+    media_memory_public_base_url: str = "http://127.0.0.1:8010"
     minio_endpoint: str = "127.0.0.1:19000"
     minio_public_endpoint: str | None = None
     minio_region: str = "us-east-1"

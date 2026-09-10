@@ -9,6 +9,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
@@ -64,6 +66,7 @@ fun HomeScreen(
     onOpenHome1: () -> Unit = {},
 ) {
     var chatStep by remember { mutableStateOf(0) }
+    val guideInteractionSource = remember { MutableInteractionSource() }
     val density = LocalDensity.current
     val statusBarTop = with(density) {
         WindowInsets.statusBars.getTop(density).toDp()
@@ -149,6 +152,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .clickable(
+                                interactionSource = guideInteractionSource,
+                                indication = null,
                                 role = Role.Button,
                                 onClickLabel = "继续引导",
                             ) {
@@ -172,6 +177,8 @@ fun HomeGuideBubble(
     text: String,
     modifier: Modifier = Modifier,
     tailPointsRight: Boolean = false,
+    horizontalPadding: Dp = 46.dp,
+    verticalPadding: Dp = 29.dp,
 ) {
     Box(modifier = modifier) {
         Image(
@@ -193,8 +200,8 @@ fun HomeGuideBubble(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    horizontal = 46.dp,
-                    vertical = 29.dp,
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding,
                 ),
             contentAlignment = Alignment.Center,
         ) {

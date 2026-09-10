@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.shengtu
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,12 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -35,8 +38,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,16 +50,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.luggage.CreationTestIssueDto
@@ -73,6 +87,7 @@ import com.jueqiao.jianghu.ui.screens.gongfang.CreationManualOption
 import com.jueqiao.jianghu.ui.screens.settings.CreationDraftStore
 import com.jueqiao.jianghu.ui.theme.YaHei
 import coil.compose.AsyncImage
+import kotlin.math.roundToInt
 
 /**
  * 作品制作与封卷流程页，沿用工坊的返回、顶部标签和创作档案入口。
@@ -109,6 +124,31 @@ data class SealCheckForm(
     val contactPrivacyConfirmed: Boolean,
     val portraitRightsConfirmed: Boolean,
 )
+
+private data class ChatMessage(
+    val text: String,
+    val fromUser: Boolean,
+)
+
+private fun coachReplyText(call: CreationToolCallDto): String? {
+    val output = call.outputSnapshot ?: return null
+    val summary = output.get("summary")?.asString?.trim().orEmpty()
+    val suggestedPrompt = output.get("suggested_prompt")?.asString?.trim().orEmpty()
+    val checklist = output.get("checklist")?.asJsonArray
+        ?.mapNotNull { it.asString?.trim()?.takeIf(String::isNotBlank) }
+        .orEmpty()
+    return buildString {
+        if (summary.isNotBlank()) append(summary)
+        if (suggestedPrompt.isNotBlank()) {
+            if (isNotEmpty()) append("\n")
+            append("可参考：").append(suggestedPrompt)
+        }
+        if (checklist.isNotEmpty()) {
+            if (isNotEmpty()) append("\n")
+            append(checklist.joinToString(prefix = "• ", separator = "\n• "))
+        }
+    }.trim().takeIf(String::isNotBlank)
+}
 
 @Composable
 fun ShengtuScreen(
@@ -148,36 +188,89 @@ fun ShengtuScreen(
     onRecordTest: (String, String, String, String) -> Unit = { _, _, _, _ -> },
     onResolveIssue: (CreationTestIssueDto, String) -> Unit = { _, _ -> },
     onEnterSeal: () -> Unit = {},
-    onSaveLearningCard: (LearningCardForm) -> Unit = {},
-    onSubmitMigrationEvidence: (List<String>, String) -> Unit = { _, _ -> },
-    onSaveProvenance: (ProvenanceForm) -> Unit = {},
-    onSaveSealCheck: (SealCheckForm) -> Unit = {},
+    onSaveLearningCard: (LearningCardForm, () -> Unit) -> Unit = { _, _ -> },
+    onSubmitMigrationEvidence: (List<String>, String, () -> Unit) -> Unit = { _, _, _ -> },
+    onSaveProvenance: (ProvenanceForm, () -> Unit) -> Unit = { _, _ -> },
+    onSaveSealCheck: (SealCheckForm, () -> Unit) -> Unit = { _, _ -> },
+    onSaveReflectionPackage: (SealCheckForm, LearningCardForm, () -> Unit) -> Unit = { _, _, _ -> },
     onSubmit: (String, String?) -> Unit = { _, _ -> },
     onOpenPublishedWork: (String) -> Unit = {},
     onCreateWork: () -> Unit = {},
     onOpenChuangzuodangan: () -> Unit = {},
 ) {
-    // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致
+    val screenFocusManager = LocalFocusManager.current
+    val screenKeyboardController = LocalSoftwareKeyboardController.current
+    val screenImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     BackHandler(enabled = true) {
-        android.util.Log.d("Shengtu", "BackHandler triggered")
-        onBack()
+        if (screenImeVisible) {
+            screenFocusManager.clearFocus()
+            screenKeyboardController?.hide()
+        } else {
+            onBack()
+        }
     }
 
     // 输入框焦点管理
     val rect227FocusRequester = remember { FocusRequester() }
     val context = LocalContext.current
     val draftStore = remember(context) { CreationDraftStore(context) }
-    val draftKey = remember(projectId) {
-        if (projectId == null) CreationDraftStore.Keys.ImagePrompt
-        else "${CreationDraftStore.Keys.ImagePrompt}:$projectId"
+    val coachAvailable = currentStage == "PRODUCTION" && publicationStatus == null
+    val draftKey = remember(projectId, currentStage) {
+        val base = if (coachAvailable) {
+            CreationDraftStore.Keys.CoachPrompt
+        } else {
+            CreationDraftStore.Keys.CreationTextDraft
+        }
+        if (projectId == null) base else "$base:$projectId"
     }
-    var rect227Text by rememberSaveable(projectId) {
+    var rect227Text by rememberSaveable(projectId, currentStage) {
         mutableStateOf(
-            draftStore.read(draftKey).ifBlank { initialPrompt.orEmpty() }
+            draftStore.read(draftKey).ifBlank {
+                initialPrompt.takeIf { currentStage == "DRAFT" || currentStage == "IDEATION" }.orEmpty()
+            }
         )
     }
     var draftNotice by rememberSaveable(projectId) { mutableStateOf<String?>(null) }
     var showWorkflowDialog by rememberSaveable(projectId) { mutableStateOf(false) }
+    var chatMessages by remember(projectId) { mutableStateOf(emptyList<ChatMessage>()) }
+    var chatSending by rememberSaveable(projectId) { mutableStateOf(false) }
+    val pendingCoachCall = toolCalls.firstOrNull {
+        it.creationVersionId == currentVersionId && it.status == "PROPOSED"
+    }
+    val latestCompletedCoachCall = toolCalls.firstOrNull {
+        it.creationVersionId == currentVersionId && it.status == "COMPLETED"
+    }
+    val latestGeneration = activeGeneration ?: imageGenerations?.items?.firstOrNull()
+    val generationActive = latestGeneration?.status in setOf(
+        "QUEUED", "RUNNING", "SAFETY_CHECK", "VERSIONING"
+    )
+    val agentProcessing = chatSending || workflowBusy || generationBusy || generationActive
+    val sealPackageComplete = sealCheck?.status == "COMPLETE" &&
+        learningCard?.status == "COMPLETE" && provenance?.status == "COMPLETE"
+    val mainActionText = when {
+        projectId == null -> "开始创作"
+        publicationStatus != null -> "查看提交状态"
+        currentStage == null -> "正在载入…"
+        currentStage == "DRAFT" || currentStage == "IDEATION" -> "保存并继续"
+        currentStage == "SEAL" && sealPackageComplete -> "提交作品"
+        else -> "下一步"
+    }
+
+    LaunchedEffect(workflowBusy, workflowMessage, pendingCoachCall, latestCompletedCoachCall) {
+        if (!workflowBusy && (workflowMessage != null || pendingCoachCall != null || latestCompletedCoachCall != null)) {
+            chatSending = false
+        }
+    }
+    val sendMessage = {
+        val message = rect227Text.trim()
+        if (coachAvailable && projectId != null && message.length >= 2 && !workflowBusy && !generationBusy) {
+            chatMessages = chatMessages + ChatMessage(text = message, fromUser = true)
+            rect227Text = ""
+            draftStore.clear(draftKey)
+            chatSending = true
+            onRequestCoach(message)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -214,198 +307,60 @@ fun ShengtuScreen(
                 contentScale = ContentScale.Fit,
             )
 
-            // 卷轴标题区单独留出固定宽度，发布按钮永远不会覆盖标题。
-            Box(
+            // 对话工作区：只有用户发出消息后，Agent 处理中的进度卡才会出现。
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = 125.dp),
+                    .align(Alignment.TopCenter)
+                    .offset(y = 150.dp)
+                    .width(300.dp)
+                    .height(500.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    text = if (projectId != null) {
-                        "正在为《${projectTitle ?: "未命名作品"}》准备创作草稿"
-                    } else {
-                        "正在生成图片"
-                    },
-                    color = Color(0xFF596756),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
-                    modifier = Modifier
-                        .offset(x = 42.dp, y = 2.dp)
-                        .width(220.dp),
-                )
-                Box(
-                    modifier = Modifier
-                        .offset(x = 291.dp, y = 0.dp)
-                        .size(width = 65.dp, height = 30.dp)
-                        .semantics { contentDescription = "打开创作流程" }
-                        .clickable(enabled = projectId != null) {
-                            showWorkflowDialog = true
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_shengtu_group253),
-                        contentDescription = null,
-                        modifier = Modifier.size(width = 65.dp, height = 23.dp),
-                        contentScale = ContentScale.Fit,
+                if (chatMessages.isEmpty() && !agentProcessing && pendingCoachCall == null && workflowMessage.isNullOrBlank()) {
+                    ChatBubble(
+                        text = "可以告诉我想怎么改，我会先理解你的想法，再给出修改方向。",
+                        fromUser = false,
                     )
                 }
-            }
-
-            // Agent 思考状态卡：提供明确的当前动作、进度和后续步骤。
-            Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 152.dp),
-                contentAlignment = Alignment.TopCenter,
-            ) {
-                Surface(
-                    color = Color(0xFFF9F4E6).copy(alpha = .96f),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier
-                        .size(width = 300.dp, height = 370.dp)
-                        .border(
-                            width = 1.dp,
-                            color = Color(0xFFB9B993).copy(alpha = .72f),
-                            shape = RoundedCornerShape(20.dp),
-                        ),
-                    shadowElevation = 5.dp,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 22.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(0.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        color = Color(0xFF789D79),
-                                        shape = RoundedCornerShape(12.dp),
-                                    ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "机巧",
-                                    color = Color.White,
-                                    fontFamily = YaHei,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                )
+                chatMessages.forEach { message ->
+                    ChatBubble(text = message.text, fromUser = message.fromUser)
+                }
+                if (agentProcessing) {
+                    AgentThinkingPanel(
+                        workflowBusy = workflowBusy || chatSending,
+                        generationBusy = generationBusy || generationActive,
+                        generationProgress = latestGeneration?.progressPercent,
+                        currentStage = currentStage,
+                        statusMessage = if (generationBusy || generationActive) {
+                            generationMessage
+                        } else {
+                            workflowMessage
+                        },
+                    )
+                }
+                pendingCoachCall?.let { call ->
+                    CoachProposalCard(
+                        effectSummary = call.effectSummary,
+                        onAccept = { onDecideCoach(call, true) },
+                        onReject = { onDecideCoach(call, false) },
+                        enabled = !workflowBusy,
+                    )
+                }
+                if (!workflowBusy) {
+                    workflowMessage?.takeIf { it.isNotBlank() }?.let {
+                        ChatBubble(text = it, fromUser = false)
+                    }
+                    latestCompletedCoachCall?.let { call ->
+                        (coachReplyText(call) ?: call.effectSummary)
+                            .takeIf { it.isNotBlank() }
+                            ?.let {
+                                ChatBubble(text = it, fromUser = false)
                             }
-                            Column(modifier = Modifier.padding(start = 12.dp)) {
-                                Text(
-                                    text = "CREATIVE AGENT",
-                                    color = Color(0xFF91A08A),
-                                    fontFamily = YaHei,
-                                    fontSize = 11.sp,
-                                    letterSpacing = 1.sp,
-                                )
-                                Text(
-                                    text = "正在把灵感整理成草稿",
-                                    color = Color(0xFF3E5B43),
-                                    fontFamily = YaHei,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
-                            }
-                        }
-                        Text(
-                            text = "我会先理解你的想法，再给出可继续编辑的创作方向。",
-                            color = Color(0xFF76816F),
-                            fontFamily = YaHei,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = 10.dp),
-                        )
-                        Surface(
-                            color = Color(0xFFEEF3E3),
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                            .padding(top = 14.dp),
-                        ) {
-                            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    Text("思考中", color = Color(0xFF5B765F), fontFamily = YaHei, fontSize = 12.sp)
-                                    Text("56%", color = Color(0xFF8DA28D), fontFamily = YaHei, fontSize = 12.sp)
-                                }
-                                LinearProgressIndicator(
-                                    progress = { .56f },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 7.dp)
-                                        .height(6.dp),
-                                    color = Color(0xFF7EA67D),
-                                    trackColor = Color(0xFFDCE7D1),
-                                )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(top = 10.dp),
-                                ) {
-                                    Text("•••", color = Color(0xFF6F9874), fontFamily = YaHei, fontSize = 14.sp)
-                                    Text(
-                                        "正在梳理主题、角色与画面关系",
-                                        color = Color(0xFF6F9874),
-                                        fontFamily = YaHei,
-                                        fontSize = 11.sp,
-                                        modifier = Modifier.padding(start = 5.dp),
-                                    )
-                                }
-                            }
-                        }
-                        Column(
-                            modifier = Modifier.padding(top = 14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            AgentStep("理解创作意图", done = true)
-                            AgentStep("规划作品结构")
-                            AgentStep("生成首版草稿")
-                        }
-                        Text(
-                            text = "完成后你可以直接修改文字、继续对话，或保存为草稿。",
-                            color = Color(0xFF929980),
-                            fontFamily = YaHei,
-                            fontSize = 10.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = 10.dp),
-                        )
                     }
                 }
             }
 
-            // Rectangle 231.png(X=56, Y=605, W=193, H=30) + 文字 "帮我绘画一只在做手表的技巧熊猫"
-            Box(
-                modifier = Modifier
-                    .offset(x = 56.dp, y = 605.dp)
-                    .size(width = 193.dp, height = 30.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shengtu_rect231),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-                Text(
-                    text = "帮我绘画一只在做手表的技巧熊猫",
-                    color = Color.Black,
-                    style = TextStyle(
-                        fontFamily = YaHei,
-                        fontWeight = FontWeight.Normal, // Regular
-                        fontSize = 12.sp,
-                    ),
-                    modifier = Modifier
-                        .size(width = 180.dp, height = 16.dp),
-                )
-            }
             // 未标题-1 41.png(X=310, Y=605, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
             Image(
                 painter = painterResource(R.drawable.img_shengtu_untitled41),
@@ -441,28 +396,6 @@ fun ShengtuScreen(
                             )
                             .border(1.dp, Color(0xFF82A575).copy(alpha = .46f), RoundedCornerShape(18.dp)),
                     ) {
-                        if (rect227Text.isEmpty()) {
-                            Text(
-                                text = "继续告诉 Agent 你想怎么修改……",
-                                color = Color(0xFF94A48F),
-                                fontFamily = YaHei,
-                                fontSize = 10.sp,
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(start = 12.dp),
-                            )
-                        } else {
-                            Text(
-                                text = rect227Text,
-                                color = Color(0xFF3D4F3F),
-                                fontFamily = YaHei,
-                                fontSize = 10.sp,
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(start = 12.dp),
-                            )
-                        }
                         BasicTextField(
                             value = rect227Text,
                             onValueChange = {
@@ -473,70 +406,100 @@ fun ShengtuScreen(
                             cursorBrush = SolidColor(Color.Black),
                             textStyle = TextStyle(
                                 fontFamily = YaHei,
-                                fontSize = 10.sp,
-                                color = Color.Transparent,
+                                fontSize = 12.sp,
+                                lineHeight = 18.sp,
+                                color = Color(0xFF3D4F3F),
                             ),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .focusRequester(focusRequester)
+                                .semantics { contentDescription = "创作修改要求" }
                                 .padding(horizontal = 12.dp),
+                            decorationBox = { innerTextField ->
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    if (rect227Text.isEmpty()) {
+                                        Text(
+                                            text = when {
+                                                coachAvailable -> "告诉创作教练你想怎么修改……"
+                                                currentStage == "DRAFT" || currentStage == "IDEATION" -> "写下这一版的草图或脚本……"
+                                                else -> "当前步骤请使用下方“下一步”继续"
+                                            },
+                                            color = Color(0xFF94A48F),
+                                            fontFamily = YaHei,
+                                            fontSize = 12.sp,
+                                            maxLines = 1,
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            },
                         )
                     }
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
-                            .background(Color(0xFF83AA7D), RoundedCornerShape(17.dp)),
+                            .size(48.dp)
+                            .semantics {
+                                contentDescription = "发送给创作教练"
+                                role = Role.Button
+                            }
+                            .clickable(
+                                enabled = coachAvailable && projectId != null && rect227Text.trim().length >= 2 &&
+                                    !workflowBusy && !generationBusy,
+                                onClick = sendMessage,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("↗", color = Color.White, fontFamily = YaHei, fontSize = 16.sp)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(Color(0xFF83AA7D), RoundedCornerShape(17.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "↑",
+                                color = Color.White,
+                                fontFamily = YaHei,
+                                fontSize = 19.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        }
                     }
                 }
             }
-            Text(
-                text = "输入内容会保存在当前创作草稿中",
-                color = Color(0xFF99A08D),
-                fontFamily = YaHei,
-                fontSize = 9.sp,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = 724.dp)
-                    .padding(horizontal = 45.dp),
-            )
-            // 行囊项目保存为服务端不可覆盖版本；无项目 ID 的旧入口仍沿用原流程。
+            // 底部只保留一个随阶段变化的主动作，避免学生在按钮之间猜测。
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(y = 393.dp)
-                    .size(width = 372.dp, height = 55.dp)
-                    .clickable(enabled = rect227Text.isNotBlank() && !savingDraft) {
-                        if (projectId != null) {
-                            draftStore.save(draftKey, rect227Text)
-                            onSaveDraft(rect227Text)
-                        } else {
-                            draftStore.clear(draftKey)
-                            onCreateWork()
+                    .width(372.dp)
+                    .height(55.dp),
+            ) {
+                ScrollActionButton(
+                    text = if (savingDraft) "保存中…" else mainActionText,
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = !savingDraft && !workflowBusy && (
+                        (projectId != null && currentStage != null) ||
+                            (projectId == null && (rect227Text.isNotBlank() || chatMessages.any { it.fromUser }))
+                    ),
+                    onClick = {
+                        val promptToSave = rect227Text.ifBlank {
+                            chatMessages.lastOrNull { it.fromUser }?.text.orEmpty()
+                        }
+                        when {
+                            projectId == null -> {
+                                draftStore.clear(draftKey)
+                                onCreateWork()
+                            }
+                            currentStage == "DRAFT" || currentStage == "IDEATION" -> {
+                                draftStore.save(draftKey, promptToSave)
+                                onSaveDraft(promptToSave)
+                            }
+                            else -> showWorkflowDialog = true
                         }
                     },
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shengtu_group196),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-                Text(
-                    text = when {
-                        savingDraft -> "保存中…"
-                        projectId != null -> "保存草图/脚本"
-                        else -> "保存作品"
-                    },
-                    color = Color.White,
-                    style = TextStyle(
-                        fontFamily = YaHei,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Normal,
-                    ),
                 )
             }
 
@@ -553,12 +516,14 @@ fun ShengtuScreen(
         }
     }
 
-    if (showWorkflowDialog && projectId != null) {
+    if (showWorkflowDialog && projectId != null && currentStage != null) {
         CreationWorkflowDialog(
             projectId = projectId,
-            currentStage = currentStage ?: "DRAFT",
+            currentStage = currentStage,
             currentVersionId = currentVersionId,
-            currentPrompt = rect227Text,
+            currentPrompt = rect227Text.ifBlank {
+                chatMessages.lastOrNull { it.fromUser }?.text.orEmpty()
+            },
             toolCalls = toolCalls,
             testRecords = testRecords,
             manualSources = manualSources,
@@ -590,6 +555,7 @@ fun ShengtuScreen(
             onSubmitMigrationEvidence = onSubmitMigrationEvidence,
             onSaveProvenance = onSaveProvenance,
             onSaveSealCheck = onSaveSealCheck,
+            onSaveReflectionPackage = onSaveReflectionPackage,
             onSubmit = onSubmit,
             onOpenPublishedWork = onOpenPublishedWork,
             onOpenEditor = onCreateWork,
@@ -598,7 +564,299 @@ fun ShengtuScreen(
 }
 
 @Composable
-private fun AgentStep(label: String, done: Boolean = false) {
+private fun ScrollActionButton(
+    text: String,
+    modifier: Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val resources = LocalContext.current.resources
+    val scrollAsset = remember(resources) {
+        ImageBitmap.imageResource(resources, R.drawable.img_shengtu_group196)
+    }
+    Box(
+        modifier = modifier
+            .semantics {
+                contentDescription = text
+                role = Role.Button
+            }
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // 372×55 卷轴图按左右 30、上下 12 的九宫格切片绘制，
+            // 这样发布按钮缩窄后仍保留和保存按钮相同的卷轴端与双层边线。
+            val sourceCap = (scrollAsset.width * 30f / 372f).roundToInt()
+            val destinationCap = (size.height * 30f / 55f)
+                .roundToInt()
+                .coerceAtMost((size.width / 2f).roundToInt())
+            val canvasWidth = size.width.roundToInt()
+            val canvasHeight = size.height.roundToInt()
+            val sourceMiddle = (scrollAsset.width - sourceCap * 2).coerceAtLeast(1)
+            val destinationMiddle = (canvasWidth - destinationCap * 2).coerceAtLeast(1)
+            drawImage(
+                image = scrollAsset,
+                srcOffset = IntOffset(0, 0),
+                srcSize = IntSize(sourceCap, scrollAsset.height),
+                dstOffset = IntOffset(0, 0),
+                dstSize = IntSize(destinationCap, canvasHeight),
+                filterQuality = FilterQuality.Medium,
+            )
+            drawImage(
+                image = scrollAsset,
+                srcOffset = IntOffset(sourceCap, 0),
+                srcSize = IntSize(sourceMiddle, scrollAsset.height),
+                dstOffset = IntOffset(destinationCap, 0),
+                dstSize = IntSize(destinationMiddle, canvasHeight),
+                filterQuality = FilterQuality.Medium,
+            )
+            drawImage(
+                image = scrollAsset,
+                srcOffset = IntOffset(scrollAsset.width - sourceCap, 0),
+                srcSize = IntSize(sourceCap, scrollAsset.height),
+                dstOffset = IntOffset(destinationCap + destinationMiddle, 0),
+                dstSize = IntSize(destinationCap, canvasHeight),
+                filterQuality = FilterQuality.Medium,
+            )
+        }
+        Text(
+            text = text,
+            color = Color.White,
+            fontFamily = YaHei,
+            fontSize = if (text.startsWith("发布")) 18.sp else 16.sp,
+            fontWeight = if (text.startsWith("发布")) FontWeight.Bold else FontWeight.Normal,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun ChatBubble(
+    text: String,
+    fromUser: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (fromUser) Arrangement.End else Arrangement.Start,
+    ) {
+        Surface(
+            color = if (fromUser) Color(0xFFE4EFD3) else Color(0xFFF9F4E6).copy(alpha = .96f),
+            shape = if (fromUser) {
+                RoundedCornerShape(16.dp, 6.dp, 16.dp, 16.dp)
+            } else {
+                RoundedCornerShape(6.dp, 16.dp, 16.dp, 16.dp)
+            },
+            modifier = Modifier
+                .widthIn(max = 276.dp)
+                .border(
+                    width = 1.dp,
+                    color = if (fromUser) Color(0xFFB7CAA8) else Color(0xFFD9D4BE),
+                    shape = if (fromUser) {
+                        RoundedCornerShape(16.dp, 6.dp, 16.dp, 16.dp)
+                    } else {
+                        RoundedCornerShape(6.dp, 16.dp, 16.dp, 16.dp)
+                    },
+                ),
+        ) {
+            Text(
+                text = text,
+                color = if (fromUser) Color(0xFF4F644E) else Color(0xFF58685A),
+                fontFamily = YaHei,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AgentThinkingPanel(
+    workflowBusy: Boolean,
+    generationBusy: Boolean,
+    generationProgress: Int?,
+    currentStage: String?,
+    statusMessage: String?,
+) {
+    val actualProgress = generationProgress?.coerceIn(0, 100)
+    val isGeneration = generationBusy && actualProgress != null
+    val progressStep = when {
+        !isGeneration -> 0
+        actualProgress >= 80 -> 2
+        actualProgress >= 40 -> 1
+        else -> 0
+    }
+    val detail = statusMessage?.trim()?.takeIf { it.isNotBlank() } ?: when {
+        isGeneration -> "正在生成并检查画面"
+        currentStage == "TEST" -> "正在读取测试反馈"
+        currentStage == "SEAL" -> "正在整理发布材料"
+        else -> "正在理解你的修改意见"
+    }
+    Surface(
+        color = Color(0xFFF9F4E6).copy(alpha = .96f),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = Color(0xFFB9B993).copy(alpha = .72f),
+                shape = RoundedCornerShape(20.dp),
+            ),
+        shadowElevation = 5.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF789D79), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "机巧",
+                        color = Color.White,
+                        fontFamily = YaHei,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
+                }
+                Text(
+                    text = "正在把灵感整理成草稿",
+                    color = Color(0xFF3E5B43),
+                    fontFamily = YaHei,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
+            Text(
+                text = if (isGeneration) "正在根据你的意见生成并校验新版本。" else "我会先理解你的想法，再给出可继续编辑的创作方向。",
+                color = Color(0xFF76816F),
+                fontFamily = YaHei,
+                fontSize = 12.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            Surface(
+                color = Color(0xFFEEF3E3),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text("处理中", color = Color(0xFF5B765F), fontFamily = YaHei, fontSize = 13.sp)
+                        actualProgress?.let {
+                            Text("$it%", color = Color(0xFF8DA28D), fontFamily = YaHei, fontSize = 13.sp)
+                        }
+                    }
+                    if (actualProgress != null) {
+                        LinearProgressIndicator(
+                            progress = { actualProgress / 100f },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 7.dp)
+                                .height(6.dp),
+                            color = Color(0xFF7EA67D),
+                            trackColor = Color(0xFFDCE7D1),
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 7.dp)
+                                .height(6.dp),
+                            color = Color(0xFF7EA67D),
+                            trackColor = Color(0xFFDCE7D1),
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 10.dp),
+                    ) {
+                        Text("•••", color = Color(0xFF6F9874), fontFamily = YaHei, fontSize = 14.sp)
+                        Text(
+                            text = detail,
+                            color = Color(0xFF6F9874),
+                            fontFamily = YaHei,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 5.dp),
+                        )
+                    }
+                }
+            }
+            Column(
+                modifier = Modifier.padding(top = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AgentStep("理解创作意图", done = isGeneration || progressStep > 0, current = progressStep == 0)
+                AgentStep("规划作品结构", done = isGeneration && progressStep > 1, current = progressStep == 1)
+                AgentStep("生成首版草稿", done = isGeneration && actualProgress >= 100, current = progressStep == 2)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoachProposalCard(
+    effectSummary: String,
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+    enabled: Boolean,
+) {
+    Surface(
+        color = Color(0xFFFFF3D7),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFFE2D2A9), RoundedCornerShape(16.dp)),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Text(
+                text = "创作教练建议，请确认",
+                color = Color(0xFF765A2C),
+                fontFamily = YaHei,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+            )
+            Text(
+                text = effectSummary.ifBlank { "我已整理出一份修改建议。" },
+                color = Color(0xFF655B49),
+                fontFamily = YaHei,
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onReject,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(42.dp),
+                ) { Text("暂不采用", fontFamily = YaHei, fontSize = 12.sp) }
+                Button(
+                    onClick = onAccept,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(42.dp),
+                ) { Text("采用建议", fontFamily = YaHei, fontSize = 12.sp) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AgentStep(label: String, done: Boolean = false, current: Boolean = false) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
@@ -611,6 +869,17 @@ private fun AgentStep(label: String, done: Boolean = false) {
                     width = 1.dp,
                     color = if (done) Color(0xFF7EA67D) else Color(0xFFB9C9AE),
                     shape = androidx.compose.foundation.shape.CircleShape,
+                )
+                .then(
+                    if (current) {
+                        Modifier.border(
+                            width = 3.dp,
+                            color = Color(0x227EA67D),
+                            shape = androidx.compose.foundation.shape.CircleShape,
+                        )
+                    } else {
+                        Modifier
+                    },
                 ),
             contentAlignment = Alignment.Center,
         ) {
@@ -625,7 +894,7 @@ private fun AgentStep(label: String, done: Boolean = false) {
             text = label,
             color = if (done) Color(0xFF526B56) else Color(0xFF7D8878),
             fontFamily = YaHei,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             modifier = Modifier.padding(start = 9.dp),
         )
     }
@@ -664,24 +933,45 @@ private fun CreationWorkflowDialog(
     onRecordTest: (String, String, String, String) -> Unit,
     onResolveIssue: (CreationTestIssueDto, String) -> Unit,
     onEnterSeal: () -> Unit,
-    onSaveLearningCard: (LearningCardForm) -> Unit,
-    onSubmitMigrationEvidence: (List<String>, String) -> Unit,
-    onSaveProvenance: (ProvenanceForm) -> Unit,
-    onSaveSealCheck: (SealCheckForm) -> Unit,
+    onSaveLearningCard: (LearningCardForm, () -> Unit) -> Unit,
+    onSubmitMigrationEvidence: (List<String>, String, () -> Unit) -> Unit,
+    onSaveProvenance: (ProvenanceForm, () -> Unit) -> Unit,
+    onSaveSealCheck: (SealCheckForm, () -> Unit) -> Unit,
+    onSaveReflectionPackage: (SealCheckForm, LearningCardForm, () -> Unit) -> Unit,
     onSubmit: (String, String?) -> Unit,
     onOpenPublishedWork: (String) -> Unit,
     onOpenEditor: () -> Unit,
 ) {
+    val workflowContext = LocalContext.current
+    val workflowDraftStore = remember(workflowContext) { CreationDraftStore(workflowContext) }
+    val generationDraftKey = remember(projectId) {
+        "${CreationDraftStore.Keys.GenerationPrompt}:$projectId"
+    }
     var coachPrompt by rememberSaveable(projectId) {
         mutableStateOf(currentPrompt.ifBlank { "请检查我的主题是否清楚，并给出文字修改建议" })
     }
     var generationPrompt by rememberSaveable(projectId, currentVersionId) {
-        mutableStateOf(currentPrompt)
+        mutableStateOf(workflowDraftStore.read(generationDraftKey))
     }
     var generationSize by rememberSaveable(projectId) { mutableStateOf("SQUARE") }
     var generationQuality by rememberSaveable(projectId) { mutableStateOf("MEDIUM") }
     var reviewingGeneration by rememberSaveable(projectId, currentVersionId) {
         mutableStateOf(false)
+    }
+    var productionStep by rememberSaveable(projectId, currentVersionId) { mutableStateOf(0) }
+    val savedSealStep = when {
+        sealCheck?.status == "COMPLETE" && learningCard?.status == "COMPLETE" &&
+            provenance?.status == "COMPLETE" -> 3
+        provenance?.status == "COMPLETE" -> 3
+        learningCard?.status == "COMPLETE" && !sealCheck?.workDescription.isNullOrBlank() -> 2
+        !sealCheck?.workDescription.isNullOrBlank() -> 1
+        else -> 0
+    }
+    var sealStep by rememberSaveable(projectId, currentVersionId) {
+        mutableStateOf(savedSealStep)
+    }
+    LaunchedEffect(savedSealStep) {
+        if (savedSealStep > sealStep) sealStep = savedSealStep
     }
     var testScenario by rememberSaveable(projectId, currentVersionId) {
         mutableStateOf("请一位同学在不看说明的情况下，说出画面的主体和主题")
@@ -715,7 +1005,11 @@ private fun CreationWorkflowDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "创作流程 · ${workflowStageLabel(currentStage)}",
+                    text = if (publicationStatus == null) {
+                        "创作流程 · ${workflowStageLabel(currentStage)}"
+                    } else {
+                        "作品提交状态"
+                    },
                     color = Color(0xFF294E36),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontFamily = YaHei,
@@ -740,11 +1034,22 @@ private fun CreationWorkflowDialog(
                 }
                 HorizontalDivider(color = Color(0xFFD7D4BE))
 
-                when (currentStage) {
+                if (publicationStatus != null) {
+                    SubmissionStatusContent(
+                        status = publicationStatus,
+                        visibility = publicationVisibility,
+                        publicationId = publicationId,
+                        busy = busy,
+                        onOpenPublishedWork = onOpenPublishedWork,
+                    )
+                } else when (currentStage) {
                     "PRODUCTION" -> ProductionWorkflowContent(
+                        step = productionStep,
+                        onStepChange = { productionStep = it.coerceIn(0, 3) },
                         generationPrompt = generationPrompt,
                         onGenerationPromptChange = {
                             generationPrompt = it.take(2000)
+                            workflowDraftStore.saveIfEnabled(generationDraftKey, generationPrompt)
                             reviewingGeneration = false
                         },
                         generationSize = generationSize,
@@ -766,6 +1071,7 @@ private fun CreationWorkflowDialog(
                         generationMessage = generationMessage,
                         onRequestImageGeneration = { prompt, size, quality ->
                             reviewingGeneration = false
+                            workflowDraftStore.clear(generationDraftKey)
                             onRequestImageGeneration(prompt, size, quality)
                         },
                         onRetryImageGeneration = onRetryImageGeneration,
@@ -787,7 +1093,10 @@ private fun CreationWorkflowDialog(
                         scenario = testScenario,
                         onScenarioChange = { testScenario = it.take(500) },
                         result = testResult,
-                        onResultChange = { testResult = it },
+                        onResultChange = {
+                            testResult = it
+                            if (it == "PASSED") testFinding = ""
+                        },
                         notes = testNotes,
                         onNotesChange = { testNotes = it.take(2000) },
                         finding = testFinding,
@@ -798,6 +1107,8 @@ private fun CreationWorkflowDialog(
                         onEnterSeal = onEnterSeal,
                     )
                     "SEAL" -> SealWorkflowContent(
+                        step = sealStep,
+                        onStepChange = { sealStep = it.coerceIn(0, 3) },
                         projectId = projectId,
                         currentVersionId = currentVersionId,
                         manualSources = manualSources,
@@ -815,6 +1126,7 @@ private fun CreationWorkflowDialog(
                         onSubmitMigrationEvidence = onSubmitMigrationEvidence,
                         onSaveProvenance = onSaveProvenance,
                         onSaveSealCheck = onSaveSealCheck,
+                        onSaveReflectionPackage = onSaveReflectionPackage,
                         onSubmit = onSubmit,
                         onOpenPublishedWork = onOpenPublishedWork,
                     )
@@ -837,6 +1149,8 @@ private fun CreationWorkflowDialog(
 
 @Composable
 private fun ProductionWorkflowContent(
+    step: Int,
+    onStepChange: (Int) -> Unit,
     generationPrompt: String,
     onGenerationPromptChange: (String) -> Unit,
     generationSize: String,
@@ -866,23 +1180,24 @@ private fun ProductionWorkflowContent(
     val generationActive = latestGeneration?.status in setOf(
         "QUEUED", "RUNNING", "SAFETY_CHECK", "VERSIONING"
     )
+    WorkflowStepHeader(
+        title = "制作阶段",
+        step = step,
+        total = 4,
+        task = listOf("生成画面", "教练确认", "画布排版", "进入测试")[step.coerceIn(0, 3)],
+    )
+    when (step.coerceIn(0, 3)) {
+    0 -> {
     Text("1. 可选：生成一层画面", fontFamily = YaHei, fontWeight = FontWeight.Bold)
     Text(
-        "生成是明确的工具调用，不是自主 Agent。只有你在确认页点击确认后才会执行。",
+        "只有你核对内容并确认后，系统才会开始生成画面。",
         fontFamily = YaHei,
         fontSize = 12.sp,
         color = Color(0xFF526354),
     )
     generationCapability?.let { capability ->
         WorkflowFact("今日额度", "已用 ${capability.dailyUsed}/${capability.dailyLimit}，剩余 ${capability.dailyRemaining}")
-        WorkflowFact(
-            "运行方式",
-            if (capability.providerRef == "development") {
-                "本地开发预览 · ${capability.modelRef}"
-            } else {
-                "${capability.providerRef} · ${capability.modelRef}"
-            },
-        )
+        WorkflowFact("生成服务", if (capability.enabled) "可以使用" else "暂不可用")
     }
     latestGeneration?.let { job ->
         Surface(
@@ -910,18 +1225,39 @@ private fun ProductionWorkflowContent(
                     fontSize = 12.sp,
                 )
                 job.outputAsset?.originalUrl?.let { url ->
+                    var previewFailed by remember(url) { mutableStateOf(false) }
+                    var previewAttempt by remember(url) { mutableStateOf(0) }
                     AsyncImage(
-                        model = url,
+                        // A URL fragment changes Coil's request key without changing the
+                        // signed HTTP request that reaches the contest backend.
+                        model = "$url#preview-attempt=$previewAttempt",
                         contentDescription = "生成结果预览",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp),
                         contentScale = ContentScale.Crop,
+                        onSuccess = { previewFailed = false },
+                        onError = { previewFailed = true },
                     )
+                    if (previewFailed) {
+                        Text(
+                            "图片暂时没有加载出来，作品版本已经安全保存。",
+                            fontFamily = YaHei,
+                            fontSize = 12.sp,
+                            color = Color(0xFF8C4D3D),
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                previewFailed = false
+                                previewAttempt += 1
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                        ) { Text("重新加载", fontFamily = YaHei) }
+                    }
                 }
                 if (job.status == "COMPLETED") {
                     Text(
-                        "已写入新版本；来源谱已自动标记 AIGC，提交前仍需补充本人修改说明。",
+                        "已保存为新版本；作品卡会注明智能工具参与，提交前还需补充本人修改说明。",
                         fontFamily = YaHei,
                         fontSize = 11.sp,
                         color = Color(0xFF526354),
@@ -937,7 +1273,7 @@ private fun ProductionWorkflowContent(
             }
         }
     }
-    if (!generationActive) {
+    if (!generationActive && latestGeneration?.status != "COMPLETED") {
         TextField(
             value = generationPrompt,
             onValueChange = onGenerationPromptChange,
@@ -987,18 +1323,21 @@ private fun ProductionWorkflowContent(
                 ) {
                     Text("生成确认", fontFamily = YaHei, fontWeight = FontWeight.Bold)
                     WorkflowFact("将读取", generationPrompt.trim())
-                    WorkflowFact("将产生", "一张 $generationSize / $generationQuality 图片，并作为 AI 图层写入新版本")
+                    WorkflowFact(
+                        "将产生",
+                        "一张${generationSizeLabel(generationSize)}、${generationQualityLabel(generationQuality)}的图片，并保存到新版本",
+                    )
                     WorkflowFact(
                         "数据去向",
                         if (generationCapability?.externalDataShared == true) {
-                            "提示词会发送给 ${generationCapability.providerRef}；不会发送作品原图"
+                            "只发送这段画面描述，不会发送作品原图"
                         } else {
                             "提示词不离开本服务"
                         },
                     )
                     WorkflowFact(
                         "后续检查",
-                        "哈希、病毒、格式、像素、元数据和内容安全检查；失败不会写入版本",
+                        "系统会检查图片格式和内容安全；未通过时不会写入作品",
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
@@ -1020,10 +1359,24 @@ private fun ProductionWorkflowContent(
             }
         }
     }
+    if (latestGeneration?.status == "COMPLETED") {
+        Button(
+            onClick = { onStepChange(1) },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("下一项", fontFamily = YaHei) }
+    } else if (!generationActive && !reviewingGeneration) {
+        OutlinedButton(
+            onClick = { onStepChange(1) },
+            enabled = !busy && !generationBusy,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("暂不生成", fontFamily = YaHei) }
+    }
+    }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
+    1 -> {
     Text("2. 可选：获取创作教练建议", fontFamily = YaHei, fontWeight = FontWeight.Bold)
-    if (pendingCall == null) {
+    if (pendingCall == null && latestCompletedCall == null) {
         TextField(
             value = coachPrompt,
             onValueChange = onCoachPromptChange,
@@ -1036,9 +1389,9 @@ private fun ProductionWorkflowContent(
             enabled = !busy && currentVersionId != null && coachPrompt.trim().length >= 2,
             modifier = Modifier.fillMaxWidth().height(48.dp),
         ) {
-            Text(if (latestCompletedCall == null) "准备建议并查看确认页" else "再次获取建议", fontFamily = YaHei)
+            Text("准备建议并查看确认页", fontFamily = YaHei)
         }
-    } else {
+    } else if (pendingCall != null) {
         Text(
             text = "调用确认",
             fontFamily = YaHei,
@@ -1066,7 +1419,6 @@ private fun ProductionWorkflowContent(
     }
 
     latestCompletedCall?.outputSnapshot?.let { output ->
-        HorizontalDivider(color = Color(0xFFD7D4BE))
         Text("最近一次建议", fontFamily = YaHei, fontWeight = FontWeight.Bold)
         WorkflowNotice(output.get("summary")?.asString ?: "建议已生成")
         output.get("suggested_prompt")?.asString?.let {
@@ -1075,15 +1427,24 @@ private fun ProductionWorkflowContent(
         output.get("checklist")?.asJsonArray?.forEach { item ->
             Text("• ${item.asString}", fontFamily = YaHei, fontSize = 13.sp)
         }
-        Text(
-            "执行器：${latestCompletedCall.executorRef ?: "规则教练"}；未自动修改作品",
-            fontFamily = YaHei,
-            fontSize = 11.sp,
-            color = Color(0xFF667166),
-        )
+        Text("建议只供参考，作品不会被自动修改。", fontFamily = YaHei, fontSize = 11.sp, color = Color(0xFF667166))
+    }
+    if (latestCompletedCall != null) {
+        Button(
+            onClick = { onStepChange(2) },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("下一项", fontFamily = YaHei) }
+    } else if (pendingCall == null) {
+        OutlinedButton(
+            onClick = { onStepChange(2) },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("暂不询问", fontFamily = YaHei) }
+    }
     }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
+    2 -> {
     Text("3. 进入画布完成排版", fontFamily = YaHei, fontWeight = FontWeight.Bold)
     Text(
         "拖动、缩放、旋转、裁剪与文字调整都会保存为新版本；旧版本不会被覆盖。",
@@ -1098,8 +1459,14 @@ private fun ProductionWorkflowContent(
     ) {
         Text("进入画布编辑器", fontFamily = YaHei)
     }
+    OutlinedButton(
+        onClick = { onStepChange(3) },
+        enabled = !busy && currentVersionId != null,
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+    ) { Text("排版已完成", fontFamily = YaHei) }
+    }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
+    else -> {
     Text("4. 完成当前版本后进入测试", fontFamily = YaHei, fontWeight = FontWeight.Bold)
     Button(
         onClick = onEnterTest,
@@ -1107,6 +1474,39 @@ private fun ProductionWorkflowContent(
         modifier = Modifier.fillMaxWidth().height(48.dp),
     ) {
         Text("进入测试", fontFamily = YaHei)
+    }
+    }
+    }
+}
+
+@Composable
+private fun SubmissionStatusContent(
+    status: String,
+    visibility: String?,
+    publicationId: String?,
+    busy: Boolean,
+    onOpenPublishedWork: (String) -> Unit,
+) {
+    WorkflowStepHeader("提交结果", 0, 1, publicationStatusLabel(status))
+    WorkflowNotice(
+        when (status) {
+            "PENDING_CHECK" -> "作品正在检查，通过前不会公开展示。"
+            "PENDING_HUMAN_REVIEW" -> "作品正在由老师进一步检查。"
+            "PUBLISHED" -> "作品已经通过并发布。当前范围：${publicationVisibilityLabel(visibility)}。"
+            "RETURNED" -> "作品需要修改后重新提交。请到创作档案点“继续创作”。"
+            "RESTRICTED" -> "作品暂时不能发布，可以在创作档案的“更多”中申诉。"
+            "WITHDRAWN" -> "作品已经撤回，作品和版本仍会保留。"
+            else -> "当前范围：${publicationVisibilityLabel(visibility)}。"
+        }
+    )
+    if (status == "PUBLISHED" && visibility == "COMMUNITY" && publicationId != null) {
+        Button(
+            onClick = { onOpenPublishedWork(publicationId) },
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            Text("查看已发布作品", fontFamily = YaHei)
+        }
     }
 }
 
@@ -1128,112 +1528,95 @@ private fun TestWorkflowContent(
     onResolveIssue: (CreationTestIssueDto, String) -> Unit,
     onEnterSeal: () -> Unit,
 ) {
-    latestTest?.let {
-        WorkflowFact(
-            "当前版本最近结果",
-            if (it.result == "PASSED") "通过" else if (it.result == "BLOCKED") "受阻" else "需要修改",
-        )
-    }
-    Text("记录一次真实测试", fontFamily = YaHei, fontWeight = FontWeight.Bold)
-    TextField(
-        value = scenario,
-        onValueChange = onScenarioChange,
-        label = { Text("测试场景", fontFamily = YaHei) },
-        minLines = 2,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(
-            selected = result == "NEEDS_REVISION",
-            onClick = { onResultChange("NEEDS_REVISION") },
-            label = { Text("需要修改", fontFamily = YaHei) },
-            enabled = !busy,
-        )
-        FilterChip(
-            selected = result == "PASSED",
-            onClick = { onResultChange("PASSED") },
-            label = { Text("通过", fontFamily = YaHei) },
-            enabled = !busy,
-        )
-        FilterChip(
-            selected = result == "BLOCKED",
-            onClick = { onResultChange("BLOCKED") },
-            label = { Text("受阻", fontFamily = YaHei) },
-            enabled = !busy,
-        )
-    }
-    TextField(
-        value = notes,
-        onValueChange = onNotesChange,
-        label = { Text("观察记录（可选）", fontFamily = YaHei) },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    TextField(
-        value = finding,
-        onValueChange = onFindingChange,
-        label = { Text(if (result == "PASSED") "仍需留意的问题（可选）" else "发现的问题", fontFamily = YaHei) },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Button(
-        onClick = { onRecordTest(scenario, result, notes, finding) },
-        enabled = !busy && currentVersionId != null && scenario.trim().length >= 2 &&
-            (result == "PASSED" || finding.trim().length >= 2),
-        modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) {
-        Text("保存测试记录", fontFamily = YaHei)
-    }
-
-    if (openIssues.isNotEmpty()) {
-        HorizontalDivider(color = Color(0xFFD7D4BE))
-        Text("待整改问题（${openIssues.size}）", fontFamily = YaHei, fontWeight = FontWeight.Bold)
-        openIssues.forEach { issue ->
+    val canSeal = latestTest?.result == "PASSED" && openIssues.isEmpty()
+    WorkflowStepHeader("测试阶段", 0, 1, when {
+        openIssues.isNotEmpty() -> "处理发现的问题"
+        canSeal -> "确认测试结果"
+        else -> "记录一次真实测试"
+    })
+    when {
+        openIssues.isNotEmpty() -> {
+            val issue = openIssues.first()
             var issueResolution by rememberSaveable(issue.id) { mutableStateOf("") }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Color(0xFFD4B88A), RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(issue.description, fontFamily = YaHei, fontSize = 13.sp)
-                TextField(
-                    value = issueResolution,
-                    onValueChange = { issueResolution = it.take(500) },
-                    label = { Text("我是怎样处理的", fontFamily = YaHei) },
-                    modifier = Modifier.fillMaxWidth(),
+            Text("还需处理 ${openIssues.size} 个问题", fontFamily = YaHei, fontWeight = FontWeight.Bold)
+            Text(issue.description, fontFamily = YaHei, fontSize = 13.sp)
+            TextField(
+                value = issueResolution,
+                onValueChange = { issueResolution = it.take(500) },
+                label = { Text("我是怎样处理的", fontFamily = YaHei) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = { onResolveIssue(issue, issueResolution) },
+                enabled = !busy && issueResolution.trim().length >= 2,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) { Text("保存处理结果", fontFamily = YaHei) }
+        }
+        canSeal -> {
+            WorkflowNotice("这次测试已经通过，可以开始填写作品说明。")
+            Button(
+                onClick = onEnterSeal,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) { Text("进入封卷", fontFamily = YaHei) }
+        }
+        else -> {
+            latestTest?.let {
+                WorkflowFact(
+                    "上次结果",
+                    if (it.result == "BLOCKED") "暂时受阻" else "需要修改后再测",
                 )
-                OutlinedButton(
-                    onClick = { onResolveIssue(issue, issueResolution) },
-                    enabled = !busy && issueResolution.trim().length >= 2,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                ) {
-                    Text("标记为已处理", fontFamily = YaHei)
+            }
+            TextField(
+                value = scenario,
+                onValueChange = onScenarioChange,
+                label = { Text("怎样测试", fontFamily = YaHei) },
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    "NEEDS_REVISION" to "需要修改",
+                    "PASSED" to "通过",
+                    "BLOCKED" to "暂时受阻",
+                ).forEach { (value, label) ->
+                    FilterChip(
+                        selected = result == value,
+                        onClick = { onResultChange(value) },
+                        label = { Text(label, fontFamily = YaHei, fontSize = 11.sp) },
+                        enabled = !busy,
+                    )
                 }
             }
+            TextField(
+                value = notes,
+                onValueChange = onNotesChange,
+                label = { Text("观察到了什么（可选）", fontFamily = YaHei) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (result != "PASSED") {
+                TextField(
+                    value = finding,
+                    onValueChange = onFindingChange,
+                    label = { Text("发现的问题", fontFamily = YaHei) },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            Button(
+                onClick = { onRecordTest(scenario, result, notes, finding) },
+                enabled = !busy && currentVersionId != null && scenario.trim().length >= 2 &&
+                    (result == "PASSED" || finding.trim().length >= 2),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) { Text("保存测试结果", fontFamily = YaHei) }
         }
-    }
-
-    HorizontalDivider(color = Color(0xFFD7D4BE))
-    val canSeal = latestTest?.result == "PASSED" && openIssues.isEmpty()
-    Button(
-        onClick = onEnterSeal,
-        enabled = !busy && canSeal,
-        modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) {
-        Text("进入作品说明", fontFamily = YaHei)
-    }
-    if (!canSeal) {
-        Text(
-            "进入说明需要：当前版本最近一次复测通过，且所有问题已经关闭。",
-            fontFamily = YaHei,
-            fontSize = 12.sp,
-            color = Color(0xFF8A5A22),
-        )
     }
 }
 
 @Composable
 private fun SealWorkflowContent(
+    step: Int,
+    onStepChange: (Int) -> Unit,
     projectId: String,
     currentVersionId: String?,
     manualSources: List<CreationManualOption>,
@@ -1247,10 +1630,11 @@ private fun SealWorkflowContent(
     publicationVisibility: String?,
     classrooms: List<ClassroomDto>,
     busy: Boolean,
-    onSaveLearningCard: (LearningCardForm) -> Unit,
-    onSubmitMigrationEvidence: (List<String>, String) -> Unit,
-    onSaveProvenance: (ProvenanceForm) -> Unit,
-    onSaveSealCheck: (SealCheckForm) -> Unit,
+    onSaveLearningCard: (LearningCardForm, () -> Unit) -> Unit,
+    onSubmitMigrationEvidence: (List<String>, String, () -> Unit) -> Unit,
+    onSaveProvenance: (ProvenanceForm, () -> Unit) -> Unit,
+    onSaveSealCheck: (SealCheckForm, () -> Unit) -> Unit,
+    onSaveReflectionPackage: (SealCheckForm, LearningCardForm, () -> Unit) -> Unit,
     onSubmit: (String, String?) -> Unit,
     onOpenPublishedWork: (String) -> Unit,
 ) {
@@ -1278,15 +1662,6 @@ private fun SealWorkflowContent(
     var methodSummary by rememberSaveable(projectId, currentVersionId, learningCard?.rowVersion) {
         mutableStateOf(learningCard?.methodSummary ?: initialMethodSummary.orEmpty())
     }
-    var unresolvedQuestions by rememberSaveable(projectId, currentVersionId, learningCard?.rowVersion) {
-        mutableStateOf(learningCard?.unresolvedQuestions?.joinToString("\n").orEmpty())
-    }
-    var questionsConfirmed by rememberSaveable(projectId, currentVersionId, learningCard?.rowVersion) {
-        mutableStateOf(learningCard?.questionsConfirmed ?: false)
-    }
-    var migrationReason by rememberSaveable(projectId, currentVersionId) {
-        mutableStateOf("")
-    }
     val savedAiItem = provenance?.items?.firstOrNull { it.itemType == "AI_CONTRIBUTION" }
     val savedExternalItem = provenance?.items?.firstOrNull { it.itemType == "EXTERNAL_MATERIAL" }
     var humanSummary by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
@@ -1295,11 +1670,18 @@ private fun SealWorkflowContent(
     var aiUsed by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
         mutableStateOf(provenance?.aiAssistanceUsed ?: false)
     }
+    var showAiDetails by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
+        mutableStateOf(false)
+    }
     var aiSummary by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
         mutableStateOf(provenance?.aiContributionSummary.orEmpty())
     }
     var aiProvider by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
-        mutableStateOf(savedAiItem?.aiProvider.orEmpty())
+        mutableStateOf(
+            savedAiItem?.aiProvider
+                ?.takeUnless { it.equals("development", ignoreCase = true) }
+                .orEmpty()
+        )
     }
     var aiModel by rememberSaveable(projectId, currentVersionId, provenance?.rowVersion) {
         mutableStateOf(savedAiItem?.aiModel.orEmpty())
@@ -1329,22 +1711,30 @@ private fun SealWorkflowContent(
         mutableStateOf(provenance?.unresolvedRights ?: false)
     }
     var pendingVisibility by rememberSaveable(projectId, currentVersionId) {
-        mutableStateOf<String?>(null)
+        mutableStateOf<String?>(
+            if (classrooms.any { it.canSubmit }) "CLASSROOM" else "GUARDIAN_ONLY"
+        )
     }
     var selectedClassroomId by rememberSaveable(projectId, currentVersionId) {
         mutableStateOf<String?>(null)
     }
+    LaunchedEffect(classrooms) {
+        val available = classrooms.filter { it.canSubmit }
+        if (selectedClassroomId == null && available.size == 1) {
+            selectedClassroomId = available.single().id
+        }
+    }
     val formEnabled = publicationStatus == null && !busy
 
-    Text("封卷检查", fontFamily = YaHei, fontWeight = FontWeight.Bold)
-    Text(
-        "所有内容固定在当前版本；提交后学习卡、来源谱和封卷说明将锁定。",
-        fontFamily = YaHei,
-        fontSize = 12.sp,
-        color = Color(0xFF667166),
+    WorkflowStepHeader(
+        title = "封卷准备",
+        step = step,
+        total = 4,
+        task = listOf("作品说明", "学习收获", "来源确认", "隐私与投递")[step.coerceIn(0, 3)],
     )
-
-    ModuleTitle("1. 作品说明与隐私", sealCheck?.status)
+    when (step.coerceIn(0, 3)) {
+    0 -> {
+    ModuleTitle("作品说明", sealCheck?.status)
     TextField(
         value = workDescription,
         onValueChange = { workDescription = it.take(3000) },
@@ -1353,52 +1743,17 @@ private fun SealWorkflowContent(
         enabled = formEnabled,
         modifier = Modifier.fillMaxWidth(),
     )
-    TextField(
-        value = learningReflection,
-        onValueChange = { learningReflection = it.take(3000) },
-        label = { Text("这次学会了什么", fontFamily = YaHei) },
-        minLines = 2,
-        enabled = formEnabled,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    TextField(
-        value = nextImprovement,
-        onValueChange = { nextImprovement = it.take(3000) },
-        label = { Text("下一次还想改什么", fontFamily = YaHei) },
-        minLines = 2,
-        enabled = formEnabled,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    CheckRow("我已检查：作品中没有真实姓名、学校或可识别身份信息", identityChecked, formEnabled) {
-        identityChecked = it
-    }
-    CheckRow("我已检查：作品中没有手机号、地址、账号等联系方式", contactChecked, formEnabled) {
-        contactChecked = it
-    }
-    CheckRow("我已确认：没有敏感肖像，或已经取得相关使用许可", portraitChecked, formEnabled) {
-        portraitChecked = it
-    }
     Button(
-        onClick = {
-            onSaveSealCheck(
-                SealCheckForm(
-                    workDescription,
-                    learningReflection,
-                    nextImprovement,
-                    identityChecked,
-                    contactChecked,
-                    portraitChecked,
-                )
-            )
-        },
-        enabled = formEnabled && currentVersionId != null,
+        onClick = { onStepChange(1) },
+        enabled = formEnabled && workDescription.trim().length >= 2,
         modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) { Text("保存作品说明与隐私自查", fontFamily = YaHei) }
+    ) { Text("下一项", fontFamily = YaHei) }
+    }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
-    ModuleTitle("2. 学习说明", learningCard?.status)
+    1 -> {
+    ModuleTitle("学习收获", learningCard?.status)
     Text(
-        "秘籍是可选项；自由创作即使不选秘籍也可以封卷。",
+        "写下这次学到的内容和下一次想改的地方；秘籍可以不选。",
         fontFamily = YaHei,
         fontSize = 12.sp,
         color = Color(0xFF667166),
@@ -1421,53 +1776,50 @@ private fun SealWorkflowContent(
         }
     }
     TextField(
-        value = methodSummary,
-        onValueChange = { methodSummary = it.take(3000) },
-        label = { Text("我用了什么方法或秘籍招式", fontFamily = YaHei) },
+        value = learningReflection,
+        onValueChange = { learningReflection = it.take(3000) },
+        label = { Text("这次学会了什么", fontFamily = YaHei) },
         minLines = 2,
         enabled = formEnabled,
         modifier = Modifier.fillMaxWidth(),
     )
     TextField(
-        value = unresolvedQuestions,
-        onValueChange = { unresolvedQuestions = it.take(3000) },
-        label = { Text("还没解决的问题（每行一个，可不填）", fontFamily = YaHei) },
+        value = nextImprovement,
+        onValueChange = { nextImprovement = it.take(3000) },
+        label = { Text("下一次还想改什么", fontFamily = YaHei) },
+        minLines = 2,
         enabled = formEnabled,
         modifier = Modifier.fillMaxWidth(),
     )
-    CheckRow("我确认已如实记录尚未解决的问题", questionsConfirmed, formEnabled) {
-        questionsConfirmed = it
-    }
     Button(
         onClick = {
-            onSaveLearningCard(
+            onSaveReflectionPackage(
+                SealCheckForm(
+                    workDescription,
+                    learningReflection,
+                    nextImprovement,
+                    identityChecked,
+                    contactChecked,
+                    portraitChecked,
+                ),
                 LearningCardForm(
                     selectedManualIds,
-                    methodSummary,
-                    unresolvedQuestions,
-                    questionsConfirmed,
-                )
-            )
+                    methodSummary.ifBlank { learningReflection },
+                    unresolvedQuestions = "",
+                    questionsConfirmed = true,
+                ),
+            ) { onStepChange(2) }
         },
-        enabled = formEnabled && currentVersionId != null,
+        enabled = formEnabled && currentVersionId != null && learningReflection.trim().length >= 2 &&
+            nextImprovement.trim().length >= 2,
         modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) { Text("保存学习说明", fontFamily = YaHei) }
-    TextField(
-        value = migrationReason,
-        onValueChange = { migrationReason = it.take(500) },
-        label = { Text("这次作品如何使用了所选秘籍（迁移理由）", fontFamily = YaHei) },
-        minLines = 2,
-        enabled = formEnabled,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Button(
-        onClick = { onSubmitMigrationEvidence(selectedManualIds, migrationReason) },
-        enabled = formEnabled && currentVersionId != null && selectedManualIds.isNotEmpty() && migrationReason.trim().isNotEmpty(),
-        modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) { Text("提交迁移证据（等待审核）", fontFamily = YaHei) }
+    ) {
+        Text("保存并继续", fontFamily = YaHei)
+    }
+    }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
-    ModuleTitle("3. 来源与人机分工", provenance?.status)
+    2 -> {
+    ModuleTitle("来源确认", provenance?.status)
     TextField(
         value = humanSummary,
         onValueChange = { humanSummary = it.take(3000) },
@@ -1481,6 +1833,12 @@ private fun SealWorkflowContent(
         if (!it) aigcLabelDeclared = false
     }
     if (aiUsed) {
+        Text(
+            "如果是在本应用里生成的图片，系统会自动记录来源；只有使用其他工具时，才需要补充详细信息。",
+            fontFamily = YaHei,
+            fontSize = 12.sp,
+            color = Color(0xFF667166),
+        )
         TextField(
             value = aiSummary,
             onValueChange = { aiSummary = it.take(3000) },
@@ -1489,36 +1847,43 @@ private fun SealWorkflowContent(
             enabled = formEnabled,
             modifier = Modifier.fillMaxWidth(),
         )
-        TextField(
-            value = aiProvider,
-            onValueChange = { aiProvider = it.take(80) },
-            label = { Text("服务提供方", fontFamily = YaHei) },
+        OutlinedButton(
+            onClick = { showAiDetails = !showAiDetails },
             enabled = formEnabled,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        TextField(
-            value = aiModel,
-            onValueChange = { aiModel = it.take(120) },
-            label = { Text("模型或工具名称", fontFamily = YaHei) },
-            enabled = formEnabled,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        TextField(
-            value = aiAction,
-            onValueChange = { aiAction = it.take(120) },
-            label = { Text("调用动作，例如生成底图", fontFamily = YaHei) },
-            enabled = formEnabled,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        TextField(
-            value = promptSummary,
-            onValueChange = { promptSummary = it.take(500) },
-            label = { Text("提示词摘要", fontFamily = YaHei) },
-            enabled = formEnabled,
-            modifier = Modifier.fillMaxWidth(),
-        )
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+        ) {
+            Text(
+                if (showAiDetails) "收起其他工具信息" else "补充其他工具信息（可选）",
+                fontFamily = YaHei,
+            )
+        }
+        if (showAiDetails) {
+            TextField(
+                value = aiProvider,
+                onValueChange = { aiProvider = it.take(80) },
+                label = { Text("使用的工具或平台", fontFamily = YaHei) },
+                enabled = formEnabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            TextField(
+                value = aiAction,
+                onValueChange = { aiAction = it.take(120) },
+                label = { Text("它帮你完成了什么", fontFamily = YaHei) },
+                enabled = formEnabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            TextField(
+                value = promptSummary,
+                onValueChange = { promptSummary = it.take(500) },
+                label = { Text("给工具的要求（可简要填写）", fontFamily = YaHei) },
+                enabled = formEnabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         CheckRow("我对 AI 结果作过选择或修改", aiResultModified, formEnabled) { aiResultModified = it }
-        CheckRow("我同意作品卡显示 AIGC 标识", aigcLabelDeclared, formEnabled) {
+        CheckRow("我同意作品卡注明智能工具参与", aigcLabelDeclared, formEnabled) {
             aigcLabelDeclared = it
         }
     }
@@ -1539,26 +1904,28 @@ private fun SealWorkflowContent(
         )
         Text("素材许可", fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("CC0", "CC_BY", "CC_BY_SA", "PUBLIC_DOMAIN").forEach { license ->
+            listOf(
+                "CC0" to "自由使用",
+                "CC_BY" to "注明作者",
+                "CC_BY_SA" to "注明作者并同样共享",
+                "PUBLIC_DOMAIN" to "公共领域",
+            ).forEach { (license, label) ->
                 FilterChip(
                     selected = externalLicense == license,
                     onClick = { externalLicense = license },
-                    label = { Text(license.replace('_', '-'), fontSize = 10.sp) },
+                    label = { Text(label, fontFamily = YaHei, fontSize = 10.sp) },
                     enabled = formEnabled,
                 )
             }
         }
     }
     CheckRow("仍有素材授权问题没有解决", unresolvedRights, formEnabled) { unresolvedRights = it }
-    val aiFieldsComplete = !aiUsed || (
-        aiSummary.trim().length >= 2 && aiProvider.isNotBlank() && aiModel.isNotBlank() &&
-            aiAction.isNotBlank() && promptSummary.isNotBlank() && aigcLabelDeclared
-        )
+    val aiFieldsComplete = !aiUsed || (aiSummary.trim().length >= 2 && aigcLabelDeclared)
     val externalSourceValid = externalUrl.isBlank() ||
         externalUrl.startsWith("http://") || externalUrl.startsWith("https://")
     if (aiUsed && !aiFieldsComplete) {
         Text(
-            "可以先保存草稿；提交前需补齐 AI 作用、提供方、工具名称、动作、提示摘要和 AIGC 标识。",
+            "请说明智能工具帮了什么，并确认作品卡会显示相应标识。",
             fontFamily = YaHei,
             fontSize = 12.sp,
             color = Color(0xFF8A5A22),
@@ -1587,10 +1954,10 @@ private fun SealWorkflowContent(
                     humanSummary,
                     aiUsed,
                     aiSummary,
-                    aiProvider,
-                    aiModel,
-                    aiAction,
-                    promptSummary,
+                    aiProvider.ifBlank { "其他生成工具" },
+                    aiModel.ifBlank { "未说明版本" },
+                    aiAction.ifBlank { "辅助生成或整理内容" },
+                    promptSummary.ifBlank { aiSummary.trim() },
                     aiResultModified,
                     aigcLabelDeclared,
                     externalUrl,
@@ -1598,14 +1965,29 @@ private fun SealWorkflowContent(
                     externalLicense,
                     unresolvedRights,
                 )
-            )
+            ) { onStepChange(3) }
         },
-        enabled = formEnabled && currentVersionId != null && externalSourceValid,
+        enabled = formEnabled && currentVersionId != null && humanSummary.trim().length >= 2 &&
+            aiFieldsComplete && externalSourceValid && !unresolvedRights,
         modifier = Modifier.fillMaxWidth().height(48.dp),
-    ) { Text("保存来源与人机分工", fontFamily = YaHei) }
+    ) { Text("保存并继续", fontFamily = YaHei) }
+    }
 
-    HorizontalDivider(color = Color(0xFFD7D4BE))
-    ModuleTitle("4. 保存或发布", publicationStatus)
+    else -> {
+    ModuleTitle("隐私与投递", publicationStatus ?: sealCheck?.status)
+    val packageComplete = sealCheck?.status == "COMPLETE" &&
+        learningCard?.status == "COMPLETE" && provenance?.status == "COMPLETE"
+    if (publicationStatus == null && !packageComplete) {
+        CheckRow("作品中没有真实姓名、学校或可识别身份信息", identityChecked, formEnabled) {
+            identityChecked = it
+        }
+        CheckRow("作品中没有手机号、地址、账号等联系方式", contactChecked, formEnabled) {
+            contactChecked = it
+        }
+        CheckRow("没有敏感肖像，或已经取得相关使用许可", portraitChecked, formEnabled) {
+            portraitChecked = it
+        }
+    }
     if (publicationStatus != null) {
         WorkflowNotice(
             "当前提交：${publicationStatusLabel(publicationStatus)} · " +
@@ -1628,86 +2010,69 @@ private fun SealWorkflowContent(
                 Text("打开大会作品，查看评招与采纳记录", fontFamily = YaHei)
             }
         }
+    } else if (!packageComplete) {
+        WorkflowNotice("先保存隐私确认；系统会同时检查作品说明、学习收获和来源记录。")
+        Button(
+            onClick = {
+                onSaveSealCheck(
+                    SealCheckForm(
+                        workDescription,
+                        learningReflection,
+                        nextImprovement,
+                        identityChecked,
+                        contactChecked,
+                        portraitChecked,
+                    )
+                ) {}
+            },
+            enabled = formEnabled && currentVersionId != null && identityChecked && contactChecked &&
+                portraitChecked,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("保存并检查", fontFamily = YaHei) }
     } else {
-        val packageComplete = sealCheck?.status == "COMPLETE" &&
-            learningCard?.status == "COMPLETE" && provenance?.status == "COMPLETE"
-        WorkflowNotice("仅自己保存：不点击提交即可，已保存内容会留在个人创作档案中。")
-        if (!packageComplete) {
-            Text(
-                "提交前请让上面三个模块都显示“已完成”。",
-                fontFamily = YaHei,
-                fontSize = 12.sp,
-                color = Color(0xFF8A5A22),
-            )
-        }
-        listOf(
-            "GUARDIAN_ONLY" to "交给家长查看",
-            "CLASSROOM" to "提交教师查看（${classrooms.count { it.canSubmit }} 个可选班级）",
-            "COMMUNITY" to "发布到知行流",
-        ).forEach { (visibility, label) ->
-            OutlinedButton(
-                onClick = { pendingVisibility = visibility },
-                enabled = !busy && packageComplete,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-            ) { Text(label, fontFamily = YaHei) }
-        }
-        pendingVisibility?.let { visibility ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Color(0xFFD4B88A), RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("提交确认", fontFamily = YaHei, fontWeight = FontWeight.Bold)
-                WorkflowFact("去向", publicationVisibilityLabel(visibility))
-                if (visibility == "CLASSROOM") {
-                    val availableClassrooms = classrooms.filter { it.canSubmit }
-                    if (availableClassrooms.isEmpty()) {
-                        Text(
-                            "尚未加入班级，请先到“书信”页面输入教师提供的邀请码。",
-                            fontFamily = YaHei,
-                            fontSize = 12.sp,
-                            color = Color(0xFF8C4D3D),
-                        )
-                    } else {
-                        Text("选择投递班级", fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        availableClassrooms.forEach { classroom ->
-                            FilterChip(
-                                selected = selectedClassroomId == classroom.id,
-                                onClick = { selectedClassroomId = classroom.id },
-                                label = { Text("${classroom.name} · ${classroom.teacherNickname}", fontFamily = YaHei) },
-                                enabled = !busy,
-                            )
-                        }
-                    }
-                }
-                WorkflowFact("提交后", "先进入内容与隐私检查；通过前不会公开展示")
-                Text(
-                    "学习卡、来源谱和封卷说明将锁定。需要修改时应保存新版本并重新测试。",
-                    fontFamily = YaHei,
-                    fontSize = 12.sp,
-                    color = Color(0xFF667166),
+        Text("选择投递位置", fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(
+                "GUARDIAN_ONLY" to "家长",
+                "CLASSROOM" to "班级",
+                "COMMUNITY" to "知行流",
+            ).forEach { (visibility, label) ->
+                FilterChip(
+                    selected = pendingVisibility == visibility,
+                    onClick = { pendingVisibility = visibility },
+                    label = { Text(label, fontFamily = YaHei) },
+                    enabled = !busy && (visibility != "CLASSROOM" || classrooms.any { it.canSubmit }),
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(
-                        onClick = { pendingVisibility = null },
-                        enabled = !busy,
-                        modifier = Modifier.height(48.dp),
-                    ) { Text("返回检查", fontFamily = YaHei) }
-                    Button(
-                        onClick = {
-                            onSubmit(
-                                visibility,
-                                selectedClassroomId.takeIf { visibility == "CLASSROOM" },
-                            )
-                        },
-                        enabled = !busy && (visibility != "CLASSROOM" || selectedClassroomId != null),
-                        modifier = Modifier.height(48.dp),
-                    ) { Text("确认提交", fontFamily = YaHei) }
-                }
             }
         }
+        if (pendingVisibility == "CLASSROOM") {
+            val availableClassrooms = classrooms.filter { it.canSubmit }
+            Text("选择班级", fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            availableClassrooms.forEach { classroom ->
+                FilterChip(
+                    selected = selectedClassroomId == classroom.id,
+                    onClick = { selectedClassroomId = classroom.id },
+                    label = { Text("${classroom.name} · ${classroom.teacherNickname}", fontFamily = YaHei) },
+                    enabled = !busy,
+                )
+            }
+        }
+        WorkflowNotice("提交后会先进行内容与隐私检查，通过前不会公开展示。")
+        Button(
+            onClick = {
+                pendingVisibility?.let { visibility ->
+                    onSubmit(
+                        visibility,
+                        selectedClassroomId.takeIf { visibility == "CLASSROOM" },
+                    )
+                }
+            },
+            enabled = !busy && pendingVisibility != null &&
+                (pendingVisibility != "CLASSROOM" || selectedClassroomId != null),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("提交作品", fontFamily = YaHei) }
+    }
+    }
     }
 }
 
@@ -1764,6 +2129,28 @@ private fun ModuleTitle(title: String, status: String?) {
     }
 }
 
+@Composable
+private fun WorkflowStepHeader(title: String, step: Int, total: Int, task: String) {
+    val safeStep = step.coerceIn(0, total - 1)
+    Text(
+        "$title · ${safeStep + 1}/$total",
+        color = Color(0xFF294E36),
+        fontFamily = YaHei,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+    )
+    LinearProgressIndicator(
+        progress = { (safeStep + 1).toFloat() / total.toFloat() },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Text(
+        task,
+        color = Color(0xFF526354),
+        fontFamily = YaHei,
+        fontSize = 13.sp,
+    )
+}
+
 private fun publicationStatusLabel(status: String): String = when (status) {
     "PENDING_CHECK" -> "自动检查中"
     "PENDING_HUMAN_REVIEW" -> "等待人工复核"
@@ -1780,6 +2167,18 @@ private fun publicationVisibilityLabel(visibility: String?): String = when (visi
     "CLASSROOM" -> "教师/班级可见"
     "COMMUNITY" -> "知行流"
     else -> "未选择"
+}
+
+private fun generationSizeLabel(size: String): String = when (size) {
+    "PORTRAIT" -> "竖版"
+    "LANDSCAPE" -> "横版"
+    else -> "方形"
+}
+
+private fun generationQualityLabel(quality: String): String = when (quality) {
+    "LOW" -> "快速"
+    "HIGH" -> "精细"
+    else -> "标准"
 }
 
 @Composable

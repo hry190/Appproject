@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
@@ -32,6 +34,7 @@ fun AuthLineField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    accessibilityLabel: String = placeholder,
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -71,7 +74,9 @@ fun AuthLineField(
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                     visualTransformation = visualTransformation,
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = accessibilityLabel },
                 )
             }
             if (trailing != null) trailing()

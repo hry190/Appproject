@@ -36,6 +36,7 @@ data class LuggageDetailState(
     val mistakeDetail: MistakeDetailDto? = null,
     val creations: CreationProjectListDto? = null,
     val creationDetail: CreationDetailBundle? = null,
+    val creationDetailProjectId: String? = null,
     val privacy: PrivacySettingsDto? = null,
     val trial: TrialDto? = null,
     val trialResult: TrialAttemptResultDto? = null,
@@ -284,10 +285,39 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
         }
     }
 
-    fun loadCreationDetail(projectId: String) =
-        loadDetail { copy(creationDetail = repository.creationDetail(projectId)) }
+    fun loadCreationDetail(projectId: String) {
+        viewModelScope.launch {
+            val visibleDetail = _detailState.value.creationDetail
+                ?.takeIf { it.project.id == projectId }
+            _detailState.value = _detailState.value.copy(
+                loading = true,
+                message = null,
+                retryable = false,
+                // Keep the same work visible during a refresh. Clearing it
+                // briefly changes currentVersionId to null and recreates the
+                // one-task workflow at step 1 after every successful action.
+                creationDetail = visibleDetail,
+                creationDetailProjectId = projectId,
+            )
+            try {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    retryable = false,
+                    creationDetail = repository.creationDetail(projectId),
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    message = error.userMessage("作品档案加载失败，请稍后重试"),
+                    retryable = true,
+                )
+            }
+        }
+    }
 
-    fun withdrawPublication(projectId: String) {
+    fun withdrawPublication(projectId: String, onComplete: () -> Unit = {}) {
         val publication = _detailState.value.creationDetail?.project?.latestPublication ?: return
         viewModelScope.launch {
             _detailState.value = _detailState.value.copy(
@@ -304,6 +334,7 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
                     retryable = false,
                 )
                 refresh(force = true)
+                onComplete()
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {

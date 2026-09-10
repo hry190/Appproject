@@ -352,6 +352,9 @@ class LuggageRepository(
                     if (error is AuthApiException && error.statusCode == 404) null else throw error
                 }
         }
+        val moderationAppeals = moderationCase?.let { case ->
+            api.getModerationAppeals(token).filter { it.moderationCaseId == case.id }
+        }.orEmpty()
         CreationDetailBundle(
             project,
             versions,
@@ -364,6 +367,7 @@ class LuggageRepository(
             provenance,
             sealCheck,
             moderationCase,
+            moderationAppeals,
         )
     }
 

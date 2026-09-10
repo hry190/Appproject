@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,17 +27,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.luggage.LearningOverviewDto
 import com.jueqiao.jianghu.ui.components.HomeQuickActions
+import com.jueqiao.jianghu.ui.screens.home.DecorButton
+import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
 import com.jueqiao.jianghu.ui.screens.home.ProgressModal
-import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val GuideBubbleEnterDurationMillis = 260
+private const val GuideBubbleExitDurationMillis = 220
+private const val XiulianEntranceDelayMillis = 550L
+private const val XiulianEntranceDurationMillis = 680
+private val XiulianEntranceOffset = 56.dp
+
+private enum class XiulianGuideStage {
+    AwaitingFirstTap,
+    ShowingBubble,
+    ShowingEntrance,
+}
 
 /**
  * 修炼页 — 基于 Figma 节点 301-1242。
@@ -57,19 +77,93 @@ fun XiulianScreen(
     var progressOpen by remember { mutableStateOf(false) }
     var dailyOpen    by remember { mutableStateOf(false) }
     var dailyStep    by remember { androidx.compose.runtime.mutableIntStateOf(1) }
+    var guideStage by remember { mutableStateOf(XiulianGuideStage.AwaitingFirstTap) }
+    val bubbleAlpha = remember { Animatable(0f) }
+    val bubbleMovement = remember { Animatable(0f) }
+    val xiulianAlpha = remember { Animatable(0f) }
+    val xiulianMovement = remember { Animatable(0f) }
+    val recommendation = learningOverview?.books?.firstOrNull {
+        it.manualPageId == learningOverview.recommendedLessonId
+    }
+
+    LaunchedEffect(guideStage) {
+        when (guideStage) {
+            XiulianGuideStage.AwaitingFirstTap -> Unit
+
+            XiulianGuideStage.ShowingBubble -> coroutineScope {
+                launch {
+                    bubbleAlpha.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = GuideBubbleEnterDurationMillis,
+                            easing = LinearEasing,
+                        ),
+                    )
+                }
+                launch {
+                    bubbleMovement.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = GuideBubbleEnterDurationMillis,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    )
+                }
+            }
+
+            XiulianGuideStage.ShowingEntrance -> {
+                coroutineScope {
+                    launch {
+                        bubbleAlpha.animateTo(
+                            targetValue = 0f,
+                            animationSpec = tween(
+                                durationMillis = GuideBubbleExitDurationMillis,
+                                easing = LinearEasing,
+                            ),
+                        )
+                    }
+                    launch {
+                        bubbleMovement.animateTo(
+                            targetValue = 0f,
+                            animationSpec = tween(
+                                durationMillis = GuideBubbleExitDurationMillis,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        )
+                    }
+                }
+                delay(XiulianEntranceDelayMillis)
+                coroutineScope {
+                    launch {
+                        xiulianAlpha.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(
+                                durationMillis = XiulianEntranceDurationMillis,
+                                easing = LinearEasing,
+                            ),
+                        )
+                    }
+                    launch {
+                        xiulianMovement.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(
+                                durationMillis = XiulianEntranceDurationMillis,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(xiulian.png)— 延伸到屏幕底部
-        Image(
-            painter = painterResource(R.drawable.img_xiulian_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
+        // 全屏背景图：上方竹林随风轻摆，建筑与石阶保持稳定。
+        XiulianWindBackground(modifier = Modifier.fillMaxSize())
 
         // 内容层(避开系统导航条)
         Box(
@@ -87,95 +181,63 @@ fun XiulianScreen(
             contentScale = ContentScale.Fit,
         )
 
-        // 修炼按钮(未标题-1 50.png,X=141, Y=368, W=55, H=90)
-        Image(
-            painter = painterResource(R.drawable.img_xiulian_group128),
-            contentDescription = "修炼",
-            modifier = Modifier
-                .offset(x = 131.dp, y = 358.dp)
-                .size(width = 55.dp, height = 90.dp)
-                .clickable(onClick = onOpenGunlun1),
-            contentScale = ContentScale.Fit,
-        )
+        // 第一次点击显示气泡，第二次点击关闭气泡并进入修炼入口阶段。
+        if (guideStage != XiulianGuideStage.ShowingEntrance) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+                        when (guideStage) {
+                            XiulianGuideStage.AwaitingFirstTap -> {
+                                guideStage = XiulianGuideStage.ShowingBubble
+                            }
+                            XiulianGuideStage.ShowingBubble -> {
+                                if (bubbleAlpha.value >= 0.99f) {
+                                    guideStage = XiulianGuideStage.ShowingEntrance
+                                }
+                            }
+                            XiulianGuideStage.ShowingEntrance -> Unit
+                        }
+                    },
+            )
+        }
 
-        // "修\n炼" 标签(X=150, Y=378,字号 12) — 在图标之上
-        Text(
-            text = "修\n炼",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
-            modifier = Modifier.offset(x = 150.dp, y = 378.dp),
-        )
-
-        // "秘籍" 旋转标签(X=104.5, Y=785.5, rotation -23.36° 逆时针, W=48, H=25,字号 20,白色)
-        Text(
-            text = "秘籍",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
-            modifier = Modifier
-                .offset(x = 104.5.dp, y = 785.5.dp)
-                .size(width = 72.dp, height = 40.dp)
-                .rotate(-23.36f)
-                .clickable(onClick = onOpenManuals),
-        )
-
-        // "学习" 旋转标签(X=238, Y=691, rotation 15.3° 顺时针, W=48, H=25,字号 20,白色)
-        Text(
-            text = "学习",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 20.sp),
-            modifier = Modifier
-                .offset(x = 238.dp, y = 691.dp)
-                .size(width = 72.dp, height = 40.dp)
-                .rotate(15.3f)
-                .clickable(onClick = onOpenLearning),
-        )
-
-        // "试炼" 旋转标签(X=271, Y=814, rotation 26° 顺时针, W=43, H=18,字号 16,白色)
-        Text(
-            text = "试炼",
-            color = Color.White,
-            style = TextStyle(fontFamily = YaHei, fontSize = 16.sp),
-            modifier = Modifier
-                .offset(x = 271.dp, y = 814.dp)
-                .size(width = 68.dp, height = 36.dp)
-                .rotate(26f)
-                .clickable(onClick = onOpenTrials),
-        )
-
-        // 6.png 作为气泡背景(118, 453, 175×79)
+        // 与首页引导页统一使用小笺气泡样式。
         Box(
             modifier = Modifier
                 .offset(x = 118.dp, y = 453.dp)
-                .size(width = 175.dp, height = 79.dp),
+                .size(width = 280.dp, height = 118.dp),
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_xiulian_6),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds,
-            )
-            // 气泡文本
-            val recommendation = learningOverview?.books?.firstOrNull {
-                it.manualPageId == learningOverview.recommendedLessonId
-            }
-            Text(
+            HomeGuideBubble(
                 text = recommendation?.let {
                     "下一招：${it.title}\n${learningOverview?.backMountain?.reason ?: "打开秘籍继续修炼"}"
                 } ?: "这里便是修炼之地!研读秘籍、\n静心学习、参与试炼,一步步\n提升你的学识修为。",
-                color = Color.Black,
-                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .graphicsLayer {
+                        alpha = bubbleAlpha.value
+                        translationY = (1f - bubbleMovement.value) * 10.dp.toPx()
+                    },
             )
-            if (recommendation != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { onOpenRecommendedManual(recommendation.manualPageId) },
-                )
-            }
         }
+
+        // 气泡退场后，修炼入口复刻首页四个一级入口的入场与点击效果。
+        DecorButton(
+            imageRes = R.drawable.img_xiulian_group128,
+            text = "修炼",
+            x = 131.dp,
+            y = 358.dp,
+            width = 55.dp,
+            height = 90.dp,
+            entranceAlpha = xiulianAlpha.value,
+            entranceTranslationY =
+                (1f - xiulianMovement.value) * with(LocalDensity.current) {
+                    XiulianEntranceOffset.toPx()
+                },
+            entranceEnabled =
+                xiulianAlpha.value >= 0.99f && xiulianMovement.value >= 0.99f,
+            onClick = onOpenGunlun1,
+        )
 
         // 左上角:返回按钮(Return.png,点击回到首页1)
         Box(
