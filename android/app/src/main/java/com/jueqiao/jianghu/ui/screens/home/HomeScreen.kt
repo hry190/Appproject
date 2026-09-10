@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
@@ -176,6 +177,8 @@ fun HomeGuideBubble(
     text: String,
     modifier: Modifier = Modifier,
     tailPointsRight: Boolean = false,
+    horizontalPadding: Dp = 46.dp,
+    verticalPadding: Dp = 29.dp,
 ) {
     Box(modifier = modifier) {
         Image(
@@ -197,8 +200,8 @@ fun HomeGuideBubble(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    horizontal = 46.dp,
-                    vertical = 29.dp,
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding,
                 ),
             contentAlignment = Alignment.Center,
         ) {

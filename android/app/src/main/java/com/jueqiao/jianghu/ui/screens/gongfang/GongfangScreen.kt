@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.CreationWorkspaceTopBar
+import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 private val Ink = Color(0xFF294A2E)
@@ -977,23 +978,13 @@ private fun InfoRow(icon: ImageVector, label: String, value: String) {
 
 @Composable
 private fun CoachBubble(text: String, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.height(78.dp), contentAlignment = Alignment.Center) {
-        Image(
-            painter = painterResource(R.drawable.img_gongfang_186),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds,
-        )
-        Text(
-            text,
-            color = Color(0xFF30362F),
-            fontFamily = YaHei,
-            fontSize = 14.sp,
-            lineHeight = 21.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        )
-    }
+    HomeGuideBubble(
+        text = text,
+        modifier = modifier.height(78.dp),
+        tailPointsRight = true,
+        horizontalPadding = 24.dp,
+        verticalPadding = 16.dp,
+    )
 }
 
 @Composable
