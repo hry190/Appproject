@@ -498,6 +498,7 @@ fun JianghuNavHost(
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
+                guideSessionKey = currentUser?.id ?: "guest",
                 onBack         = {
                     // 引导页的页面返回与系统返回都直接回首页，并移除本次引导实例。
                     navController.navigate(Routes.Home1) {
@@ -516,13 +517,14 @@ fun JianghuNavHost(
         composable(Routes.Dahui) {
             DahuiScreen(
                 onBack = { navController.popBackStack() },
+                // 大会入口先展示引导页；演武场组件进入图1的演武场页面。
                 onOpenArena = { navController.navigate(Routes.Yanwuchang) },
             )
         }
         composable(Routes.Yanwuchang) {
             YanwuchangScreen(
                 onBack = { navController.popBackStack() },
-                onOpenWuhui = { navController.navigate(Routes.DahuiArena) },
+                onOpenDahui = { navController.navigate(Routes.DahuiArena) },
                 onOpenYanwuchangVideo = { navController.navigate(Routes.YanwuchangVideo) },
             )
         }
@@ -919,7 +921,7 @@ fun JianghuNavHost(
                         }
                     }
                 },
-                onSaveLearningCard = { form ->
+                onSaveLearningCard = { form, afterSave ->
                     latestVersion?.let { version ->
                         creationViewModel.saveLearningCard(
                             projectId = projectId,
@@ -931,10 +933,11 @@ fun JianghuNavHost(
                             rowVersion = bundle?.learningCard?.rowVersion,
                         ) {
                             luggageViewModel.loadCreationDetail(projectId)
+                            afterSave()
                         }
                     }
                 },
-                onSubmitMigrationEvidence = { manualPageIds, revisionReason ->
+                onSubmitMigrationEvidence = { manualPageIds, revisionReason, afterSave ->
                     latestVersion?.let { version ->
                         creationViewModel.submitMigrationEvidence(
                             projectId = projectId,
@@ -943,10 +946,11 @@ fun JianghuNavHost(
                             revisionReason = revisionReason,
                         ) {
                             luggageViewModel.loadCreationDetail(projectId)
+                            afterSave()
                         }
                     }
                 },
-                onSaveProvenance = { form ->
+                onSaveProvenance = { form, afterSave ->
                     latestVersion?.let { version ->
                         creationViewModel.saveProvenance(
                             projectId = projectId,
@@ -967,10 +971,11 @@ fun JianghuNavHost(
                             rowVersion = bundle?.provenance?.rowVersion,
                         ) {
                             luggageViewModel.loadCreationDetail(projectId)
+                            afterSave()
                         }
                     }
                 },
-                onSaveSealCheck = { form ->
+                onSaveSealCheck = { form, afterSave ->
                     latestVersion?.let { version ->
                         creationViewModel.saveSealCheck(
                             projectId = projectId,
@@ -984,6 +989,28 @@ fun JianghuNavHost(
                             rowVersion = bundle?.sealCheck?.rowVersion,
                         ) {
                             luggageViewModel.loadCreationDetail(projectId)
+                            afterSave()
+                        }
+                    }
+                },
+                onSaveReflectionPackage = { sealForm, learningForm, afterSave ->
+                    latestVersion?.let { version ->
+                        creationViewModel.saveSealReflectionPackage(
+                            projectId = projectId,
+                            versionId = version.id,
+                            workDescription = sealForm.workDescription,
+                            learningReflection = sealForm.learningReflection,
+                            nextImprovement = sealForm.nextImprovement,
+                            identityPrivacyConfirmed = sealForm.identityPrivacyConfirmed,
+                            contactPrivacyConfirmed = sealForm.contactPrivacyConfirmed,
+                            portraitRightsConfirmed = sealForm.portraitRightsConfirmed,
+                            sealRowVersion = bundle?.sealCheck?.rowVersion,
+                            manualPageIds = learningForm.manualPageIds,
+                            methodSummary = learningForm.methodSummary,
+                            learningRowVersion = bundle?.learningCard?.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                            afterSave()
                         }
                     }
                 },
@@ -1014,8 +1041,49 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Chuangzuodangan) {
+            LaunchedEffect(Unit) {
+                creationViewModel.loadRecentProjects()
+            }
             ChuangzuodanganScreen(
                 onBack = { navController.popBackStack() },
+                guideSessionKey = currentUser?.id.orEmpty().ifBlank { "guest" },
+                onContinueWork = { projectId ->
+                    creationViewModel.continueProject(projectId) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        navController.navigate(Routes.shengtuProject(projectId))
+                    }
+                },
+                onWithdrawWork = { projectId ->
+                    luggageViewModel.withdrawPublication(projectId) {
+                        creationViewModel.loadRecentProjects()
+                    }
+                },
+                onDeleteWork = { projectId ->
+                    luggageViewModel.deleteCreationProject(projectId) {
+                        creationViewModel.loadRecentProjects()
+                        navController.navigate(Routes.Gongfang) {
+                            popUpTo(Routes.Chuangzuodangan) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onAppealWork = { projectId, caseId, reason ->
+                    luggageViewModel.createAppeal(projectId, caseId, reason)
+                },
+                recentWorks = creationState.recentProjects,
+                recentWorksLoading = creationState.loadingRecent,
+                recentWorksMessage = creationState.recentError,
+                continuingProjectId = creationState.continuingProjectId,
+                continueMessage = creationState.continueMessage,
+                onRetryRecentWorks = creationViewModel::loadRecentProjects,
+                archiveDetail = luggageDetailState.creationDetail,
+                archiveDetailProjectId = luggageDetailState.creationDetailProjectId,
+                archiveDetailLoading = luggageDetailState.loading,
+                archiveDetailMessage = luggageDetailState.message,
+                onArchiveWorkSelected = luggageViewModel::loadCreationDetail,
+                onRetryArchiveDetail = {
+                    luggageDetailState.creationDetailProjectId?.let(luggageViewModel::loadCreationDetail)
+                },
                 onOpenCreationDesk = {
                     val returnedToDesk = navController.popBackStack(
                         route = Routes.Gongfang,

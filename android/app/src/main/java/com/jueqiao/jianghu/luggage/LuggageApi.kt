@@ -8,6 +8,7 @@ import com.jueqiao.jianghu.auth.AuthApiException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
+import okhttp3.ConnectionPool
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,11 +23,15 @@ import java.util.concurrent.TimeUnit
 class LuggageApi(
     baseUrl: String,
     private val client: OkHttpClient = OkHttpClient.Builder()
+        // The contest Uvicorn service closes idle HTTP/1.1 connections before
+        // OkHttp's five-minute default. Retire them on the client first so a
+        // student pausing on a task never sends the next write to a stale socket.
+        .connectionPool(ConnectionPool(5, 10, TimeUnit.SECONDS))
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .callTimeout(20, TimeUnit.SECONDS)
-        .retryOnConnectionFailure(false)
+        .retryOnConnectionFailure(true)
         .build(),
     private val gson: Gson = Gson(),
 ) {
@@ -699,6 +704,12 @@ class LuggageApi(
         ModerationAppealDto::class.java,
     )
 
+    suspend fun getModerationAppeals(accessToken: String): List<ModerationAppealDto> = get(
+        accessToken = accessToken,
+        path = "/v1/me/moderation-appeals",
+        type = TypeToken.getParameterized(List::class.java, ModerationAppealDto::class.java).type,
+    )
+
     suspend fun getPrivacy(accessToken: String): PrivacySettingsDto = get(
         accessToken,
         "/v1/me/privacy-settings",
@@ -1086,6 +1097,9 @@ class LuggageApi(
             client.newCall(request).execute()
         } catch (firstError: IOException) {
             if (request.method == "GET") {
+                // The demo server may close an idle HTTP/1.1 socket between screens.
+                // Evict pooled sockets so the single safe GET retry is truly fresh.
+                client.connectionPool.evictAll()
                 android.util.Log.w(
                     "LuggageApi",
                     "Retrying GET on a fresh connection: ${request.url}",
@@ -1120,7 +1134,7 @@ class LuggageApi(
         throw AuthApiException(
             statusCode = response.code,
             code = "INVALID_SERVER_RESPONSE",
-            message = "驿站返回异常，请稍后重试",
+            message = "服务有点忙，请稍后再试",
             requestId = response.header("X-Request-ID"),
         )
     }

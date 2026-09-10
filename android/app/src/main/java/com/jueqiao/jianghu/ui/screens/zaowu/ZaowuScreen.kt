@@ -70,13 +70,22 @@ private val WorkshopEntranceOffset = 56.dp
 fun ZaowuScreen(
     onBack: () -> Unit = {},
     onOpenGongfang: () -> Unit = {},
+    guideSessionKey: String = "guest",
 ) {
+    val context = LocalContext.current
+    val guidePreferences = remember(context) {
+        context.getSharedPreferences("creation_entry_guides", android.content.Context.MODE_PRIVATE)
+    }
+    val guidePreferenceKey = remember(guideSessionKey) { "entry_intro:$guideSessionKey" }
+    val guideAlreadyCompleted = remember(guideSessionKey) {
+        guidePreferences.getBoolean(guidePreferenceKey, false)
+    }
     // 引导顺序：小笺出现并停留，用户点击全屏后才淡出并展示工坊入口。
-    val guideDismissed = remember { mutableStateOf(false) }
-    val bubbleAlpha = remember { Animatable(0f) }
-    val bubbleMovement = remember { Animatable(0f) }
-    val workshopAlpha = remember { Animatable(0f) }
-    val workshopMovement = remember { Animatable(0f) }
+    val guideDismissed = remember(guideSessionKey) { mutableStateOf(guideAlreadyCompleted) }
+    val bubbleAlpha = remember(guideSessionKey) { Animatable(0f) }
+    val bubbleMovement = remember(guideSessionKey) { Animatable(0f) }
+    val workshopAlpha = remember(guideSessionKey) { Animatable(if (guideAlreadyCompleted) 1f else 0f) }
+    val workshopMovement = remember(guideSessionKey) { Animatable(if (guideAlreadyCompleted) 1f else 0f) }
     val density = LocalDensity.current
     val workshopEntranceOffsetPx = with(density) { WorkshopEntranceOffset.toPx() }
 
@@ -190,6 +199,7 @@ fun ZaowuScreen(
                     .clickable {
                         if (bubbleAlpha.value >= 0.99f) {
                             guideDismissed.value = true
+                            guidePreferences.edit().putBoolean(guidePreferenceKey, true).apply()
                         }
                     },
             )

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -197,7 +199,15 @@ fun GongfangScreen(
         }
     }
 
-    BackHandler { onBack() }
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    BackHandler {
+        if (imeVisible) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        } else {
+            onBack()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -396,7 +406,7 @@ private fun StartCreationContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            sourceStatus ?: "点“＋”可上传草图或带入已学秘籍；同门灵感等待授权能力",
+                            sourceStatus ?: "点“＋”可上传草图或带入已学秘籍；同门灵感将在获得许可后开放",
                             color = if (sourceStatus?.contains("失败") == true) {
                                 Color(0xFF8C4D3D)
                             } else {
@@ -785,7 +795,7 @@ private fun StartedCreationContent(
                     )
                     method?.let { plan ->
                         Text(
-                            "推荐：${creationMediaTypeLabel(plan.recommendedMediaType)} · 工具调用前会再次确认",
+                            "推荐：${creationMediaTypeLabel(plan.recommendedMediaType)} · 使用辅助功能前会请你确认",
                             color = MutedInk,
                             fontFamily = YaHei,
                             fontSize = 11.sp,

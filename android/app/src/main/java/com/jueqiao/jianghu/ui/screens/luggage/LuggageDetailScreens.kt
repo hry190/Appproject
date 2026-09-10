@@ -809,11 +809,11 @@ private fun CreationDetailContent(
         }
     }
     SectionCard {
-        Text("人机分工与来源谱", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        Text("我和智能工具做了什么", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
         val provenance = bundle.provenance
-        if (provenance == null) Text("尚未填写来源谱", color = DetailMuted) else {
+        if (provenance == null) Text("尚未填写来源记录", color = DetailMuted) else {
             Text("我的贡献：${provenance.humanContributionSummary}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
-            Text("AI辅助：${if (provenance.aiAssistanceUsed) "是" else "否"} · AIGC标识：${if (provenance.aigcLabelDeclared) "已声明" else "未声明"}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
+            Text("智能工具参与：${if (provenance.aiAssistanceUsed) "是" else "否"} · 作品卡说明：${if (provenance.aigcLabelDeclared) "已注明" else "未注明"}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
             Text("素材记录 ${provenance.items.size} 项 · 未解决授权 ${if (provenance.unresolvedRights) "有" else "无"}", color = DetailMuted, fontFamily = YaHei, fontSize = 12.sp)
             provenance.items.forEach { item ->
                 val sourceDetail = when (item.itemType) {
@@ -901,7 +901,7 @@ private fun PrivacyContent(
         }
     }
     PrivacySwitch("公开学习卡", settings.learningCardPublic) { onToggle("learning_card_public", it) }
-    PrivacySwitch("导出作品保留 AIGC 标识", settings.aigcExportMarkEnabled) { onToggle("aigc_export_mark_enabled", it) }
+    PrivacySwitch("导出作品保留智能工具参与说明", settings.aigcExportMarkEnabled) { onToggle("aigc_export_mark_enabled", it) }
     PrivacySwitch("允许通过资料发现我", settings.profileDiscoveryEnabled) { onToggle("profile_discovery_enabled", it) }
     SectionCard {
         Text("监护设置", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)

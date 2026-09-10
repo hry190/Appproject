@@ -4,9 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -22,8 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.ResponsiveDesignCanvas
+import com.jueqiao.jianghu.ui.screens.home.DecorButton
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -40,7 +37,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun YanwuchangScreen(
     onBack: () -> Unit = {},
-    onOpenWuhui: () -> Unit = {},
+    onOpenDahui: () -> Unit = {},
     onOpenYanwuchangVideo: () -> Unit = {},
 ) {
     // 拦截系统返回键 — 行为与点击左上角"返回"按钮一致(回退到大会页)
@@ -93,65 +90,28 @@ fun YanwuchangScreen(
                 contentScale = ContentScale.Fit,
             )
 
-            // 右侧按钮(未标题-1 50.png, X=269, Y=487, 45×95, 不透明度 70%)
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_un50),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 269.dp, y = 487.dp)
-                    .size(width = 45.dp, height = 95.dp),
-                contentScale = ContentScale.Fit,
-                alpha = 0.7f,
+            // 右侧大会入口：尺寸、流光、高光、按压缩放与首页 DecorButton 完全一致。
+            DecorButton(
+                imageRes = R.drawable.img_yanwuchang_un50,
+                text = "大会",
+                x = 264.dp,
+                y = 489.dp,
+                width = 55.dp,
+                height = 90.dp,
+                entranceAlpha = 0.7f,
+                onClick = onOpenDahui,
             )
 
-            // 右侧图标内"武会"竖排文字(X=278, Y=500, 19.28×49.57, 14px, #FFFFFF, 不透明度 100%)
-            Column(
-                modifier = Modifier
-                    .offset(x = 278.dp, y = 500.dp)
-                    .size(width = 19.28.dp, height = 49.57.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("武", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp))
-                Text("会", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp))
-            }
-            Box(
-                modifier = Modifier
-                    .offset(x = 267.dp, y = 486.dp)
-                    .size(width = 48.dp, height = 96.dp)
-                    .semantics { contentDescription = "进入武会" }
-                    .clickable(onClick = onOpenWuhui),
-            )
-
-            // 左侧按钮(未标题-1 50 (1).png, X=23, Y=492, 44×94, 不透明度 70%)
-            Image(
-                painter = painterResource(R.drawable.img_yanwuchang_un50_1),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 23.dp, y = 492.dp)
-                    .size(width = 44.dp, height = 94.dp),
-                contentScale = ContentScale.Fit,
-                alpha = 0.7f,
-            )
-
-            // 左侧图标内"作品"竖排文字(X=31, Y=506, 19.07×49.04, 14px, #FFFFFF, 不透明度 100%)
-            //   点击进入演武场视频首页
-            Column(
-                modifier = Modifier
-                    .offset(x = 31.dp, y = 506.dp)
-                    .size(width = 19.07.dp, height = 49.04.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("作", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp))
-                Text("品", color = Color.White, style = TextStyle(fontFamily = YaHei, fontSize = 14.sp))
-            }
-            Box(
-                modifier = Modifier
-                    .offset(x = 21.dp, y = 491.dp)
-                    .size(width = 48.dp, height = 96.dp)
-                    .semantics { contentDescription = "进入作品视频" }
-                    .clickable(onClick = onOpenYanwuchangVideo),
+            // 左侧作品入口：同样复用首页 DecorButton 的点击特效和点击区。
+            DecorButton(
+                imageRes = R.drawable.img_yanwuchang_un50_1,
+                text = "作品",
+                x = 18.dp,
+                y = 494.dp,
+                width = 55.dp,
+                height = 90.dp,
+                entranceAlpha = 0.7f,
+                onClick = onOpenYanwuchangVideo,
             )
 
             // 底部装饰气泡(与"大会"页面气泡同款填充色:

@@ -857,7 +857,7 @@ data class CreationToolCallDto(
     @SerializedName("prompt_summary") val promptSummary: String,
     @SerializedName("effect_summary") val effectSummary: String,
     @SerializedName("external_data_shared") val externalDataShared: Boolean,
-    @SerializedName("output_snapshot") val outputSnapshot: JsonObject?,
+    @SerializedName("output_snapshot") val outputSnapshot: Map<String, JsonElement>?,
     @SerializedName("executor_ref") val executorRef: String?,
     @SerializedName("row_version") val rowVersion: Int,
     @SerializedName("proposed_at") val proposedAt: String,
@@ -1228,6 +1228,7 @@ data class CreationDetailBundle(
     val provenance: ProvenanceManifestDto?,
     val sealCheck: CreationSealCheckDto?,
     val moderationCase: ModerationCaseDto?,
+    val moderationAppeals: List<ModerationAppealDto> = emptyList(),
 )
 
 data class PrivacySettingsDto(
