@@ -189,7 +189,7 @@ fun Gunlun5Screen(
                 style = TextStyle(fontFamily = YaHei, fontSize = 14.sp),
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(width = 127.dp, height = 80.dp)
+                    .size(width = 128.dp, height = 88.dp)
                     .graphicsLayer { translationY = -5f },
             )
         }

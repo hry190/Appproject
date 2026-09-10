@@ -102,19 +102,21 @@ fun PendingUnlockScreen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "前往解锁"按钮(未标题-2 23.png,X=222, Y=725, W=160, H=58)。
+        // "前往解锁"按钮(未标题-2 23.png,X=222, Y=725, W=160, H=58)— 点击跳滚轮1。
         // Y=725–783 在书框 Y=40–824 范围内;与熊猫(Y=560–890)在 X=222–243 范围 Y=725–783 重叠,
         // 写在熊猫之后 → 视觉上覆盖熊猫右下角。
+        // 图像 + 文本各自 clickable,两个目标区域都触发 onOpenGunlun1。
         Image(
             painter = painterResource(R.drawable.img_pendingunlock_button),
             contentDescription = "前往解锁按钮",
             modifier = Modifier
                 .offset(x = 222.dp, y = 725.dp)
-                .size(width = 160.dp, height = 58.dp),
+                .size(width = 160.dp, height = 58.dp)
+                .clickable(onClick = onOpenGunlun1),
             contentScale = ContentScale.FillBounds,
         )
 
-        // "前往解锁"文本(字号 16,色 #605718,X=265, Y=738, W=81, H=21)。
+        // "前往解锁"文本(字号 16,色 #605718,X=265, Y=738, W=81, H=21)— 点击也跳滚轮1。
         // Y=738–759 在按钮(Y=725–783)Y 范围内 → 视觉上叠在按钮上;
         // X=265–346 在按钮(X=222–382)X 范围内 → 居中。
         Text(
@@ -124,7 +126,8 @@ fun PendingUnlockScreen(
             fontFamily = YaHei,
             modifier = Modifier
                 .offset(x = 265.dp, y = 738.dp)
-                .size(width = 81.dp, height = 21.dp),
+                .size(width = 81.dp, height = 21.dp)
+                .clickable(onClick = onOpenGunlun1),
         )
     }
 }

@@ -30,6 +30,7 @@ object Routes {
     const val Houshan  = "houshan"
     const val Learning2 = "learning2"
     const val Learning3 = "learning3"
+    const val Learning4 = "learning4"
     const val Gunlun9  = "gunlun9"
     const val Gunlun10 = "gunlun10"
     const val Gunlun11 = "gunlun11"

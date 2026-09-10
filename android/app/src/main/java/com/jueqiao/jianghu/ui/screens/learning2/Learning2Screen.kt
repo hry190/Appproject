@@ -45,6 +45,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Learning2Screen(
     onBack: () -> Unit = {},
     onOpenLearning3: () -> Unit = {},
+    onOpenLearning4: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -147,12 +148,13 @@ fun Learning2Screen(
             // 同类问题;建议抽 private fun Learning2Label(drawable, text, labelY, textY)。
             // 当前保留重复以免过度抽象,等出现第 3 组标签再统一抽。
 
-            // 底部"查看秘籍"标签(复用 Group 196.png,X 轴居中, Y=557, W=267, H=42)。
+            // 底部"查看秘籍"标签(复用 Group 196.png,X 轴居中, Y=557, W=267, H=42)— 点击跳学习4。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 557.dp)
-                    .size(width = 267.dp, height = 42.dp),
+                    .size(width = 267.dp, height = 42.dp)
+                    .clickable(onClick = onOpenLearning4),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_learning_group_196),
@@ -162,7 +164,7 @@ fun Learning2Screen(
                 )
             }
 
-            // 标签内文本"查看秘籍"(字号 16,白色,X 轴居中, Y=567, W=67, H=21)。
+            // 标签内文本"查看秘籍"(字号 16,白色,X 轴居中, Y=567, W=67, H=21)— 点击也跳学习4。
             Text(
                 text = "查看秘籍",
                 color = Color.White,
@@ -172,7 +174,8 @@ fun Learning2Screen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 567.dp)
-                    .size(width = 67.dp, height = 21.dp),
+                    .size(width = 67.dp, height = 21.dp)
+                    .clickable(onClick = onOpenLearning4),
             )
         }
     }

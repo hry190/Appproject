@@ -41,6 +41,7 @@ class RoutesTest {
         assertEquals("houshan", Routes.Houshan)
         assertEquals("learning2", Routes.Learning2)
         assertEquals("learning3", Routes.Learning3)
+        assertEquals("learning4", Routes.Learning4)
         assertEquals("unfinished", Routes.Unfinished)
         assertEquals("pending-unlock", Routes.PendingUnlock)
         assertEquals("gunlun12", Routes.Gunlun12)
