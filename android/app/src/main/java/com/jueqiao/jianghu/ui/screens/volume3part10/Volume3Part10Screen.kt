@@ -39,6 +39,7 @@ import com.jueqiao.jianghu.R
  *   - image 339 实测 710×810(近正方形,比率 0.877);用户给 W=356 H=300 会拉宽 35%,与原图严重不符
  *   - 用户 2026-09-11 在 AskUserQuestion 后改为 W=356 H=356(正方形限高保安全),渲染比 1.000 与原图差 14%,可接受
  *   - Y=471+356=827,在书框 Y=88-872 范围内安全
+ *   - 图2 资源 2026-09-11 由用户替换:从原 712×880(766KB)→ 新版 1065×1215(1.71MB,清晰度↑2.2×),宽高比保持 0.877,坐标不变
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -119,7 +120,7 @@ fun Volume3Part10Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 471.dp)
+                    .offset(x = 18.dp, y = 421.dp)
                     .size(width = 356.dp, height = 356.dp),
             ) {
                 Image(
