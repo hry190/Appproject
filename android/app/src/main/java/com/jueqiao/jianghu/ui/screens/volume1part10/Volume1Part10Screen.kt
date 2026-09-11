@@ -30,7 +30,7 @@ import com.jueqiao.jianghu.R
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
  *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— **复用第一卷-2 书框素材**(与第一卷 / 第一卷-3 / 第一卷-4 / 第一卷-7 / 第一卷-9 的 Group 255 不同)
- *   - 标题文本"以来数据与经验"(字号 24,bold,黑色,X=104, Y=67, W=170, H=33)— 6 字 24sp 接近 W=170 极限
+ *   - 标题文本"依赖数据与经验"(字号 24,bold,黑色,X=104, Y=67, W=170, H=33)— 6 字 24sp 接近 W=170 极限
  *   - 图1(image 253.png,X=20, Y=135, W=359, H=292)— 上半区域
  *   - 图2(up.png,X=20, Y=478, W=356, H=327)— 下半区域(贴近书框底沿)
  *
@@ -81,9 +81,9 @@ fun Volume1Part10Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"以来数据与经验"(字号 24,bold,黑色,X=104, Y=67, W=170, H=33)— 6 字 24sp 接近 W=170 极限,点击跳第一卷-11。
+            // 标题"依赖数据与经验"(字号 24,bold,黑色,X=104, Y=67, W=170, H=33)— 6 字 24sp 接近 W=170 极限,点击跳第一卷-11。
             Text(
-                text = "以来数据与经验",
+                text = "依赖数据与经验",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
