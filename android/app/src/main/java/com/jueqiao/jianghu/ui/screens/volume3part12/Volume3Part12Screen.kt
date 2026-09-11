@@ -121,8 +121,8 @@ fun Volume3Part12Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 471.dp)
-                    .size(width = 371.dp, height = 340.dp),
+                    .offset(x = 18.dp, y = 481.dp)
+                    .size(width = 355.dp, height = 320.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume3part12_image_342),
