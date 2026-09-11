@@ -28,6 +28,7 @@
 | [SESSION-LOG-2026-09-10.md](./SESSION-LOG-2026-09-10.md) | 2026-09-10 学习/滚轮 6 新屏 + 修 dead button + v2 审计 | 2026-09-10 |
 | [CODE-AUDIT-2026-09-09.md](./CODE-AUDIT-2026-09-09.md) | v1 代码审计 — 103 个 finding + 8 个优先行动 | 2026-09-09 |
 | [CODE-AUDIT-2026-09-10.md](./CODE-AUDIT-2026-09-10.md) | v2 代码审计 — 68 个 finding(含 NEW/PERSISTED 标注) | 2026-09-10 |
+| [CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) | v3 代码审计 — Vol-2 doc 批(0 runtime bug,9 HIGH pre-existing)| 2026-09-11 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 
 **项目根目录的文档**(不属于 docs/ 但常参考):

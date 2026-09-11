@@ -29,10 +29,10 @@ import com.jueqiao.jianghu.R
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与 Vol-2-5/6 同款;交替模式:Vol-2-1/3/4/5/6/7 都用 255,仅 Vol-2-2 用 256)
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与 Vol-2-5/6 同款;交替模式:Vol-2-2/8/11/14 用 256,其他 Vol-2 用 255)
  *   - 标题文本"明令还是自学"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— **新切换**(从"输入-处理-输出"系列到"明令还是自学"系列)
- *   - 图1(image 291.png,X=28, Y=155, W=352, H=203)— 上部
- *   - 图2(image 292.png,X=24, Y=381, W=356, H=214)— 中部
+ *   - 图1(image 291.png,X=18, Y=135, W=352, H=283)— 上部
+ *   - 图2(image 292.png,X=28, Y=481, W=340, H=254)— 中部
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -93,7 +93,7 @@ fun Volume2Part7Screen(
                     .clickable(onClick = onOpenVolume2Part8),
             )
 
-            // 图1(image 291.png,X=28, Y=155, W=352, H=203)— 在书框之上、上部。
+            // 图1(image 291.png,X=18, Y=135, W=352, H=283)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -108,8 +108,8 @@ fun Volume2Part7Screen(
                 )
             }
 
-            // 图2(image 289.png,X=24, Y=381, W=356, H=214)— 在书框之上、中部。
-            // Y=381+214=595,在书框 Y=88-872 范围内安全。
+            // 图2(image 292.png,X=28, Y=481, W=340, H=254)— 在书框之上、中部。
+            // Y=481+254=735,在书框 Y=88-872 范围内安全。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

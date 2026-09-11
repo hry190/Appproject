@@ -29,9 +29,9 @@ import com.jueqiao.jianghu.R
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(Vol-2 系列交替模式:Vol-2-1/3/4/5/6/7/9 用 255,Vol-2-2/8 用 256)
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(交替模式:Vol-2-2/8/11/14 用 256,其他 Vol-2 用 255)
  *   - 标题文本"明令还是自学"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-2-7/8 同款
- *   - 图1(image 293.png,X=28, Y=155, W=352, H=203)— 上部(只 1 张图)
+ *   - 图1(image 293.png,X=28, Y=155, W=332, H=237)— 上部(只 1 张图)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -91,7 +91,7 @@ fun Volume2Part9Screen(
                     .clickable(onClick = onOpenVolume2Part10),
             )
 
-            // 图1(image 293.png,X=28, Y=155, W=352, H=203)— 在书框之上、上部。
+            // 图1(image 293.png,X=28, Y=155, W=332, H=237)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
