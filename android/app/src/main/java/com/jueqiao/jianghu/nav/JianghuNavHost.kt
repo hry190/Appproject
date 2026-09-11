@@ -128,6 +128,9 @@ import com.jueqiao.jianghu.ui.screens.volume2part6.Volume2Part6Screen
 import com.jueqiao.jianghu.ui.screens.volume2part7.Volume2Part7Screen
 import com.jueqiao.jianghu.ui.screens.volume2part8.Volume2Part8Screen
 import com.jueqiao.jianghu.ui.screens.volume2part9.Volume2Part9Screen
+import com.jueqiao.jianghu.ui.screens.volume2part10.Volume2Part10Screen
+import com.jueqiao.jianghu.ui.screens.volume2part11.Volume2Part11Screen
+import com.jueqiao.jianghu.ui.screens.volume2part12.Volume2Part12Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
@@ -657,7 +660,25 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume2Part9) {
-            Volume2Part9Screen(onBack = { navController.popBackStack() })
+            Volume2Part9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume2Part10 = { navController.navigate(Routes.Volume2Part10) },
+            )
+        }
+        composable(Routes.Volume2Part10) {
+            Volume2Part10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume2Part11 = { navController.navigate(Routes.Volume2Part11) },
+            )
+        }
+        composable(Routes.Volume2Part11) {
+            Volume2Part11Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume2Part12 = { navController.navigate(Routes.Volume2Part12) },
+            )
+        }
+        composable(Routes.Volume2Part12) {
+            Volume2Part12Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun7) {
             Gunlun7Screen(
