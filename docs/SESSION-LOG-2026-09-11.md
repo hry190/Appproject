@@ -161,7 +161,10 @@
   - 冲突如 dry-run 预测,精确命中 1 文件 3 处标记(98/128/152)
   - **解法**:保留 main 的 §14(上次合并记录),zzz 侧两节顺延为 §15(v3 审计)/ §16(注释修复)—— 两侧都是历史叙事,都该留
   - 验证:`grep -nE '^(<<<<<<<|=======|>>>>>>>)'` 空;`find . -name '*.orig'` 空;`git status` 无 `UU`
-- **状态**:冲突已解决待编译,见下方"§17 收尾"
+- **合并结果**:编译 + 测试 `BUILD SUCCESSFUL in 4s`;merge commit `3aac12d`;`git push` → `c9b89e2..3aac12d main -> main` ✅
+- **收尾**:`git log main..zzz` 为空(zzz 已完全并入);工作区 clean
+- **方法沉淀**:本次首次在**合并前**用 `git merge-tree --write-tree` dry-run 定位冲突,取代历次"合并后才发现"——建议写入 [[merge-workflow-sop]] Step 2 作为标准动作
+- **未做**:H5 duplicate `composable(Routes.Learning3)`(代码改动,独立 commit);H6 scaffold 抽取;L1-L9
 
 
 
