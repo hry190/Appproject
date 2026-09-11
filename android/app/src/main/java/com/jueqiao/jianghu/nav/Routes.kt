@@ -74,6 +74,8 @@ object Routes {
     const val Volume3Part7 = "volume3-7"
     const val Volume3Part8 = "volume3-8"
     const val Volume3Part9 = "volume3-9"
+    const val Volume3Part10 = "volume3-10"
+    const val Volume3Part11 = "volume3-11"
     const val Gunlun14 = "gunlun14"
     const val Gunlun15 = "gunlun15"
     const val Luggage   = "luggage"

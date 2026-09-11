@@ -84,6 +84,8 @@ class RoutesTest {
         assertEquals("volume3-7", Routes.Volume3Part7)
         assertEquals("volume3-8", Routes.Volume3Part8)
         assertEquals("volume3-9", Routes.Volume3Part9)
+        assertEquals("volume3-10", Routes.Volume3Part10)
+        assertEquals("volume3-11", Routes.Volume3Part11)
         assertEquals("gunlun14", Routes.Gunlun14)
         assertEquals("gunlun15", Routes.Gunlun15)
     }
