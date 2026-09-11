@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume3part3
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume3Part3Screen(
     onBack: () -> Unit = {},
+    onOpenVolume3Part4: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -83,8 +85,7 @@ fun Volume3Part3Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-3-1/3-2 同款。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-3-4 创建时按历次约定回填 onOpenVolume3Part4)。
+            // 标题"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-3-1/3-2 同款,点击跳第三卷-4。
             Text(
                 text = "万物形成符",
                 color = Color.Black,
@@ -92,7 +93,8 @@ fun Volume3Part3Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume3Part4),
             )
 
             // 图1(image 323.png,X=18, Y=260, W=352, H=352)— 在书框之上、居中。
