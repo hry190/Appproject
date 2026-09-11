@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume1part4
+package com.jueqiao.jianghu.ui.screens.volume2part4
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,25 +25,25 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第一卷-4 页 — 第一卷-3 → 点击"规则与学习的区别"标题跳转目标。
+ * 第二卷-4 页 — 第二卷-3 → 点击"输入-处理-输出"标题跳转目标。
  *
  * 布局(z-order 由下到上):
- *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与第一卷-2 的 Group 256 不同)
- *   - 图1(image 237.png,X=19, Y=131, W=356, H=329)— 上半区域
- *   - 图2(image 236.png,X=19, Y=492, W=356, H=335)— 下半区域
- *   - 标题文本"感知-推理-行动闭环"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 顶层
+ *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(目前 Vol-2-1/3/4 都用 255,Vol-2-2 是唯一用 Group 256 的)
+ *   - 标题文本"输入-处理-输出"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— **新标题**(从"大题拆小招"系列切换)— 与第一卷-1 标题位置样式相同
+ *   - 图1(image 279.png,X=24, Y=135, W=339, H=286)— 上半区域
+ *   - 图2(image 282.png,X=14, Y=452, W=404, H=338)— 下半区域
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 237.png(已复制为 res/drawable-nodpi/img_volume1part4_image_237.png)
- *   - 图2:D:\图\image 236.png(已复制为 res/drawable-nodpi/img_volume1part4_image_236.png)
+ *   - 图1:D:\图\image 279.png(已复制为 res/drawable-nodpi/img_volume2part4_image_279.png)
+ *   - 图2:D:\图\image 282.png(已复制为 res/drawable-nodpi/img_volume2part4_image_282.png)
  */
 @Composable
-fun Volume1Part4Screen(
+fun Volume2Part4Screen(
     onBack: () -> Unit = {},
-    onOpenVolume1Part5: () -> Unit = {},
+    onOpenVolume2Part5: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -52,7 +52,7 @@ fun Volume1Part4Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(image 129.png,与第一卷同源)
+        // 全屏背景图(image 129.png,与第一卷 / 第一卷-2 同源)
         Image(
             painter = painterResource(R.drawable.img_volume1_bg),
             contentDescription = null,
@@ -60,7 +60,7 @@ fun Volume1Part4Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷素材**。
+        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷素材。
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -81,47 +81,48 @@ fun Volume1Part4Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 图1(image 237.png,X=19, Y=131, W=356, H=329)— 在书框之上、上半区域。
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 19.dp, y = 131.dp)
-                    .size(width = 356.dp, height = 329.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_volume1part4_image_237),
-                    contentDescription = "图1",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-
-            // 图2(image 236.png,X=19, Y=492, W=356, H=335)— 在书框之上、下半区域。
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 19.dp, y = 492.dp)
-                    .size(width = 356.dp, height = 335.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_volume1part4_image_236),
-                    contentDescription = "图2",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-
-            // 标题"感知-推理-行动闭环"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与第一卷同位置同样式,点击跳第一卷-5。
+            // 标题"输入-处理-输出"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与第一卷-1 标题样式相同(从"大题拆小招"系列切换)
             Text(
-                text = "感知-推理-行动闭环",
+                text = "输入-处理-输出",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 213.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume1Part5),
+                    .clickable(onClick = onOpenVolume2Part5),
             )
+
+            // 图1(image 279.png,X=20, Y=135, W=359, H=320)— 在书框之上、上半区域。
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 24.dp, y = 135.dp)
+                    .size(width = 339.dp, height = 286.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_volume2part4_image_279),
+                    contentDescription = "图1",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
+
+            // 图2(image 282.png,X=20, Y=492, W=403, H=353)— 在书框之上、下半区域。
+            // Y=492+353=845,在书框 Y=88-872 范围内安全(底部留 27dp 余量)。
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 14.dp, y = 452.dp)
+                    .size(width = 354.dp, height = 338.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_volume2part4_image_282),
+                    contentDescription = "图2",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
         }
     }
 }
