@@ -96,7 +96,7 @@ fun Volume3Part4Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp)
+                    .size(width = 409.dp, height = 32.dp)
                     .clickable(onClick = onOpenVolume3Part5),
             )
 
@@ -104,7 +104,7 @@ fun Volume3Part4Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 135.dp)
+                    .offset(x = 18.dp, y = 125.dp)
                     .size(width = 352.dp, height = 229.dp),
             ) {
                 Image(
@@ -120,7 +120,7 @@ fun Volume3Part4Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 351.dp)
+                    .offset(x = 18.dp, y = 359.dp)
                     .size(width = 356.dp, height = 214.dp),
             ) {
                 Image(
@@ -137,7 +137,7 @@ fun Volume3Part4Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 576.dp)
-                    .size(width = 350.dp, height = 296.dp),
+                    .size(width = 350.dp, height = 242.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume3part4_image_326),
