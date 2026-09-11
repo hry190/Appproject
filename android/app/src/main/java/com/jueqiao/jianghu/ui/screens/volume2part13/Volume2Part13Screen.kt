@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume2part10
+package com.jueqiao.jianghu.ui.screens.volume2part13
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,25 +25,25 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第二卷-10 页 — 第二卷-9 → 点击"算法特点"标题跳转目标。
+ * 第二卷-13 页 — 第二卷-12 → 点击"以尺量标"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(Vol-2 系列交替模式:Vol-2-1/3/4/5/6/7/9/10 用 255,Vol-2-2/8 用 256)
- *   - 标题文本"算法特点"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— **新切换**(从"明令还是自学"系列到"算法特点"系列)
- *   - 图1(image 294.png,X=18, Y=135, W=344, H=319)— 上部
- *   - 图2(image 295.png,X=18, Y=490, W=356, H=314)— 下半区域
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与 Vol-2-9/10/12 同款;交替模式:Vol-2-2/8/11 用 256,其他 Vol-2 用 255)
+ *   - 标题文本"以尺量标"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— **新切换**(从"算法特点"系列到"以尺量标"系列)
+ *   - 图1(image 301.png,X=18, Y=135, W=352, H=313)— 上部
+ *   - 图2(image 302.png,X=18, Y=481, W=356, H=314)— 下半区域
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 294.png(已复制为 res/drawable-nodpi/img_volume2part10_image_294.png)
- *   - 图2:D:\图\image 295.png(已复制为 res/drawable-nodpi/img_volume2part10_image_295.png)
+ *   - 图1:D:\图\image 301.png(已复制为 res/drawable-nodpi/img_volume2part13_image_301.png)
+ *   - 图2:D:\图\image 302.png(已复制为 res/drawable-nodpi/img_volume2part13_image_302.png)
  */
 @Composable
-fun Volume2Part10Screen(
+fun Volume2Part13Screen(
     onBack: () -> Unit = {},
-    onOpenVolume2Part11: () -> Unit = {},
+    onOpenVolume2Part14: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -81,42 +81,42 @@ fun Volume2Part10Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"算法特点"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 第二卷第四种标题系列
+            // 标题"以尺量标"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 第二卷第五种标题系列
             Text(
-                text = "算法特点",
+                text = "以尺量标",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 213.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume2Part11),
+                    .clickable(onClick = onOpenVolume2Part14),
             )
 
-            // 图1(image 294.png,X=18, Y=135, W=344, H=319)— 上部
+            // 图1(image 301.png,X=18, Y=135, W=352, H=313)— 上部
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 344.dp, height = 319.dp),
+                    .size(width = 352.dp, height = 313.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume2part10_image_294),
+                    painter = painterResource(R.drawable.img_volume2part13_image_301),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 295.png,X=18, Y=490, W=356, H=314)— 下半区域
+            // 图2(image 302.png,X=18, Y=481, W=356, H=314)— 下半区域
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 490.dp)
+                    .offset(x = 18.dp, y = 481.dp)
                     .size(width = 356.dp, height = 314.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume2part10_image_295),
+                    painter = painterResource(R.drawable.img_volume2part13_image_302),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
