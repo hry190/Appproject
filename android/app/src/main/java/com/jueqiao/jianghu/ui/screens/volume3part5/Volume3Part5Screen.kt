@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume3part5
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +52,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume3Part5Screen(
     onBack: () -> Unit = {},
+    onOpenVolume3Part6: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -88,8 +90,7 @@ fun Volume3Part5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-3-6 创建时按历次约定回填 onOpenVolume3Part6)。
+            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款,点击跳第三卷-6。
             Text(
                 text = "特征与信息是否有关",
                 color = Color.Black,
@@ -97,7 +98,8 @@ fun Volume3Part5Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 302.dp, height = 32.dp),
+                    .size(width = 302.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume3Part6),
             )
 
             // 图1(image 327.png,X=18, Y=135, W=351, H=208)— 在书框之上、上部。
