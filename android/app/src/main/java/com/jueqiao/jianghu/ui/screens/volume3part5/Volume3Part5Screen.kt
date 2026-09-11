@@ -95,7 +95,7 @@ fun Volume3Part5Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp),
+                    .size(width = 302.dp, height = 32.dp),
             )
 
             // 图1(image 327.png,X=18, Y=135, W=352, H=229)— 在书框之上、上部。
@@ -119,7 +119,7 @@ fun Volume3Part5Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 351.dp)
-                    .size(width = 356.dp, height = 214.dp),
+                    .size(width = 355.dp, height = 220.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume3part5_image_329),
@@ -135,7 +135,7 @@ fun Volume3Part5Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 576.dp)
-                    .size(width = 350.dp, height = 296.dp),
+                    .size(width = 357.dp, height = 209.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume3part5_image_328),
