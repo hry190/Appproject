@@ -166,6 +166,46 @@
 - **方法沉淀**:本次首次在**合并前**用 `git merge-tree --write-tree` dry-run 定位冲突,取代历次"合并后才发现"——建议写入 [[merge-workflow-sop]] Step 2 作为标准动作
 - **未做**:H5 duplicate `composable(Routes.Learning3)`(代码改动,独立 commit);H6 scaffold 抽取;L1-L9
 
+### 18. 第三卷-2 创建 + zzz ↔ main 同步
+- **用户**:"创建'第三卷-2'页面,点击'第三卷-1'时可以跳转,复制'第一卷-2'页面的背景和标题和书框这些素材...图1 image 320.png X28Y155W352H203,图2 image 321.png X24Y381W356H214,标题文本改成'万物形成符'"
+- **侦察发现(两条关键)**:
+  1. **Vol-3-1 已存在**,且标题已经是"万物形成符" —— Vol-3-2 是同卷续页,不是新标题系列
+  2. **用户给的坐标正是 v3 审计 H2 认定的"注释抄错模板"**(`X=28 Y=155 W=352 H=203` / `X=24 Y=381 W=356 H=214`)。Vol-3-1 的 KDoc 写着这组数,但它的**实际代码**是 `18/135/352/327` 和 `18/361/356/214`
+     - 顺带推翻审计结论:CODE-AUDIT-2026-09-11 曾判定"Vol-3-1 是干净的(KDoc 坐标与代码一致)"——**该结论是错的**,Vol-3-1 同样漂移
+- **取证(用图片真实像素定案)**:读 PNG 头部拿原始尺寸算宽高比
+
+  | 图片 | 像素 | 真实比 | 拟渲染 | 渲染比 | 结论 |
+  |---|---|---|---|---|---|
+  | image 316(Vol-3-1 图1)| 698×612 | 1.141 | 352×327 | 1.076 | 轻微畸变 |
+  | **image 320(本次图1)** | **696×612** | **1.137** | 352×203 | 1.734 | **纵向压扁至 66%** ⚠ |
+  | image 319(Vol-3-1 图2)| 712×706 | 1.008 | 356×214 | 1.663 | 拉伸 |
+  | image 321(本次图2)| 726×641 | 1.133 | 356×214 | 1.663 | 拉伸更重 |
+
+  - image 320 与 image 316 **近乎孪生**(696×612 vs 698×612)→ 图1 H=203 几乎必错
+- **AskUserQuestion 两问 → 用户决策**:
+  - 图坐标:**对齐 Vol-3-1 实调值** → 图1 `18/135/352/327`,图2 `18/361/356/214`
+  - 书框:**Group 256**(按"复制第一卷-2"指令)—— 符合既有模式 Vol-2-1(255)→ Vol-2-2(256),故 Vol-3-1(255)→ Vol-3-2(256) 同样交替
+- **实现**(6 文件 + 2 PNG):
+  - 新建 [Volume3Part2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume3part2/Volume3Part2Screen.kt)(4 层 z-order)
+  - 复制 image 320/321 → `res/drawable-nodpi/img_volume3part2_image_{320,321}.png`
+  - [Routes.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/Routes.kt) 加 `Volume3Part2 = "volume3-2"` + [RoutesTest.kt](android/app/src/test/java/com/jueqiao/jianghu/nav/RoutesTest.kt) 断言
+  - [Volume3Part1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume3part1/Volume3Part1Screen.kt) 加 `onOpenVolume3Part2` + 标题 `.clickable`;**顺带修它自己的 KDoc + 2 处行内注释**(按实际代码)
+  - [JianghuNavHost.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt) Vol-3-1 传入跳转 + 新增 Vol-3-2 composable
+- **两处自主决定(已向用户说明)**:
+  1. Vol-3-2 标题**暂不接 clickable** —— 按历次约定,第 N 屏的后继 link 等第 N+1 屏创建时回填,避免造 dead button(审计 L8 那类)
+  2. 标题宽度取 **213**(Vol-3-1 对同一串五字文本的值),未取 Vol-1-2 的 192(那是七字文本"规则与学习的区别"的值)
+- **编译**:`compileDebugKotlin testDebugUnitTest` **BUILD SUCCESSFUL in 52s**(真执行,非 UP-TO-DATE)
+- **提交**:由**用户自行** commit `8d3566c`("Refactor code structure...")+ push origin/main ✅
+  - 注:用户沿用了仓库里的通用 commit message,未走我提议的 message
+- **zzz ↔ main 同步**:
+  - 预检:`main..zzz` 为空(zzz 无 main 没有的东西)→ `reset --hard` 零丢失
+  - 预检:`git merge-base --is-ancestor zzz main` 通过 → push 为 **fast-forward,无需 --force**
+  - `git checkout zzz && git reset --hard main && git push origin zzz` → `a67cc75..8d3566c zzz -> zzz` ✅
+  - 核验:main / origin/main / zzz / origin/zzz **四 ref 全部 = `8d3566c`**,双向 diff 均 0 commits
+- **教训沉淀**:
+  - "复制 X 页素材"不等于"照抄 X 的数值" —— 同卷续页应以**同卷兄弟屏**为准(Vol-3-2 该学 Vol-3-1,不是 Vol-1-2)
+  - 用户给的设计稿坐标**可能本身就是漂移值**,动手前用素材真实像素校验宽高比,是最便宜的决定性证据
+
 
 
 
