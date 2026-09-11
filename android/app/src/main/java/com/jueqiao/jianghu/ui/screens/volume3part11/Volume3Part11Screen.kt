@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume3part11
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,12 +43,13 @@ import com.jueqiao.jianghu.R
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 338.png(已复制为 res/drawable-nodpi/img_volume3part11_image_338.png)
+ *   - 图1:D:\图\image 340.png(已复制为 res/drawable-nodpi/img_volume3part11_image_340.png;2026-09-11 由用户从原 image 338.png 替换)
  *   - 图2:D:\图\image 380.png(已复制为 res/drawable-nodpi/img_volume3part11_image_380.png)
  */
 @Composable
 fun Volume3Part11Screen(
     onBack: () -> Unit = {},
+    onOpenVolume3Part12: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -85,8 +87,7 @@ fun Volume3Part11Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"关系织成网"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-3-9/3-10 同款。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-3-12 创建时按历次约定回填 onOpenVolume3Part12)。
+            // 标题"关系织成网"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-3-9/3-10 同款,点击跳第三卷-12。
             Text(
                 text = "关系织成网",
                 color = Color.Black,
@@ -94,7 +95,8 @@ fun Volume3Part11Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp),
+                    .size(width = 192.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume3Part12),
             )
 
             // 图1(image 338.png,X=18, Y=135, W=355, H=249)— 在书框之上、上部。
@@ -105,7 +107,7 @@ fun Volume3Part11Screen(
                     .size(width = 355.dp, height = 249.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume3part11_image_338),
+                    painter = painterResource(R.drawable.img_volume3part11_image_340),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
@@ -117,8 +119,8 @@ fun Volume3Part11Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 471.dp)
-                    .size(width = 356.dp, height = 288.dp),
+                    .offset(x = 18.dp, y = 411.dp)
+                    .size(width = 356.dp, height = 388.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume3part11_image_380),
