@@ -125,6 +125,44 @@
 - 风险评估准确:本次仅注释改动,gradle 4s UP-TO-DATE 验证判断
 - merge-workflow-sop 第 2 次实战通过(首次:2026-09-10 feature/creation-contest-demo,本次:Vol-2 doc 批改)
 
+### 15. v3 代码审计(Vol-2 doc 批)
+- **用户**:"审查我的代码"
+- **我**:调 code-review skill,8 个评审角度并行(line-by-line / removed-behavior / cross-file / efficiency+altitude / reuse+simplification / language-pitfall / wrapper-proxy / conventions)+ 2 个 verify pass
+- **范围**:刚合并的 `b04d25f`(zzz → main,2 commits:8e5cded doc + ac6a168 refactor)
+- **核心结论**:
+  - **Vol-2 doc 批本身 0 runtime bug** — compileDebugKotlin + testDebugUnitTest BUILD SUCCESSFUL
+  - **暴露 9 项 pre-existing HIGH**(本次审计范围内):Vol-2-7 错图号、Vol-2-7/8/9 stale KDoc/行内注释、JianghuNavHost.kt duplicate `composable(Routes.Learning3)`、9-screen copy-paste 无共享 scaffold、Vol-2-14 book-frame 规则冲突、Vol-2-8 跨屏 drawable 引用、Vol-2-15 图2 突破布局网格
+- **新建独立文档**: [docs/CODE-AUDIT-2026-09-11.md](docs/CODE-AUDIT-2026-09-11.md) — v3 审计快照,24 个 finding(9 HIGH / 6 MEDIUM / 9 LOW)+ Top 8 优先行动 + 验证缺口
+- **同步更新**: [docs/README.md](docs/README.md) 当前文件清单新增 CODE-AUDIT-2026-09-11.md 一行
+- **未 commit/push**:用户后续指示再执行(本次纯文档创建)
+
+### 16. 注释修复(v3 audit HIGH/MEDIUM 中除 H5/H6/H7/H8/H9/L1-L9 外的可修项)
+- **用户**:确认"我测试过了没有问题"+ "修复注释"
+- **范围**:v3 audit 中优先级 2-3 + 5-6 项的纯注释/EOF 修复(用户确认 H7 Vol-2-14 book-frame 用 256 是设计意图)
+- **修改**:
+  - **Vol-2-7** 4 处: KDoc L32 (交替模式)+ L34 (图1 X/Y/H)+ L35 (图2 X/Y/W/H)+ inline L96 (图1 X/Y/H)+ inline L111-112 (图2 错图号 289→292 + 4 坐标 + 安全算术 595→735)
+  - **Vol-2-8** 4 处: KDoc L32 (交替模式)+ L34 (图1 X/Y/H)+ L35 (图2 Y/H)+ inline L96 + L111
+  - **Vol-2-9** 3 处: KDoc L32 + L34 (图1 W/H)+ inline L94
+  - **Vol-2-10/11/12/13** 各 1 处 KDoc L32 (交替模式统一为 `Vol-2-2/8/11/14 用 256,其他 Vol-2 用 255`)
+  - **Vol-2-13/14/15** EOF 加 trailing newline × 3
+- **未修**: H5 NavHost duplicate `composable(Routes.Learning3)`(代码改动,需单独 PR);H6 scaffold 抽取(大重构);H7 Vol-2-14 256(用户确认设计);H8 Vol-2-8 跨屏 drawable(H7 已确认设计);H9 Vol-2-15 网格(用户测试 OK);L1-L9 优化项(后续)
+- **编译**: `compileDebugKotlin testDebugUnitTest` BUILD SUCCESSFUL in 5s(纯注释 UP-TO-DATE)
+- **未 commit/push**: zzz 分支上,等用户指示
+
+### 17. zzz → main 第 3 次合并(v3 audit + 注释修复批)
+- **用户**:"推送到main" → 我方出 SOP Steps 1-3 → 用户"合并"
+- **侦察**:main `c9b89e2` / zzz `a67cc75`(两侧与 origin 同步);merge-base `8e5cded`;zzz 领先 3 commits;main 领先 2 commits → **非 fast-forward,需真 merge commit**
+- **评估(关键改进:先做 dry-run)**:`git merge-tree --write-tree --name-only main zzz`(git 2.55,不碰工作区)预演出 **1 个 content 冲突** —— `docs/SESSION-LOG-2026-09-11.md`。根因:两侧在**同一锚点**(L96 后)各自插入 `### 14.`,add/add 必然冲突
+  - 教训对照:2026-09-10 那次是"auto-merge 静默窜改",这次用 dry-run 把冲突**合并前**就定性了,不再靠"auto-merge went well"下结论
+  - 其余 12 文件为 zzz 单侧独占(main 未触碰)→ 干净 auto-merge
+- **建议**:立即合并(修冲突后);H5 重复 `composable(Routes.Learning3)` 属代码改动,建议**不混入**本批,留独立 commit
+- **合并**:
+  - `git checkout main` → `git merge zzz --no-commit --no-ff --strategy=recursive`(显式 strategy 绕开 Windows bash 把 `--no-ff` 误解析为 `-X theirs` 的 bug)
+  - 冲突如 dry-run 预测,精确命中 1 文件 3 处标记(98/128/152)
+  - **解法**:保留 main 的 §14(上次合并记录),zzz 侧两节顺延为 §15(v3 审计)/ §16(注释修复)—— 两侧都是历史叙事,都该留
+  - 验证:`grep -nE '^(<<<<<<<|=======|>>>>>>>)'` 空;`find . -name '*.orig'` 空;`git status` 无 `UU`
+- **状态**:冲突已解决待编译,见下方"§17 收尾"
+
 
 
 
