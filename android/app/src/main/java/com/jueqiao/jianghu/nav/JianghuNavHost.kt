@@ -139,6 +139,10 @@ import com.jueqiao.jianghu.ui.screens.volume3part11.Volume3Part11Screen
 import com.jueqiao.jianghu.ui.screens.volume3part12.Volume3Part12Screen
 import com.jueqiao.jianghu.ui.screens.volume3part13.Volume3Part13Screen
 import com.jueqiao.jianghu.ui.screens.volume3part14.Volume3Part14Screen
+import com.jueqiao.jianghu.ui.screens.volume4part1.Volume4Part1Screen
+import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
+import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
+import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
 import com.jueqiao.jianghu.ui.screens.volume3part1.Volume3Part1Screen
 import com.jueqiao.jianghu.ui.screens.volume3part2.Volume3Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume3part3.Volume3Part3Screen
@@ -813,7 +817,29 @@ fun JianghuNavHost(
             Gunlun8Screen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) },
+                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
             )
+        }
+        composable(Routes.Volume4Part1) {
+            Volume4Part1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part2 = { navController.navigate(Routes.Volume4Part2) },
+            )
+        }
+        composable(Routes.Volume4Part2) {
+            Volume4Part2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part3 = { navController.navigate(Routes.Volume4Part3) },
+            )
+        }
+        composable(Routes.Volume4Part3) {
+            Volume4Part3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part4 = { navController.navigate(Routes.Volume4Part4) },
+            )
+        }
+        composable(Routes.Volume4Part4) {
+            Volume4Part4Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun9) {
             Gunlun9Screen(
