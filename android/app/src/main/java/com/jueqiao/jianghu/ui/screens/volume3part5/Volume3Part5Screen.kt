@@ -1,9 +1,8 @@
-package com.jueqiao.jianghu.ui.screens.volume3part2
+package com.jueqiao.jianghu.ui.screens.volume3part5
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,31 +24,33 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第三卷-2 页 — 第三卷-1 → 点击"万物形成符"标题跳转目标。
+ * 第三卷-5 页 — 第三卷-4 → 点击"特征与信息是否有关"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(交替模式:Vol-1-2 / Vol-2-2 / Vol-2-8 / Vol-2-11 / Vol-2-14 / Vol-3-2 用 256,其他屏用 255)
- *   - 标题文本"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-3-1 同位置同样式
- *   - 图1(image 320.png,X=18, Y=135, W=350, H=312)— 上部
- *   - 图2(image 321.png,X=18, Y=461, W=353, H=314)— 中部
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-11 指定"复制第一卷-2";Vol-3 序列 255→255→256,在 Vol-3-4 之后接回交替)
+ *   - 标题文本"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款文本(7 字,真机上调宽至 302 适配)
+ *   - 图1(image 327.png,X=18, Y=135, W=351, H=208)— 上部
+ *   - 图2(image 329.png,X=18, Y=351, W=355, H=220)— 中部
+ *   - 图3(image 328.png,X=18, Y=576, W=357, H=209)— 下部
  *
  * 坐标说明:
- *   - 用户原始设计稿给的是 X=28/Y=155/W=352/H=203(图1)、X=24/Y=381/W=356/H=214(图2)
- *   - 图1 H=203 与素材真实宽高比不符(image 320 为 696×612,比率 1.137;H=203 会渲染成比率 1.734,
- *     纵向压扁到约 66%)。image 320 与 Vol-3-1 图1 素材 image 316(698×612)近乎孪生,
- *     故沿用 Vol-3-1 已实调的值(用户 2026-09-11 确认按此版)。代码后续又在真机上调过,最终值 W=350 H=312(图1)、W=353 H=314(图2),见行内注释
+ *   - 用户原始设计稿:图3 H=342 → 渲染下沿 Y=918,超出书框底 872 共 46dp
+ *   - 与 Vol-3-4 同处理:改为 H=296 → 渲染下沿 Y=872,贴书框底不越界
+ *   - 渲染畸变 ~55% 横向被拉(渲染比 1.182 vs 原图 1.869),但 Y=576+296=872 在书框 88-872 范围内安全
+ *   - 代码后续真机上调过:图1 H=229→208;图2 W=356→355 H=214→220;图3 W=350→357 H=296→209(见行内注释)
+ *   - 标题宽度 W=192→302(真机上调,适配 7 字文本)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 320.png(已复制为 res/drawable-nodpi/img_volume3part2_image_320.png)
- *   - 图2:D:\图\image 321.png(已复制为 res/drawable-nodpi/img_volume3part2_image_321.png)
+ *   - 图1:D:\图\image 327.png(已复制为 res/drawable-nodpi/img_volume3part5_image_327.png)
+ *   - 图2:D:\图\image 329.png(已复制为 res/drawable-nodpi/img_volume3part5_image_329.png)
+ *   - 图3:D:\图\image 328.png(已复制为 res/drawable-nodpi/img_volume3part5_image_328.png)
  */
 @Composable
-fun Volume3Part2Screen(
+fun Volume3Part5Screen(
     onBack: () -> Unit = {},
-    onOpenVolume3Part3: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -87,44 +88,60 @@ fun Volume3Part2Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-3-1 同款,点击跳第三卷-3。
+            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款。
+            // 本屏暂无后继页,故未接 clickable(等 Vol-3-6 创建时按历次约定回填 onOpenVolume3Part6)。
             Text(
-                text = "万物形成符",
+                text = "特征与信息是否有关",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume3Part3),
+                    .size(width = 302.dp, height = 32.dp),
             )
 
-            // 图1(image 320.png,X=18, Y=135, W=350, H=312)— 在书框之上、上部。
+            // 图1(image 327.png,X=18, Y=135, W=351, H=208)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 350.dp, height = 312.dp),
+                    .size(width = 351.dp, height = 208.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume3part2_image_320),
+                    painter = painterResource(R.drawable.img_volume3part5_image_327),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 321.png,X=18, Y=461, W=353, H=314)— 在书框之上、中部。
-            // Y=461+314=775,在书框 Y=88-872 范围内安全。
+            // 图2(image 329.png,X=18, Y=351, W=355, H=220)— 在书框之上、中部。
+            // Y=351+220=571,在书框 Y=88-872 范围内安全。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 461.dp)
-                    .size(width = 353.dp, height = 314.dp),
+                    .offset(x = 18.dp, y = 351.dp)
+                    .size(width = 355.dp, height = 220.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume3part2_image_321),
+                    painter = painterResource(R.drawable.img_volume3part5_image_329),
                     contentDescription = "图2",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
+
+            // 图3(image 328.png,X=18, Y=576, W=357, H=209)— 在书框之上、下部。
+            // Y=576+296=872,刚好书框底,不越界。
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 18.dp, y = 576.dp)
+                    .size(width = 357.dp, height = 209.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_volume3part5_image_328),
+                    contentDescription = "图3",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )

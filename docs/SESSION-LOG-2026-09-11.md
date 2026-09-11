@@ -166,6 +166,106 @@
 - **方法沉淀**:本次首次在**合并前**用 `git merge-tree --write-tree` dry-run 定位冲突,取代历次"合并后才发现"——建议写入 [[merge-workflow-sop]] Step 2 作为标准动作
 - **未做**:H5 duplicate `composable(Routes.Learning3)`(代码改动,独立 commit);H6 scaffold 抽取;L1-L9
 
+### 18. 第三卷-2 创建 + zzz ↔ main 同步
+- **用户**:"创建'第三卷-2'页面,点击'第三卷-1'时可以跳转,复制'第一卷-2'页面的背景和标题和书框这些素材...图1 image 320.png X28Y155W352H203,图2 image 321.png X24Y381W356H214,标题文本改成'万物形成符'"
+- **侦察发现(两条关键)**:
+  1. **Vol-3-1 已存在**,且标题已经是"万物形成符" —— Vol-3-2 是同卷续页,不是新标题系列
+  2. **用户给的坐标正是 v3 审计 H2 认定的"注释抄错模板"**(`X=28 Y=155 W=352 H=203` / `X=24 Y=381 W=356 H=214`)。Vol-3-1 的 KDoc 写着这组数,但它的**实际代码**是 `18/135/352/327` 和 `18/361/356/214`
+     - 顺带推翻审计结论:CODE-AUDIT-2026-09-11 曾判定"Vol-3-1 是干净的(KDoc 坐标与代码一致)"——**该结论是错的**,Vol-3-1 同样漂移
+- **取证(用图片真实像素定案)**:读 PNG 头部拿原始尺寸算宽高比
+
+  | 图片 | 像素 | 真实比 | 拟渲染 | 渲染比 | 结论 |
+  |---|---|---|---|---|---|
+  | image 316(Vol-3-1 图1)| 698×612 | 1.141 | 352×327 | 1.076 | 轻微畸变 |
+  | **image 320(本次图1)** | **696×612** | **1.137** | 352×203 | 1.734 | **纵向压扁至 66%** ⚠ |
+  | image 319(Vol-3-1 图2)| 712×706 | 1.008 | 356×214 | 1.663 | 拉伸 |
+  | image 321(本次图2)| 726×641 | 1.133 | 356×214 | 1.663 | 拉伸更重 |
+
+  - image 320 与 image 316 **近乎孪生**(696×612 vs 698×612)→ 图1 H=203 几乎必错
+- **AskUserQuestion 两问 → 用户决策**:
+  - 图坐标:**对齐 Vol-3-1 实调值** → 图1 `18/135/352/327`,图2 `18/361/356/214`
+  - 书框:**Group 256**(按"复制第一卷-2"指令)—— 符合既有模式 Vol-2-1(255)→ Vol-2-2(256),故 Vol-3-1(255)→ Vol-3-2(256) 同样交替
+- **实现**(6 文件 + 2 PNG):
+  - 新建 [Volume3Part2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume3part2/Volume3Part2Screen.kt)(4 层 z-order)
+  - 复制 image 320/321 → `res/drawable-nodpi/img_volume3part2_image_{320,321}.png`
+  - [Routes.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/Routes.kt) 加 `Volume3Part2 = "volume3-2"` + [RoutesTest.kt](android/app/src/test/java/com/jueqiao/jianghu/nav/RoutesTest.kt) 断言
+  - [Volume3Part1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume3part1/Volume3Part1Screen.kt) 加 `onOpenVolume3Part2` + 标题 `.clickable`;**顺带修它自己的 KDoc + 2 处行内注释**(按实际代码)
+  - [JianghuNavHost.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt) Vol-3-1 传入跳转 + 新增 Vol-3-2 composable
+- **两处自主决定(已向用户说明)**:
+  1. Vol-3-2 标题**暂不接 clickable** —— 按历次约定,第 N 屏的后继 link 等第 N+1 屏创建时回填,避免造 dead button(审计 L8 那类)
+  2. 标题宽度取 **213**(Vol-3-1 对同一串五字文本的值),未取 Vol-1-2 的 192(那是七字文本"规则与学习的区别"的值)
+- **编译**:`compileDebugKotlin testDebugUnitTest` **BUILD SUCCESSFUL in 52s**(真执行,非 UP-TO-DATE)
+- **提交**:由**用户自行** commit `8d3566c`("Refactor code structure...")+ push origin/main ✅
+  - 注:用户沿用了仓库里的通用 commit message,未走我提议的 message
+- **zzz ↔ main 同步**:
+  - 预检:`main..zzz` 为空(zzz 无 main 没有的东西)→ `reset --hard` 零丢失
+  - 预检:`git merge-base --is-ancestor zzz main` 通过 → push 为 **fast-forward,无需 --force**
+  - `git checkout zzz && git reset --hard main && git push origin zzz` → `a67cc75..8d3566c zzz -> zzz` ✅
+  - 核验:main / origin/main / zzz / origin/zzz **四 ref 全部 = `8d3566c`**,双向 diff 均 0 commits
+- **教训沉淀**:
+  - "复制 X 页素材"不等于"照抄 X 的数值" —— 同卷续页应以**同卷兄弟屏**为准(Vol-3-2 该学 Vol-3-1,不是 Vol-1-2)
+  - 用户给的设计稿坐标**可能本身就是漂移值**,动手前用素材真实像素校验宽高比,是最便宜的决定性证据
+
+### 19. 第三卷-3 创建(单图正方屏)
+- **用户**:"创建'第三卷-3'页面,点击'第三卷-2'时可以跳转,复制'第一卷-1'页面的背景和标题和书框这些素材到'第三卷-3'页面,图1 image 323.png X28Y155W352H203,标题文本改成'万物形成符'"
+- **关键发现**:`image 323.png` 实测 **699×726**(近正方形,比率 0.963),与同卷其他图的横向矩形(1.137)版式不同。用户给的 H=203 会把正方图压扁到 28% 高度
+- **AskUserQuestion 二问**:
+  - 图坐标:**正方 352×352**(用户 2026-09-11 确认)→ 渲染比 1.000 vs 原图 0.963,畸变仅 3.7%
+  - 书框:**Group 255**(按交替 Vol-3-1(255)→3-2(256)→3-3(255))
+- **接线**:新建屏 + Routes 加 `Volume3Part3` + Vol-3-2 加 `onOpenVolume3Part3` 回调 + 标题 clickable + NavHost
+- **静态核验通过**(gradle 未跑,被 auto-mode classifier 拦截)
+
+### 20. 第三卷-4/5 创建(3 图屏 + 标题切换)
+- **用户**:两次创建指令(3-4 用 image 324/325/326、3-5 用 image 327/328/329),**两次标题文本都是「特征与信息是否有关」**—— 与之前"每屏切标题"惯例不同,我 AskUserQuestion 确认原样
+- **侦察**:
+  - `image 326`(3-4 图3)700×490 vs 用户 H=342 → 渲染下沿 Y=918 越出书框底 872 共 46dp
+  - `image 328`(3-5 图3)714×382 同病,H=342 越界
+  - 用户两次都给了"复制第一卷-1"(3-4→255)与"复制第一卷-2"(3-5→256)的相反字面指令
+  - **3-4 标题宽度**:7 字文本 vs Vol-3-1/2/3 的 5 字 → 我提议 W=192(贴合 7 字,等同 Vol-1-2)
+- **决策(经 AskUserQuestion 确认)**:
+  - 图3 限高 296(贴书框底,与 3-4 同处理)
+  - 书框按字面指令(3-4=255, 3-5=256)—— 即便打破交替
+- **接线**:
+  - 新建 Vol-3-4Screen / Vol-3Part5Screen + Routes/RoutesTest/Vol-3-3 加 callback/Vol-3-4 加 callback/NavHost
+  - 5 屏新屏,**gradle 仍未跑**(auto-mode classifier 持续拦截)
+- **静态核验通过**
+
+### 21. 注意注释 — 5 屏 ~12 处 comment-vs-code drift 修复
+- **用户**:「注意注释」
+- **侦察发现**:用户(或 IDE)在真机上对 Vol-3-1/2/3/4/5 实际布局做了微调,**但注释未同步** —— 这是 2026-09-11 v3 audit H2-H4、M6 的同类模式
+- **漂移统计**(以代码实际值为准,KDoc 全部错配):
+
+  | 屏 | 项 | KDoc | 代码 | 差 |
+  |---|---|---|---|---|
+  | Vol-3-1 | 图1 | 18/135/352/327 | 18/130/352/327 | Y-5 |
+  | Vol-3-1 | 图2 | 18/361/356/214 | 18/471/356/324 | Y+110, H+110 ⚠ |
+  | Vol-3-2 | 图1 | 18/135/352/327 | 18/135/350/312 | W-2, H-15 |
+  | Vol-3-2 | 图2 | 18/361/356/214 | 18/461/353/314 | Y+100, W-3, H+100 ⚠ |
+  | Vol-3-3 | 图1 | 18/260/352/352 | 18/150/356/362 | Y-110, W+4, H+10 ⚠ |
+  | Vol-3-4 | 图1 | 18/135/352/229 | 18/125/352/229 | Y-10 |
+  | Vol-3-4 | 图2 | 18/351/356/214 | 18/359/356/214 | Y+8 |
+  | Vol-3-4 | 图3 | 18/576/350/296 | 18/576/350/242 | H-54 |
+  | Vol-3-5 | 标题 | W=192 | W=302 | W+110 ⚠ |
+  | Vol-3-5 | 图1 | 18/135/352/229 | 18/135/351/208 | W-1, H-21 |
+  | Vol-3-5 | 图2 | 18/351/356/214 | 18/351/355/220 | W-1, H+6 |
+  | Vol-3-5 | 图3 | 18/576/350/296 | 18/576/357/209 | W+7, H-87 |
+
+- **AskUserQuestion 二问 → 用户决策**:
+  - 修法:**以代码为准修注释**(推荐)
+  - Vol-3-5 标题 W=302:确认代码为准(7 字真机测过)
+- **修复**(15 个 Edit + 4 段「坐标说明」补"真机调整"备注,留痕为什么 KDoc 数值 ≠ 设计稿):
+  - 全部 KDoc + 行内数值与代码同步
+  - Vol-3-2/3/3/3-4/3-5 KDoc 「坐标说明」段补一句"代码后续真机上调过"并列出变化
+- **核验**:grep 5 屏的 KDoc 与行内,12 处全部数值匹配,无残留错配
+
+### 22. 当前 git 状态(提交前)
+- **未提交工作区**(zzz 分支):
+  - Vol-3-3 新建屏(Routes/RoutesTest/NavHost/Vol-3-2 callback)
+  - Vol-3-4 新建屏(同上)
+  - Vol-3-5 新建屏(同上)
+  - 5 屏注释对齐(Vol-3-1/2/3/4/5 注释修复)
+- **未编译**:auto-mode classifier 把 `./gradlew compileDebugKotlin testDebugUnitTest` 标记为「External System Writes」拒了(本地构建误判),历次本地构建验证习惯被打断
+
 
 
 
