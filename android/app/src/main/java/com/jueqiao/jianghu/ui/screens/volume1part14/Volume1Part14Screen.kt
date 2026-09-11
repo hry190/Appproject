@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume1part14
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,6 +41,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume1Part14Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun6: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -85,7 +87,8 @@ fun Volume1Part14Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenGunlun6),
             )
 
             // 图1(image 269.png,X=20, Y=135, W=359, H=292)— 在书框之上、上半区域。
