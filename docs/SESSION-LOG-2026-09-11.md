@@ -66,6 +66,67 @@
 - **用户**:"创建'第二卷-6'页面,点击'第二卷-5'的标题时可以跳转,复制'第一卷-1'页面的背景和标题和书框这些素材到'第二卷-6'页面,图1 image 285.png X=28,Y=155,W=352,H=203,标题文本改成'输入-处理-输出'"
 - **我**:复制 image 285 → 创建 Vol-2-6 屏(只 1 张图)— 进行中— **进行中**
 
+### 12. Vol-2-10 ~ Vol-2-15 + Vol-3-1 注释审计与对齐(代码未编译)
+- **用户**:"现在检查一下注释"(针对 Vol-2-12)
+- **我**:读 [Volume2Part12Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume2part12/Volume2Part12Screen.kt) → 发现图1/图2 行内注释坐标错配(KDoc 头正确,行内错)— 修复 2 处行内注释
+- **用户**:"以实际代码为准修复注释"
+- **我**:修 Vol-2-12 行内注释 2 处
+- **用户**:"查看最近几个页面的注释"
+- **我**:通读 6 屏 — 发现 Vol-2-10/11/13/14/15 共 5 屏的图1/图2 KDoc + 行内注释共用同一错误模板:
+  - 图1 模板错值:`X=28 Y=155 W=352 H=203`
+  - 图2 模板错值:`X=24 Y=381 W=356 H=214`
+  - Vol-3-1 是干净的(KDoc 坐标与代码一致)— 说明 Vol-2-10~15 是注释抄错,Vol-3-1 是代码真按注释写
+- **用户**:"对齐"
+- **我**:并行 15 处 Edit(5 文件 × 每文件 3 处),按实际代码对齐:
+  - **Vol-2-10** 图1 → `X=18 Y=135 W=344 H=319`,图2 → `X=18 Y=490 W=356 H=314`
+  - **Vol-2-11** 图1 → `X=18 Y=155 W=352 H=313`,图2 → `X=18 Y=481 W=356 H=314`
+  - **Vol-2-13** 图1 → `X=18 Y=135 W=352 H=313`,图2 → `X=18 Y=481 W=356 H=314`
+  - **Vol-2-14** 图1 → `X=18 Y=155 W=352 H=303`,图2 → `X=18 Y=481 W=356 H=314`
+  - **Vol-2-15** 图1 → `X=18 Y=155 W=365 H=313`,图2 → `X=18 Y=481 W=365 H=324`
+  - 行内位置描述统一为"上部 / 下半区域"(消除"上半部 / 中部 / 在书框之上"混乱)
+- **未编译**:纯注释修改,未跑 `compileDebugKotlin`
+- **附带发现(未修)**:
+  - Vol-2-10 KDoc L32 交替模式漏列 Vol-11(Vol-2-11 自身 KDoc 已完整,Vol-2-10 滞后)
+  - Vol-2-15 用 `onOpenGunlun10` 而非 `onOpenVolume2Part16`,与其他屏命名约定不一致
+  - Vol-3-1 函数签名无 `onOpen*`,KDoc 说"点击'已解锁9'图像跳转目标",跳转逻辑待确认
+  - 6 屏共用的 KDoc 交替模式列表随新屏加入要手工维护,易漂移
+
+### 13. 规则确立:commit/push 前必写当日 SESSION-LOG
+- **用户**:"我每次提交或者推送等步骤时就总结一下今日的.md文件"
+- **我**:写入 feedback memory [[commit-push-summary-rule]] — 后续所有 git commit/push 步骤前后,先追加 SESSION-LOG 再 / 后 commit;新建独立文档同步更新 [docs/README.md](docs/README.md) "当前文件清单"
+
+### 14. zzz → main 合并(进行中)
+
+**按 [[merge-workflow-sop]] 4 步走:**
+
+**侦察**:
+- zzz HEAD `8e5cded`(刚推送的注释对齐)| main HEAD `a02ddd1`(上次"catch-up batch"merge commit)
+- merge-base = `a02ddd1`;zzz 领先 main 2 commits(`8e5cded` + `ac6a168`),main 未动
+- 17 文件变更:Vol-1-14 / Vol-2-7/8/9 / Vol-2-10~15 Screen.kt + 6 PNG + SESSION-LOG
+
+**评估**:
+- 🟢 零分叉冲突(main 未动)| 🟢 零共享修改文件| 🟡 本次注释对齐未重跑编译(纯注释,理论零风险)
+
+**建议**:立即合并 — 低风险 fast-forward-eligible + `--no-ff` 强制 merge commit(保持历次风格一致)
+
+**合并(用户同意后)**:
+- `git checkout main` → `git merge origin/zzz --no-commit --no-ff --strategy=recursive`
+  - 备注:`--strategy=recursive` 显式声明,绕开 Windows bash git 把 `--no-ff` 误解析为 `-X theirs` 的 bug
+- 验证:`grep -nE '^(<<<<<<<|=======|>>>>>>>)'` 空;`find . -name '*.orig'` 空;`git status` = "All conflicts fixed but you are still merging" ✅
+- 暂存 17 文件(注释对齐 + catch-up batch + SESSION-LOG §12 + §13)
+- 编译:`cd android && ./gradlew compileDebugKotlin testDebugUnitTest` → **BUILD SUCCESSFUL in 4s**(纯注释,gradle 正确识别 UP-TO-DATE)
+- **commit**:`b04d25f merge zzz into main: Vol-2-10~15 image comment alignment + refactor`
+  - 注:SESSION-LOG 从 merge commit 中 unstage,保持 merge commit 干净(沿用历次 "merge zzz into main: ..." 风格)
+- **push**:`a02ddd1..b04d25f main -> main` ✅(https://github.com/hry190/Appproject.git)
+- 后续:SESSION-LOG 在独立 commit 中补完 §14 详情(本节,见下)
+
+**新增:§14 末尾补完**(本 commit)
+- 合并结果总览:zzz → main,2 commits 进来(`8e5cded` + `ac6a168`),零冲突
+- 风险评估准确:本次仅注释改动,gradle 4s UP-TO-DATE 验证判断
+- merge-workflow-sop 第 2 次实战通过(首次:2026-09-10 feature/creation-contest-demo,本次:Vol-2 doc 批改)
+
+
+
 
 
 ### 1. 第一卷-12 创建 + 标题纠正
