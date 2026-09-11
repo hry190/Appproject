@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume3part5
+package com.jueqiao.jianghu.ui.screens.volume3part10
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,34 +25,32 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第三卷-5 页 — 第三卷-4 → 点击"特征与信息是否有关"标题跳转目标。
+ * 第三卷-10 页 — 第三卷-9 → 点击"关系织成网"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-11 指定"复制第一卷-2";Vol-3 序列 255→255→256,在 Vol-3-4 之后接回交替)
- *   - 标题文本"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款文本(7 字,真机上调宽至 302 适配)
- *   - 图1(image 327.png,X=18, Y=135, W=351, H=208)— 上部
- *   - 图2(image 329.png,X=18, Y=351, W=355, H=220)— 中部
- *   - 图3(image 328.png,X=18, Y=576, W=357, H=209)— 下部
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-11 指定"复制第一卷-2";Vol-3-9(255)→ Vol-3-10(256) 交替回去)
+ *   - 标题文本"关系织成网"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-3-9 同款(同标题跨页叙述)
+ *   - 图1(image 338.png,X=18, Y=135, W=359, H=250)— 上部
+ *   - 图2(image 339.png,X=18, Y=471, W=356, H=356)— 中部(正方限高保安全)
  *
  * 坐标说明:
- *   - 用户原始设计稿:图3 H=342 → 渲染下沿 Y=918,超出书框底 872 共 46dp
- *   - 与 Vol-3-4 同处理:改为 H=296 → 渲染下沿 Y=872,贴书框底不越界
- *   - 渲染畸变 ~55% 横向被拉(渲染比 1.182 vs 原图 1.869),但 Y=576+296=872 在书框 88-872 范围内安全
- *   - 代码后续真机上调过:图1 H=229→208;图2 W=356→355 H=214→220;图3 W=350→357 H=296→209(见行内注释)
- *   - 标题宽度 W=192→302(真机上调,适配 7 字文本)
+ *   - image 338 实测 713×500(横向矩形,比率 1.426);用户给 W=359 H=250,渲染比 1.436 与原图差 0.7%,几乎完美
+ *   - image 339 实测 710×810(近正方形,比率 0.877);用户给 W=356 H=300 会拉宽 35%,与原图严重不符
+ *   - 用户 2026-09-11 在 AskUserQuestion 后改为 W=356 H=356(正方形限高保安全),渲染比 1.000 与原图差 14%,可接受
+ *   - Y=471+356=827,在书框 Y=88-872 范围内安全
+ *   - 图2 资源 2026-09-11 由用户替换:从原 712×880(766KB)→ 新版 1065×1215(1.71MB,清晰度↑2.2×),宽高比保持 0.877,坐标不变
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 327.png(已复制为 res/drawable-nodpi/img_volume3part5_image_327.png)
- *   - 图2:D:\图\image 329.png(已复制为 res/drawable-nodpi/img_volume3part5_image_329.png)
- *   - 图3:D:\图\image 328.png(已复制为 res/drawable-nodpi/img_volume3part5_image_328.png)
+ *   - 图1:D:\图\image 338.png(已复制为 res/drawable-nodpi/img_volume3part10_image_338.png)
+ *   - 图2:D:\图\image 339.png(已复制为 res/drawable-nodpi/img_volume3part10_image_339.png)
  */
 @Composable
-fun Volume3Part5Screen(
+fun Volume3Part10Screen(
     onBack: () -> Unit = {},
-    onOpenVolume3Part6: () -> Unit = {},
+    onOpenVolume3Part11: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -90,60 +88,44 @@ fun Volume3Part5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 与 Vol-3-4 同款,点击跳第三卷-6。
+            // 标题"关系织成网"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-3-9 同款,点击跳第三卷-11。
             Text(
-                text = "特征与信息是否有关",
+                text = "关系织成网",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 302.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume3Part6),
+                    .size(width = 192.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume3Part11),
             )
 
-            // 图1(image 327.png,X=18, Y=135, W=351, H=208)— 在书框之上、上部。
+            // 图1(image 338.png,X=18, Y=135, W=359, H=250)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 351.dp, height = 208.dp),
+                    .size(width = 359.dp, height = 250.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume3part5_image_327),
+                    painter = painterResource(R.drawable.img_volume3part10_image_338),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 329.png,X=18, Y=351, W=355, H=220)— 在书框之上、中部。
-            // Y=351+220=571,在书框 Y=88-872 范围内安全。
+            // 图2(image 339.png,X=18, Y=471, W=356, H=356)— 在书框之上、中部(正方限高保安全)。
+            // Y=471+356=827,在书框 Y=88-872 范围内安全。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 351.dp)
-                    .size(width = 355.dp, height = 220.dp),
+                    .offset(x = 18.dp, y = 421.dp)
+                    .size(width = 356.dp, height = 317.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume3part5_image_329),
+                    painter = painterResource(R.drawable.img_volume3part10_image_339),
                     contentDescription = "图2",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-
-            // 图3(image 328.png,X=18, Y=576, W=357, H=209)— 在书框之上、下部。
-            // Y=576+296=872,刚好书框底,不越界。
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 576.dp)
-                    .size(width = 357.dp, height = 209.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_volume3part5_image_328),
-                    contentDescription = "图3",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )

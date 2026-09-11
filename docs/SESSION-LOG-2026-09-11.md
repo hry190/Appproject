@@ -266,6 +266,44 @@
   - 5 屏注释对齐(Vol-3-1/2/3/4/5 注释修复)
 - **未编译**:auto-mode classifier 把 `./gradlew compileDebugKotlin testDebugUnitTest` 标记为「External System Writes」拒了(本地构建误判),历次本地构建验证习惯被打断
 
+### 23. 提交 Vol-3 注释修复批
+- **用户**:"提交"
+- **commit**:`0628aa4 fix(vol3-screens): align KDoc + inline comments with actual code (5 screens)`(5 屏注释与代码同步)
+- **push**:`1d6fa0f..0628aa4 zzz -> zzz` ✅
+
+### 24. zzz → main 第 4 次合并(注释修复批)
+- **用户**:"同步到main"
+- **侦察**:main `8d3566c` / zzz `0628aa4`;merge-base 同 main;zzz 领先 8 commits,main 未动 → **fast-forward eligible**
+- **干跑**:`git merge-tree` exit=0,0 冲突 ✅
+- **合并**:`git merge zzz --no-commit --no-ff --strategy=recursive`(SOP 一致,留 merge commit);0 冲突,merge commit `877fc62`;`8d3566c..877fc62 main -> main` ✅
+- **结果**:4-ref 状态:zzz `0628aa4`,main `877fc62`(含 zzz 全部 8 commits)
+
+### 25. 第三卷-6/7/8 创建 + 持续漂移
+- **用户**:连续 3 次创建指令(Vol-3-6/7/8)
+- **侦察发现**:
+  - Vol-3-6:用 image 330/331,user 给原值 352×229/356×214 畸变 35-65% → AskUserQuestion → 用户修订 349×322/446×422 → 图2 446 远宽于系列(风格异常,留痕)
+  - Vol-3-7:用 image 333/334,user 给值与素材比例几乎完美(< 2%),无需修订 — 正向样本
+  - Vol-3-8:用 image 330(W=342 H=303 几乎完美 1.1% 畸变)
+- **接线**:每屏新建 + Routes/RoutesTest/NavHost + 上屏加 callback
+- **静态核验全过**(gradle 仍未跑)
+
+### 26. 第三轮「注意注释」+ 第三卷-9
+- **用户**:"注意注释" → Vol-3-6/7 又被盘外微调过(Vol-3-6 图2 Y+120/W-100/H-100 ⚠大改;Vol-3-7 图1 H-20、图2 Y+140 等)
+  - 以代码为准修 6 处(KDoc + 行内 + 坐标说明补"真机调整"备注)
+- **用户**:"vol-3-8的图改成 image 335.png" → 简单替换(image 330 → 335,比例完美)
+- **用户**:Vol-3-9 创建(image 336/337 + 标题"关系织成网") → Vol-3 序列打破交替(Vol-3-8/3-9 两连 255,按字面指令)
+- **note**:用户中途给出"创建第三卷-6"的指令(但 Vol-3-6 已存在未 commit),我 AskUserQuestion → 用户修正为"创建第三卷-9"
+
+### 27. 当前 git 状态(提交前)
+- **未提交工作区**(zzz 分支):
+  - Vol-3-6 注释修复 + 上屏 callback 接线
+  - Vol-3-7/8/9 新建屏 + 接线 + 注释
+  - Vol-3-8 image 替换(330 → 335)
+  - 改动文件:NavHost / Routes / RoutesTest / Vol-3-6 / Vol-3-8 等 8 个
+  - 新增 PNG:img_volume3part7_{333,334} + img_volume3part8_image_335 + img_volume3part9_{336,337} = 5 PNG
+- **Vol-3-6 注释**:当前盘外调整后的实际值(349×322 / 346×322)。这次提交后,该屏历史将定格在该坐标上(取代之前盘外改动前的版本)
+- **未编译**:从 §22 起连续 ~5 屏改动未跑过 gradle
+
 
 
 

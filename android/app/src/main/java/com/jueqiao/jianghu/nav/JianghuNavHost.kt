@@ -134,11 +134,20 @@ import com.jueqiao.jianghu.ui.screens.volume2part12.Volume2Part12Screen
 import com.jueqiao.jianghu.ui.screens.volume2part13.Volume2Part13Screen
 import com.jueqiao.jianghu.ui.screens.volume2part14.Volume2Part14Screen
 import com.jueqiao.jianghu.ui.screens.volume2part15.Volume2Part15Screen
+import com.jueqiao.jianghu.ui.screens.volume3part10.Volume3Part10Screen
+import com.jueqiao.jianghu.ui.screens.volume3part11.Volume3Part11Screen
+import com.jueqiao.jianghu.ui.screens.volume3part12.Volume3Part12Screen
+import com.jueqiao.jianghu.ui.screens.volume3part13.Volume3Part13Screen
+import com.jueqiao.jianghu.ui.screens.volume3part14.Volume3Part14Screen
 import com.jueqiao.jianghu.ui.screens.volume3part1.Volume3Part1Screen
 import com.jueqiao.jianghu.ui.screens.volume3part2.Volume3Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume3part3.Volume3Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume3part4.Volume3Part4Screen
 import com.jueqiao.jianghu.ui.screens.volume3part5.Volume3Part5Screen
+import com.jueqiao.jianghu.ui.screens.volume3part6.Volume3Part6Screen
+import com.jueqiao.jianghu.ui.screens.volume3part7.Volume3Part7Screen
+import com.jueqiao.jianghu.ui.screens.volume3part8.Volume3Part8Screen
+import com.jueqiao.jianghu.ui.screens.volume3part9.Volume3Part9Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
@@ -737,7 +746,61 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume3Part5) {
-            Volume3Part5Screen(onBack = { navController.popBackStack() })
+            Volume3Part5Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part6 = { navController.navigate(Routes.Volume3Part6) },
+            )
+        }
+        composable(Routes.Volume3Part6) {
+            Volume3Part6Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part7 = { navController.navigate(Routes.Volume3Part7) },
+            )
+        }
+        composable(Routes.Volume3Part7) {
+            Volume3Part7Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part8 = { navController.navigate(Routes.Volume3Part8) },
+            )
+        }
+        composable(Routes.Volume3Part8) {
+            Volume3Part8Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part9 = { navController.navigate(Routes.Volume3Part9) },
+            )
+        }
+        composable(Routes.Volume3Part9) {
+            Volume3Part9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part10 = { navController.navigate(Routes.Volume3Part10) },
+            )
+        }
+        composable(Routes.Volume3Part10) {
+            Volume3Part10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part11 = { navController.navigate(Routes.Volume3Part11) },
+            )
+        }
+        composable(Routes.Volume3Part11) {
+            Volume3Part11Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part12 = { navController.navigate(Routes.Volume3Part12) },
+            )
+        }
+        composable(Routes.Volume3Part12) {
+            Volume3Part12Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part13 = { navController.navigate(Routes.Volume3Part13) },
+            )
+        }
+        composable(Routes.Volume3Part13) {
+            Volume3Part13Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume3Part14 = { navController.navigate(Routes.Volume3Part14) },
+            )
+        }
+        composable(Routes.Volume3Part14) {
+            Volume3Part14Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun7) {
             Gunlun7Screen(
