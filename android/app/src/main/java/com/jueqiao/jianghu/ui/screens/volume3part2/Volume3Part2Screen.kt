@@ -31,14 +31,14 @@ import com.jueqiao.jianghu.R
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
  *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(交替模式:Vol-1-2 / Vol-2-2 / Vol-2-8 / Vol-2-11 / Vol-2-14 / Vol-3-2 用 256,其他屏用 255)
  *   - 标题文本"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-3-1 同位置同样式
- *   - 图1(image 320.png,X=18, Y=135, W=352, H=327)— 上部
- *   - 图2(image 321.png,X=18, Y=361, W=356, H=214)— 中部
+ *   - 图1(image 320.png,X=18, Y=135, W=350, H=312)— 上部
+ *   - 图2(image 321.png,X=18, Y=461, W=353, H=314)— 中部
  *
  * 坐标说明:
  *   - 用户原始设计稿给的是 X=28/Y=155/W=352/H=203(图1)、X=24/Y=381/W=356/H=214(图2)
  *   - 图1 H=203 与素材真实宽高比不符(image 320 为 696×612,比率 1.137;H=203 会渲染成比率 1.734,
  *     纵向压扁到约 66%)。image 320 与 Vol-3-1 图1 素材 image 316(698×612)近乎孪生,
- *     故沿用 Vol-3-1 已实调的值 352×327(用户 2026-09-11 确认按此版)
+ *     故沿用 Vol-3-1 已实调的值(用户 2026-09-11 确认按此版)。代码后续又在真机上调过,最终值 W=350 H=312(图1)、W=353 H=314(图2),见行内注释
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -99,7 +99,7 @@ fun Volume3Part2Screen(
                     .clickable(onClick = onOpenVolume3Part3),
             )
 
-            // 图1(image 320.png,X=18, Y=135, W=352, H=327)— 在书框之上、上部。
+            // 图1(image 320.png,X=18, Y=135, W=350, H=312)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -114,8 +114,8 @@ fun Volume3Part2Screen(
                 )
             }
 
-            // 图2(image 321.png,X=18, Y=361, W=356, H=214)— 在书框之上、中部。
-            // Y=361+214=575,在书框 Y=88-872 范围内安全。
+            // 图2(image 321.png,X=18, Y=461, W=353, H=314)— 在书框之上、中部。
+            // Y=461+314=775,在书框 Y=88-872 范围内安全。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

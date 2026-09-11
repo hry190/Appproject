@@ -31,8 +31,8 @@ import com.jueqiao.jianghu.R
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— **复用第一卷书框素材**(与第一卷 / 第一卷-3 / 第一卷-4 / 第一卷-7 / 第一卷-9 / 第一卷-11 / 第一卷-12 / 第一卷-14 / 第二卷-1 / 第二卷-3 / 第二卷-4 / 第二卷-5 / 第二卷-6 / 第二卷-7 / 第二卷-9 / 第二卷-10 / 第二卷-12 / 第二卷-13 / 第二卷-15 同款;第一卷-2 / 第二卷-2 / 第二卷-8 / 第二卷-11 / 第二卷-14 / 第三卷-2 用 Group 256)
  *   - 标题文本"万物形成符"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— **第三卷首屏新标题系列**,点击跳第三卷-2
- *   - 图1(image 316.png,X=18, Y=135, W=352, H=327)— 上部
- *   - 图2(image 319.png,X=18, Y=361, W=356, H=214)— 中部
+ *   - 图1(image 316.png,X=18, Y=130, W=352, H=327)— 上部
+ *   - 图2(image 319.png,X=18, Y=471, W=356, H=324)— 中部
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -93,7 +93,7 @@ fun Volume3Part1Screen(
                     .clickable(onClick = onOpenVolume3Part2),
             )
 
-            // 图1(image 316.png,X=18, Y=135, W=352, H=327)— 在书框之上、上部。
+            // 图1(image 316.png,X=18, Y=130, W=352, H=327)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -108,7 +108,7 @@ fun Volume3Part1Screen(
                 )
             }
 
-            // 图2(image 319.png,X=18, Y=361, W=356, H=214)— 在书框之上、中部。
+            // 图2(image 319.png,X=18, Y=471, W=356, H=324)— 在书框之上、中部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
