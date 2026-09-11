@@ -148,6 +148,80 @@ class LuggageRepository(
         api.analyzeCreationIntent(token, payload)
     }
 
+    suspend fun startCreationConversation(
+        payload: CreationConversationStartDto,
+        idempotencyKey: String,
+    ): CreationConversationDto = authorized { token ->
+        api.startCreationConversation(token, payload, idempotencyKey)
+    }
+
+    suspend fun creationConversation(projectId: String): CreationConversationDto =
+        authorized { token -> api.getCreationConversation(token, projectId) }
+
+    suspend fun resumeCreationConversation(projectId: String): CreationConversationDto =
+        authorized { token -> api.resumeCreationConversation(token, projectId) }
+
+    suspend fun addCreationConversationMessage(
+        projectId: String,
+        text: String,
+        idempotencyKey: String,
+    ): CreationConversationDto = authorized { token ->
+        api.addCreationConversationMessage(
+            token,
+            projectId,
+            CreationConversationMessageCreateDto(text),
+            idempotencyKey,
+        )
+    }
+
+    suspend fun acceptCreationConversationSuggestion(
+        projectId: String,
+        messageId: String,
+        expectedRevision: Int,
+    ): CreationConversationDto = authorized { token ->
+        api.acceptCreationConversationSuggestion(
+            token,
+            projectId,
+            messageId,
+            CreationConversationActionDto(expectedRevision),
+        )
+    }
+
+    suspend fun generateFromCreationConversation(
+        projectId: String,
+        expectedRevision: Int,
+        idempotencyKey: String,
+    ): CreationConversationGenerationDto = authorized { token ->
+        api.generateFromCreationConversation(
+            token,
+            projectId,
+            CreationConversationGenerateDto(expectedRevision),
+            idempotencyKey,
+        )
+    }
+
+    suspend fun returnCreationConversation(
+        projectId: String,
+        expectedRevision: Int,
+    ): CreationConversationDto = authorized { token ->
+        api.returnCreationConversation(
+            token,
+            projectId,
+            CreationConversationActionDto(expectedRevision),
+        )
+    }
+
+    suspend fun saveCreationConversationResult(
+        projectId: String,
+        expectedRevision: Int,
+    ): CreationConversationDto = authorized { token ->
+        api.saveCreationConversationResult(
+            token,
+            projectId,
+            CreationConversationActionDto(expectedRevision),
+        )
+    }
+
     suspend fun learnedManualSources(): List<ManualPageDto> = authorized { token ->
         listOf("LEARNED", "MASTERED", "TEACHING")
             .flatMap { state ->
@@ -316,8 +390,15 @@ class LuggageRepository(
         api.submitCreation(token, projectId, payload, idempotencyKey)
     }
 
+    suspend fun conferenceCategorySuggestions(
+        projectId: String,
+    ): List<ConferenceCategorySuggestionDto> = authorized { token ->
+        api.getConferenceCategorySuggestions(token, projectId).items
+    }
+
     suspend fun creationDetail(projectId: String): CreationDetailBundle = authorized { token ->
         val project = api.getCreationProject(token, projectId)
+        val conversation = api.resumeCreationConversation(token, projectId)
         val versions = api.getCreationVersions(token, projectId).items
         val method = runCatching { api.getCreationMethod(token, projectId) }
             .getOrElse { error ->
@@ -357,6 +438,7 @@ class LuggageRepository(
         }.orEmpty()
         CreationDetailBundle(
             project,
+            conversation,
             versions,
             method,
             stageEvents,
@@ -416,11 +498,25 @@ class LuggageRepository(
     suspend fun joinClassroom(joinCode: String): ClassroomDto =
         authorized { token -> api.joinClassroom(token, joinCode) }
 
-    suspend fun conferenceFeed(cursor: String? = null): ConferenceFeedDto =
-        authorized { token -> api.getConferenceFeed(token, cursor) }
+    suspend fun conferenceFeed(
+        cursor: String? = null,
+        category: String? = null,
+    ): ConferenceFeedDto = authorized { token ->
+        api.getConferenceFeed(token, cursor, category)
+    }
+
+    suspend fun myConferenceWorks(): ConferenceFeedDto =
+        authorized(api::getMyConferenceWorks)
 
     suspend fun conferenceWork(publicationId: String): ConferenceWorkDto =
         authorized { token -> api.getConferenceWork(token, publicationId) }
+
+    suspend fun addConferenceLike(publicationId: String): ConferenceLikeDto =
+        authorized { token -> api.addConferenceLike(token, publicationId) }
+
+    suspend fun removeConferenceLike(publicationId: String) {
+        authorized<Unit> { token -> api.removeConferenceLike(token, publicationId) }
+    }
 
     suspend fun conferenceReviews(publicationId: String): ConferenceReviewListDto =
         authorized { token -> api.getConferenceReviews(token, publicationId) }
@@ -519,6 +615,15 @@ class LuggageRepository(
 
     suspend fun conferenceMatch(matchId: String): ConferenceMatchDetailDto = authorized { token ->
         api.getConferenceMatch(token, matchId)
+    }
+
+    suspend fun conferenceMatchRecords(
+        outcome: String?,
+        reflectionStatus: String?,
+        page: Int,
+        limit: Int,
+    ): ConferenceMatchRecordListDto = authorized { token ->
+        api.getConferenceMatchRecords(token, outcome, reflectionStatus, page, limit)
     }
 
     suspend fun answerConferenceMatch(

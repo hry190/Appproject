@@ -68,6 +68,7 @@ class MediaAssetPublic(ContractModel):
     sha256: str
     width: int | None
     height: int | None
+    duration_ms: int | None
     metadata_stripped: bool | None
     aigc_detected: bool | None
     rejection_code: str | None

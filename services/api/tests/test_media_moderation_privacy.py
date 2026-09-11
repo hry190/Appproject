@@ -53,6 +53,27 @@ def png_bytes(width: int = 80, height: int = 40) -> bytes:
     return output.getvalue()
 
 
+def h264_mp4_bytes(width: int = 1080, height: int = 1920, duration_ms: int = 8_000) -> bytes:
+    """Small structurally valid MP4 fixture for the bounded server-side probe."""
+
+    def box(kind: bytes, payload: bytes) -> bytes:
+        return (len(payload) + 8).to_bytes(4, "big") + kind + payload
+
+    mvhd = (
+        b"\x00\x00\x00\x00"
+        + (0).to_bytes(4, "big")
+        + (0).to_bytes(4, "big")
+        + (1_000).to_bytes(4, "big")
+        + duration_ms.to_bytes(4, "big")
+        + b"\x00" * 80
+    )
+    tkhd = b"\x00" * 76 + (width << 16).to_bytes(4, "big") + (
+        height << 16
+    ).to_bytes(4, "big")
+    moov = box(b"moov", box(b"mvhd", mvhd) + box(b"trak", box(b"tkhd", tkhd)) + b"avc1")
+    return box(b"ftyp", b"isom\x00\x00\x02\x00isomavc1") + moov + box(b"mdat", b"frame")
+
+
 def upload_ready_image(
     client: TestClient,
     headers: dict[str, str],
@@ -95,6 +116,47 @@ def upload_ready_image(
     assert processed.status_code == 200, processed.text
     assert processed.json()["status"] == "READY"
     return processed.json()
+
+
+def test_h264_mp4_upload_is_processed_with_duration(client: TestClient) -> None:
+    headers = register(client, "13950000029")
+    video_data = h264_mp4_bytes()
+    digest = hashlib.sha256(video_data).hexdigest()
+    intent = client.post(
+        "/v1/uploads/intents",
+        headers=headers,
+        json={
+            "purpose": "CREATION_LAYER",
+            "filename": "机关蝶.mp4",
+            "declared_mime": "video/mp4",
+            "byte_size": len(video_data),
+            "sha256": digest,
+        },
+    )
+    assert intent.status_code == 201, intent.text
+    body = intent.json()
+    store = client.app.state.object_store
+    assert isinstance(store, InMemoryObjectStore)
+    object_key = body["upload_url"].removeprefix("memory://quarantine/")
+    store.put_test_object(object_key, video_data, "video/mp4")
+    completed = client.post(
+        f"/v1/uploads/{body['id']}/complete",
+        headers={**headers, "Idempotency-Key": f"complete-{body['id']}"},
+        json={"byte_size": len(video_data), "sha256": digest},
+    )
+    assert completed.status_code == 202, completed.text
+    processed = client.post(
+        f"/v1/internal/media-assets/{completed.json()['id']}/process",
+        headers={"X-Internal-Token": INTERNAL_TOKEN},
+        json={"content_safety_outcome": "REVIEW", "aigc_detected": True},
+    )
+    assert processed.status_code == 200, processed.text
+    payload = processed.json()
+    assert payload["status"] == "READY"
+    assert payload["actual_mime"] == "video/mp4"
+    assert payload["width"] == 1080
+    assert payload["height"] == 1920
+    assert payload["duration_ms"] == 8_000
 
 
 def test_nonproduction_memory_store_accepts_authenticated_upload_proxy(

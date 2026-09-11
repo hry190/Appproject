@@ -15,6 +15,7 @@ from app.core.config import Settings
 from app.core.errors import ApiError
 from app.core.security import utcnow
 from app.domains.creations.models import (
+    ConferenceCategory,
     CreationExportJob,
     CreationExportJobStatus,
     CreationProject,
@@ -27,6 +28,13 @@ from app.domains.creations.models import (
     ProvenanceItem,
     Publication,
     PublicationStatus,
+)
+from app.domains.conference.models import (
+    ConferenceCollection,
+    ConferenceDerivativeRequest,
+    ConferenceLike,
+    ConferenceReview,
+    ConferenceReviewModerationStatus,
 )
 from app.domains.distribution.contracts import (
     ClassroomCreate,
@@ -263,12 +271,30 @@ class DistributionService:
         return ClassroomListPublic(items=items)
 
     def community_feed(
-        self, user: User, *, cursor: str | None, limit: int
+        self,
+        user: User,
+        *,
+        cursor: str | None,
+        limit: int,
+        category: ConferenceCategory | None = None,
     ) -> PublicationFeedPagePublic:
         statement = self._community_statement(user)
+        if category is not None:
+            statement = statement.where(Publication.conference_category == category)
         statement = self._apply_cursor(statement, cursor)
         rows = self.db.execute(
             statement.order_by(Publication.published_at.desc(), Publication.id.desc()).limit(limit + 1)
+        ).all()
+        return self._feed_page(rows, limit, is_inbox=False, viewer=user)
+
+    def owned_community_feed(
+        self, user: User, *, limit: int
+    ) -> PublicationFeedPagePublic:
+        rows = self.db.execute(
+            self._community_statement(user)
+            .where(Publication.owner_user_id == user.id)
+            .order_by(Publication.published_at.desc(), Publication.id.desc())
+            .limit(limit)
         ).all()
         return self._feed_page(rows, limit, is_inbox=False, viewer=user)
 
@@ -383,6 +409,7 @@ class DistributionService:
         mime_type = None
         width = None
         height = None
+        duration_ms = None
         expires_at = None
         if asset and asset.private_object_key:
             expires_at = utcnow() + timedelta(minutes=self.settings.media_download_ttl_minutes)
@@ -404,6 +431,7 @@ class DistributionService:
                     expires=timedelta(minutes=self.settings.media_download_ttl_minutes),
                 )
                 mime_type, width, height = asset.actual_mime, asset.width, asset.height
+                duration_ms = asset.duration_ms
         manifest = self.db.get(ProvenanceManifest, version.id)
         card = self.db.get(LearningCard, version.id)
         privacy = self.db.get(PrivacySetting, author.id)
@@ -425,6 +453,46 @@ class DistributionService:
             .select_from(ProvenanceItem)
             .where(ProvenanceItem.creation_version_id == version.id)
         ) or 0
+        is_collected = self.db.scalar(
+            select(ConferenceCollection.id).where(
+                ConferenceCollection.user_id == viewer.id,
+                ConferenceCollection.publication_id == publication.id,
+            )
+        ) is not None
+        collection_count = self.db.scalar(
+            select(func.count())
+            .select_from(ConferenceCollection)
+            .where(ConferenceCollection.publication_id == publication.id)
+        ) or 0
+        is_liked = self.db.scalar(
+            select(ConferenceLike.id).where(
+                ConferenceLike.user_id == viewer.id,
+                ConferenceLike.publication_id == publication.id,
+            )
+        ) is not None
+        like_count = self.db.scalar(
+            select(func.count())
+            .select_from(ConferenceLike)
+            .where(ConferenceLike.publication_id == publication.id)
+        ) or 0
+        review_count = self.db.scalar(
+            select(func.count())
+            .select_from(ConferenceReview)
+            .where(
+                ConferenceReview.publication_id == publication.id,
+                ConferenceReview.moderation_status
+                == ConferenceReviewModerationStatus.VISIBLE,
+            )
+        ) or 0
+        co_create_request_status = self.db.scalar(
+            select(ConferenceDerivativeRequest.status)
+            .where(
+                ConferenceDerivativeRequest.requester_user_id == viewer.id,
+                ConferenceDerivativeRequest.source_publication_id == publication.id,
+            )
+            .order_by(ConferenceDerivativeRequest.created_at.desc())
+            .limit(1)
+        )
         assert publication.published_at is not None
         return PublicationFeedItemPublic(
             publication_id=publication.id,
@@ -434,6 +502,7 @@ class DistributionService:
             description=project.description,
             media_type=project.media_type,
             visibility=publication.visibility,
+            conference_category=publication.conference_category,
             channel=channel,
             classroom_id=publication.classroom_id,
             classroom_name=classroom.name if classroom else None,
@@ -445,6 +514,7 @@ class DistributionService:
             preview_mime_type=mime_type,
             preview_width=width,
             preview_height=height,
+            preview_duration_ms=duration_ms,
             preview_url_expires_at=expires_at if preview_url else None,
             ai_assisted=bool(manifest and manifest.ai_assistance_used),
             learning_summary=card.method_summary if card and include_learning else None,
@@ -473,6 +543,16 @@ class DistributionService:
                     source_count=source_count,
                 )
                 if manifest
+                else None
+            ),
+            is_liked=is_liked,
+            like_count=like_count,
+            is_collected=is_collected,
+            collection_count=collection_count,
+            review_count=review_count,
+            co_create_request_status=(
+                co_create_request_status.value
+                if co_create_request_status is not None
                 else None
             ),
         )

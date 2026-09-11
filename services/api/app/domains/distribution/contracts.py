@@ -6,7 +6,11 @@ from enum import Enum
 
 from pydantic import Field, field_validator
 
-from app.domains.creations.models import CreationMediaType, CreationVisibility
+from app.domains.creations.models import (
+    ConferenceCategory,
+    CreationMediaType,
+    CreationVisibility,
+)
 from app.domains.distribution.models import PublicationDeliveryChannel
 from app.domains.learning.contracts import ContractModel
 
@@ -85,6 +89,7 @@ class PublicationFeedItemPublic(ContractModel):
     description: str | None
     media_type: CreationMediaType
     visibility: CreationVisibility
+    conference_category: ConferenceCategory | None
     channel: PublicationDeliveryChannel | None
     classroom_id: uuid.UUID | None
     classroom_name: str | None
@@ -96,12 +101,19 @@ class PublicationFeedItemPublic(ContractModel):
     preview_mime_type: str | None
     preview_width: int | None
     preview_height: int | None
+    preview_duration_ms: int | None
     preview_url_expires_at: datetime | None
     ai_assisted: bool
     learning_summary: str | None
     related_manuals: list[PublicationRelatedManualPublic]
     learning_card: PublicationLearningCardSummaryPublic | None
     provenance: PublicationProvenanceSummaryPublic | None
+    is_liked: bool = False
+    like_count: int = Field(default=0, ge=0)
+    is_collected: bool = False
+    collection_count: int = Field(default=0, ge=0)
+    review_count: int = Field(default=0, ge=0)
+    co_create_request_status: str | None = None
 
 
 class PublicationFeedPagePublic(ContractModel):

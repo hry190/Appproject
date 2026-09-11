@@ -12,6 +12,12 @@ from app.api.dependencies import (
 )
 from app.domains.creations.contracts import (
     CreationChangeLogListPublic,
+    CreationConversationGenerate,
+    CreationConversationGenerationPublic,
+    CreationConversationMessageCreate,
+    CreationConversationPublic,
+    CreationConversationResultAction,
+    CreationConversationStart,
     CreationExportCreate,
     CreationExportJobListPublic,
     CreationExportJobPublic,
@@ -29,6 +35,7 @@ from app.domains.creations.contracts import (
     CreationStageTransition,
     CreationStageTransitionPublic,
     CreationSubmissionCreate,
+    ConferenceCategorySuggestionListPublic,
     CreationTestIssuePublic,
     CreationTestIssueResolve,
     CreationTestRecordCreate,
@@ -95,6 +102,25 @@ def analyze_creation_intent(
     return service.analyze_intent(user, payload)
 
 
+@router.post(
+    "/creation-conversations:start",
+    response_model=CreationConversationPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+def start_creation_conversation(
+    payload: CreationConversationStart,
+    idempotency_key: str = Header(
+        alias="Idempotency-Key",
+        min_length=8,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    ),
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.start_conversation(user, payload, idempotency_key)
+
+
 @router.get("/me/creation-projects", response_model=CreationProjectListPublic)
 def list_projects(
     project_status: CreationProjectStatus | None = Query(default=None, alias="status"),
@@ -120,6 +146,145 @@ def get_project(
     service: CreationService = Depends(get_creation_service),
 ) -> CreationProjectPublic:
     return service.get_project(user, project_id)
+
+
+@router.get(
+    "/creation-projects/{project_id}/conversation",
+    response_model=CreationConversationPublic,
+)
+def get_creation_conversation(
+    project_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.get_conversation(user, project_id)
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation:resume",
+    response_model=CreationConversationPublic,
+)
+def resume_creation_conversation(
+    project_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.resume_conversation(user, project_id)
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation/messages",
+    response_model=CreationConversationPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_creation_conversation_message(
+    project_id: uuid.UUID,
+    payload: CreationConversationMessageCreate,
+    idempotency_key: str = Header(
+        alias="Idempotency-Key",
+        min_length=8,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    ),
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.add_conversation_message(
+        user, project_id, payload, idempotency_key
+    )
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation/suggestions/{message_id}:accept",
+    response_model=CreationConversationPublic,
+)
+def accept_creation_conversation_suggestion(
+    project_id: uuid.UUID,
+    message_id: uuid.UUID,
+    payload: CreationConversationResultAction,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.accept_conversation_suggestion(
+        user, project_id, message_id, payload.expected_revision
+    )
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation:return",
+    response_model=CreationConversationPublic,
+)
+def return_creation_conversation(
+    project_id: uuid.UUID,
+    payload: CreationConversationResultAction,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.return_conversation_to_dialogue(user, project_id, payload)
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation:save-result",
+    response_model=CreationConversationPublic,
+)
+def save_creation_conversation_result(
+    project_id: uuid.UUID,
+    payload: CreationConversationResultAction,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> CreationConversationPublic:
+    return service.save_conversation_result(user, project_id, payload)
+
+
+@router.post(
+    "/creation-projects/{project_id}/conversation:generate",
+    response_model=CreationConversationGenerationPublic,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def generate_from_creation_conversation(
+    project_id: uuid.UUID,
+    payload: CreationConversationGenerate,
+    idempotency_key: str = Header(
+        alias="Idempotency-Key",
+        min_length=8,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    ),
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+    generation_service: ImageGenerationService = Depends(get_image_generation_service),
+) -> CreationConversationGenerationPublic:
+    draft, private_prompt, project, has_job = service.prepare_conversation_generation(
+        user, project_id, payload, idempotency_key
+    )
+    conversation = service.get_conversation(user, project_id)
+    if has_job and conversation.active_generation_job_id is not None:
+        job = generation_service.get_job(user, conversation.active_generation_job_id)
+    else:
+        try:
+            job = generation_service.create_job(
+                user,
+                project_id,
+                ImageGenerationCreate(
+                    parent_version_id=draft.id,
+                    prompt=private_prompt,
+                    size="PORTRAIT",
+                    quality="MEDIUM",
+                    expected_project_revision=project.row_version,
+                    user_confirmed_generation=True,
+                ),
+                f"conversation:{idempotency_key}",
+            )
+            conversation = service.attach_conversation_generation(
+                user, project_id, job.id
+            )
+        except Exception:
+            service.mark_conversation_generation_failed(user, project_id)
+            raise
+    return CreationConversationGenerationPublic(
+        conversation=conversation,
+        generation=job,
+    )
 
 
 @router.patch(
@@ -557,3 +722,15 @@ def submit_creation(
     service: CreationService = Depends(get_creation_service),
 ) -> PublicationPublic:
     return service.submit(user, project_id, payload, idempotency_key)
+
+
+@router.get(
+    "/creation-projects/{project_id}/conference-category-suggestions",
+    response_model=ConferenceCategorySuggestionListPublic,
+)
+def suggest_conference_categories(
+    project_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    service: CreationService = Depends(get_creation_service),
+) -> ConferenceCategorySuggestionListPublic:
+    return service.suggest_conference_categories(user, project_id)

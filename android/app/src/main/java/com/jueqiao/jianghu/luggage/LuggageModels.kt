@@ -373,6 +373,7 @@ data class PublicationDto(
     @SerializedName("creation_version_id") val creationVersionId: String,
     val status: String,
     val visibility: String,
+    @SerializedName("conference_category") val conferenceCategory: String?,
     @SerializedName("classroom_id") val classroomId: String?,
     @SerializedName("return_reason_summary") val returnReasonSummary: String?,
     @SerializedName("submitted_at") val submittedAt: String,
@@ -410,6 +411,7 @@ data class CreationProjectDto(
     @SerializedName("display_status") val displayStatus: String,
     @SerializedName("latest_publication") val latestPublication: PublicationDto?,
     @SerializedName("row_version") val rowVersion: Int,
+    @SerializedName("created_at") val createdAt: String?,
     @SerializedName("updated_at") val updatedAt: String,
 )
 
@@ -441,11 +443,20 @@ data class ConferenceWorkDto(
     @SerializedName("version_number") val versionNumber: Int,
     @SerializedName("published_at") val publishedAt: String,
     @SerializedName("preview_url") val previewUrl: String?,
+    @SerializedName("preview_mime_type") val previewMimeType: String?,
+    @SerializedName("preview_duration_ms") val previewDurationMs: Int?,
     @SerializedName("ai_assisted") val aiAssisted: Boolean,
     @SerializedName("learning_summary") val learningSummary: String?,
     @SerializedName("related_manuals") val relatedManuals: List<ConferenceRelatedManualDto>,
     @SerializedName("learning_card") val learningCard: ConferenceLearningCardSummaryDto?,
     val provenance: ConferenceProvenanceSummaryDto?,
+    @SerializedName("conference_category") val conferenceCategory: String?,
+    @SerializedName("is_liked") val isLiked: Boolean,
+    @SerializedName("like_count") val likeCount: Int,
+    @SerializedName("is_collected") val isCollected: Boolean,
+    @SerializedName("collection_count") val collectionCount: Int,
+    @SerializedName("review_count") val reviewCount: Int,
+    @SerializedName("co_create_request_status") val coCreateRequestStatus: String?,
 )
 
 data class ConferenceRelatedManualDto(
@@ -532,6 +543,11 @@ data class ConferenceCollectionDto(
 
 data class ConferenceCollectionListDto(val items: List<ConferenceCollectionDto>)
 
+data class ConferenceLikeDto(
+    @SerializedName("publication_id") val publicationId: String,
+    @SerializedName("liked_at") val likedAt: String,
+)
+
 data class ConferenceDerivativeRequestCreateDto(
     @SerializedName("source_publication_id") val sourcePublicationId: String,
     @SerializedName("requested_use") val requestedUse: String,
@@ -566,11 +582,26 @@ data class ConferenceDerivativeRequestListDto(
     val items: List<ConferenceDerivativeRequestDto>,
 )
 
+data class ConferenceMatchOpponentDto(
+    val alias: String,
+    @SerializedName("avatar_key") val avatarKey: String,
+    @SerializedName("age_band_label") val ageBandLabel: String,
+    @SerializedName("stage_label") val stageLabel: String,
+)
+
 data class ConferenceMatchQueueDto(
     @SerializedName("queue_id") val queueId: String?,
     val status: String,
+    val phase: String,
     @SerializedName("manual_page_id") val manualPageId: String?,
+    @SerializedName("manual_title") val manualTitle: String?,
+    @SerializedName("manual_page_no") val manualPageNo: Int?,
     @SerializedName("match_id") val matchId: String?,
+    @SerializedName("match_code") val matchCode: String?,
+    @SerializedName("pool_size") val poolSize: Int,
+    @SerializedName("wait_seconds") val waitSeconds: Int,
+    @SerializedName("server_time") val serverTime: String,
+    @SerializedName("anonymous_opponent") val anonymousOpponent: ConferenceMatchOpponentDto?,
     @SerializedName("joined_at") val joinedAt: String?,
     @SerializedName("expires_at") val expiresAt: String?,
     @SerializedName("updated_at") val updatedAt: String?,
@@ -578,6 +609,38 @@ data class ConferenceMatchQueueDto(
 
 data class ConferenceMatchJoinDto(
     @SerializedName("manual_page_id") val manualPageId: String,
+)
+
+data class ConferenceMatchRecordSummaryDto(
+    val total: Int,
+    val wins: Int,
+    val ties: Int,
+    @SerializedName("pending_reflections") val pendingReflections: Int,
+)
+
+data class ConferenceMatchRecordDto(
+    @SerializedName("match_id") val matchId: String,
+    @SerializedName("manual_id") val manualId: String,
+    @SerializedName("manual_title") val manualTitle: String,
+    @SerializedName("manual_page_no") val manualPageNo: Int,
+    val status: String,
+    val outcome: String,
+    @SerializedName("my_score") val myScore: Double?,
+    @SerializedName("opponent_score") val opponentScore: Double?,
+    @SerializedName("anonymous_opponent") val anonymousOpponent: ConferenceMatchOpponentDto,
+    @SerializedName("judgment_status") val judgmentStatus: String,
+    @SerializedName("reflection_status") val reflectionStatus: String,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("ended_at") val endedAt: String?,
+)
+
+data class ConferenceMatchRecordListDto(
+    val items: List<ConferenceMatchRecordDto>,
+    val summary: ConferenceMatchRecordSummaryDto,
+    val page: Int,
+    val limit: Int,
+    val total: Int,
+    @SerializedName("has_more") val hasMore: Boolean,
 )
 
 data class ConferenceMatchReportCreateDto(
@@ -739,6 +802,57 @@ data class CreationIntentAnalysisDto(
     @SerializedName("safety_flags") val safetyFlags: List<String>,
     val confidence: String,
     @SerializedName("expires_at") val expiresAt: String,
+)
+
+data class CreationConversationStartDto(
+    val idea: String,
+    val title: String? = null,
+    @SerializedName("attachment_asset_ids") val attachmentAssetIds: List<String> = emptyList(),
+    @SerializedName("manual_page_ids") val manualPageIds: List<String> = emptyList(),
+    @SerializedName("resource_links") val resourceLinks: List<String> = emptyList(),
+    @SerializedName("derivative_authorization_id") val derivativeAuthorizationId: String? = null,
+)
+
+data class CreationConversationMessageCreateDto(val text: String)
+
+data class CreationConversationActionDto(
+    @SerializedName("expected_revision") val expectedRevision: Int,
+)
+
+data class CreationConversationGenerateDto(
+    @SerializedName("expected_revision") val expectedRevision: Int,
+    @SerializedName("user_confirmed_generation") val userConfirmedGeneration: Boolean = true,
+)
+
+data class CreationConversationMessageDto(
+    val id: String,
+    @SerializedName("project_id") val projectId: String,
+    val role: String,
+    val kind: String,
+    val content: String,
+    val decision: String,
+    @SerializedName("in_reply_to_id") val inReplyToId: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class CreationConversationDto(
+    val project: CreationProjectDto,
+    val status: String,
+    @SerializedName("initial_idea") val initialIdea: String,
+    @SerializedName("attachment_asset_ids") val attachmentAssetIds: List<String>,
+    @SerializedName("attachment_names") val attachmentNames: List<String>,
+    @SerializedName("manual_page_ids") val manualPageIds: List<String>,
+    @SerializedName("manual_titles") val manualTitles: List<String>,
+    @SerializedName("derivative_source_title") val derivativeSourceTitle: String?,
+    @SerializedName("plan_summary") val planSummary: String?,
+    val messages: List<CreationConversationMessageDto>,
+    @SerializedName("draft_version_ids") val draftVersionIds: List<String>,
+    @SerializedName("saved_version_ids") val savedVersionIds: List<String>,
+    @SerializedName("active_generation_job_id") val activeGenerationJobId: String?,
+    @SerializedName("result_version_id") val resultVersionId: String?,
+    @SerializedName("row_version") val rowVersion: Int,
+    @SerializedName("started_at") val startedAt: String,
+    @SerializedName("updated_at") val updatedAt: String,
 )
 
 data class CreationMethodPutDto(
@@ -1006,6 +1120,11 @@ data class ImageGenerationJobDto(
     @SerializedName("row_version") val rowVersion: Int,
 )
 
+data class CreationConversationGenerationDto(
+    val conversation: CreationConversationDto,
+    val generation: ImageGenerationJobDto,
+)
+
 data class ImageGenerationJobListDto(
     val enabled: Boolean,
     @SerializedName("provider_ref") val providerRef: String,
@@ -1165,6 +1284,17 @@ data class CreationSubmissionCreateDto(
     @SerializedName("creation_version_id") val creationVersionId: String,
     val visibility: String,
     @SerializedName("target_classroom_id") val targetClassroomId: String? = null,
+    @SerializedName("conference_category") val conferenceCategory: String? = null,
+)
+
+data class ConferenceCategorySuggestionDto(
+    val category: String,
+    val confidence: Double,
+    val reason: String,
+)
+
+data class ConferenceCategorySuggestionListDto(
+    val items: List<ConferenceCategorySuggestionDto>,
 )
 
 data class ClassroomDto(
@@ -1218,6 +1348,7 @@ data class PublicationFeedPageDto(
 
 data class CreationDetailBundle(
     val project: CreationProjectDto,
+    val conversation: CreationConversationDto,
     val versions: List<CreationVersionDto>,
     val method: CreationMethodDto?,
     val stageEvents: List<CreationStageEventDto>,

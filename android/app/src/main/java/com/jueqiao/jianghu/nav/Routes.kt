@@ -89,9 +89,26 @@ object Routes {
     const val DahuiCollections = "dahui/collections"
     const val DahuiRequests = "dahui/requests"
     const val DahuiLetters = "dahui/letters"
+    const val DahuiRecords = "dahui/records"
     const val DahuiMatch = "dahui/match"
     const val DahuiMatchPattern = "dahui/match/{matchId}"
     fun dahuiMatch(matchId: String): String = "dahui/match/$matchId"
+
+    fun conferenceLetterDestination(
+        navigationTarget: String?,
+        navigationId: String?,
+        actionType: String?,
+        actionId: String?,
+    ): String? = when (navigationTarget) {
+        "CONFERENCE_WORK" -> navigationId?.let(::dahuiWork)
+        "CONFERENCE_MATCH" -> navigationId?.let(::dahuiMatch)
+        "DERIVATIVE_REQUESTS" -> DahuiRequests
+        else -> when (actionType) {
+            "CONFERENCE_MATCH" -> actionId?.let(::dahuiMatch)
+            "DERIVATIVE_REQUEST", "DERIVATIVE_AUTHORIZATION" -> DahuiRequests
+            else -> null
+        }
+    }
     const val Gongfang  = "gongfang"
     const val ShengtuProjectPattern = "shengtu/project/{projectId}"
     fun shengtuProject(projectId: String): String = "shengtu/project/$projectId"

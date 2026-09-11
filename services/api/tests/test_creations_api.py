@@ -107,6 +107,29 @@ def create_text_version(
     return response.json()
 
 
+def test_conference_category_suggestions_are_ranked_for_author_choice(
+    seeded_client: TestClient,
+) -> None:
+    headers = register(seeded_client, "13940000991")
+    project = create_project(seeded_client, headers)
+
+    response = seeded_client.get(
+        f"/v1/creation-projects/{project['id']}/conference-category-suggestions",
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    items = response.json()["items"]
+    assert [item["category"] for item in items] == [
+        "ART",
+        "SCIENCE",
+        "LANGUAGE",
+        "MATH",
+    ]
+    assert items[0]["confidence"] > items[-1]["confidence"]
+    assert all(item["reason"] for item in items)
+
+
 def prepare_project_for_production(
     client: TestClient,
     headers: dict[str, str],
@@ -228,6 +251,7 @@ def latest_user_id(client: TestClient) -> uuid.UUID:
 def add_ready_creation_asset(client: TestClient, user_id: uuid.UUID) -> uuid.UUID:
     upload_id = uuid.uuid4()
     asset_id = uuid.uuid4()
+    private_object_key = f"users/{user_id}/assets/{asset_id}/sanitized.png"
     with client.app.state.session_factory() as db:
         db.add(
             UploadSession(
@@ -257,7 +281,7 @@ def add_ready_creation_asset(client: TestClient, user_id: uuid.UUID) -> uuid.UUI
                 byte_size=8,
                 sha256="0" * 64,
                 quarantine_object_key=f"users/{user_id}/uploads/{upload_id}.png",
-                private_object_key=f"users/{user_id}/assets/{asset_id}/sanitized.png",
+                private_object_key=private_object_key,
                 status=MediaAssetStatus.READY,
                 width=1,
                 height=1,
@@ -267,6 +291,13 @@ def add_ready_creation_asset(client: TestClient, user_id: uuid.UUID) -> uuid.UUI
             )
         )
         db.commit()
+    rendered = io.BytesIO()
+    Image.new("RGB", (2, 2), "white").save(rendered, format="PNG")
+    client.app.state.object_store.write_private(
+        private_object_key,
+        rendered.getvalue(),
+        content_type="image/png",
+    )
     return asset_id
 
 
@@ -1601,3 +1632,146 @@ def test_editor_revision_persists_transforms_compares_versions_and_marks_ai_modi
         if item["item_type"] == "AI_CONTRIBUTION"
     )
     assert ai_item["user_modified"] is True
+
+
+def test_conversation_driven_creation_can_revise_generate_and_save(
+    seeded_client: TestClient,
+) -> None:
+    headers = register(seeded_client, "13940000036")
+    user_id = latest_user_id(seeded_client)
+    asset_id = add_ready_creation_asset(seeded_client, user_id)
+    manual = seeded_client.get("/v1/manuals?limit=1", headers=headers).json()["items"][0]
+    with seeded_client.app.state.session_factory() as db:
+        db.add(
+            ManualProgress(
+                user_id=user_id,
+                manual_page_id=uuid.UUID(manual["id"]),
+                state=ManualProgressState.LEARNED,
+                learned_at=utcnow(),
+            )
+        )
+        db.commit()
+    started = seeded_client.post(
+        "/v1/creation-conversations:start",
+        headers={**headers, "Idempotency-Key": "conversation-start-0001"},
+        json={
+            "idea": "画一只在荷塘修理木鸟的小熊猫",
+            "attachment_asset_ids": [str(asset_id)],
+            "manual_page_ids": [manual["id"]],
+        },
+    )
+    assert started.status_code == 201, started.text
+    conversation = started.json()
+    project_id = conversation["project"]["id"]
+    assert conversation["project"]["current_stage"] == "DRAFT"
+    assert [item["role"] for item in conversation["messages"]] == [
+        "STUDENT",
+        "COACH",
+    ]
+    assert conversation["messages"][-1]["decision"] == "PENDING"
+    assert conversation["attachment_names"] == ["竹影草图.png"]
+    assert conversation["manual_titles"] == [manual["title"]]
+    assert "竹影草图.png" in conversation["messages"][-1]["content"]
+    assert manual["title"] in conversation["messages"][-1]["content"]
+
+    replay = seeded_client.post(
+        "/v1/creation-conversations:start",
+        headers={**headers, "Idempotency-Key": "conversation-start-0001"},
+        json={
+            "idea": "画一只在荷塘修理木鸟的小熊猫",
+            "attachment_asset_ids": [str(asset_id)],
+            "manual_page_ids": [manual["id"]],
+        },
+    )
+    assert replay.status_code == 201, replay.text
+    assert replay.json()["project"]["id"] == project_id
+
+    revised = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation/messages",
+        headers={**headers, "Idempotency-Key": "conversation-message-0001"},
+        json={"text": "背景改成傍晚，木鸟要更可爱"},
+    )
+    assert revised.status_code == 201, revised.text
+    conversation = revised.json()
+    assert conversation["messages"][-3]["decision"] == "REPLACED"
+    suggestion = conversation["messages"][-1]
+    assert suggestion["decision"] == "PENDING"
+
+    accepted = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation/suggestions/{suggestion['id']}:accept",
+        headers=headers,
+        json={"expected_revision": conversation["row_version"]},
+    )
+    assert accepted.status_code == 200, accepted.text
+    conversation = accepted.json()
+    accepted_message = next(
+        item for item in conversation["messages"] if item["id"] == suggestion["id"]
+    )
+    assert accepted_message["decision"] == "ACCEPTED"
+    assert conversation["plan_summary"]
+
+    queued = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation:generate",
+        headers={
+            **headers,
+            "Idempotency-Key": f"android-convgen-{uuid.uuid4()}",
+        },
+        json={
+            "expected_revision": conversation["row_version"],
+            "user_confirmed_generation": True,
+        },
+    )
+    assert queued.status_code == 202, queued.text
+    generation = queued.json()["generation"]
+    assert generation["prompt_summary"] == "创作方案已由教练整理"
+    assert "荷塘" not in generation["prompt_summary"]
+
+    process_image_generation(seeded_client, generation["id"])
+    ready = seeded_client.get(
+        f"/v1/creation-projects/{project_id}/conversation", headers=headers
+    )
+    assert ready.status_code == 200, ready.text
+    conversation = ready.json()
+    assert conversation["status"] == "RESULT_READY"
+    assert conversation["result_version_id"]
+    project_after_checks = seeded_client.get(
+        f"/v1/creation-projects/{project_id}", headers=headers
+    ).json()
+    assert project_after_checks["current_stage"] == "SEAL"
+    automatic_tests = seeded_client.get(
+        f"/v1/creation-projects/{project_id}/test-records", headers=headers
+    ).json()["items"]
+    assert automatic_tests[0]["creation_version_id"] == conversation["result_version_id"]
+    assert automatic_tests[0]["result"] == "PASSED"
+
+    adjusted = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation/messages",
+        headers={**headers, "Idempotency-Key": "conversation-message-0002"},
+        json={"text": "把天空改成浅紫色，保留傍晚的感觉"},
+    )
+    assert adjusted.status_code == 201, adjusted.text
+    conversation = adjusted.json()
+    assert conversation["status"] == "DIALOGUE"
+    assert conversation["result_version_id"] == ready.json()["result_version_id"]
+    second_queue = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation:generate",
+        headers={**headers, "Idempotency-Key": "conversation-generate-0002"},
+        json={
+            "expected_revision": conversation["row_version"],
+            "user_confirmed_generation": True,
+        },
+    )
+    assert second_queue.status_code == 202, second_queue.text
+    second_job = second_queue.json()["generation"]
+    process_image_generation(seeded_client, second_job["id"])
+    conversation = seeded_client.get(
+        f"/v1/creation-projects/{project_id}/conversation", headers=headers
+    ).json()
+    saved = seeded_client.post(
+        f"/v1/creation-projects/{project_id}/conversation:save-result",
+        headers=headers,
+        json={"expected_revision": conversation["row_version"]},
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["status"] == "SAVED"
+    assert saved.json()["result_version_id"] in saved.json()["saved_version_ids"]

@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.domains.catalog.models import ManualPage, ManualVolume
 from app.domains.creations.models import (
+    ConferenceCategory,
     CreationMediaType,
     CreationProject,
     CreationStage,
@@ -20,6 +21,15 @@ from app.domains.moderation.models import (
     DomainAuditEvent,
     ModerationCase,
     ModerationCaseStatus,
+)
+from app.core.security import utcnow
+from app.domains.conference.models import (
+    ConferenceMatch,
+    ConferenceMatchEndReason,
+    ConferenceMatchEvaluation,
+    ConferenceMatchEvaluationKind,
+    ConferenceMatchReflection,
+    ConferenceMatchStatus,
 )
 from app.domains.media.models import OutboxEvent, OutboxStatus
 from app.domains.conference.judge import DevelopmentConferenceJudge
@@ -51,7 +61,13 @@ def register(client: TestClient, phone: str, age_band: str = "AGE_14_TO_17") -> 
     return body, {"Authorization": f"Bearer {body['tokens']['access_token']}"}
 
 
-def create_published_community_work(app: FastAPI, owner_id: str, *, title: str) -> tuple[str, str]:
+def create_published_community_work(
+    app: FastAPI,
+    owner_id: str,
+    *,
+    title: str,
+    category: ConferenceCategory = ConferenceCategory.ART,
+) -> tuple[str, str]:
     with app.state.session_factory() as db:
         project = CreationProject(
             owner_user_id=uuid.UUID(owner_id),
@@ -82,6 +98,7 @@ def create_published_community_work(app: FastAPI, owner_id: str, *, title: str) 
             owner_user_id=uuid.UUID(owner_id),
             status=PublicationStatus.PENDING_HUMAN_REVIEW,
             visibility=CreationVisibility.COMMUNITY,
+            conference_category=category,
             idempotency_key=f"conference-{uuid.uuid4()}",
             request_fingerprint="a" * 64,
         )
@@ -193,10 +210,43 @@ def test_conference_feed_is_hard_capped_at_five(client: TestClient, app: FastAPI
     assert detail.status_code == 200, detail.text
     assert detail.json()["project_id"] == feed.json()["items"][0]["project_id"]
     assert detail.json()["is_owner"] is False
+    assert detail.json()["conference_category"] == "ART"
+    assert detail.json()["is_collected"] is False
+    assert detail.json()["review_count"] == 0
     assert client.get("/v1/conference/feed", headers=author_headers).json()["items"][0]["is_owner"] is True
     assert len(
         client.get("/v1/conference/feed?limit=99", headers=viewer_headers).json()["items"]
     ) == 5
+
+    mine = client.get("/v1/conference/me/works", headers=author_headers)
+    assert mine.status_code == 200, mine.text
+    assert len(mine.json()["items"]) == 6
+    assert all(item["is_owner"] for item in mine.json()["items"])
+
+
+def test_conference_feed_filters_author_selected_category(
+    client: TestClient, app: FastAPI
+) -> None:
+    author, _ = register(client, "13981500001")
+    _, viewer_headers = register(client, "13981500002")
+    _, art_case = create_published_community_work(
+        app,
+        author["user"]["id"],
+        title="光影插画",
+        category=ConferenceCategory.ART,
+    )
+    _, science_case = create_published_community_work(
+        app,
+        author["user"]["id"],
+        title="机关结构实验",
+        category=ConferenceCategory.SCIENCE,
+    )
+    publish(client, art_case)
+    publish(client, science_case)
+
+    filtered = client.get("/v1/conference/feed?category=SCIENCE", headers=viewer_headers)
+    assert filtered.status_code == 200, filtered.text
+    assert [item["title"] for item in filtered.json()["items"]] == ["机关结构实验"]
 
 
 def test_conference_review_collection_and_derivative_withdrawal(
@@ -234,8 +284,35 @@ def test_conference_review_collection_and_derivative_withdrawal(
         f"/v1/conference/collections/{publication_id}", headers=reviewer_headers
     )
     assert saved.status_code == 200, saved.text
+    liked = client.put(
+        f"/v1/conference/likes/{publication_id}", headers=reviewer_headers
+    )
+    assert liked.status_code == 200, liked.text
+    assert liked.json()["publication_id"] == publication_id
+    assert client.put(
+        f"/v1/conference/likes/{publication_id}", headers=reviewer_headers
+    ).status_code == 200
     assert client.get("/v1/conference/me/collections", headers=author_headers).json()["items"] == []
     assert len(client.get("/v1/conference/me/collections", headers=reviewer_headers).json()["items"]) == 1
+
+    live_detail = client.get(
+        f"/v1/conference/publications/{publication_id}", headers=reviewer_headers
+    )
+    assert live_detail.status_code == 200, live_detail.text
+    assert live_detail.json()["is_liked"] is True
+    assert live_detail.json()["like_count"] == 1
+    assert live_detail.json()["is_collected"] is True
+    assert live_detail.json()["collection_count"] == 1
+    assert live_detail.json()["review_count"] == 1
+
+    assert client.delete(
+        f"/v1/conference/likes/{publication_id}", headers=reviewer_headers
+    ).status_code == 204
+    after_unlike = client.get(
+        f"/v1/conference/publications/{publication_id}", headers=reviewer_headers
+    ).json()
+    assert after_unlike["is_liked"] is False
+    assert after_unlike["like_count"] == 0
 
     requested = client.post(
         "/v1/conference/derivative-requests",
@@ -503,6 +580,12 @@ def test_conference_match_is_anonymous_and_scoped_to_age_and_manual(
     )
     assert waiting.status_code == 200, waiting.text
     assert waiting.json()["status"] == "WAITING"
+    assert waiting.json()["phase"] == "FILTERING"
+    assert waiting.json()["pool_size"] == 1
+    assert waiting.json()["wait_seconds"] >= 0
+    assert waiting.json()["manual_title"]
+    assert waiting.json()["manual_page_no"] == 1
+    assert waiting.json()["anonymous_opponent"] is None
     assert waiting.json()["expires_at"] is not None
     adult_waiting = client.post(
         "/v1/conference/match-queue",
@@ -518,8 +601,17 @@ def test_conference_match_is_anonymous_and_scoped_to_age_and_manual(
     )
     assert matched.status_code == 200, matched.text
     assert matched.json()["status"] == "MATCHED"
+    assert matched.json()["phase"] == "LOCKED"
     assert matched.json()["match_id"]
+    assert matched.json()["match_code"].startswith("M-")
+    assert matched.json()["anonymous_opponent"] == {
+        "alias": "竹影同门",
+        "avatar_key": "PANDA_BAMBOO",
+        "age_band_label": "同龄",
+        "stage_label": "同阶段",
+    }
     assert "nickname" not in matched.json()
+    assert "user_id" not in matched.json()["anonymous_opponent"]
 
     report = client.post(
         f"/v1/conference/matches/{matched.json()['match_id']}/reports",
@@ -566,6 +658,145 @@ def test_conference_match_is_anonymous_and_scoped_to_age_and_manual(
     )
     assert repeated.status_code == 409
     assert repeated.json()["error"]["code"] == "MATCH_REPORT_ALREADY_DECIDED"
+
+
+def test_conference_match_records_are_private_filterable_and_paginated(
+    client: TestClient, app: FastAPI
+) -> None:
+    first, first_headers = register(client, "13983500001")
+    second, _ = register(client, "13983500002")
+    _, outsider_headers = register(client, "13983500003")
+    manual_page_id = uuid.UUID(create_manual_page(app))
+    first_id = uuid.UUID(first["user"]["id"])
+    second_id = uuid.UUID(second["user"]["id"])
+    now = utcnow()
+
+    with app.state.session_factory() as db:
+        matches = [
+            ConferenceMatch(
+                id=uuid.uuid4(),
+                manual_page_id=manual_page_id,
+                age_band="AGE_14_TO_17",
+                participant_a_user_id=first_id,
+                participant_b_user_id=second_id,
+                status=ConferenceMatchStatus.ENDED,
+                end_reason=ConferenceMatchEndReason.COMPLETED,
+                winner_user_id=first_id,
+                question_count=3,
+                matched_at=now,
+                ended_at=now,
+            ),
+            ConferenceMatch(
+                id=uuid.uuid4(),
+                manual_page_id=manual_page_id,
+                age_band="AGE_14_TO_17",
+                participant_a_user_id=first_id,
+                participant_b_user_id=second_id,
+                status=ConferenceMatchStatus.ENDED,
+                end_reason=ConferenceMatchEndReason.COMPLETED,
+                winner_user_id=None,
+                question_count=3,
+                matched_at=now,
+                ended_at=now,
+            ),
+            ConferenceMatch(
+                id=uuid.uuid4(),
+                manual_page_id=manual_page_id,
+                age_band="AGE_14_TO_17",
+                participant_a_user_id=first_id,
+                participant_b_user_id=second_id,
+                status=ConferenceMatchStatus.ENDED,
+                end_reason=ConferenceMatchEndReason.COMPLETED,
+                winner_user_id=second_id,
+                question_count=3,
+                matched_at=now,
+                ended_at=now,
+            ),
+        ]
+        db.add_all(matches)
+        db.flush()
+        scores = ((90.0, 80.0), (88.0, 88.0), (70.0, 95.0))
+        for match, (first_score, second_score) in zip(matches, scores, strict=True):
+            for subject_id, score in ((first_id, first_score), (second_id, second_score)):
+                db.add(
+                    ConferenceMatchEvaluation(
+                        id=uuid.uuid4(),
+                        match_id=match.id,
+                        subject_user_id=subject_id,
+                        evaluator_user_id=None,
+                        kind=ConferenceMatchEvaluationKind.AI,
+                        score=score,
+                        dimension_scores={"理解": score},
+                        summary="大会匿名评审已经完成。",
+                        strengths=["理由清楚"],
+                        improvements=["补充边界"],
+                        evaluator_reference="records-test",
+                    )
+                )
+        db.add(
+            ConferenceMatchReflection(
+                id=uuid.uuid4(),
+                match_id=matches[0].id,
+                user_id=first_id,
+                learned="学会了复盘。",
+                next_improvement="下次补充依据。",
+            )
+        )
+        db.commit()
+
+    first_page = client.get(
+        "/v1/conference/matches",
+        headers=first_headers,
+        params={"page": 1, "limit": 2},
+    )
+    assert first_page.status_code == 200, first_page.text
+    payload = first_page.json()
+    assert len(payload["items"]) == 2
+    assert payload["page"] == 1
+    assert payload["limit"] == 2
+    assert payload["total"] == 3
+    assert payload["has_more"] is True
+    assert payload["summary"] == {
+        "total": 3,
+        "wins": 1,
+        "ties": 1,
+        "pending_reflections": 2,
+    }
+    assert all(item["anonymous_opponent"]["alias"] == "竹影同门" for item in payload["items"])
+    assert "participant_a_user_id" not in first_page.text
+    assert first["user"]["id"] not in first_page.text
+    assert second["user"]["id"] not in first_page.text
+
+    second_page = client.get(
+        "/v1/conference/matches",
+        headers=first_headers,
+        params={"page": 2, "limit": 2},
+    ).json()
+    assert len(second_page["items"]) == 1
+    assert second_page["has_more"] is False
+
+    wins = client.get(
+        "/v1/conference/matches",
+        headers=first_headers,
+        params={"outcome": "WIN"},
+    ).json()
+    assert [item["outcome"] for item in wins["items"]] == ["WIN"]
+    completed_reflections = client.get(
+        "/v1/conference/matches",
+        headers=first_headers,
+        params={"reflection_status": "COMPLETED"},
+    ).json()
+    assert len(completed_reflections["items"]) == 1
+    assert completed_reflections["items"][0]["reflection_status"] == "COMPLETED"
+    pending_reflections = client.get(
+        "/v1/conference/matches",
+        headers=first_headers,
+        params={"reflection_status": "PENDING"},
+    ).json()
+    assert len(pending_reflections["items"]) == 2
+    outsider = client.get("/v1/conference/matches", headers=outsider_headers).json()
+    assert outsider["items"] == []
+    assert outsider["summary"]["total"] == 0
 
 
 def test_conference_match_learning_loop_evaluations_reflection_and_letters(

@@ -135,6 +135,7 @@ class MediaAsset(Base):
     )
     width: Mapped[int | None] = mapped_column(Integer)
     height: Mapped[int | None] = mapped_column(Integer)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
     metadata_stripped: Mapped[bool | None] = mapped_column()
     aigc_detected: Mapped[bool | None] = mapped_column()
     rejection_code: Mapped[str | None] = mapped_column(String(80))

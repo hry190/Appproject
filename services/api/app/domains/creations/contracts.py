@@ -7,7 +7,11 @@ from enum import Enum
 from pydantic import Field, field_validator, model_validator
 
 from app.domains.creations.models import (
+    ConferenceCategory,
     CreationChangeAction,
+    CreationConversationMessageKind,
+    CreationConversationRole,
+    CreationConversationStatus,
     CreationExportFormat,
     CreationExportJobStatus,
     CreationIssueSeverity,
@@ -16,6 +20,7 @@ from app.domains.creations.models import (
     CreationProjectStatus,
     CreationSealStatus,
     CreationStage,
+    CreationSuggestionDecision,
     CreationTestResult,
     CreationToolCallStatus,
     CreationToolKind,
@@ -141,6 +146,72 @@ class CreationIntentAnalysisPublic(ContractModel):
     expires_at: datetime
 
 
+class CreationConversationStart(ContractModel):
+    idea: str = Field(min_length=2, max_length=500)
+    title: str | None = Field(default=None, max_length=100)
+    attachment_asset_ids: list[uuid.UUID] = Field(default_factory=list, max_length=10)
+    manual_page_ids: list[uuid.UUID] = Field(default_factory=list, max_length=10)
+    resource_links: list[str] = Field(default_factory=list, max_length=20)
+    derivative_authorization_id: uuid.UUID | None = None
+
+    @field_validator("idea")
+    @classmethod
+    def conversation_idea_must_not_be_blank(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if len(value) < 2:
+            raise ValueError("idea must contain at least two characters")
+        return value
+
+    @field_validator("attachment_asset_ids", "manual_page_ids")
+    @classmethod
+    def conversation_source_ids_must_be_unique(
+        cls, value: list[uuid.UUID]
+    ) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("source IDs must be unique")
+        return value
+
+
+class CreationConversationMessageCreate(ContractModel):
+    text: str = Field(min_length=2, max_length=1000)
+
+    @field_validator("text")
+    @classmethod
+    def conversation_message_must_not_be_blank(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if len(value) < 2:
+            raise ValueError("message must contain at least two characters")
+        return value
+
+
+class CreationConversationMessagePublic(ContractModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    role: CreationConversationRole
+    kind: CreationConversationMessageKind
+    content: str
+    decision: CreationSuggestionDecision
+    in_reply_to_id: uuid.UUID | None
+    created_at: datetime
+
+
+class CreationConversationGenerate(ContractModel):
+    expected_revision: int = Field(ge=1)
+    user_confirmed_generation: bool
+
+    @model_validator(mode="after")
+    def conversation_generation_requires_confirmation(
+        self,
+    ) -> "CreationConversationGenerate":
+        if not self.user_confirmed_generation:
+            raise ValueError("generation requires explicit user confirmation")
+        return self
+
+
+class CreationConversationResultAction(ContractModel):
+    expected_revision: int = Field(ge=1)
+
+
 class CreationProjectPatch(ContractModel):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
@@ -188,6 +259,7 @@ class PublicationPublic(ContractModel):
     creation_version_id: uuid.UUID
     status: PublicationStatus
     visibility: CreationVisibility
+    conference_category: ConferenceCategory | None
     classroom_id: uuid.UUID | None = None
     return_reason_code: str | None
     return_reason_summary: str | None
@@ -478,6 +550,31 @@ class ImageGenerationJobPublic(ContractModel):
     updated_at: datetime
 
 
+class CreationConversationPublic(ContractModel):
+    project: CreationProjectPublic
+    status: CreationConversationStatus
+    initial_idea: str
+    attachment_asset_ids: list[uuid.UUID]
+    attachment_names: list[str]
+    manual_page_ids: list[uuid.UUID]
+    manual_titles: list[str]
+    derivative_source_title: str | None
+    plan_summary: str | None
+    messages: list[CreationConversationMessagePublic]
+    draft_version_ids: list[uuid.UUID]
+    saved_version_ids: list[uuid.UUID]
+    active_generation_job_id: uuid.UUID | None
+    result_version_id: uuid.UUID | None
+    row_version: int = Field(ge=1)
+    started_at: datetime
+    updated_at: datetime
+
+
+class CreationConversationGenerationPublic(ContractModel):
+    conversation: CreationConversationPublic
+    generation: ImageGenerationJobPublic
+
+
 class ImageGenerationJobListPublic(ContractModel):
     enabled: bool
     provider_ref: str
@@ -639,6 +736,17 @@ class CreationSubmissionCreate(ContractModel):
     creation_version_id: uuid.UUID
     visibility: CreationVisibility | None = None
     target_classroom_id: uuid.UUID | None = None
+    conference_category: ConferenceCategory | None = None
+
+
+class ConferenceCategorySuggestionPublic(ContractModel):
+    category: ConferenceCategory
+    confidence: float = Field(ge=0, le=1)
+    reason: str
+
+
+class ConferenceCategorySuggestionListPublic(ContractModel):
+    items: list[ConferenceCategorySuggestionPublic]
 
 
 class CreationChangeLogPublic(ContractModel):

@@ -17,6 +17,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -900,43 +902,76 @@ private fun ArchiveDetailContent(
             detail == null -> ArchiveDetailMessage("这幅作品还没有可展示的记录", Modifier.fillMaxSize())
             else -> {
                 val projectTitle = detail.project.title.ifBlank { work?.title ?: "当前作品" }
+                val conversation = detail.conversation
                 val lines = when (entry) {
                     CreationArchiveEntry.OriginalRecords -> {
-                        val description = detail.project.description
-                            ?: detail.method?.goal
-                            ?: work?.description
-                            ?: "暂无作品说明"
-                        listOf(
-                            projectTitle,
-                            "创作目标：$description",
-                            "当前阶段：${archiveProjectStatusLabel(detail.project)}",
-                        )
+                        buildList {
+                            add(projectTitle)
+                            add("我的最初想法：${conversation.initialIdea}")
+                            if (conversation.attachmentNames.isNotEmpty()) {
+                                add("带入内容：${conversation.attachmentNames.joinToString("、")}")
+                            }
+                            if (conversation.manualTitles.isNotEmpty()) {
+                                add("参考秘籍：${conversation.manualTitles.joinToString("、")}")
+                            }
+                            conversation.derivativeSourceTitle?.takeIf(String::isNotBlank)?.let {
+                                add("同门授权：$it")
+                            }
+                            add("开始时间：${conversation.startedAt.take(10)}")
+                        }
                     }
                     CreationArchiveEntry.VersionRecords -> {
-                        val versions = detail.versions
+                        val draftIds = conversation.draftVersionIds.toSet()
+                        val savedIds = conversation.savedVersionIds.toSet()
+                        val recordedVersions = detail.versions
+                            .filter { it.id in draftIds || it.id in savedIds }
                             .sortedBy { it.versionNumber }
                             .takeLast(4)
-                            .map { version ->
-                                "第 ${version.versionNumber} 版 · ${version.changeSummary.ifBlank { "已保存版本" }}"
+                            .flatMap { version ->
+                                val label = if (version.id in savedIds) "确认作品" else "交流草稿"
+                                val summary = version.modificationReason
+                                    ?.takeIf(String::isNotBlank)
+                                    ?: version.changeSummary
+                                listOf(
+                                    "第 ${version.versionNumber} 版 · $label · ${version.createdAt.take(10)}",
+                                    "这次调整：$summary",
+                                )
                             }
-                        listOf(projectTitle) + versions.ifEmpty { listOf("暂无版本记录") }
+                        listOf(projectTitle) + recordedVersions.ifEmpty { listOf("还没有保存过草稿或作品") }
                     }
                     CreationArchiveEntry.CoachRecords -> {
-                        val calls = detail.toolCalls
-                            .sortedBy { it.proposedAt }
-                            .takeLast(4)
-                            .map { call ->
-                                "${call.proposedAt.take(16)} · ${call.effectSummary.ifBlank { call.promptSummary }}"
+                        buildList {
+                            add(projectTitle)
+                            conversation.planSummary?.takeIf(String::isNotBlank)?.let {
+                                add("商量结果：${it.replace("\n", "；")}")
                             }
-                        listOf(projectTitle) + calls.ifEmpty { listOf("暂无创作教练记录") }
+                            conversation.messages.forEach { item ->
+                                val prefix = when (item.role) {
+                                    "STUDENT" -> "我"
+                                    else -> when (item.decision) {
+                                        "ACCEPTED" -> "教练（已采纳）"
+                                        "REPLACED" -> "教练（已调整）"
+                                        else -> "教练"
+                                    }
+                                }
+                                add("$prefix：${item.content}")
+                            }
+                            if (size == 1) add("还没有与教练交流的记录")
+                        }
                     }
                     CreationArchiveEntry.Works -> emptyList()
                 }
                 Text(
                     text = (lines + "再次点击荷花即可关闭").joinToString("\n"),
                     color = Color(0xFF263A2D),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 21.sp),
-                    modifier = Modifier.fillMaxSize(),
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontSize = if (entry == CreationArchiveEntry.CoachRecords) 12.sp else 14.sp,
+                        lineHeight = if (entry == CreationArchiveEntry.CoachRecords) 18.sp else 21.sp,
+                    ),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                 )
             }
         }
@@ -1391,30 +1426,14 @@ private fun archiveProjectStatusLabel(project: CreationProjectDto): String {
         project.latestPublication?.status ?: project.currentStage
     }
     return when (status) {
-        "IDEATION" -> "构思阶段"
-        "DRAFT" -> "草图阶段"
-        "PRODUCTION" -> "制作阶段"
-        "TEST" -> "测试阶段"
-        "SEAL" -> "封卷阶段"
-        "PENDING_CHECK", "PENDING_REVIEW", "SUBMITTED" -> "检查中"
-        "PENDING_HUMAN_REVIEW" -> "老师检查中"
-        "PUBLISHED" -> "已发布"
-        "RETURNED" -> "需要修改"
-        "RESTRICTED" -> "暂时不能发布"
+        "PENDING_CHECK", "PENDING_REVIEW", "SUBMITTED", "PENDING_HUMAN_REVIEW" -> "等待老师"
+        "PUBLISHED" -> "已展示"
+        "RETURNED" -> "再改一改"
+        "RESTRICTED" -> "暂不可展示"
         "WITHDRAWN" -> "已撤回"
-        "REJECTED" -> "未通过检查"
-        "ACTIVE" -> workflowStageLabelForArchive(project.currentStage)
-        else -> workflowStageLabelForArchive(project.currentStage)
+        "REJECTED" -> "请修改后再试"
+        else -> "继续创作"
     }
-}
-
-private fun workflowStageLabelForArchive(stage: String): String = when (stage) {
-    "IDEATION" -> "构思阶段"
-    "DRAFT" -> "草图阶段"
-    "PRODUCTION" -> "制作阶段"
-    "TEST" -> "测试阶段"
-    "SEAL" -> "封卷阶段"
-    else -> "创作中"
 }
 
 @Composable

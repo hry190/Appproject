@@ -36,10 +36,18 @@ class CreationVisibility(str, enum.Enum):
     COMMUNITY = "COMMUNITY"
 
 
+class ConferenceCategory(str, enum.Enum):
+    ART = "ART"
+    SCIENCE = "SCIENCE"
+    MATH = "MATH"
+    LANGUAGE = "LANGUAGE"
+
+
 class CreationMediaType(str, enum.Enum):
     ILLUSTRATION = "ILLUSTRATION"
     COMIC = "COMIC"
     MIXED_MEDIA = "MIXED_MEDIA"
+    VIDEO = "VIDEO"
 
 
 class CreationStage(str, enum.Enum):
@@ -66,6 +74,32 @@ class CreationToolCallStatus(str, enum.Enum):
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
     FAILED = "FAILED"
+
+
+class CreationConversationStatus(str, enum.Enum):
+    DIALOGUE = "DIALOGUE"
+    GENERATING = "GENERATING"
+    RESULT_READY = "RESULT_READY"
+    SAVED = "SAVED"
+    GENERATION_FAILED = "GENERATION_FAILED"
+
+
+class CreationConversationRole(str, enum.Enum):
+    STUDENT = "STUDENT"
+    COACH = "COACH"
+
+
+class CreationConversationMessageKind(str, enum.Enum):
+    IDEA = "IDEA"
+    MESSAGE = "MESSAGE"
+    SUGGESTION = "SUGGESTION"
+
+
+class CreationSuggestionDecision(str, enum.Enum):
+    NONE = "NONE"
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REPLACED = "REPLACED"
 
 
 class CreationTestResult(str, enum.Enum):
@@ -192,6 +226,10 @@ class CreationChangeAction(str, enum.Enum):
     EXPORT_REQUESTED = "EXPORT_REQUESTED"
     EXPORT_COMPLETED = "EXPORT_COMPLETED"
     EXPORT_FAILED = "EXPORT_FAILED"
+    CONVERSATION_STARTED = "CONVERSATION_STARTED"
+    CONVERSATION_MESSAGE_ADDED = "CONVERSATION_MESSAGE_ADDED"
+    CONVERSATION_SUGGESTION_ACCEPTED = "CONVERSATION_SUGGESTION_ACCEPTED"
+    CONVERSATION_RESULT_SAVED = "CONVERSATION_RESULT_SAVED"
 
 
 class CreationProject(Base):
@@ -546,6 +584,86 @@ class ImageGenerationJob(Base):
     )
 
 
+class CreationConversation(Base):
+    __tablename__ = "creation_conversations"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[CreationConversationStatus] = mapped_column(
+        Enum(CreationConversationStatus, native_enum=False, length=24),
+        default=CreationConversationStatus.DIALOGUE,
+        nullable=False,
+    )
+    initial_idea: Mapped[str] = mapped_column(Text, nullable=False)
+    attachment_asset_ids: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    manual_page_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    plan_summary: Mapped[str | None] = mapped_column(Text)
+    active_suggestion_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
+    draft_version_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    saved_version_ids: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    active_generation_job_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("image_generation_jobs.id", ondelete="SET NULL"), index=True
+    )
+    result_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("creation_versions.id", ondelete="SET NULL"), index=True
+    )
+    last_generation_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    last_generation_request_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    row_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+
+class CreationConversationMessage(Base):
+    __tablename__ = "creation_conversation_messages"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_user_id",
+            "client_idempotency_key",
+            name="uq_creation_conversation_messages_owner_idempotency",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("creation_conversations.project_id", ondelete="CASCADE"), index=True
+    )
+    owner_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[CreationConversationRole] = mapped_column(
+        Enum(CreationConversationRole, native_enum=False, length=16), nullable=False
+    )
+    kind: Mapped[CreationConversationMessageKind] = mapped_column(
+        Enum(CreationConversationMessageKind, native_enum=False, length=16),
+        nullable=False,
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    decision: Mapped[CreationSuggestionDecision] = mapped_column(
+        Enum(CreationSuggestionDecision, native_enum=False, length=16),
+        default=CreationSuggestionDecision.NONE,
+        nullable=False,
+    )
+    in_reply_to_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("creation_conversation_messages.id", ondelete="SET NULL"), index=True
+    )
+    client_idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    request_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+
 class CreationExportJob(Base):
     __tablename__ = "creation_export_jobs"
     __table_args__ = (
@@ -750,6 +868,9 @@ class Publication(Base):
     )
     visibility: Mapped[CreationVisibility] = mapped_column(
         Enum(CreationVisibility, native_enum=False, length=20), nullable=False
+    )
+    conference_category: Mapped[ConferenceCategory | None] = mapped_column(
+        Enum(ConferenceCategory, native_enum=False, length=16), index=True
     )
     idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)

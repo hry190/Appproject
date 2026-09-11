@@ -90,6 +90,8 @@ def get_creation_service(
     yield CreationService(
         db=db,
         request_id=getattr(request.state, "request_id", "unknown"),
+        conversation_coach=request.app.state.conversation_coach,
+        object_store=request.app.state.object_store,
     )
 
 

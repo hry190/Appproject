@@ -42,6 +42,7 @@ from app.domains.luggage.cache import (
     LuggageCache,
     RedisLuggageCache,
 )
+from app.domains.creations.conversation_coach import build_conversation_coach
 from app.domains.creations.image_generation import build_image_generator
 from app.domains.media.storage import build_object_store
 from app.domains.media.virus import build_virus_scanner
@@ -85,6 +86,7 @@ def create_app(
     application.state.object_store = build_object_store(resolved)
     application.state.virus_scanner = build_virus_scanner(resolved)
     application.state.image_generator = build_image_generator(resolved)
+    application.state.conversation_coach = build_conversation_coach(resolved)
 
     redis_client: Redis | None = None
     if verification_store is None or rate_limiter is None:

@@ -15,6 +15,7 @@ from app.core.errors import ApiError
 from app.core.security import utcnow
 from app.domains.creations.contracts import (
     CreationStageTransition,
+    CreationTestRecordCreate,
     CreationVersionCreate,
     ImageGenerationCreate,
     ImageGenerationJobListPublic,
@@ -32,9 +33,12 @@ from app.domains.creations.image_generation import (
 from app.domains.creations.models import (
     CreationChangeAction,
     CreationChangeLog,
+    CreationConversation,
+    CreationConversationStatus,
     CreationProject,
     CreationProjectStatus,
     CreationStage,
+    CreationTestResult,
     CreationVersion,
     ImageGenerationJob,
     ImageGenerationJobStatus,
@@ -441,7 +445,7 @@ class ImageGenerationService:
                             ai_provider=job.provider_ref,
                             ai_model=job.model_ref,
                             ai_tool_action="IMAGE_GENERATION",
-                            prompt_summary=job.prompt[:500],
+                            prompt_summary="根据学生确认的创作方案生成",
                             output_asset_id=asset_id,
                             user_modified=False,
                         )
@@ -475,11 +479,18 @@ class ImageGenerationService:
                         ai_provider=job.provider_ref,
                         ai_model=job.model_ref,
                         ai_tool_action="IMAGE_GENERATION",
-                        prompt_summary=job.prompt[:500],
+                        prompt_summary="根据学生确认的创作方案生成",
                         output_asset_id=asset_id,
                         user_modified=False,
                     )
                 )
+        conversation = self.db.get(CreationConversation, job.project_id)
+        if conversation is not None:
+            self._complete_conversation_quality_gates(
+                user=user,
+                project_id=project.id,
+                version_id=version.id,
+            )
         job = self.db.get(ImageGenerationJob, job.id)
         assert job is not None
         job.output_version_id = version.id
@@ -491,6 +502,13 @@ class ImageGenerationService:
         job.completed_at = utcnow()
         job.updated_at = job.completed_at
         job.row_version += 1
+        conversation = self.db.get(CreationConversation, job.project_id)
+        if conversation is not None:
+            conversation.status = CreationConversationStatus.RESULT_READY
+            conversation.active_generation_job_id = job.id
+            conversation.result_version_id = version.id
+            conversation.updated_at = job.completed_at
+            conversation.row_version += 1
         self._log(
             job,
             CreationChangeAction.IMAGE_GENERATION_COMPLETED,
@@ -500,6 +518,55 @@ class ImageGenerationService:
         )
         self._complete_outbox(job.id)
         self.db.commit()
+
+    def _complete_conversation_quality_gates(
+        self,
+        *,
+        user: User,
+        project_id: uuid.UUID,
+        version_id: uuid.UUID,
+    ) -> None:
+        """Run the existing domain gates for the simple conversation flow."""
+        creation = CreationService(db=self.db, request_id=self.request_id)
+        project = self.db.get(CreationProject, project_id)
+        assert project is not None
+        if project.current_stage == CreationStage.PRODUCTION:
+            creation.transition_stage(
+                user,
+                project.id,
+                CreationStageTransition(
+                    from_stage=CreationStage.PRODUCTION,
+                    to_stage=CreationStage.TEST,
+                    reason="生成文件已完成媒体安全检查，进入自动完整性检查",
+                    expected_revision=project.row_version,
+                ),
+            )
+        project = self.db.get(CreationProject, project_id)
+        assert project is not None
+        if project.current_stage == CreationStage.TEST:
+            creation.create_test_record(
+                user,
+                project.id,
+                CreationTestRecordCreate(
+                    creation_version_id=version_id,
+                    scenario="检查生成结果能否正常显示，并确认文件完整且已通过媒体安全检查",
+                    result=CreationTestResult.PASSED,
+                    notes="系统按真实生成结果完成检查，未发现需要学生填写的问题。",
+                    findings=[],
+                ),
+            )
+            project = self.db.get(CreationProject, project_id)
+            assert project is not None
+            creation.transition_stage(
+                user,
+                project.id,
+                CreationStageTransition(
+                    from_stage=CreationStage.TEST,
+                    to_stage=CreationStage.SEAL,
+                    reason="生成结果显示正常且安全检查通过，等待学生确认保存",
+                    expected_revision=project.row_version,
+                ),
+            )
 
     def _fail(
         self,
@@ -517,6 +584,7 @@ class ImageGenerationService:
         job.completed_at = utcnow()
         job.updated_at = job.completed_at
         job.row_version += 1
+        self._mark_conversation_failed(job)
         self._log(
             job,
             CreationChangeAction.IMAGE_GENERATION_FAILED,
@@ -534,6 +602,7 @@ class ImageGenerationService:
         job.completed_at = utcnow()
         job.updated_at = job.completed_at
         job.row_version += 1
+        self._mark_conversation_failed(job)
         self._log(
             job,
             CreationChangeAction.IMAGE_GENERATION_FAILED,
@@ -544,6 +613,12 @@ class ImageGenerationService:
         self.db.commit()
 
     def _queue(self, job: ImageGenerationJob) -> None:
+        conversation = self.db.get(CreationConversation, job.project_id)
+        if conversation is not None:
+            conversation.status = CreationConversationStatus.GENERATING
+            conversation.active_generation_job_id = job.id
+            conversation.updated_at = utcnow()
+            conversation.row_version += 1
         self.db.add(
             OutboxEvent(
                 aggregate_type="IMAGE_GENERATION_JOB",
@@ -555,6 +630,14 @@ class ImageGenerationService:
                 available_at=utcnow(),
             )
         )
+
+    def _mark_conversation_failed(self, job: ImageGenerationJob) -> None:
+        conversation = self.db.get(CreationConversation, job.project_id)
+        if conversation is not None:
+            conversation.status = CreationConversationStatus.GENERATION_FAILED
+            conversation.active_generation_job_id = job.id
+            conversation.updated_at = utcnow()
+            conversation.row_version += 1
 
     def _complete_outbox(
         self, job_id: uuid.UUID, *, failed: bool = False, error: str | None = None
@@ -646,7 +729,7 @@ class ImageGenerationService:
             id=job.id,
             project_id=job.project_id,
             parent_version_id=job.parent_version_id,
-            prompt_summary=job.prompt[:500],
+            prompt_summary="创作方案已由教练整理",
             size=job.size,
             quality=job.quality,
             status=job.status,

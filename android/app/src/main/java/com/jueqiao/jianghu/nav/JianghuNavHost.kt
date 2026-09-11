@@ -44,6 +44,7 @@ import com.jueqiao.jianghu.ui.screens.dahui.ConferenceCollectionsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceHubScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceLettersScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceMatchScreen
+import com.jueqiao.jianghu.ui.screens.dahui.ConferenceMatchRecordsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceRequestsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceWorkScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
@@ -100,8 +101,6 @@ import com.jueqiao.jianghu.ui.screens.gunlun14.Gunlun14Screen
 import com.jueqiao.jianghu.ui.screens.gunlun15.Gunlun15Screen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
-import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodDraftDto
-import com.jueqiao.jianghu.ui.screens.gongfang.toCreationMethodPlan
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
@@ -621,22 +620,36 @@ fun JianghuNavHost(
         }
         composable(Routes.YanwuchangVideo) {
             YanwuchangVideoScreen(
+                state = conferenceState,
                 onBack = { navController.popBackStack() },
-                onOpenComment = { navController.navigate(Routes.YanwuchangVideoComment) },
+                onLoadFeed = { category -> conferenceViewModel.loadFeed(category = category) },
+                onLoadWork = conferenceViewModel::loadWork,
+                onAddLike = conferenceViewModel::addLike,
+                onRemoveLike = conferenceViewModel::removeLike,
+                onCreateReview = conferenceViewModel::createReview,
+                onAddCollection = conferenceViewModel::addCollection,
+                onRemoveCollection = conferenceViewModel::removeCollection,
+                onCreateCoCreateRequest = conferenceViewModel::createDerivativeRequest,
+                onOpenOwnerRequests = { navController.navigate(Routes.DahuiRequests) },
                 onOpenMy = { navController.navigate(Routes.YanwuchangVideoMy) },
             )
         }
         composable(Routes.YanwuchangVideoMy) {
             YanwuchangVideoMyScreen(
+                state = conferenceState,
+                nickname = currentUser?.nickname.orEmpty(),
+                userId = currentUser?.id.orEmpty(),
                 onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadMyShelf,
                 onOpenWorks = {
                     navController.popBackStack(Routes.YanwuchangVideo, inclusive = false)
                 },
-                onOpenLikes = { /* No likes-list endpoint yet. */ },
+                onOpenWork = { navController.navigate(Routes.dahuiWork(it)) },
+                onOpenReviews = { navController.navigate(Routes.dahuiWork(it)) },
                 onOpenBrowseRecord = {
                     navController.navigate(Routes.YanwuchangVideoBrowseRecord)
                 },
-                onOpenMyClass = { /* No class-detail destination yet. */ },
+                onOpenMyClass = { navController.navigate(Routes.Challenge) },
             )
         }
         composable(Routes.YanwuchangVideoBrowseRecord) {
@@ -664,13 +677,11 @@ fun JianghuNavHost(
             ConferenceHubScreen(
                 state = conferenceState,
                 onBack = { navController.popBackStack() },
-                onLoad = conferenceViewModel::loadFeed,
-                onLoadMore = { conferenceViewModel.loadFeed(append = true) },
-                onOpenWork = { navController.navigate(Routes.dahuiWork(it)) },
-                onOpenCollections = { navController.navigate(Routes.DahuiCollections) },
-                onOpenRequests = { navController.navigate(Routes.DahuiRequests) },
-                onOpenLetters = { navController.navigate(Routes.DahuiLetters) },
+                onLoad = { conferenceViewModel.loadMatch() },
+                onOpenLetters = { navController.navigateConferenceRoot(Routes.DahuiLetters) },
+                onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
                 onOpenMatch = { navController.navigate(Routes.DahuiMatch) },
+                onOpenCreation = { navController.navigate(Routes.Gongfang) },
             )
         }
         composable(
@@ -730,6 +741,10 @@ fun JianghuNavHost(
                 onCreateEvaluation = conferenceViewModel::createMatchEvaluation,
                 onCreateReflection = conferenceViewModel::createMatchReflection,
                 onStartNewMatch = conferenceViewModel::clearCompletedMatch,
+                onOpenCreation = { navController.navigate(Routes.Gongfang) },
+                onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
+                onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
+                onOpenLetters = { navController.navigateConferenceRoot(Routes.DahuiLetters) },
                 onMessageShown = conferenceViewModel::clearMessage,
             )
         }
@@ -752,6 +767,21 @@ fun JianghuNavHost(
                     conferenceViewModel.clearCompletedMatch()
                     navController.navigate(Routes.DahuiMatch) { launchSingleTop = true }
                 },
+                onOpenCreation = { navController.navigate(Routes.Gongfang) },
+                onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
+                onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
+                onOpenLetters = { navController.navigateConferenceRoot(Routes.DahuiLetters) },
+                onMessageShown = conferenceViewModel::clearMessage,
+            )
+        }
+        composable(Routes.DahuiRecords) {
+            ConferenceMatchRecordsScreen(
+                state = conferenceState,
+                onBack = { navController.popBackStack() },
+                onLoad = conferenceViewModel::loadMatchRecords,
+                onOpenMatch = { navController.navigate(Routes.dahuiMatch(it)) },
+                onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
+                onOpenLetters = { navController.navigateConferenceRoot(Routes.DahuiLetters) },
                 onMessageShown = conferenceViewModel::clearMessage,
             )
         }
@@ -760,28 +790,22 @@ fun JianghuNavHost(
                 state = conferenceState,
                 onBack = { navController.popBackStack() },
                 onLoad = conferenceViewModel::loadLetters,
-                onOpenLetter = { letter ->
-                    conferenceViewModel.readLetter(letter)
-                    when (letter.navigationTarget) {
-                        "CONFERENCE_WORK" -> letter.navigationId?.let {
-                            navController.navigate(Routes.dahuiWork(it))
-                        }
-                        "CONFERENCE_MATCH" -> letter.navigationId?.let {
-                            navController.navigate(Routes.dahuiMatch(it))
-                        }
-                        "DERIVATIVE_REQUESTS" ->
-                            navController.navigate(Routes.DahuiRequests)
-                        else -> when (letter.actionType) {
-                            "CONFERENCE_MATCH" -> letter.actionId?.let {
-                                navController.navigate(Routes.dahuiMatch(it))
-                            }
-                            "DERIVATIVE_REQUEST", "DERIVATIVE_AUTHORIZATION" ->
-                                navController.navigate(Routes.DahuiRequests)
-                            "CONFERENCE_REVIEW" -> navController.navigate(Routes.DahuiArena)
-                        }
-                    }
+                onMarkRead = conferenceViewModel::readLetter,
+                onOpenTarget = { letter ->
+                    Routes.conferenceLetterDestination(
+                        navigationTarget = letter.navigationTarget,
+                        navigationId = letter.navigationId,
+                        actionType = letter.actionType,
+                        actionId = letter.actionId,
+                    )?.let { destination ->
+                        navController.navigate(destination) { launchSingleTop = true }
+                        true
+                    } ?: false
                 },
+                onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
+                onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
                 onOpenPublicationInbox = { navController.navigate(Routes.Challenge) },
+                onMessageShown = conferenceViewModel::clearMessage,
             )
         }
         composable(Routes.Gongfang) {
@@ -796,17 +820,6 @@ fun JianghuNavHost(
                     launchSingleTop = true
                 }
             }
-            val analysisNotice = when {
-                creationState.intentAnalysis?.safetyFlags?.contains(
-                    "POSSIBLE_PERSONAL_INFORMATION"
-                ) == true -> "提示：请检查并移除电话、住址、学校全名等个人信息。"
-                creationState.intentAnalysis?.safetyFlags?.contains(
-                    "MVP_MEDIA_FALLBACK"
-                ) == true -> "当前版本先按图文作品落地；互动、视频能力将在后续阶段接入。"
-                creationState.intentAnalysis?.questions?.isNotEmpty() == true ->
-                    creationState.intentAnalysis?.questions?.first()
-                else -> null
-            }
             GongfangScreen(
                 onBack   = {
                     creationViewModel.clearDerivative()
@@ -816,8 +829,11 @@ fun JianghuNavHost(
                         launchSingleTop = true
                     }
                 },
-                // 新版创作流程在工坊页内展开，不再跳转到旧的搜索结果页。
-                onAnalyzeIntent = creationViewModel::analyzeIntent,
+                onStartConversation = { idea, assets, manuals ->
+                    creationViewModel.startConversation(idea, assets, manuals) { conversation ->
+                        navController.navigate(Routes.shengtuProject(conversation.project.id))
+                    }
+                },
                 onContinueWork = { workId ->
                     navController.navigate(Routes.shengtuProject(workId))
                 },
@@ -837,22 +853,8 @@ fun JianghuNavHost(
                 sketchSourceAssetId = creationState.sketchSource?.assetId,
                 sketchSourceMessage = creationState.sketchSourceMessage,
                 onUploadSketch = creationViewModel::uploadSketch,
-                analyzingIntent = creationState.analyzingIntent,
-                creationMethod = creationState.intentAnalysis
-                    ?.methodDraft
-                    ?.toCreationMethodPlan(),
+                startingConversation = creationState.startingConversation,
                 analysisMessage = creationState.analysisError,
-                creatingProject = creationState.creatingProject,
-                createProjectMessage = creationState.createError ?: analysisNotice,
-                onConfirmNewProject = { title, idea, method ->
-                    creationViewModel.createProject(
-                        title,
-                        idea,
-                        method.toCreationMethodDraftDto(),
-                    ) { project ->
-                        navController.navigate(Routes.shengtuProject(project.id))
-                    }
-                },
             )
         }
 
@@ -868,9 +870,6 @@ fun JianghuNavHost(
             }
             val bundle = luggageDetailState.creationDetail
                 ?.takeIf { it.project.id == projectId }
-            val latestVersion = bundle?.versions?.maxByOrNull { it.versionNumber }
-            val currentPublication = bundle?.project?.latestPublication
-                ?.takeIf { it.creationVersionId == latestVersion?.id }
             val bundleGeneration = bundle?.imageGenerations?.items?.firstOrNull()
             val visibleGeneration = creationState.generationJob
                 ?.takeIf { it.projectId == projectId }
@@ -883,247 +882,64 @@ fun JianghuNavHost(
                     }
                 }
             }
-            val initialPrompt = latestVersion?.layers
-                ?.firstOrNull { it.kind == "TEXT" && !it.textContent.isNullOrBlank() }
-                ?.textContent
-                ?: bundle?.project?.description
             ShengtuScreen(
                 projectId = projectId,
                 projectTitle = bundle?.project?.title,
-                currentVersionNumber = latestVersion?.versionNumber,
-                currentVersionId = latestVersion?.id,
-                currentStage = bundle?.project?.currentStage,
-                toolCalls = bundle?.toolCalls.orEmpty(),
-                testRecords = bundle?.testRecords.orEmpty(),
-                manualSources = creationState.manualSources,
-                methodManualPageIds = bundle?.method?.manualPageIds.orEmpty(),
-                initialMethodSummary = bundle?.method?.let { method ->
-                    buildString {
-                        append(method.name)
-                        append("：")
-                        append(method.goal)
-                        if (method.steps.isNotEmpty()) {
-                            append("\n")
-                            append(method.steps.joinToString(" → "))
-                        }
-                    }
-                },
-                learningCard = bundle?.learningCard,
-                provenance = bundle?.provenance,
-                sealCheck = bundle?.sealCheck,
-                imageGenerations = bundle?.imageGenerations,
+                conversation = bundle?.conversation,
                 activeGeneration = visibleGeneration,
-                publicationStatus = currentPublication?.status,
-                publicationId = currentPublication?.id,
-                publicationVisibility = currentPublication?.visibility,
-                classrooms = distributionState.classrooms,
-                initialPrompt = initialPrompt,
-                savingDraft = creationState.savingDraft,
-                draftSaveMessage = creationState.draftSaveMessage
-                    ?.takeIf { creationState.draftMessageProjectId == projectId },
-                workflowBusy = creationState.workflowBusy,
-                workflowMessage = creationState.workflowMessage
-                    ?.takeIf { creationState.workflowMessageProjectId == projectId },
+                loading = luggageDetailState.loading && bundle == null,
+                busy = creationState.conversationBusy &&
+                    creationState.conversationProjectId == projectId,
+                statusMessage = creationState.conversationMessage
+                    ?.takeIf { creationState.conversationProjectId == projectId },
+                errorMessage = creationState.conversationError
+                    ?.takeIf { creationState.conversationProjectId == projectId },
                 generationBusy = creationState.generationBusy &&
                     creationState.generationProjectId == projectId,
                 generationMessage = creationState.generationMessage
                     ?.takeIf { creationState.generationProjectId == projectId },
-                onSaveDraft = { prompt ->
-                    creationViewModel.saveTextDraft(
-                        projectId = projectId,
-                        parentVersionId = latestVersion?.id,
-                        prompt = prompt,
-                    ) {
+                onSendMessage = { text ->
+                    creationViewModel.sendConversationMessage(projectId, text) {
                         luggageViewModel.loadCreationDetail(projectId)
                     }
                 },
-                onRequestCoach = { prompt ->
-                    creationViewModel.requestCoachReview(projectId, prompt) {
-                        luggageViewModel.loadCreationDetail(projectId)
-                    }
-                },
-                onDecideCoach = { call, approve ->
-                    creationViewModel.decideCoachReview(call, approve) {
-                        luggageViewModel.loadCreationDetail(projectId)
-                    }
-                },
-                onRequestImageGeneration = { prompt, size, quality ->
-                    val project = bundle?.project
-                    val version = latestVersion
-                    if (project != null && version != null) {
-                        creationViewModel.requestImageGeneration(
+                onAcceptSuggestion = { message ->
+                    bundle?.conversation?.let { current ->
+                        creationViewModel.acceptConversationSuggestion(
                             projectId = projectId,
-                            parentVersionId = version.id,
-                            expectedProjectRevision = project.rowVersion,
-                            prompt = prompt,
-                            size = size,
-                            quality = quality,
+                            message = message,
+                            expectedRevision = current.rowVersion,
                         ) {
                             luggageViewModel.loadCreationDetail(projectId)
-                            luggageViewModel.refresh(force = true)
-                            conferenceViewModel.invalidateFeed()
                         }
                     }
                 },
-                onRetryImageGeneration = { job ->
+                onSaveDraftAndGenerate = {
+                    bundle?.conversation?.let { current ->
+                        creationViewModel.saveConversationDraftAndGenerate(
+                            projectId = projectId,
+                            expectedRevision = current.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                            luggageViewModel.refresh(force = true)
+                        }
+                    }
+                },
+                onSaveWork = {
+                    bundle?.conversation?.let { current ->
+                        creationViewModel.saveConversationResult(
+                            projectId = projectId,
+                            expectedRevision = current.rowVersion,
+                        ) {
+                            luggageViewModel.loadCreationDetail(projectId)
+                            creationViewModel.loadRecentProjects()
+                        }
+                    }
+                },
+                onRetryGeneration = { job ->
                     creationViewModel.retryImageGeneration(job) {
                         luggageViewModel.loadCreationDetail(projectId)
                         luggageViewModel.refresh(force = true)
-                    }
-                },
-                onEnterTest = {
-                    bundle?.project?.let { project ->
-                        creationViewModel.moveCreationStage(
-                            project = project,
-                            toStage = "TEST",
-                            reason = "当前版本制作完成，开始真实场景测试",
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                        }
-                    }
-                },
-                onRecordTest = { scenario, result, notes, finding ->
-                    latestVersion?.let { version ->
-                        creationViewModel.recordCreationTest(
-                            projectId = projectId,
-                            creationVersionId = version.id,
-                            scenario = scenario,
-                            result = result,
-                            notes = notes,
-                            finding = finding,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                        }
-                    }
-                },
-                onResolveIssue = { issue, resolution ->
-                    creationViewModel.resolveCreationTestIssue(issue, resolution) {
-                        luggageViewModel.loadCreationDetail(projectId)
-                    }
-                },
-                onEnterSeal = {
-                    bundle?.project?.let { project ->
-                        creationViewModel.moveCreationStage(
-                            project = project,
-                            toStage = "SEAL",
-                            reason = "当前版本复测通过，且测试问题已经全部关闭",
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                        }
-                    }
-                },
-                onSaveLearningCard = { form, afterSave ->
-                    latestVersion?.let { version ->
-                        creationViewModel.saveLearningCard(
-                            projectId = projectId,
-                            versionId = version.id,
-                            manualPageIds = form.manualPageIds,
-                            methodSummary = form.methodSummary,
-                            unresolvedQuestionsText = form.unresolvedQuestions,
-                            questionsConfirmed = form.questionsConfirmed,
-                            rowVersion = bundle?.learningCard?.rowVersion,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            afterSave()
-                        }
-                    }
-                },
-                onSubmitMigrationEvidence = { manualPageIds, revisionReason, afterSave ->
-                    latestVersion?.let { version ->
-                        creationViewModel.submitMigrationEvidence(
-                            projectId = projectId,
-                            creationVersionId = version.id,
-                            manualPageIds = manualPageIds,
-                            revisionReason = revisionReason,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            afterSave()
-                        }
-                    }
-                },
-                onSaveProvenance = { form, afterSave ->
-                    latestVersion?.let { version ->
-                        creationViewModel.saveProvenance(
-                            projectId = projectId,
-                            versionId = version.id,
-                            humanSummary = form.humanSummary,
-                            aiUsed = form.aiUsed,
-                            aiSummary = form.aiSummary,
-                            aiProvider = form.aiProvider,
-                            aiModel = form.aiModel,
-                            aiAction = form.aiAction,
-                            promptSummary = form.promptSummary,
-                            aiResultModified = form.aiResultModified,
-                            aigcLabelDeclared = form.aigcLabelDeclared,
-                            externalSourceUrl = form.externalSourceUrl,
-                            externalSourceAuthor = form.externalSourceAuthor,
-                            externalLicense = form.externalLicense,
-                            unresolvedRights = form.unresolvedRights,
-                            rowVersion = bundle?.provenance?.rowVersion,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            afterSave()
-                        }
-                    }
-                },
-                onSaveSealCheck = { form, afterSave ->
-                    latestVersion?.let { version ->
-                        creationViewModel.saveSealCheck(
-                            projectId = projectId,
-                            versionId = version.id,
-                            workDescription = form.workDescription,
-                            learningReflection = form.learningReflection,
-                            nextImprovement = form.nextImprovement,
-                            identityPrivacyConfirmed = form.identityPrivacyConfirmed,
-                            contactPrivacyConfirmed = form.contactPrivacyConfirmed,
-                            portraitRightsConfirmed = form.portraitRightsConfirmed,
-                            rowVersion = bundle?.sealCheck?.rowVersion,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            afterSave()
-                        }
-                    }
-                },
-                onSaveReflectionPackage = { sealForm, learningForm, afterSave ->
-                    latestVersion?.let { version ->
-                        creationViewModel.saveSealReflectionPackage(
-                            projectId = projectId,
-                            versionId = version.id,
-                            workDescription = sealForm.workDescription,
-                            learningReflection = sealForm.learningReflection,
-                            nextImprovement = sealForm.nextImprovement,
-                            identityPrivacyConfirmed = sealForm.identityPrivacyConfirmed,
-                            contactPrivacyConfirmed = sealForm.contactPrivacyConfirmed,
-                            portraitRightsConfirmed = sealForm.portraitRightsConfirmed,
-                            sealRowVersion = bundle?.sealCheck?.rowVersion,
-                            manualPageIds = learningForm.manualPageIds,
-                            methodSummary = learningForm.methodSummary,
-                            learningRowVersion = bundle?.learningCard?.rowVersion,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            afterSave()
-                        }
-                    }
-                },
-                onSubmit = { visibility, classroomId ->
-                    latestVersion?.let { version ->
-                        creationViewModel.submitCreation(
-                            projectId = projectId,
-                            versionId = version.id,
-                            visibility = visibility,
-                            targetClassroomId = classroomId,
-                        ) {
-                            luggageViewModel.loadCreationDetail(projectId)
-                            luggageViewModel.refresh(force = true)
-                        }
-                    }
-                },
-                onOpenPublishedWork = { publicationId ->
-                    navController.navigate(Routes.dahuiWork(publicationId))
-                },
-                onCreateWork = {
-                    if (latestVersion != null) {
-                        navController.navigate(Routes.creationEditorProject(projectId))
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -1623,5 +1439,13 @@ fun JianghuNavHost(
             phase = mistPhase.value,
             modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+private fun NavHostController.navigateConferenceRoot(route: String) {
+    navigate(route) {
+        popUpTo(Routes.DahuiArena) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }

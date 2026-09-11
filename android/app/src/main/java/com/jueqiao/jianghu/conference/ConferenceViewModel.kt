@@ -9,6 +9,8 @@ import com.jueqiao.jianghu.luggage.ConferenceDerivativeRequestDto
 import com.jueqiao.jianghu.luggage.ConferenceLetterDto
 import com.jueqiao.jianghu.luggage.ConferenceMatchDetailDto
 import com.jueqiao.jianghu.luggage.ConferenceMatchQueueDto
+import com.jueqiao.jianghu.luggage.ConferenceMatchRecordDto
+import com.jueqiao.jianghu.luggage.ConferenceMatchRecordSummaryDto
 import com.jueqiao.jianghu.luggage.ConferenceMatchResultDto
 import com.jueqiao.jianghu.luggage.ConferenceReviewDto
 import com.jueqiao.jianghu.luggage.ConferenceWorkDto
@@ -29,7 +31,9 @@ data class ConferenceUiState(
     val error: String? = null,
     val message: String? = null,
     val works: List<ConferenceWorkDto> = emptyList(),
+    val selectedCategory: String? = null,
     val nextCursor: String? = null,
+    val myWorks: List<ConferenceWorkDto> = emptyList(),
     val work: ConferenceWorkDto? = null,
     val reviews: List<ConferenceReviewDto> = emptyList(),
     val adoptionVersions: List<CreationVersionDto> = emptyList(),
@@ -40,6 +44,12 @@ data class ConferenceUiState(
     val matchManuals: List<ManualPageDto> = emptyList(),
     val matchDetail: ConferenceMatchDetailDto? = null,
     val matchResult: ConferenceMatchResultDto? = null,
+    val matchRecords: List<ConferenceMatchRecordDto> = emptyList(),
+    val matchRecordSummary: ConferenceMatchRecordSummaryDto? = null,
+    val matchRecordsPage: Int = 1,
+    val matchRecordsHasMore: Boolean = false,
+    val matchRecordsOutcome: String? = null,
+    val matchRecordsReflectionStatus: String? = null,
     val letters: List<ConferenceLetterDto> = emptyList(),
     val unreadLetterCount: Int = 0,
 )
@@ -104,16 +114,24 @@ class ConferenceViewModel(
         _state.value = _state.value.copy(works = emptyList(), nextCursor = null)
     }
 
-    fun loadFeed(append: Boolean = false) {
+    fun loadFeed(category: String? = _state.value.selectedCategory, append: Boolean = false) {
         val current = _state.value
-        val cursor = if (append) current.nextCursor ?: return else null
+        val categoryChanged = category != current.selectedCategory
+        val cursor = if (append && !categoryChanged) current.nextCursor ?: return else null
         request("大会作品暂时无法载入，请稍后重试") {
-            val page = repository.conferenceFeed(cursor)
+            val page = repository.conferenceFeed(cursor, category)
             _state.value = _state.value.copy(
-                works = if (append) current.works + page.items else page.items,
+                selectedCategory = category,
+                works = if (append && !categoryChanged) current.works + page.items else page.items,
                 nextCursor = page.nextCursor,
             )
         }
+    }
+
+    fun loadMyShelf() = request("个人作品暂时无法载入，请稍后重试") {
+        val myWorks = repository.myConferenceWorks().items
+        val collections = repository.conferenceCollections().items
+        _state.value = _state.value.copy(myWorks = myWorks, collections = collections)
     }
 
     fun loadWork(publicationId: String) = request("作品详情暂时无法载入，请稍后重试") {
@@ -132,11 +150,31 @@ class ConferenceViewModel(
         if (text.isEmpty()) return
         request("评语提交失败，请稍后重试") {
             repository.createConferenceReview(publicationId, template, text)
-            _state.value = _state.value.copy(
+            val updatedWork = repository.conferenceWork(publicationId)
+            _state.value = replaceWork(updatedWork).copy(
+                work = updatedWork,
                 reviews = repository.conferenceReviews(publicationId).items,
                 message = "评语已提交",
             )
         }
+    }
+
+    fun addLike(publicationId: String) = request("点赞失败，请稍后重试") {
+        repository.addConferenceLike(publicationId)
+        val updatedWork = repository.conferenceWork(publicationId)
+        _state.value = replaceWork(updatedWork).copy(
+            work = updatedWork,
+            message = "已点赞",
+        )
+    }
+
+    fun removeLike(publicationId: String) = request("取消点赞失败，请稍后重试") {
+        repository.removeConferenceLike(publicationId)
+        val updatedWork = repository.conferenceWork(publicationId)
+        _state.value = replaceWork(updatedWork).copy(
+            work = updatedWork,
+            message = "已取消点赞",
+        )
     }
 
     fun decideReview(review: ConferenceReviewDto, action: String, reply: String? = null) =
@@ -184,13 +222,20 @@ class ConferenceViewModel(
 
     fun addCollection(publicationId: String) = request("收藏操作失败，请稍后重试") {
         repository.addConferenceCollection(publicationId)
-        _state.value = _state.value.copy(message = "已收藏")
+        val updatedWork = repository.conferenceWork(publicationId)
+        _state.value = replaceWork(updatedWork).copy(
+            work = updatedWork,
+            collections = repository.conferenceCollections().items,
+            message = "已收藏",
+        )
     }
 
     fun removeCollection(publicationId: String) = request("取消收藏失败，请稍后重试") {
         repository.removeConferenceCollection(publicationId)
-        _state.value = _state.value.copy(
-            collections = _state.value.collections.filterNot { it.publicationId == publicationId },
+        val updatedWork = repository.conferenceWork(publicationId)
+        _state.value = replaceWork(updatedWork).copy(
+            work = updatedWork,
+            collections = repository.conferenceCollections().items,
             message = "已取消收藏",
         )
     }
@@ -204,7 +249,11 @@ class ConferenceViewModel(
         if (text.isEmpty()) return
         request("授权申请提交失败，请稍后重试") {
             repository.createDerivativeRequest(publicationId, text)
-            _state.value = _state.value.copy(message = "授权申请已提交")
+            val updatedWork = repository.conferenceWork(publicationId)
+            _state.value = replaceWork(updatedWork).copy(
+                work = updatedWork,
+                message = "共创申请已提交",
+            )
         }
     }
 
@@ -373,6 +422,38 @@ class ConferenceViewModel(
             )
         }
 
+    fun loadMatchRecords(
+        outcome: String? = _state.value.matchRecordsOutcome,
+        reflectionStatus: String? = _state.value.matchRecordsReflectionStatus,
+        append: Boolean = false,
+    ) {
+        val snapshot = _state.value
+        val filterChanged = outcome != snapshot.matchRecordsOutcome ||
+            reflectionStatus != snapshot.matchRecordsReflectionStatus
+        if (append && !filterChanged && !snapshot.matchRecordsHasMore) return
+        val requestedPage = if (append && !filterChanged) snapshot.matchRecordsPage + 1 else 1
+        request("战绩暂时无法载入，请稍后重试") {
+            val result = repository.conferenceMatchRecords(
+                outcome = outcome,
+                reflectionStatus = reflectionStatus,
+                page = requestedPage,
+                limit = 20,
+            )
+            _state.value = _state.value.copy(
+                matchRecords = if (append && !filterChanged) {
+                    snapshot.matchRecords + result.items
+                } else {
+                    result.items
+                },
+                matchRecordSummary = result.summary,
+                matchRecordsPage = result.page,
+                matchRecordsHasMore = result.hasMore,
+                matchRecordsOutcome = outcome,
+                matchRecordsReflectionStatus = reflectionStatus,
+            )
+        }
+    }
+
     fun loadLetters() = request("大会书信暂时无法载入，请稍后重试") {
         val page = repository.conferenceLetters()
         _state.value = _state.value.copy(
@@ -417,6 +498,14 @@ class ConferenceViewModel(
 
     fun clearMessage() {
         _state.value = _state.value.copy(message = null)
+    }
+
+    private fun replaceWork(updated: ConferenceWorkDto): ConferenceUiState {
+        val current = _state.value
+        return current.copy(
+            works = current.works.map { if (it.publicationId == updated.publicationId) updated else it },
+            myWorks = current.myWorks.map { if (it.publicationId == updated.publicationId) updated else it },
+        )
     }
 
     private fun request(fallback: String, action: suspend () -> Unit) {

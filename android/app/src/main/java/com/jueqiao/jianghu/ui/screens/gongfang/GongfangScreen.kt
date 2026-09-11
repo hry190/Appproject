@@ -98,24 +98,14 @@ private val JadeDark = Color(0xFF244F3D)
 private val DormantBamboo = Color(0xFFAAA77E)
 private val LivingBamboo = Color(0xFF6F963F)
 
-private data class CreationStage(val label: String, val icon: ImageVector)
-
-private val CreationStages = listOf(
-    CreationStage("构思", Icons.Outlined.Lightbulb),
-    CreationStage("草图/脚本", Icons.Outlined.Description),
-    CreationStage("制作", Icons.Outlined.Settings),
-    CreationStage("测试", Icons.Outlined.TrackChanges),
-    CreationStage("说明", Icons.AutoMirrored.Outlined.MenuBook),
-)
-
 /**
- * 作品创作页。入口态只呈现创作入口与最近作品；开始后才显示工法详情和竹节进度链。
+ * 作品创作入口。这里只收集最初想法和参考内容，开始后直接进入教练对话。
  * 背景、熊猫、顶部叶签与气泡均直接复用原资源。
  */
 @Composable
 fun GongfangScreen(
     onBack: () -> Unit = {},
-    onAnalyzeIntent: (String, List<String>, List<String>) -> Unit = { _, _, _ -> },
+    onStartConversation: (String, List<String>, List<String>) -> Unit = { _, _, _ -> },
     onContinueWork: (String) -> Unit = {},
     onOpenChuangzuodangan: () -> Unit = {},
     onOpenAllWorks: () -> Unit = {},
@@ -133,25 +123,14 @@ fun GongfangScreen(
     sketchSourceAssetId: String? = null,
     sketchSourceMessage: String? = null,
     onUploadSketch: (String) -> Unit = {},
-    analyzingIntent: Boolean = false,
-    creationMethod: CreationMethodPlan? = null,
+    startingConversation: Boolean = false,
     analysisMessage: String? = null,
-    creatingProject: Boolean = false,
-    createProjectMessage: String? = null,
-    onConfirmNewProject: (String, String, CreationMethodPlan) -> Unit = { _, _, _ -> },
 ) {
     var inputText by rememberSaveable { mutableStateOf("") }
-    var projectTitle by rememberSaveable { mutableStateOf("") }
     var selectedSource by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedManualId by rememberSaveable { mutableStateOf<String?>(null) }
     var showManualPicker by rememberSaveable { mutableStateOf(false) }
     var sourceMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var creationStarted by rememberSaveable { mutableStateOf(false) }
-    var currentStage by rememberSaveable { mutableIntStateOf(0) }
-    var maxReachedStage by rememberSaveable { mutableIntStateOf(0) }
-    var isSealed by rememberSaveable { mutableStateOf(false) }
-    var editedMethod by remember { mutableStateOf<CreationMethodPlan?>(null) }
-    var receivedMethod by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val sketchPicker = rememberLauncherForActivityResult(
@@ -159,7 +138,6 @@ fun GongfangScreen(
     ) { uri ->
         if (uri != null) {
             selectedSource = "上传草图"
-            selectedManualId = null
             sourceMenuExpanded = false
             onUploadSketch(uri.toString())
         }
@@ -169,35 +147,6 @@ fun GongfangScreen(
     LaunchedEffect(Unit) {
         onLoadRecentWorks()
         onLoadCreationSources()
-    }
-
-    fun showCreationPlan(idea: String) {
-        val cleanedIdea = idea.trim()
-        if (cleanedIdea.isEmpty()) return
-        inputText = cleanedIdea
-        projectTitle = deriveProjectTitle(cleanedIdea)
-        currentStage = 0
-        maxReachedStage = 0
-        creationStarted = true
-        sourceMenuExpanded = false
-        focusManager.clearFocus()
-        keyboardController?.hide()
-    }
-
-    LaunchedEffect(creationMethod) {
-        if (creationMethod != null) {
-            receivedMethod = true
-            editedMethod = creationMethod
-            if (!creationStarted) showCreationPlan(inputText)
-        } else if (receivedMethod) {
-            receivedMethod = false
-            editedMethod = null
-            creationStarted = false
-            inputText = ""
-            projectTitle = ""
-            selectedSource = null
-            selectedManualId = null
-        }
     }
 
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
@@ -229,8 +178,7 @@ fun GongfangScreen(
         ) {
             CreationWorkspaceTopBar(onBack, onOpenChuangzuodangan)
 
-            if (!creationStarted) {
-                StartCreationContent(
+            StartCreationContent(
                     inputText = inputText,
                     onInputChange = { inputText = it },
                     sourceMenuExpanded = sourceMenuExpanded,
@@ -250,33 +198,23 @@ fun GongfangScreen(
                     sourceStatus = when {
                         derivativeSourceTitle != null -> "已选择改造来源：《$derivativeSourceTitle》"
                         uploadingSketch -> "草图上传与安全检查中…"
-                        selectedSource == "上传草图" -> sketchSourceMessage
-                        selectedSource == "带入秘籍" && selectedManual != null ->
-                            "已带入秘籍：《${selectedManual.title}》· ${selectedManual.stateLabel}"
+                        sketchSourceAssetId != null && selectedManual != null ->
+                            "已带入草图和秘籍《${selectedManual.title}》"
+                        sketchSourceAssetId != null -> sketchSourceMessage
+                        selectedManual != null -> "已带入秘籍：《${selectedManual.title}》"
                         else -> sketchSourceMessage
                     },
                     derivativeSourceSelected = derivativeSourceTitle != null,
                     onClearDerivative = onClearDerivative,
-                    sourceReady = when (selectedSource) {
-                        "上传草图" -> sketchSourceAssetId != null && !uploadingSketch
-                        "带入秘籍" -> selectedManual != null
-                        else -> true
-                    },
+                    sourceReady = !uploadingSketch &&
+                        (selectedSource != "上传草图" || sketchSourceAssetId != null),
                     onStart = {
                         focusManager.clearFocus()
                         keyboardController?.hide()
-                        onAnalyzeIntent(
+                        onStartConversation(
                             inputText.trim(),
-                            if (selectedSource == "上传草图") {
-                                listOfNotNull(sketchSourceAssetId)
-                            } else {
-                                emptyList()
-                            },
-                            if (selectedSource == "带入秘籍") {
-                                listOfNotNull(selectedManualId)
-                            } else {
-                                emptyList()
-                            },
+                            listOfNotNull(sketchSourceAssetId),
+                            listOfNotNull(selectedManualId),
                         )
                     },
                     onContinue = { workId, _, _ -> onContinueWork(workId) },
@@ -285,35 +223,9 @@ fun GongfangScreen(
                     recentWorksLoading = recentWorksLoading,
                     recentWorksMessage = recentWorksMessage,
                     onRetryRecentWorks = onLoadRecentWorks,
-                    analyzingIntent = analyzingIntent,
+                    analyzingIntent = startingConversation,
                     analysisMessage = analysisMessage,
                 )
-            } else {
-                StartedCreationContent(
-                    title = projectTitle,
-                    idea = inputText,
-                    source = selectedSource,
-                    method = editedMethod ?: creationMethod,
-                    currentStage = currentStage,
-                    maxReachedStage = maxReachedStage,
-                    isSealed = isSealed,
-                    onMethodChanged = { editedMethod = it },
-                    onStageSelected = { currentStage = it },
-                    onNextStage = {
-                        if (currentStage < CreationStages.lastIndex) {
-                            currentStage += 1
-                            maxReachedStage = maxOf(maxReachedStage, currentStage)
-                        } else {
-                            isSealed = true
-                        }
-                    },
-                    creatingProject = creatingProject,
-                    createProjectMessage = createProjectMessage,
-                    onConfirmNewProject = { method ->
-                        onConfirmNewProject(projectTitle, inputText, method)
-                    },
-                )
-            }
         }
     }
 
@@ -428,7 +340,7 @@ private fun StartCreationContent(
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    CoachBubble("我会先帮你\n理清步骤。", Modifier.width(165.dp).padding(bottom = 18.dp))
+                    CoachBubble("我会先听懂你的想法，\n再和你一起商量。", Modifier.width(165.dp).padding(bottom = 18.dp))
                     Image(
                         painter = painterResource(R.drawable.img_gongfang_panda),
                         contentDescription = "创作教练熊猫",
@@ -494,7 +406,7 @@ private fun CreationIdeaField(
             },
         )
         JadeButton(
-            if (analyzingIntent) "整理中…" else "开始",
+            if (analyzingIntent) "正在进入…" else "开始",
             Modifier.width(82.dp),
             enabled = value.trim().length >= 2 && !analyzingIntent && sourceReady,
             onClick = onStart,
@@ -526,7 +438,7 @@ private fun ManualSourceDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "只显示达到“习得、悟得、传习”的秘籍，确认后会写入工法来源。",
+                    "只显示你已经学会的秘籍，选中后教练会在交流时一起参考。",
                     color = MutedInk,
                     fontFamily = YaHei,
                     fontSize = 12.sp,
@@ -735,248 +647,6 @@ private fun ContinueWorkRow(title: String, stage: String, onContinue: () -> Unit
 }
 
 @Composable
-private fun StartedCreationContent(
-    title: String,
-    idea: String,
-    source: String?,
-    method: CreationMethodPlan?,
-    currentStage: Int,
-    maxReachedStage: Int,
-    isSealed: Boolean,
-    onMethodChanged: (CreationMethodPlan) -> Unit,
-    onStageSelected: (Int) -> Unit,
-    onNextStage: () -> Unit,
-    creatingProject: Boolean,
-    createProjectMessage: String?,
-    onConfirmNewProject: (CreationMethodPlan) -> Unit,
-) {
-    var editingMethod by rememberSaveable { mutableStateOf(false) }
-    val methodReady = method != null &&
-        method.name.trim().length >= 2 &&
-        method.goal.trim().length >= 2 &&
-        method.format.trim().length >= 2 &&
-        method.audience.isNotEmpty() &&
-        method.steps.any { it.trim().isNotEmpty() }
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        GlassPanel(
-            modifier = Modifier.fillMaxWidth().height(410.dp).padding(horizontal = 28.dp),
-        ) {
-            Column(modifier = Modifier.fillMaxSize().padding(21.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Eco, null, tint = Ink, modifier = Modifier.size(27.dp))
-                    Spacer(Modifier.width(7.dp))
-                    Text(
-                        "创作工法",
-                        color = Ink,
-                        fontFamily = YaHei,
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                Spacer(Modifier.height(17.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xA8FFFDF2))
-                        .border(1.dp, Color(0x66A8AA86), RoundedCornerShape(22.dp))
-                        .padding(horizontal = 17.dp, vertical = 15.dp),
-                ) {
-                    Text(
-                        title,
-                        color = Ink,
-                        fontFamily = YaHei,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                    )
-                    method?.let { plan ->
-                        Text(
-                            "推荐：${creationMediaTypeLabel(plan.recommendedMediaType)} · 使用辅助功能前会请你确认",
-                            color = MutedInk,
-                            fontFamily = YaHei,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                    if (source != null) {
-                        Text(
-                            "已带入：$source",
-                            color = MutedInk,
-                            fontFamily = YaHei,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .padding(top = 6.dp)
-                                .clip(RoundedCornerShape(13.dp))
-                                .background(Color(0x90DDEAC9))
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    if (editingMethod && method != null) {
-                        EditableInfoRow(Icons.Outlined.TrackChanges, "目标", method.goal) {
-                            onMethodChanged(method.copy(goal = it))
-                        }
-                        EditableInfoRow(Icons.Outlined.ChatBubbleOutline, "形式", method.format) {
-                            onMethodChanged(method.copy(format = it))
-                        }
-                        val stepIndex = (currentStage + 1).coerceAtMost(method.steps.lastIndex)
-                        EditableInfoRow(
-                            Icons.Outlined.PlayCircleOutline,
-                            "下一步",
-                            method.steps.getOrNull(stepIndex).orEmpty(),
-                        ) { value ->
-                            val revisedSteps = method.steps.toMutableList().apply {
-                                if (isEmpty()) add(value) else this[stepIndex] = value
-                            }
-                            onMethodChanged(method.copy(steps = revisedSteps))
-                        }
-                    } else {
-                        InfoRow(Icons.Outlined.TrackChanges, "目标", method?.goal ?: conciseGoal(idea))
-                        InfoRow(Icons.Outlined.ChatBubbleOutline, "形式", method?.format ?: inferCreationFormat(idea))
-                        InfoRow(
-                            Icons.Outlined.PlayCircleOutline,
-                            "下一步",
-                            method?.steps?.getOrNull(currentStage + 1) ?: stageInstruction(currentStage),
-                        )
-                    }
-                }
-                Spacer(Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    PaleButton(
-                        if (editingMethod) "完成调整" else "调整工法",
-                        Modifier.weight(0.78f),
-                    ) { editingMethod = !editingMethod }
-                    JadeButton(
-                        text = if (creatingProject) {
-                            "正在创建…"
-                        } else if (currentStage < CreationStages.lastIndex) {
-                            "进入${CreationStages[currentStage + 1].label}"
-                        } else if (isSealed) {
-                            "作品已封卷"
-                        } else {
-                            "完成并封卷"
-                        },
-                        modifier = Modifier.weight(1.42f),
-                        enabled = !creatingProject && !isSealed && methodReady,
-                        onClick = if (currentStage == 0) {
-                            { if (method != null) onConfirmNewProject(method) }
-                        } else {
-                            onNextStage
-                        },
-                    )
-                }
-                createProjectMessage?.let { message ->
-                    Text(
-                        message,
-                        color = Color(0xFF8C4D3D),
-                        fontFamily = YaHei,
-                        fontSize = 11.sp,
-                        maxLines = 2,
-                        modifier = Modifier.padding(top = 5.dp),
-                    )
-                }
-                if (!methodReady && createProjectMessage == null) {
-                    Text(
-                        "请补全目标、形式和下一步后再进入草图/脚本。",
-                        color = Color(0xFF8C4D3D),
-                        fontFamily = YaHei,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        modifier = Modifier.padding(top = 5.dp),
-                    )
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().height(135.dp).padding(horizontal = 52.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CoachBubble(coachMessage(currentStage), Modifier.width(170.dp))
-            Image(
-                painter = painterResource(R.drawable.img_gongfang_panda),
-                contentDescription = "创作教练熊猫",
-                modifier = Modifier.size(82.dp, 122.dp),
-                contentScale = ContentScale.Fit,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-        CreationProgressChain(currentStage, maxReachedStage, onStageSelected)
-    }
-}
-
-@Composable
-private fun EditableInfoRow(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, tint = Ink, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(12.dp))
-        Text(
-            "$label：",
-            color = Ink,
-            fontFamily = YaHei,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = TextStyle(color = Ink, fontFamily = YaHei, fontSize = 14.sp),
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xB8F5F2DE))
-                .border(1.dp, Color(0x66739A63), RoundedCornerShape(8.dp))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-        )
-    }
-}
-
-@Composable
-private fun InfoRow(icon: ImageVector, label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(52.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, null, tint = Ink, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(12.dp))
-        Text(
-            "$label：",
-            color = Ink,
-            fontFamily = YaHei,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            value,
-            color = Color(0xFF3F4B3E),
-            fontFamily = YaHei,
-            fontSize = 15.sp,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
 private fun CoachBubble(text: String, modifier: Modifier = Modifier) {
     HomeGuideBubble(
         text = text,
@@ -985,142 +655,6 @@ private fun CoachBubble(text: String, modifier: Modifier = Modifier) {
         horizontalPadding = 24.dp,
         verticalPadding = 16.dp,
     )
-}
-
-@Composable
-private fun CreationProgressChain(
-    currentStage: Int,
-    maxReachedStage: Int,
-    onStageSelected: (Int) -> Unit,
-) {
-    val progress by animateFloatAsState(
-        targetValue = maxReachedStage.toFloat(),
-        animationSpec = tween(750),
-        label = "竹节生长进度",
-    )
-    GlassPanel(
-        modifier = Modifier.fillMaxWidth().height(112.dp).padding(horizontal = 12.dp, vertical = 5.dp),
-        shape = RoundedCornerShape(28.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            CreationStages.forEachIndexed { index, stage ->
-                StageNode(
-                    stage = stage,
-                    active = index == currentStage,
-                    reached = index <= maxReachedStage,
-                    modifier = Modifier.width(if (index == 1) 72.dp else 58.dp),
-                    onClick = { if (index <= maxReachedStage) onStageSelected(index) },
-                )
-                if (index < CreationStages.lastIndex) {
-                    BambooProgressLine(
-                        fill = (progress - index).coerceIn(0f, 1f),
-                        modifier = Modifier.weight(1f).height(58.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StageNode(
-    stage: CreationStage,
-    active: Boolean,
-    reached: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = modifier.clickable(enabled = reached, onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(55.dp)
-                .shadow(if (active) 9.dp else 2.dp, CircleShape)
-                .clip(CircleShape)
-                .background(if (active) Color(0xE7E8F4CE) else Color(0xD9F6F2DF))
-                .border(if (active) 2.dp else 1.dp, if (active) LivingBamboo else DormantBamboo, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                stage.icon,
-                stage.label,
-                tint = if (reached) Ink else Color(0xFF7A7B68),
-                modifier = Modifier.size(29.dp),
-            )
-        }
-        Text(
-            stage.label,
-            color = if (active) Ink else Color(0xFF525A4B),
-            fontFamily = YaHei,
-            fontSize = if (stage.label.length > 2) 12.sp else 13.sp,
-            fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 5.dp),
-        )
-    }
-}
-
-@Composable
-private fun BambooProgressLine(fill: Float, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val y = 27.dp.toPx()
-        val startX = -2.dp.toPx()
-        val endX = size.width + 2.dp.toPx()
-        drawLine(
-            color = DormantBamboo,
-            start = Offset(startX, y),
-            end = Offset(endX, y),
-            strokeWidth = 4.dp.toPx(),
-            cap = StrokeCap.Round,
-        )
-        val livingEnd = startX + (endX - startX) * fill
-        if (fill > 0f) {
-            drawLine(
-                color = LivingBamboo,
-                start = Offset(startX, y),
-                end = Offset(livingEnd, y),
-                strokeWidth = 5.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-        }
-        listOf(0.35f, 0.72f).forEach { node ->
-            val x = startX + (endX - startX) * node
-            drawLine(
-                color = Color(0xFFD8D5AC),
-                start = Offset(x, y - 4.dp.toPx()),
-                end = Offset(x, y + 4.dp.toPx()),
-                strokeWidth = 1.dp.toPx(),
-            )
-            val leafGrowth = ((fill - node) / 0.2f).coerceIn(0f, 1f)
-            if (leafGrowth > 0f) {
-                drawBambooLeaf(Offset(x - 1.dp.toPx(), y - 2.dp.toPx()), -1f, leafGrowth)
-                drawBambooLeaf(Offset(x + 1.dp.toPx(), y + 2.dp.toPx()), 1f, leafGrowth)
-            }
-        }
-    }
-}
-
-private fun DrawScope.drawBambooLeaf(origin: Offset, direction: Float, growth: Float) {
-    val length = 13.dp.toPx() * growth
-    val width = 5.dp.toPx() * growth
-    val tip = Offset(origin.x + direction * length, origin.y - direction * length * 0.72f)
-    val path = Path().apply {
-        moveTo(origin.x, origin.y)
-        quadraticTo(origin.x + direction * length * 0.45f, origin.y - width, tip.x, tip.y)
-        quadraticTo(
-            origin.x + direction * length * 0.55f,
-            origin.y + width * 0.25f,
-            origin.x,
-            origin.y,
-        )
-        close()
-    }
-    drawPath(path, LivingBamboo)
 }
 
 @Composable
@@ -1188,39 +722,4 @@ private fun PaleButton(text: String, modifier: Modifier = Modifier, onClick: () 
             maxLines = 1,
         )
     }
-}
-
-private fun deriveProjectTitle(idea: String): String =
-    idea.trim().replace("\n", " ").take(16).ifBlank { "新的机关创意" }
-
-private fun inferCreationFormat(idea: String): String = when {
-    idea.contains("游戏") -> "互动问答小游戏"
-    idea.contains("画") || idea.contains("海报") -> "画面与图文作品"
-    idea.contains("故事") || idea.contains("脚本") -> "故事脚本"
-    else -> "互动机关作品"
-}
-
-private fun creationMediaTypeLabel(mediaType: String): String = when (mediaType) {
-    "COMIC" -> "漫画/绘本"
-    "MIXED_MEDIA" -> "综合媒介"
-    else -> "图文作品"
-}
-
-private fun conciseGoal(idea: String): String =
-    if (idea.isBlank()) "把灵感整理成可完成的作品" else idea.replace("\n", " ").take(22)
-
-private fun stageInstruction(stage: Int): String = when (stage) {
-    0 -> "确定玩法与表达目标"
-    1 -> "整理画面、流程与脚本"
-    2 -> "完成素材与交互制作"
-    3 -> "试玩并修正问题"
-    else -> "补充说明并完成归档"
-}
-
-private fun coachMessage(stage: Int): String = when (stage) {
-    0 -> "先确定玩法，\n再开始做画面。"
-    1 -> "把流程排清楚，\n制作会更顺。"
-    2 -> "按草图逐步制作，\n别忘了保存。"
-    3 -> "邀请同门试玩，\n记录卡住的地方。"
-    else -> "补齐作品说明，\n就可以封卷啦。"
 }

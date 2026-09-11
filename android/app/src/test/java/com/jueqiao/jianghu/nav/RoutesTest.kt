@@ -21,6 +21,53 @@ class RoutesTest {
     }
 
     @Test
+    fun conferencePrimaryTabsUseDistinctRoutes() {
+        assertEquals("dahui/arena", Routes.DahuiArena)
+        assertEquals("dahui/records", Routes.DahuiRecords)
+        assertEquals("dahui/letters", Routes.DahuiLetters)
+    }
+
+    @Test
+    fun conferenceLettersResolveToTheirSpecificDestinations() {
+        assertEquals(
+            "dahui/match/match-456",
+            Routes.conferenceLetterDestination(
+                navigationTarget = "CONFERENCE_MATCH",
+                navigationId = "match-456",
+                actionType = "CONFERENCE_MATCH",
+                actionId = "ignored",
+            ),
+        )
+        assertEquals(
+            "dahui/work/work-789",
+            Routes.conferenceLetterDestination(
+                navigationTarget = "CONFERENCE_WORK",
+                navigationId = "work-789",
+                actionType = "CONFERENCE_REVIEW",
+                actionId = "review-1",
+            ),
+        )
+        assertEquals(
+            Routes.DahuiRequests,
+            Routes.conferenceLetterDestination(
+                navigationTarget = "DERIVATIVE_REQUESTS",
+                navigationId = null,
+                actionType = "DERIVATIVE_REQUEST",
+                actionId = "request-1",
+            ),
+        )
+        assertEquals(
+            null,
+            Routes.conferenceLetterDestination(
+                navigationTarget = null,
+                navigationId = null,
+                actionType = "SYSTEM",
+                actionId = null,
+            ),
+        )
+    }
+
+    @Test
     fun yanwuchangDestinationsStayUnderTheirOwnRouteNamespace() {
         assertEquals("yanwuchang", Routes.Yanwuchang)
         assertEquals("yanwuchang/video", Routes.YanwuchangVideo)
