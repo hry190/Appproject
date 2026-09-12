@@ -31,16 +31,16 @@ import com.jueqiao.jianghu.R
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";第四卷首屏)
  *   - 标题文本"起点目标和可走之路"(字号 24,bold,黑色,X=110, Y=67, W=313, H=32)— **新标题系列**(8 字,W=313 真机测过)
- *   - 图1(image 348.png,X=18, Y=137, W=355, H=253)— 上部
- *   - 图2(image 349.png,X=18, Y=400, W=355, H=238)— 中部
- *   - 图3(image 354.png,X=18, Y=650, W=349, H=157)— 下部
+ *   - 图1(image 348.png,X=18, Y=120, W=355, H=253)— 上部
+ *   - 图2(image 349.png,X=18, Y=380, W=355, H=238)— 中部
+ *   - 图3(image 354.png,X=18, Y=625, W=349, H=187)— 下部
  *
  * 坐标说明:
  *   - image 348 实测 1044×708(横向矩形,比率 1.475);用户给 W=355 H=253 渲染比 1.403 与原图差 4.9%,几乎完美
  *   - image 349 实测 1047×651(横向矩形,比率 1.608);用户给 W=355 H=238 渲染比 1.492 与原图差 7.2%,几乎完美
  *   - image 354 实测 1047×612(横向矩形,比率 1.711);用户给 W=349 H=257 渲染比 1.358 与原图差 20.6%,图被拉宽
- *   - 图3 Y=650+157=807,在书框 Y=88-872 范围内安全(余量 65dp)
- *   - 代码后续真机上调过:图3 Y=590→650, H=257→157(见行内注释)
+ *   - 图3 Y=625+187=812,在书框 Y=88-872 范围内安全(余量 60dp)
+ *   - 代码后续真机上调过:图1 Y=137→120;图2 Y=400→380;图3 Y=650→625, H=207→187(见行内注释)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
@@ -106,7 +106,7 @@ fun Volume4Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 137.dp)
+                    .offset(x = 18.dp, y = 120.dp)
                     .size(width = 355.dp, height = 253.dp),
             ) {
                 Image(
@@ -122,7 +122,7 @@ fun Volume4Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 400.dp)
+                    .offset(x = 18.dp, y = 380.dp)
                     .size(width = 355.dp, height = 238.dp),
             ) {
                 Image(
@@ -133,13 +133,13 @@ fun Volume4Part1Screen(
                 )
             }
 
-            // 图3(image 354.png,X=18, Y=650, W=349, H=157)— 在书框之上、下部(贴书框底安全)。
-            // Y=650+157=807,在书框 Y=88-872 范围内安全(余量 65dp)。
+            // 图3(image 354.png,X=18, Y=650, W=349, H=207)— 在书框之上、下部(贴书框底安全)。
+            // Y=650+207=857,在书框 Y=88-872 范围内安全(余量 15dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 650.dp)
-                    .size(width = 349.dp, height = 157.dp),
+                    .offset(x = 18.dp, y = 625.dp)
+                    .size(width = 349.dp, height = 187.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume4part1_image_354),
