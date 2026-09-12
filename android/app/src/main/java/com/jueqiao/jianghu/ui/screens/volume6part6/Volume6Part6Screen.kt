@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume6part6
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第六卷-6 页 — 第六卷-5 → 点击"问问近邻"标题跳转目标。
+ * 第六卷-6 页 — 第六卷-5 → 点击"问问近邻"标题跳转目标。Vol-6-6 标题点击跳 Vol-6-7。
  *
  * 布局(z-order 由下到上,**4 层,无图 2**):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
@@ -46,6 +47,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume6Part6Screen(
     onBack: () -> Unit = {},
+    onOpenVolume6Part7: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -83,8 +85,7 @@ fun Volume6Part6Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"问问近邻"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 4 字 W=213(沿用 5 字规约宽度)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-6-7 创建时按历次约定回填 onOpenVolume6Part7)。
+            // 标题"问问近邻"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 4 字 W=213,点击跳第六卷-7。
             Text(
                 text = "问问近邻",
                 color = Color.Black,
@@ -92,7 +93,8 @@ fun Volume6Part6Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume6Part7),
             )
 
             // 图1(image 419.png,X=18, Y=135, W=360, H=202)— 在书框之上、上部(非标准尺寸)。

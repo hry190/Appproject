@@ -161,6 +161,7 @@ import com.jueqiao.jianghu.ui.screens.volume6part3.Volume6Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume6part4.Volume6Part4Screen
 import com.jueqiao.jianghu.ui.screens.volume6part5.Volume6Part5Screen
 import com.jueqiao.jianghu.ui.screens.volume6part6.Volume6Part6Screen
+import com.jueqiao.jianghu.ui.screens.volume6part7.Volume6Part7Screen
 import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
@@ -1095,7 +1096,13 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume6Part6) {
-            Volume6Part6Screen(onBack = { navController.popBackStack() })
+            Volume6Part6Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume6Part7 = { navController.navigate(Routes.Volume6Part7) },
+            )
+        }
+        composable(Routes.Volume6Part7) {
+            Volume6Part7Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun15) {
             Gunlun15Screen(onBack = { navController.popBackStack() })
