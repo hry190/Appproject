@@ -129,3 +129,85 @@
 7. **每次建屏前先 git status 看是否漏 commit**(本日 §30 时漏了 §24-29 累计)— ⚠️ 本日教训
 9. **书框奇偶交替中断例外已沉淀到 §28**:复制指令中明确指定页 = 字面优先于模式约定
 10. **commit 之前必先写当日 SESSION-LOG**(commit-push-summary-rule)— 本日未遵守,务必明天起恢复
+
+---
+
+## §31 Vol-5-8 ~ Vol-5-12 五屏批量创建 + NavHost 4 次 stray `}` 修复 + 环境修复
+
+### §31.1 Vol-5-8「训练，检验，测试」— 8 字 W=192
+
+- 用户 2026-09-12 13:33;复制第一卷-2 → Group 256(Vol-5-7 也是 256,连续两屏 256 异常)
+- 图:image 398(3.4%)/ image 399(3.9%)
+
+### §31.2 Vol-5-9「训练，检验，测试」**— 无图 2,4 层 z-order**
+
+- 用户 2026-09-12 13:35 创建指令只指定 image 400,未指定图 2
+- 经 AskUserQuestion 确认"确认 Vol-5-9 只有图1,跳过图2"
+- 复制第一卷-1 → Group 255(恢复交替:Vol-5-8 256 → Vol-5-9 255)
+- image 400 畸变 **0.5% 几乎完美**
+
+### §31.3 Vol-5-10「偏差的数据」— 5 字 W=213
+
+- 用户 2026-09-12 14:05;复制第一卷-1 → Group 255(Vol-5-9 也是 255,连续两屏 255 异常)
+- 图:image 401(**0% 完全匹配**)/ image 01(2.2%)— 图2 Y=318 改 Y=478(沿用 Vol-5-7/5-8 真机调过的值)
+- KDoc 同步记录"用户已手动适配 Y=478"
+
+### §31.4 Vol-5-11「偏差的数据」— 5 字 W=213
+
+- 用户 2026-09-12 14:11;复制第一卷-2 → Group 256(Vol-5-10 255 → Vol-5-11 256 恢复交替)
+- 图:image 4(3.6%)/ image 4001(0.6% 几乎完美)— Y=478 继续
+
+### §31.5 Vol-5-12「偏差的数据」— 5 字 W=213
+
+- 用户 2026-09-12 14:17;复制第一卷-1 → Group 255(Vol-5-11 256 → Vol-5-12 255 恢复交替)
+- 图:image 101(1.5% 几乎完美)/ image 901(**0% 完全匹配**)— Y=478
+
+### §31.6 NavHost stray `}` bug **4 次复发**(本日沉淀)
+
+| Vol-N | stray `}` 位置 | 大括号差 | 备注 |
+|---|---|---|---|
+| Vol-5-9 | 1003-1005 行 3 个 | diff +3 | 修了 3 行 |
+| Vol-5-10 | 1010 行 1 个 | diff +1 | 修了 1 行 |
+| Vol-5-11 | 1017 行 1 个 | diff +1 | 修了 1 行 |
+| Vol-5-12 | 1024 行 1 个 | diff +1 | **主动发现**(我之前承诺每次创建后跑 brace check)|**根因猜测**:NavHost 文件在新建 composable 后,闭合块外层多一个 `}`,可能是某个工具(IDE 自动格式化?)留下的。**未确认根因**(没追溯到具体来源)。
+
+**应对策略**(本日沉淀):
+- **每次新建 composable 后必跑 brace check**(我已主动做到)
+- 检查命令:`python -c "content=open('JianghuNavHost.kt', encoding='utf-8').read(); print(content.count('{'), content.count('}'), content.count('{') - content.count('}'))"`
+- 用户暂不考虑写文档("下次再出现的时候再让我考虑要不要加上")— ⚠️ 4 次同模式,但文档待办
+
+### §31.7 AUTH_BASE_URL + adb reverse 修复(本日诊断 → 用户处理)
+
+- 用户报"暂时无法连接江湖驿站"
+- 诊断:`AUTH_BASE_URL = http://10.0.2.2:8010/`(模拟器专属 alias)
+- 真机 `21908b7a` 用 `10.0.2.2` 不解析
+- curl 测试:127.0.0.1:8010 返回 200 + 完整 token pair ✓(Docker jianghu-dev-api-1 0.0.0.0:8010->8000/tcp 健康)
+- 修复(我做):
+  1. `adb reverse tcp:8010 tcp:8010`(同时保留 tcp:8081)
+  2. 改 [android/app/build.gradle.kts](android/app/build.gradle.kts) 三处 `10.0.2.2` → `127.0.0.1`(line 14/56/63)
+- 用户后续:`export JAVA_HOME=C:/Users/28784/.jdks/jbr-21.0.11` + `./gradlew :app:assembleDebug` + `adb install -r` + 登录 13800138000 / Test1234!
+
+### §31.8 当前状态(commit 前)
+
+```
+ M android/app/build.gradle.kts
+ M android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt   (含 4 次 stray `}` 修复)
+ M android/app/src/main/java/com/jueqiao/jianghu/nav/Routes.kt
+ M android/app/src/main/java/com/jueqiao/jianghu/ui/screens/volume5part{1..7}/  (用户真机手动调整 Y=318→478)
+ M android/app/src/test/java/com/jueqiao/jianghu/nav/RoutesTest.kt
+?? volume5part8/ volume5part9/ volume5part10/ volume5part11/ volume5part12/  (5 个新目录)
+?? img_volume5part{8,9,10,11,12}_*.png  (8 张 PNG)
+```
+
+### §31.9 累计未 commit 量统计
+
+- Vol-5-8/9/10/11/12 五屏完整创建
+- 8 张 PNG (image 398/399/400/401/01/4/4001/101/901 = 实际 9 张?查一下)
+- 1 次 stray `}` 修复
+- 1 处 build.gradle.kts URL 修改
+
+### §31.10 本日沉淀新结论(添加到 §121 后的"重要建议")
+
+11. **NavHost stray `}` 是高频 bug(本日 4 次),每次新增 composable 后必跑 brace check** — 已形成肌肉记忆
+12. **`adb reverse tcp:8010` 需手动建**(模拟器 10.0.2.2 在真机不解析)
+13. **gradle 不能在 Claude 自动模式下跑**(全程静态核验)— 用户自己 `./gradlew :app:assembleDebug`

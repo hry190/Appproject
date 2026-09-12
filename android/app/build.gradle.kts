@@ -11,7 +11,7 @@ val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) load(f.inputStream())
 }
-val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://10.0.2.2:8010/")
+val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://127.0.0.1:8010/")
 val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-08")
 val privacyVersion: String = localProps.getProperty("PRIVACY_VERSION", "2026-08")
 
@@ -53,14 +53,14 @@ android {
             matchingFallbacks += listOf("debug")
             signingConfig = signingConfigs.getByName("debug")
             // 比赛演示只连接随项目启动的隔离后端，不读取开发机 local.properties。
-            buildConfigField("String", "AUTH_BASE_URL", "http://10.0.2.2:8011/".asBuildConfigString())
+            buildConfigField("String", "AUTH_BASE_URL", "http://127.0.0.1:8011/".asBuildConfigString())
         }
         create("acceptance") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".acceptance"
             matchingFallbacks += listOf("debug")
             signingConfig = signingConfigs.getByName("debug")
-            buildConfigField("String", "AUTH_BASE_URL", "http://10.0.2.2:8011/".asBuildConfigString())
+            buildConfigField("String", "AUTH_BASE_URL", "http://127.0.0.1:8011/".asBuildConfigString())
         }
     }
     sourceSets.getByName("demo").manifest.srcFile("src/debug/AndroidManifest.xml")
