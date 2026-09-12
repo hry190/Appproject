@@ -1,9 +1,8 @@
-package com.jueqiao.jianghu.ui.screens.volume5part12
+package com.jueqiao.jianghu.ui.screens.volume5part15
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,30 +24,28 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第五卷-12 页 — 第五卷-11 → 点击"偏差的数据"标题跳转目标。Vol-5-12 标题点击跳 Vol-5-13。
+ * 第五卷-15 页 — 第五卷-14 → 点击"死记硬背不可行"标题跳转目标。
  *
- * 布局(z-order 由下到上):
+ * 布局(z-order 由下到上,**4 层,无图 2**):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-5-11(256)→ Vol-5-12(255) 恢复交替)
- *   - 标题文本"偏差的数据"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 5 字 W=213 沿用 5 字规约(与 Vol-5-10/5-11 同款,跨页同标题)
- *   - 图1(image 101.png,X=18, Y=135, W=355, H=311)— 上部
- *   - 图2(image 901.png,X=18, Y=478, W=355, H=321)— 中下部(沿用 Vol-5-7/5-8/5-10/5-11 真机调整过的 Y=478)
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-5-14(256)→ Vol-5-15(255) 恢复交替)
+ *   - 标题文本"死记硬背不可行"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 7 字 W=192 沿用 6-8 字规约(与 Vol-5-13/5-14 同款,跨页同标题)
+ *   - 图1(image 407.png,X=18, Y=135, **W=355, H=391**)— 上部(**H=391 比标准 H=311 大 80dp,占据更大空间**)
+ *
+ * **本屏无图 2**(用户 2026-09-12 创建指令仅指定 image 407;沿用 Vol-5-9 单图先例直接采用 4 层 z-order,如有出入随时改回 5 层)
  *
  * 坐标说明:
- *   - image 101 实测 1049×933(横向矩形,比率 1.124);用户给 W=355 H=311 渲染比 1.141 与原图差 1.5%,几乎完美
- *   - image 901 实测 1062×960(横向矩形,比率 1.106);用户给 W=355 H=321 渲染比 1.106 与原图差 0%,**完全匹配**
- *   - 图2 Y=478+321=799,在书框 Y=88-872 范围内(余量 73dp)
+ *   - image 407 实测 1049×1089(近正方形略竖,比率 0.963);用户给 W=355 H=391 渲染比 0.907 与原图差 5.8%,偏高但可接受
+ *   - 图1 Y=135+391=526,在书框 Y=88-872 范围内(余量 346dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 101.png(已复制为 res/drawable-nodpi/img_volume5part12_image_101.png)
- *   - 图2:D:\图\image 901.png(已复制为 res/drawable-nodpi/img_volume5part12_image_901.png)
+ *   - 图1:D:\图\image 407.png(已复制为 res/drawable-nodpi/img_volume5part15_image_407.png)
  */
 @Composable
-fun Volume5Part12Screen(
+fun Volume5Part15Screen(
     onBack: () -> Unit = {},
-    onOpenVolume5Part13: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -86,44 +83,29 @@ fun Volume5Part12Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"偏差的数据"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 5 字 W=213,点击跳第五卷-13。
+            // 标题"死记硬背不可行"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 7 字 W=192。
+            // **Vol-5 卷末补充屏**(用户 2026-09-12 在 5-14 后追加 5-15),本屏暂无后继页。
             Text(
-                text = "偏差的数据",
+                text = "死记硬背不可行",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume5Part13),
+                    .size(width = 192.dp, height = 32.dp),
             )
 
-            // 图1(image 101.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 407.png,X=18, Y=135, W=355, H=391)— 在书框之上、上部。
+            // **本屏无图 2**(沿用 Vol-5-9 单图先例,如有出入随时改回 5 层)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 311.dp),
+                    .size(width = 355.dp, height = 391.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume5part12_image_101),
+                    painter = painterResource(R.drawable.img_volume5part15_image_407),
                     contentDescription = "图1",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-
-            // 图2(image 901.png,X=18, Y=478, W=355, H=321)— 在书框之上、中下部。
-            // Y=478+321=799,在书框 Y=88-872 范围内(余量 73dp)。
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 321.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_volume5part12_image_901),
-                    contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
