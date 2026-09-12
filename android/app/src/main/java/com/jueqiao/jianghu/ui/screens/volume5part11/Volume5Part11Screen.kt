@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume5part7
+package com.jueqiao.jianghu.ui.screens.volume5part11
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,30 +25,30 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第五卷-7 页 — 第五卷-6 → 点击"标签不能重复和乱贴"标题跳转目标。Vol-5-7 标题点击跳 Vol-5-8。
+ * 第五卷-11 页 — 第五卷-10 → 点击"偏差的数据"标题跳转目标。Vol-5-11 标题点击跳 Vol-5-12。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-5-6(255)→ Vol-5-7(256) 交替)
- *   - 标题文本"训练，检验，测试"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 8 字(中文逗号算字)W=192 沿用 6-8 字规约
- *   - 图1(image 396.png,X=18, Y=135, W=355, H=311)— 上部
- *   - 图2(image 397.png,X=18, Y=318, W=355, H=321)— 中部
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-12 指定"复制第一卷-2";Vol-5-10(255)→ Vol-5-11(256) 恢复交替)
+ *   - 标题文本"偏差的数据"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 5 字 W=213 沿用 5 字规约(与 Vol-5-10 同款,跨页同标题)
+ *   - 图1(image 4.png,X=18, Y=135, W=355, H=311)— 上部
+ *   - 图2(image 4001.png,X=18, Y=478, W=355, H=321)— 中下部(沿用 Vol-5-7/5-8/5-10 真机调整过的 Y=478)
  *
  * 坐标说明:
- *   - image 396 实测 1035×918(横向矩形,比率 1.127);用户给 W=355 H=311 渲染比 1.141 与原图差 1.2%,几乎完美
- *   - image 397 实测 1062×921(横向矩形,比率 1.153);用户给 W=355 H=321 渲染比 1.106 与原图差 4.2%,可接受
- *   - 图2 Y=318+321=639,在书框 Y=88-872 范围内安全(余量 233dp)
+ *   - image 4 实测 1047×951(横向矩形,比率 1.101);用户给 W=355 H=311 渲染比 1.141 与原图差 3.6%,可接受
+ *   - image 4001 实测 1071×962(横向矩形,比率 1.113);用户给 W=355 H=321 渲染比 1.106 与原图差 0.6%,几乎完美
+ *   - 图2 Y=478+321=799,在书框 Y=88-872 范围内(余量 73dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 396.png(已复制为 res/drawable-nodpi/img_volume5part7_image_396.png)
- *   - 图2:D:\图\image 397.png(已复制为 res/drawable-nodpi/img_volume5part7_image_397.png)
+ *   - 图1:D:\图\image 4.png(已复制为 res/drawable-nodpi/img_volume5part11_image_4.png)
+ *   - 图2:D:\图\image 4001.png(已复制为 res/drawable-nodpi/img_volume5part11_image_4001.png)
  */
 @Composable
-fun Volume5Part7Screen(
+fun Volume5Part11Screen(
     onBack: () -> Unit = {},
-    onOpenVolume5Part8: () -> Unit = {},
+    onOpenVolume5Part12: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -86,19 +86,19 @@ fun Volume5Part7Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"训练，检验，测试"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 8 字 W=192,点击跳第五卷-8。
+            // 标题"偏差的数据"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 5 字 W=213,点击跳第五卷-12。
             Text(
-                text = "训练，检验，测试",
+                text = "偏差的数据",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume5Part8),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenVolume5Part12),
             )
 
-            // 图1(image 396.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 4.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -106,15 +106,15 @@ fun Volume5Part7Screen(
                     .size(width = 355.dp, height = 311.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume5part7_image_396),
+                    painter = painterResource(R.drawable.img_volume5part11_image_4),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 397.png,X=18, Y=318, W=355, H=321)— 在书框之上、中部。
-            // Y=318+321=639,在书框 Y=88-872 范围内安全(余量 233dp)。
+            // 图2(image 4001.png,X=18, Y=478, W=355, H=321)— 在书框之上、中下部。
+            // Y=478+321=799,在书框 Y=88-872 范围内(余量 73dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -122,7 +122,7 @@ fun Volume5Part7Screen(
                     .size(width = 355.dp, height = 321.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume5part7_image_397),
+                    painter = painterResource(R.drawable.img_volume5part11_image_4001),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
