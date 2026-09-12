@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.gunlun12
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -38,6 +39,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun12Screen(
     onBack: () -> Unit = {},
     onOpenGunlun13: () -> Unit = {},
+    onOpenVolume5Part1: () -> Unit = {},
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
@@ -140,7 +142,8 @@ fun Gunlun12Screen(
             contentDescription = "已解锁秘籍9",
             modifier = Modifier
                 .offset(x = 135.dp, y = 221.dp)
-                .size(width = 155.dp, height = 147.dp),
+                .size(width = 155.dp, height = 147.dp)
+                .clickable(onClick = onOpenVolume5Part1),
             contentScale = ContentScale.FillBounds,
         )
 
