@@ -214,6 +214,63 @@
 
 ---
 
+## §34 第六卷 + 全卷图像畸变排查(42 处修复)
+
+### §34.1 第六卷-1~6 创建批(2026-09-12 16:13~17:13)
+
+- **Vol-6-1**: 入口 Gunlun14「已解锁秘籍9」图像(新入口, 仿 Gunlun12→Vol-5 模式); image 409 (0%) / image 410 (0.4%); 书框 255; 标题「相似要有尺」5 字 W=213; 创建时无图 2 (单图先例沿用 Vol-5-9); Vol-6-1 → Vol-6-2 标题 clickable
+- **Vol-6-2**: 书框 256 (用户后续修订「用 vol-1-2 的书框图像」); image 411 (3.9%) / image 412 (0.5%); Vol-6-1 标题 clickable
+- **Vol-6-3**: 复制第一卷-1 → 书框 255 (恢复交替); image 413 (5.9%**KDoc 标"偏高但可接受"**); image 414 (0.5%)
+- **Vol-6-4**: 标题「问问近邻」(**4 字 — 无独立规约,沿用 5 字 W=213**); image 415 (**0% 完全匹配**) / image 416 (**0% 完全匹配**); 跨页同标题叙述
+- **Vol-6-5**: 书框 256 (恢复交替); image 417 (5.1%**偏高**); image 418 (2.1%); 与 Vol-6-4 同标题
+- **Vol-6-6**: 单图先例 4 层 z-order (沿用 Vol-5-9/15); **非标准尺寸 W=360 H=202** (用户显式指定, panorama 图 1049×606 比率 1.731)
+- **Vol-6-7**: image 420 (5.9%) / image 42 (6.2%) — **用户口头指示"根据宽度调整高度"** → 改 H=311→330 / H=321→341 消除畸变
+
+### §34.2 用户新规则「之后都要以宽度调整图像」(2026-09-12 19:00)
+
+- 用户指示:"之后都要以宽度调整图像"
+- **新 memory** [image-size-by-width-default.md](~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md)(feedback 类型): H_natural = round(W / 原图比例)
+- 决策表: 偏离 ≤5% 用用户 H, >5% 自动按比例重算 H, KDoc 留痕"用户字面 H→自然 H(消除畸变)"
+- 已加入 [MEMORY.md 索引](~/.claude/projects/d--Appproject/memory/MEMORY.md) 第 7 条
+
+### §34.3 全卷图像畸变排查 + 批量修复(2026-09-12 19:10)
+
+- 用户指示:"排查一下有没有畸变超过 5% 的图像, 按照宽度去调整图像"
+- **审计脚本**(Python re.sub + PNG header 校验): 扫描所有 Vol-N 内容图像 + Learning 系列
+- **结果**: 144 个内容图像, **43 项 >5% 畸变** (最大 18.6% Vol-2-9 image 293, 最小 5.0% Vol-5-15 image 407)
+- **修复**: 42 项(41 自动 + 1 手动)
+  - 41 项自动改 `.size()` + KDoc/inline 留痕
+  - Vol-4-7 image 366 漏改(backward search 抓错 .size() — 见沉淀 bug), 手动 Edit 修正
+- **跳过**: Vol-5-15 image 407 (用户已手动调 391→351, 在阈值 5.0%)
+- **修复后**: 0 项内容图像 >5% 畸变
+- **沉淀**: 案例 E + 审计脚本 + 已知 bug 全部写入 [IMAGE-COORDINATE-VERIFICATION.md](docs/IMAGE-COORDINATE-VERIFICATION.md)
+
+### §34.4 沉淀索引增量(2026-09-12 沉淀时间)
+
+新增 / 更新 4 条 memory + 1 个文档章节:
+1. `memory/image-size-by-width-default.md`(新)— H = W / 比例规则
+2. `MEMORY.md` 索引第 7 条(新)— 链接到 image-size-by-width-default
+3. `docs/IMAGE-COORDINATE-VERIFICATION.md` 案例 E + 审计脚本 + H 公式 + 沉淀索引更新
+4. (已有) `memory/screen-copy-verify-coordinates.md`(现有规则) + `commit-push-summary-rule.md`
+
+### §34.5 Git 状态(commit 前)
+
+```
+ M 35 文件(Volume1Part{3,4,7,10,11,14} / Volume2Part{5,6,7,9,10,11,14} /
+   Volume3Part{1,4,5,6,7,10,11} / Volume4Part{1,3,5,7,9,10,11,12,13,14} /
+   Volume5Part{1,3,4} / Volume6Part{3,5,6} / Learning4 / JianghuNavHost /
+   Routes / RoutesTest / docs/IMAGE-COORDINATE-VERIFICATION.md)
+?? volume6part7/ + img_volume6part7_{image_420,image_42}.png
+```
+
+### §34.6 已知 bug(写入 IMAGE-COORDINATE-VERIFICATION)
+
+**多图像屏的 backward search 抓错 .size()**: 屏有 2 张图(image_364 + image_366), `backward search` 找 `.size()` 时会抓到前一张图的对象。
+- **修复方案**: 改成从 inline comment (`// 图N(image X.png,...)`) 前向找 .size()
+- **沉淀位置**: IMAGE-COORDINATE-VERIFICATION.md「全卷畸变审计脚本」章节末尾
+
+---
+
 ## §33 Vol-5-15 → Gunlun12 卷末闭环 + Vol-5 全系列注释审计+修复
 
 ### §33.1 Vol-5-15 标题 → Gunlun12(闭环)

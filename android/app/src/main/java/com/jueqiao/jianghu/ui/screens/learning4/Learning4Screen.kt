@@ -117,7 +117,7 @@ fun Learning4Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 190.dp, y = 544.dp)
-                    .size(width = 200.dp, height = 280.dp),
+                    .size(width = 200.dp, height = 326.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_learning4_image_540),

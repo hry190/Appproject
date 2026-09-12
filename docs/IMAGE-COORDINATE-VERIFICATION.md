@@ -122,6 +122,101 @@ PNG 校验**发现问题时**,不要默改、不要猜,要把数据+选项摆给
 - 处理:**以代码为准修注释**,共修复 12+ 处
 - KDoc 补:每屏「坐标说明」段加"代码后续真机上调过:..."句
 
+### 案例 E:全卷批量"按宽度调整"消畸变(2026-09-12)
+
+- **触发**:用户口头指示"排查一下有没有畸变超过5%的图像,按照宽度去调整图像"
+- **范围**:144 个内容图像(volumeNpartN_image_* / learningN_image_*)全卷扫描
+- **发现**:43 项畸变 >5%(分布 Vol-1/2/3/4/5/6 + Learning-4),最大 18.6%(Vol-2-9 image 293)
+- **决策**:用户给出**新规则**——所有内容图像一律 `H = round(W / 原图比例)`,消除 `ContentScale.FillBounds` 拉伸
+- **结果**:42 项自动 + 1 项手动修复,**剩余 0 项 >5%**
+- **KDoc 留痕**:每处加"用户 2026-09-12 按宽度调整消除畸变,H=X→Y 自然高度 W/比例"
+- **沉淀**:规则写入 [[image-size-by-width-default]](~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md)(跨会话生效)
+
+---
+
+## 全卷畸变审计脚本(案例 E 沉淀)
+
+### 使用方法
+
+```bash
+PYTHONIOENCODING=utf-8 python audit_distortion.py
+```
+
+输出格式:
+```
+=== > 5% content images ===
+  Volume4Part7Screen  img_volume4part7_image_366  W=355 H=311  diff 15.5%  -> new H=263
+  ...
+```
+
+阈值 5% 是用户规则定的(image-size-by-width-default memory)。
+
+### 脚本实现要点(供以后移植到 `tools/audit_distortion.py`)
+
+```python
+import struct, os, re, glob
+
+DRAW_DIR = "android/app/src/main/res/drawable-nodpi"
+SCREEN_DIR = "android/app/src/main/java/com/jueqiao/jianghu/ui/screens"
+
+def png_dims(name):
+    """读 PNG 头 16-24 字节拿宽高"""
+    p = os.path.join(DRAW_DIR, name + ".png")
+    with open(p, 'rb') as f: data = f.read(24)
+    if data[:8] != b'\x89PNG\r\n\x1a\n': return None
+    w, h = struct.unpack('>II', data[16:24])
+    return (w, h)
+
+def is_content_image(name):
+    """只审计 Vol-N + Learning 系列内容图,跳过 UI/书框/背景"""
+    return bool(re.match(r'^img_(volume\d+part\d+_image_|learning\d+_image_)', name))
+
+results = []
+for kt_path in glob.glob(f'{SCREEN_DIR}/**/*Screen.kt', recursive=True):
+    screen = os.path.basename(kt_path).replace('.kt', '')
+    with open(kt_path, encoding='utf-8') as f: content = f.read()
+    # 每个 painterResource 后向前找最近的 .size()
+    for m in re.finditer(r'painterResource\(R\.drawable\.(\w+)\)', content):
+        img = m.group(1)
+        if not is_content_image(img): continue
+        start = max(0, m.start() - 600)
+        snip = content[start:m.start()]
+        sizes = list(re.finditer(r'\.size\(width\s*=\s*([\d.]+)\.dp,\s*height\s*=\s*([\d.]+)\.dp\)', snip))
+        if not sizes: continue
+        w, h = float(sizes[-1].group(1)), float(sizes[-1].group(2))
+        d = png_dims(img)
+        if not d: continue
+        ow, oh = d
+        ratio_o = ow / oh
+        ratio_r = w / h
+        diff = abs(ratio_o - ratio_r) / ratio_o * 100
+        if diff > 5:
+            results.append((screen, img, w, h, diff, round(w / ratio_o)))
+```
+
+### 已知 bug:多图像屏的 backward search
+
+**问题**:屏有 2 张图(image_364 + image_366),`backward search` 找 `.size()` 时,会抓到**前一张图**的 .size() 而不是当前的。
+**修复**:改成从 inline comment (`// 图N(image X.png,...)`) 前向找 .size(),或按 modifier 嵌套结构解析。
+
+实际 2026-09-12 案例 E 中 Vol-4-7 image 366 因此漏改,需手动 Edit 修正。
+
+---
+
+## 按宽度调整 H 的标准公式(2026-09-12 新规则)
+
+```
+H_natural = round(W_given / 原图_width_height_ratio)
+```
+
+| H偏离原图比例 | 处理 |
+|---|---|
+| ≤ 5% | 用用户 H(容差)|
+| > 5% | **自动按比例重算 H**,KDoc 留痕"用户字面 H=X→自然 H=Y 消除畸变"|
+| 用户显式说"按 H=X"或真机已调过 | 尊重用户 H,留痕 |
+
+详见 [[image-size-by-width-default memory]](~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md)。
+
 ---
 
 ## 决策树(快速参考)
@@ -178,9 +273,12 @@ PNG 校验**发现问题时**,不要默改、不要猜,要把数据+选项摆给
 
 ## 沉淀索引
 
-- **沉淀出处**:2026-09-11 一天 11 屏 Vol-3 创建批 + 3 轮"注意注释"修复
-- **配套 memory**:`~/.claude/projects/d--Appproject/memory/screen-copy-verify-coordinates.md`(AI 流程记忆,跨会话生效)
+- **沉淀出处**:2026-09-11 一天 11 屏 Vol-3 创建批 + 3 轮"注意注释"修复;**2026-09-12 增量**:案例 E 全卷批量"按宽度调整"消畸变 + 4 个新 memory/image rules
+- **配套 memory**:
+  - `~/.claude/projects/d--Appproject/memory/screen-copy-verify-coordinates.md` — 跨会话生效
+  - `~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md` — 2026-09-12 新增,H = W / 比例
 - **相关文档**:
   - [docs/CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) — Vol-2 doc 批审计,本方法源自该审计的 H2-H4 + M6
   - [docs/SESSION-LOG-2026-09-11.md § 19-27](./SESSION-LOG-2026-09-11.md) — 每天操作记录,含本方法所有使用实例
-- **沉淀时间**:2026-09-11
+  - [docs/SESSION-LOG-2026-09-12.md § 31-33](./SESSION-LOG-2026-09-12.md) — Vol-5/Vol-6 创建批 + 注释审计 + 全卷畸变排查
+- **沉淀时间**:2026-09-11(初版)+ 2026-09-12(增量)

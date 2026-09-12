@@ -132,7 +132,7 @@ fun Volume2Part5Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 24.dp, y = 609.dp)
-                    .size(width = 356.dp, height = 217.dp),
+                    .size(width = 356.dp, height = 202.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume2part4_image_284),
