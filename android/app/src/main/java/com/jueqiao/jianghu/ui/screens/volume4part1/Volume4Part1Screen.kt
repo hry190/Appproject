@@ -106,7 +106,7 @@ fun Volume4Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 137.dp)
+                    .offset(x = 18.dp, y = 120.dp)
                     .size(width = 355.dp, height = 253.dp),
             ) {
                 Image(
@@ -122,7 +122,7 @@ fun Volume4Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 400.dp)
+                    .offset(x = 18.dp, y = 380.dp)
                     .size(width = 355.dp, height = 238.dp),
             ) {
                 Image(
@@ -138,8 +138,8 @@ fun Volume4Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 650.dp)
-                    .size(width = 349.dp, height = 207.dp),
+                    .offset(x = 18.dp, y = 625.dp)
+                    .size(width = 349.dp, height = 187.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume4part1_image_354),

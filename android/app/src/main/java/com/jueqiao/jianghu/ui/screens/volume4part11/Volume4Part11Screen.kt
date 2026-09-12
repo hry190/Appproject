@@ -116,8 +116,8 @@ fun Volume4Part11Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 318.dp)
-                    .size(width = 361.dp, height = 321.dp),
+                    .offset(x = 18.dp, y = 468.dp)
+                    .size(width = 355.dp, height = 321.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume4part11_image_374),
