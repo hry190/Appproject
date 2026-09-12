@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume4part14
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +32,7 @@ import com.jueqiao.jianghu.R
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-4-13(256)→ Vol-4-14(255) 交替)
  *   - 标题文本"路边则重算"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-12/4-13 同款(同标题跨页叙述)
  *   - 图1(image 0.png,X=18, Y=135, W=355, H=311)— 上部
- *   - 图2(image 379.png,X=18, Y=318, W=355, H=321)— 中部
+ *   - 图2(image 379.png,X=18, Y=458, W=355, H=321)— 中部
  *
  * 坐标说明:
  *   - image 0 实测 1049×1011(近正方形,比率 1.038);用户给 W=355 H=311 渲染比 1.141 与原图差 9.9%,图被拉宽(接近 10% 阈值)
@@ -48,6 +49,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume4Part14Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun8: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -85,8 +87,7 @@ fun Volume4Part14Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"路边则重算"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-12/4-13 同款。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-4-15 创建时按历次约定回填 onOpenVolume4Part15)。
+            // 标题"路边则重算"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-12/4-13 同款,点击跳滚轮8(系列闭环)。
             Text(
                 text = "路边则重算",
                 color = Color.Black,
@@ -94,7 +95,8 @@ fun Volume4Part14Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp),
+                    .size(width = 192.dp, height = 32.dp)
+                    .clickable(onClick = onOpenGunlun8),
             )
 
             // 图1(image 0.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
