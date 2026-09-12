@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.gunlun15
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -50,6 +51,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun15Screen(
     onBack: () -> Unit = {},
     onPandaClick: (() -> Unit)? = null,
+    onOpenVolume7Part1: (() -> Unit)? = null,
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
@@ -147,12 +149,14 @@ fun Gunlun15Screen(
         )
 
         // "已解锁秘籍9" 图像(完成循环轮换,占"秘籍"原槽位,X=135, Y=221, W=155, H=147)
+        // **新增:点击跳 Vol-7-1(第七卷首屏)**
         Image(
             painter = painterResource(R.drawable.img_gunlun15_untitled_2_recovered_17),
             contentDescription = "已解锁秘籍9",
             modifier = Modifier
                 .offset(x = 135.dp, y = 221.dp)
-                .size(width = 155.dp, height = 147.dp),
+                .size(width = 155.dp, height = 147.dp)
+                .clickable { onOpenVolume7Part1?.invoke() },
             contentScale = ContentScale.FillBounds,
         )
 

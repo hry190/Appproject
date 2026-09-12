@@ -476,3 +476,55 @@ python -c "content = open('JianghuNavHost.kt', encoding='utf-8').read(); print(c
 ```
  M Volume6Part12Screen.kt — 仅 1 文件,KDoc + inline 同步真机手动调整值
 ```
+
+---
+
+## §37 图像调整方案升级 + 第七卷启动(2026-09-12 20:50)
+
+### §37.1 用户指令:升级图像调整规则
+
+- 用户 2026-09-12 20:48 指示:"改一下调整图像的方案,要以图像的高度和宽度来设定的高度和宽度,而不是用我设定的"
+- 旧规则(image-size-by-width-default):用户给 W,反推 H = round(W / 原图比例)
+- **新规则(image-fit-to-natural-bounds):完全忽略用户 W/H,只取 PNG 原图尺寸 fit 进 max_W=355 × max_H=394**
+  - 横图 (ratio ≥ 1): W=355, H = round(355/ratio)
+  - 竖图 (ratio < 1): H=394, W = round(394 × ratio)
+
+### §37.2 沉淀路径
+
+- 新 memory [image-fit-to-natural-bounds.md](~/.claude/projects/d--Appproject/memory/image-fit-to-natural-bounds.md)(替换旧的 image-size-by-width-default)
+- [MEMORY.md 索引第 7 条](~/.claude/projects/d--Appproject/memory/MEMORY.md)(已更新)— 链接到 fit-to-natural-bounds
+- [docs/IMAGE-COORDINATE-VERIFICATION.md](docs/IMAGE-COORDINATE-VERIFICATION.md) — 5 处旧引用替换 + 新增 fit-to-box 公式段(取代"按宽度调整 H"段)
+- 旧 image-size-by-width-default.md — **保留**(标记为"已废弃")
+
+### §37.3 第七卷启动:Vol-7-1 (首次新规则应用)
+
+- **新入口**: Gunlun15 「已解锁秘籍9」图像 (仿 Gunlun8→Vol-4 / Gunlun12→Vol-5 / Gunlun14→Vol-6 模式)
+- Gunlun15 已加 `onOpenVolume7Part1: (() -> Unit)?` 参数 + 「已解锁秘籍9」 `.clickable { onOpenVolume7Part1?.invoke() }`
+- **Vol-7-1 创建**:复制第一卷-1 → Group 255,标题「皮影戏之小节点会加权」**10 字**(新长度,沿用 9 字 W=302,KDoc 标注异常)
+- **完全按新规则 fit-to-natural-bounds**:
+  - image 436 (1047×816, ratio 1.283) → W=355 H=277(用户字面 H=311 忽略) — 畸变 0.12%
+  - image 437 (1065×801, ratio 1.330) → W=355 H=267(用户字面 H=321 忽略) — 畸变 0%
+- **首次新规则应用确认**:用户 W/H 完全没影响最终渲染,完全由 PNG 尺寸决定
+
+### §37.4 沉淀:10 字标题宽度
+
+- 用户首次给出 10 字标题"皮影戏之小节点会加权"
+- 历次规约:5字=213, 6-8字=192, 9字=302, 8字长=313
+- 10字无独立规约 — 沿用 9字 W=302,KDoc 标注"10 字无独立规约,真机可微调"
+- 后续 10字出现时可观察是否需要更新规则
+
+### §37.5 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (加 import + 接线 Vol-7-1)
+ M Routes.kt / RoutesTest.kt
+ M Gunlun15Screen.kt (加 onOpenVolume7Part1 + clickable)
+?? Volume7Part1Screen.kt
+?? img_volume7part1_image_{436,437}.png
+```
+
+### §37.6 沉淀:新规则 vs AskUserQuestion
+
+- 旧规则下 Vol-6-12 image 7 触发 AskUserQuestion(竖图 ratio 0.772 严重畸变)
+- **新规则直接 fit,无需 AskUserQuestion** — 竖图自动选 H=394 W=round(394×0.772)=304(0% 畸变 + fit 书框)
+- 沉淀:新规则应减少 AskUserQuestion 触发次数(只对极端尺寸)
