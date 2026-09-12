@@ -87,7 +87,7 @@ fun Volume4Part2Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"起点目标和可走之路"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 与 Vol-4-1 同款,点击跳第四卷-3。
+            // 标题"起点目标和可走之路"(字号 24,bold,黑色,X=110, Y=67, W=313, H=32)— 与 Vol-4-1 同款,点击跳第四卷-3。
             Text(
                 text = "起点目标和可走之路",
                 color = Color.Black,
@@ -120,7 +120,7 @@ fun Volume4Part2Screen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 318.dp)
-                    .size(width = 361.dp, height = 121.dp),
+                    .size(width = 350.dp, height = 121.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume4part2_image_352),
