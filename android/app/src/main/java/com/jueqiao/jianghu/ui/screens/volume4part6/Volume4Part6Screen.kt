@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume4part5
+package com.jueqiao.jianghu.ui.screens.volume4part6
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,31 +25,30 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第四卷-5 页 — 第四卷-4 → 点击"穷尽还是剪枝"标题跳转目标。
+ * 第四卷-6 页 — 第四卷-5 → 点击"层层探路"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-4-4(256)→ Vol-4-5(255) 交替)
- *   - 标题文本"穷尽还是剪枝"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-3/4-4 同款(同标题跨页叙述)
- *   - 图1(image 359.png,X=18, Y=135, W=355, H=311)— 上部
- *   - 图2(image 360.png,X=18, Y=478, W=361, H=321)— 中部
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-4-5(255)→ Vol-4-6(255) 两连同款)
+ *   - 标题文本"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 新标题系列(4 字短标题,W=192 沿用 Vol-3-4~3-8/4-3~4-5 同款)
+ *   - 图1(image 361.png,X=18, Y=135, W=355, H=311)— 上部
+ *   - 图2(image 362.png,X=18, Y=318, W=361, H=321)— 中部
  *
  * 坐标说明:
- *   - image 359 实测 1049×966(近正方形,比率 1.086);用户给 W=355 H=311 渲染比 1.141 与原图差 5%,可接受
- *   - image 360 实测 1064×978(近正方形,比率 1.088);用户给 W=361 H=321 渲染比 1.125 与原图差 3.4%,可接受
- *   - 图2 Y=478+321=799,在书框 Y=88-872 范围内安全(余量 73dp)
- *   - 代码后续真机上调过:图2 Y=318→478(见行内注释)
+ *   - image 361 实测 1047×918(横向矩形,比率 1.141);用户给 W=355 H=311 渲染比 1.141 与原图差 0%,几乎完美
+ *   - image 362 实测 1062×912(横向矩形,比率 1.164);用户给 W=361 H=321 渲染比 1.125 与原图差 3.4%,几乎完美
+ *   - 图2 Y=318+321=639,在书框 Y=88-872 范围内安全(余量 233dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 359.png(已复制为 res/drawable-nodpi/img_volume4part5_image_359.png)
- *   - 图2:D:\图\image 360.png(已复制为 res/drawable-nodpi/img_volume4part5_image_360.png)
+ *   - 图1:D:\图\image 361.png(已复制为 res/drawable-nodpi/img_volume4part6_image_361.png)
+ *   - 图2:D:\图\image 362.png(已复制为 res/drawable-nodpi/img_volume4part6_image_362.png)
  */
 @Composable
-fun Volume4Part5Screen(
+fun Volume4Part6Screen(
     onBack: () -> Unit = {},
-    onOpenVolume4Part6: () -> Unit = {},
+    onOpenVolume4Part7: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -87,19 +86,19 @@ fun Volume4Part5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"穷尽还是剪枝"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-3/4-4 同款,点击跳第四卷-6。
+            // 标题"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 新标题系列,点击跳第四卷-7。
             Text(
-                text = "穷尽还是剪枝",
+                text = "层层探路",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 192.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume4Part6),
+                    .clickable(onClick = onOpenVolume4Part7),
             )
 
-            // 图1(image 359.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 361.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -107,23 +106,23 @@ fun Volume4Part5Screen(
                     .size(width = 355.dp, height = 311.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume4part5_image_359),
+                    painter = painterResource(R.drawable.img_volume4part6_image_361),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 360.png,X=18, Y=478, W=361, H=321)— 在书框之上、中部。
-            // Y=478+321=799,在书框 Y=88-872 范围内安全(余量 73dp)。
+            // 图2(image 362.png,X=18, Y=318, W=361, H=321)— 在书框之上、中部。
+            // Y=318+321=639,在书框 Y=88-872 范围内安全(余量 233dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
+                    .offset(x = 18.dp, y = 318.dp)
                     .size(width = 361.dp, height = 321.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume4part5_image_360),
+                    painter = painterResource(R.drawable.img_volume4part6_image_362),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
