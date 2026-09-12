@@ -146,6 +146,10 @@ import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
 import com.jueqiao.jianghu.ui.screens.volume4part5.Volume4Part5Screen
 import com.jueqiao.jianghu.ui.screens.volume4part6.Volume4Part6Screen
 import com.jueqiao.jianghu.ui.screens.volume4part7.Volume4Part7Screen
+import com.jueqiao.jianghu.ui.screens.volume4part8.Volume4Part8Screen
+import com.jueqiao.jianghu.ui.screens.volume4part9.Volume4Part9Screen
+import com.jueqiao.jianghu.ui.screens.volume4part10.Volume4Part10Screen
+import com.jueqiao.jianghu.ui.screens.volume4part11.Volume4Part11Screen
 import com.jueqiao.jianghu.ui.screens.volume3part1.Volume3Part1Screen
 import com.jueqiao.jianghu.ui.screens.volume3part2.Volume3Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume3part3.Volume3Part3Screen
@@ -860,7 +864,31 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume4Part7) {
-            Volume4Part7Screen(onBack = { navController.popBackStack() })
+            Volume4Part7Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part8 = { navController.navigate(Routes.Volume4Part8) },
+            )
+        }
+        composable(Routes.Volume4Part8) {
+            Volume4Part8Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part9 = { navController.navigate(Routes.Volume4Part9) },
+            )
+        }
+        composable(Routes.Volume4Part9) {
+            Volume4Part9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part10 = { navController.navigate(Routes.Volume4Part10) },
+            )
+        }
+        composable(Routes.Volume4Part10) {
+            Volume4Part10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume4Part11 = { navController.navigate(Routes.Volume4Part11) },
+            )
+        }
+        composable(Routes.Volume4Part11) {
+            Volume4Part11Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun9) {
             Gunlun9Screen(

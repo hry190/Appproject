@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume4part7
+package com.jueqiao.jianghu.ui.screens.volume4part8
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -25,31 +25,26 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第四卷-7 页 — 第四卷-6 → 点击"层层探路"标题跳转目标。
+ * 第四卷-8 页 — 第四卷-7 → 点击"层层探路"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-12 指定"复制第一卷-2";Vol-4-6(255)→ Vol-4-7(256) 交替)
- *   - 标题文本"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-6 同款(同标题跨页叙述)
- *   - 图1(image 364.png,X=18, Y=135, W=355, H=311)— 上部
- *   - 图2(image 366.png,X=18, Y=478, W=355, H=311)— 中部
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-4-7(256)→ Vol-4-8(255) 交替)
+ *   - 标题文本"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-6/4-7 同款(同标题跨页叙述)
+ *   - 图1(image 367.png,X=18, Y=135, W=355, H=311)— 上部(只 1 张图)
  *
  * 坐标说明:
- *   - image 364 实测 1068×957(横向矩形,比率 1.116);用户给 W=355 H=311 渲染比 1.141 与原图差 2.2%,几乎完美
- *   - image 366 实测 1074×795(横向矩形,比率 1.351);用户给 W=361 H=321 渲染比 1.125 与原图差 16.8%,图被拉宽
- *   - 图2 Y=478+311=789,在书框 Y=88-872 范围内安全(余量 83dp)
- *   - 代码后续真机上调过:图2 Y=318→478, W=361→355, H=321→311(见行内注释)
+ *   - image 367 实测 1049×888(横向矩形,比率 1.181);用户给 W=355 H=311 渲染比 1.141 与原图差 3.4%,几乎完美
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 364.png(已复制为 res/drawable-nodpi/img_volume4part7_image_364.png)
- *   - 图2:D:\图\image 366.png(已复制为 res/drawable-nodpi/img_volume4part7_image_366.png)
+ *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:D:\图\image 367.png(已复制为 res/drawable-nodpi/img_volume4part8_image_367.png)
  */
 @Composable
-fun Volume4Part7Screen(
+fun Volume4Part8Screen(
     onBack: () -> Unit = {},
-    onOpenVolume4Part8: () -> Unit = {},
+    onOpenVolume4Part9: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -66,7 +61,7 @@ fun Volume4Part7Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 素材。
+        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷素材。
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -74,7 +69,7 @@ fun Volume4Part7Screen(
                 .size(width = 854.dp, height = 784.dp),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_volume1part2_group_256),
+                painter = painterResource(R.drawable.img_volume1_group_255),
                 contentDescription = "书框",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds,
@@ -87,7 +82,7 @@ fun Volume4Part7Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-6 同款,点击跳第四卷-8。
+            // 标题"层层探路"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-4-6/4-7 同款,点击跳第四卷-9。
             Text(
                 text = "层层探路",
                 color = Color.Black,
@@ -96,10 +91,10 @@ fun Volume4Part7Screen(
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 192.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume4Part8),
+                    .clickable(onClick = onOpenVolume4Part9),
             )
 
-            // 图1(image 364.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 367.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部(只 1 张图)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -107,24 +102,8 @@ fun Volume4Part7Screen(
                     .size(width = 355.dp, height = 311.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume4part7_image_364),
+                    painter = painterResource(R.drawable.img_volume4part8_image_367),
                     contentDescription = "图1",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-            }
-
-            // 图2(image 366.png,X=18, Y=478, W=355, H=311)— 在书框之上、中部。
-            // Y=478+311=789,在书框 Y=88-872 范围内安全(余量 83dp)。
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 311.dp),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_volume4part7_image_366),
-                    contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
