@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.gunlun13
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -40,7 +41,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   - 已解锁秘籍6 (X=311.04)   ← 未标题-2 31.png         → img_gunlun13_untitled_2_31
  *   - 已解锁秘籍7 (X=357)      ← 未标题-2-恢复的 17.png  → img_gunlun13_untitled_2_recovered_17
  *   - 已解锁秘籍8 (X=321)      ← 未标题-2 56.png         → img_gunlun13_untitled_2_56
- *   - 已解锁秘籍9 (X=135)      ← 未标题-2 50.png         → img_gunlun13_untitled_2_50
+ *   - 已解锁秘籍9 (X=135)      ← 未标题-2 50.png         → img_gunlun13_untitled_2_50  → **点击跳 Vol-10-1**(2026-09-13 新增)
  *
  * 介绍样式:
  *   - 背景色:#2E1E60 (64% 不透明,Color(0xA32E1E60))
@@ -51,6 +52,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun13Screen(
     onBack: () -> Unit = {},
     onPandaClick: (() -> Unit)? = null,
+    onOpenVolume10Part1: (() -> Unit)? = null,
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
@@ -147,13 +149,14 @@ fun Gunlun13Screen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "已解锁秘籍9" 图像(完成循环轮换,占"秘籍"原槽位,X=135, Y=221, W=155, H=147)
+        // "已解锁秘籍9" 图像(完成循环轮换,占"秘籍"原槽位,X=135, Y=221, W=155, H=147)— 点击跳 Vol-10-1
         Image(
             painter = painterResource(R.drawable.img_gunlun13_untitled_2_50),
             contentDescription = "已解锁秘籍9",
             modifier = Modifier
                 .offset(x = 135.dp, y = 221.dp)
-                .size(width = 155.dp, height = 147.dp),
+                .size(width = 155.dp, height = 147.dp)
+                .clickable { onOpenVolume10Part1?.invoke() },
             contentScale = ContentScale.FillBounds,
         )
 

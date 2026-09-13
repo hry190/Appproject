@@ -48,7 +48,7 @@ import com.jueqiao.jianghu.R
  *   - 图1:D:\图\image 528.png(已复制为 res/drawable-nodpi/img_volume8part8_image_528.png)
  *   - 图2:D:\图\image 529.png(已复制为 res/drawable-nodpi/img_volume8part8_image_529.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-8-9 创建时按历次约定回填 onOpenVolume8Part9)。
+ * 点击跳 Vol-8-9(Vol-8-9 创建时回填 callback 与 .clickable)。
  *
  * 用户指令笔误留痕(2026-09-13):
  *   - 用户写"第八卷-7标题" → 实际意图"第八卷-7 的标题"(缺少" 的"),无歧义

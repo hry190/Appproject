@@ -47,7 +47,7 @@ import com.jueqiao.jianghu.R
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
  *   - 图1:D:\图\image 530.png(已复制为 res/drawable-nodpi/img_volume8part9_image_530.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-8-10 创建时按历次约定回填 onOpenVolume8Part10)。
+ * 点击跳 Vol-8-10(Vol-8-10 创建时回填 callback 与 .clickable)。
  *
  * 用户指令笔误留痕(2026-09-13):
  *   - 用户写"第八卷-8标题" → 实际意图"第八卷-8 的标题"(缺少" 的"),无歧义
@@ -55,6 +55,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume8Part9Screen(
     onBack: () -> Unit = {},
+    onOpenVolume8Part10: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -93,7 +94,7 @@ fun Volume8Part9Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"皮影戏之每一步奖励"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 9 字 W=302(沿用 9 字规约,与 Vol-8-7/8-8 同款)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-8-10 创建时按历次约定回填 onOpenVolume8Part10)。
+            // 点击跳 Vol-8-10(Vol-8-10 创建时回填 callback)。
             Text(
                 text = "皮影戏之每一步奖励",
                 color = Color.Black,
@@ -103,7 +104,8 @@ fun Volume8Part9Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenVolume8Part10),
             )
 
             // 图1(image 530.png,X=18, Y=135, W=355, H=278)— 在书框之上、上部(单图屏)。

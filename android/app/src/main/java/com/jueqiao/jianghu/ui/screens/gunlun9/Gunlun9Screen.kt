@@ -1,5 +1,6 @@
 package com.jueqiao.jianghu.ui.screens.gunlun9
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Gunlun9Screen(
     onBack: () -> Unit = {},
     onOpenGunlun10: () -> Unit = {},
+    onOpenVolume9Part1: () -> Unit = {},
 ) {
     StandardGunlunScaffold(
         onBack = onBack,
@@ -135,12 +137,14 @@ fun Gunlun9Screen(
         )
 
         // "已解锁秘籍9" 图像(完成循环轮换,占"秘籍"原槽位,X=135, Y=221, W=155, H=147 — 素材换了 未标题-2 41.png)
+        // **新增:点击跳 Vol-9-1(第九卷首屏)**
         Image(
             painter = painterResource(R.drawable.img_gunlun9_untitled_2_41),
             contentDescription = "已解锁秘籍9",
             modifier = Modifier
                 .offset(x = 135.dp, y = 221.dp)
-                .size(width = 155.dp, height = 147.dp),
+                .size(width = 155.dp, height = 147.dp)
+                .clickable { onOpenVolume9Part1?.invoke() },
             contentScale = ContentScale.FillBounds,
         )
 
