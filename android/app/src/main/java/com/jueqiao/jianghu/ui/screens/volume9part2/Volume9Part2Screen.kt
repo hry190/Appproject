@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume9part1
+package com.jueqiao.jianghu.ui.screens.volume9part2
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -28,32 +28,32 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第九卷-1 页 — 滚轮9 → 点击"已解锁9"图像跳转目标(新卷首屏)。
+ * 第九卷-2 页 — 第九卷-1 → 点击" 长句先切成符"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";第九卷首屏)
- *   - 标题文本"长句先切成符"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **6 字** W=192 沿用 6-8 字规约(6 字无独立规约,真机可微调;与 Vol-8 系列同款窄标题)
- *   - 图1(image 491.png,X=18, Y=135, **W=355, H=328**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.084)=328)
- *   - 图2(image 492.png,X=18, Y=478, **W=355, H=343**)— 中下部(应用新规则:横图 W=355 H=round(355/1.035)=343)
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-13 指定"复制第一卷-2";Vol-9-1(255)→ Vol-9-2(256) 恢复交替)
+ *   - 标题文本" 长句先切成符"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **6 字 + 1 前导空格** W=192 沿用 6-8 字规约(与 Vol-9-1 同款 6 字标题;**用户字面前导空格按字面保留,真实意图可能是"新"地引导——"长句先切成符"**)
+ *   - 图1(image 493.png,X=18, Y=135, **W=355, H=288**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.235)=288)
+ *   - 图2(image 494.png,X=18, Y=478, **W=355, H=291**)— 中下部(应用新规则:横图 W=355 H=round(355/1.222)=291)
  *
  * 坐标说明:
- *   - image 491 实测 1047×966(横图,比率 1.084);自然 W=355 H=328,渲染比 1.084 与原图差 0.14%,几乎完美
- *   - image 492 实测 1059×1023(近正方形,比率 1.035);自然 W=355 H=343,渲染比 1.035 与原图差 0.02%,几乎完美
- *   - 图2 Y=478+343=821,在书框 Y=88-872 范围内(余量 51dp)
+ *   - image 493 实测 1026×831(横图,比率 1.235);自然 W=355 H=288,渲染比 1.233 与原图差 0.16%,几乎完美
+ *   - image 494 实测 1074×879(横图,比率 1.222);自然 W=355 H=291,渲染比 1.222 与原图差 0.16%,几乎完美
+ *   - 图2 Y=478+291=769,在书框 Y=88-872 范围内(余量 103dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 491.png(已复制为 res/drawable-nodpi/img_volume9part1_image_491.png)
- *   - 图2:D:\图\image 492.png(已复制为 res/drawable-nodpi/img_volume9part1_image_492.png)
+ *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:D:\图\image 493.png(已复制为 res/drawable-nodpi/img_volume9part2_image_493.png)
+ *   - 图2:D:\图\image 494.png(已复制为 res/drawable-nodpi/img_volume9part2_image_494.png)
  *
- * 点击跳 Vol-9-2(Vol-9-2 创建时回填 callback 与 .clickable)。
+ * 点击跳 Vol-9-3(Vol-9-3 创建时回填 callback 与 .clickable)。
  */
 @Composable
-fun Volume9Part1Screen(
+fun Volume9Part2Screen(
     onBack: () -> Unit = {},
-    onOpenVolume9Part2: () -> Unit = {},
+    onOpenVolume9Part3: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -70,7 +70,7 @@ fun Volume9Part1Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷素材。
+        // 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 素材。
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -78,7 +78,7 @@ fun Volume9Part1Screen(
                 .size(width = 854.dp, height = 784.dp),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_volume1_group_255),
+                painter = painterResource(R.drawable.img_volume1part2_group_256),
                 contentDescription = "书框",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds,
@@ -91,10 +91,10 @@ fun Volume9Part1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 W=192(沿用 6-8 字规约)。
-            // 标题"长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 + 1 前导空格 W=192(沿用 6-8 字规约),点击跳 Vol-9-2。
+            // 标题" 长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 + 1 前导空格 W=192(沿用 6-8 字规约,与 Vol-9-1 同款;**用户字面前导空格按字面保留**)。
+            // 标题" 长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 + 1 前导空格 W=192(沿用 6-8 字规约),点击跳 Vol-9-3。
             Text(
-                text = "长句先切成符",
+                text = " 长句先切成符",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -103,34 +103,34 @@ fun Volume9Part1Screen(
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
                     .height(32.dp)
-                    .clickable(onClick = onOpenVolume9Part2),
+                    .clickable(onClick = onOpenVolume9Part3),
             )
 
-            // 图1(image 491.png,X=18, Y=135, W=355, H=328)— 在书框之上、上部。
+            // 图1(image 493.png,X=18, Y=135, W=355, H=288)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 328.dp),
+                    .size(width = 355.dp, height = 288.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part1_image_491),
+                    painter = painterResource(R.drawable.img_volume9part2_image_493),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 492.png,X=18, Y=478, W=355, H=343)— 在书框之上、中下部。
-            // Y=478+343=821,在书框 Y=88-872 范围内(余量 51dp)。
+            // 图2(image 494.png,X=18, Y=478, W=355, H=291)— 在书框之上、中下部。
+            // Y=478+291=769,在书框 Y=88-872 范围内(余量 103dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 343.dp),
+                    .size(width = 355.dp, height = 291.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part1_image_492),
+                    painter = painterResource(R.drawable.img_volume9part2_image_494),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,

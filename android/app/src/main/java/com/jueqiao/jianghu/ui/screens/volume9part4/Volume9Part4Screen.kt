@@ -1,7 +1,6 @@
-package com.jueqiao.jianghu.ui.screens.volume9part1
+package com.jueqiao.jianghu.ui.screens.volume9part4
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,32 +27,31 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第九卷-1 页 — 滚轮9 → 点击"已解锁9"图像跳转目标(新卷首屏)。
+ * 第九卷-4 页 — 第九卷-3 → 点击"语义也有远近"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";第九卷首屏)
- *   - 标题文本"长句先切成符"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **6 字** W=192 沿用 6-8 字规约(6 字无独立规约,真机可微调;与 Vol-8 系列同款窄标题)
- *   - 图1(image 491.png,X=18, Y=135, **W=355, H=328**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.084)=328)
- *   - 图2(image 492.png,X=18, Y=478, **W=355, H=343**)— 中下部(应用新规则:横图 W=355 H=round(355/1.035)=343)
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";Vol-9-3(255)→ Vol-9-4(255) 用户字面优先,连续两屏 255)
+ *   - 标题文本"语义也有远近"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **6 字** W=192 沿用 6-8 字规约
+ *   - 图1(image 497.png,X=18, Y=135, **W=355, H=354**)— 上部(应用新规则 fit-to-natural-bounds:近正方形 ratio 1.003,自动 fit H=354 W=355)
+ *   - 图2(image 49.png,X=18, Y=478, **W=355, H=356**)— 中下部(应用新规则:近正方形 ratio 0.997,自动 fit H=356 W=355)
  *
  * 坐标说明:
- *   - image 491 实测 1047×966(横图,比率 1.084);自然 W=355 H=328,渲染比 1.084 与原图差 0.14%,几乎完美
- *   - image 492 实测 1059×1023(近正方形,比率 1.035);自然 W=355 H=343,渲染比 1.035 与原图差 0.02%,几乎完美
- *   - 图2 Y=478+343=821,在书框 Y=88-872 范围内(余量 51dp)
+ *   - image 497 实测 969×966(近正方形,比率 1.003);自然 W=355 H=354,渲染比 1.003 与原图差 0.03%,几乎完美
+ *   - image 49 实测 1044×1047(近正方形,比率 0.997);自然 W=355 H=356,渲染比 0.997 与原图差 0.01%,几乎完美
+ *   - 图1 Y=135+354=489,图 2 Y=478+356=834(均在书框 Y=88-872 范围内,余量 383/38dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 491.png(已复制为 res/drawable-nodpi/img_volume9part1_image_491.png)
- *   - 图2:D:\图\image 492.png(已复制为 res/drawable-nodpi/img_volume9part1_image_492.png)
+ *   - 图1:D:\图\image 497.png(已复制为 res/drawable-nodpi/img_volume9part4_image_497.png)
+ *   - 图2:D:\图\image 49.png(已复制为 res/drawable-nodpi/img_volume9part4_image_49.png)
  *
- * 点击跳 Vol-9-2(Vol-9-2 创建时回填 callback 与 .clickable)。
+ * 本屏暂无后继页,故未接 clickable(等 Vol-9-5 创建时按历次约定回填 onOpenVolume9Part5)。
  */
 @Composable
-fun Volume9Part1Screen(
+fun Volume9Part4Screen(
     onBack: () -> Unit = {},
-    onOpenVolume9Part2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -91,10 +89,10 @@ fun Volume9Part1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 W=192(沿用 6-8 字规约)。
-            // 标题"长句先切成符"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 + 1 前导空格 W=192(沿用 6-8 字规约),点击跳 Vol-9-2。
+            // 标题"语义也有远近"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 W=192(沿用 6-8 字规约)。
+            // 本屏暂无后继页,故未接 clickable(等 Vol-9-5 创建时按历次约定回填 onOpenVolume9Part5)。
             Text(
-                text = "长句先切成符",
+                text = "语义也有远近",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -102,35 +100,34 @@ fun Volume9Part1Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp)
-                    .clickable(onClick = onOpenVolume9Part2),
+                    .height(32.dp),
             )
 
-            // 图1(image 491.png,X=18, Y=135, W=355, H=328)— 在书框之上、上部。
+            // 图1(image 497.png,X=18, Y=135, W=355, H=354)— 在书框之上、上部(近正方形)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 328.dp),
+                    .size(width = 355.dp, height = 354.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part1_image_491),
+                    painter = painterResource(R.drawable.img_volume9part4_image_497),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 492.png,X=18, Y=478, W=355, H=343)— 在书框之上、中下部。
-            // Y=478+343=821,在书框 Y=88-872 范围内(余量 51dp)。
+            // 图2(image 49.png,X=18, Y=478, W=355, H=356)— 在书框之上、中下部(近正方形)。
+            // Y=478+356=834,在书框 Y=88-872 范围内(余量 38dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 343.dp),
+                    .size(width = 355.dp, height = 356.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part1_image_492),
+                    painter = painterResource(R.drawable.img_volume9part4_image_49),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
