@@ -517,3 +517,48 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
  M Volume8Part7Screen.kt / Volume8Part8Screen.kt / Volume8Part10Screen.kt (KDoc 修)
  M Volume8Part11Screen.kt / Volume8Part13Screen.kt (BUG 修 + KDoc 修)
 ```
+
+## §48 Vol-8-14 卷末闭环 → Gunlun11(2026-09-13 14:35~14:40)
+
+### §48.1 用户指令
+
+- 用户 2026-09-13 14:35 "点击 vol-8-14 页面的标题会回到滚轮11 页面"
+- 仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 模式:卷末屏标题 → 入口滚轮
+
+### §48.2 修改
+
+- **Vol-8-14 修改**:
+  - 加 `onOpenGunlun11: () -> Unit = {}` 函数参数
+  - 加 `import clickable` (前 4 屏 Vol-8-1~13 未加 + 同)
+  - Title 加 `.clickable(onClick = onOpenGunlun11)`
+  - KDoc 改 "点击跳 Gunlun11(Vol-8 卷末闭环,仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 模式;第八卷入口卷)"
+  - inline 注释同步更新(刚开始有重复 comment,Python 修过一次删除一个)
+- **NavHost 修改**:
+  - Vol-8-14 composable 加 `onOpenGunlun11 = { navController.navigate(Routes.Gunlun11) }`
+
+### §48.3 沉淀
+
+- **卷末闭环 Pattern 标准化**:
+  - Vol-4-14→Gunlun8 (Volume 4 入口)
+  - Vol-5-15→Gunlun12 (Volume 5 入口)
+  - Vol-7-12→Gunlun16 (Volume 7 入口)
+  - **Vol-8-14→Gunlun11 (Volume 8 入口)** ✓ 第 4 个
+- 每次卷末闭环都涉及 4 处修改:
+  1. 父屏函数参数加 onOpenGunlunX
+  2. 父屏 import clickable
+  3. 父屏 Title .clickable(onClick = onOpenGunlunX)
+  4. 父屏 KDoc 更新
+  5. NavHost composable 加接线
+
+### §48.4 今日累计(2026-09-13)
+
+- Vol-8 共 14 屏(还差 1 屏到 15 屏规模,Vol-8-15 未建)
+- 完成 2 个 commit 修复: Vol-8-11/13 BUG + Vol-8-14 卷末闭环
+- 第 4 次"注意注释"相关修复
+
+### §48.5 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-8-14 composable 加 onOpenGunlun11)
+ M Volume8Part14Screen.kt (import clickable + onOpenGunlun11 函数参数 + .clickable on Title + KDoc)
+```

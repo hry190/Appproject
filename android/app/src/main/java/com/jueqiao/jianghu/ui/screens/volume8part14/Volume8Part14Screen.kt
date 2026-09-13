@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.volume8part14
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -46,7 +47,7 @@ import com.jueqiao.jianghu.R
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
  *   - 图1:D:\图\image 539.png(已复制为 res/drawable-nodpi/img_volume8part14_image_539.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-8-15 创建时按历次约定回填 onOpenVolume8Part15)。
+ * 点击跳 Gunlun11(Vol-8 卷末闭环,仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 模式;第八卷入口卷)。
  *
  * 用户指令笔误留痕(2026-09-13):
  *   - 用户写"第八卷-13标题" → 实际意图"第八卷-13 的标题"(缺少" 的"),无歧义
@@ -54,6 +55,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume8Part14Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun11: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -91,8 +93,7 @@ fun Volume8Part14Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之钻空子的机关兽"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 11 字 W=360(沿用估算 ~33/字宽度,无独立规约,与 Vol-8-12/8-13 同款)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-8-15 创建时按历次约定回填 onOpenVolume8Part15)。
+            // 标题"皮影戏之钻空子的机关兽"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 11 字 W=360,点击跳 Gunlun11(卷末闭环)。
             Text(
                 text = "皮影戏之钻空子的机关兽",
                 color = Color.Black,
@@ -102,7 +103,8 @@ fun Volume8Part14Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenGunlun11),
             )
 
             // 图1(image 539.png,X=18, Y=135, W=355, H=300)— 在书框之上、上部(单图屏)。
