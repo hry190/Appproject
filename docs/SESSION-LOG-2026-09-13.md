@@ -126,6 +126,42 @@
 
 ---
 
+## §43 Vol-8-6 创建 + Vol-8-3 import typo 修复 + 编译失败(2026-09-13 10:25~10:27)
+
+### §43.1 Vol-8-6 创建
+
+- 复制第一卷-1 → Group 255(恢复交替 Vol-8-5 256 → 8-6 255)
+- 图 1 image 523 (1.267 ratio) → W=355 H=280
+- 图 2 image 525 (1.331 ratio) → W=355 H=267
+- 标题沿用 10 字 W=302
+
+### §43.2 Vol-8-3 编译失败 + import typo 修复
+
+- **build failed** `Volume8Part3Screen.kt: Unresolved reference 'layout' / 'offset'` (4 处)
+- **根因**: 我创建 Vol-8-3 时用 Write 工具,**漏了 `.foundation.`** — 应 `androidx.compose.foundation.layout.offset` 写成 `androidx.compose.layout.offset`
+- **修复**: line 11 `import androidx.compose.layout.offset` → `import androidx.compose.foundation.layout.offset`,同时整理 import 顺序
+- **扫描 Vol-8-1~8-6**: 仅 Vol-8-3 有 typo,其他 5 屏 correct
+- **预防**: Write 时**先 grep 类似 import**(Box/WindowInsets 都有 `.foundation.`)对齐格式
+
+### §43.3 沉淀
+
+- **Write 工具输入笔误留痕**: Vol-8-3 import path 漏 `.foundation.` — 与 §42 Edit 工具参数名 typo 共同构成"工具笔误"系列
+- **Write 笔误模式**:路径写错 / 漏段(本次)
+- **Edit 笔误模式**:参数名 typo / 缺前缀
+- **预防**:两种工具都需 import 写完后 grep 同系列验证
+
+### §43.4 Git 状态(commit 前)
+
+```
+ M Volume8Part3Screen.kt (修复 import layout)
+ M JianghuNavHost.kt / Routes.kt / RoutesTest.kt
+ M Volume8Part5Screen.kt (Vol-8-6 入口 + clickable)
+?? Volume8Part6Screen.kt
+?? img_volume8part6_image_{523,525}.png
+```
+
+---
+
 ## §42 Vol-8-5 创建(2026-09-13 10:18)
 
 ### §42.1 Vol-8-5

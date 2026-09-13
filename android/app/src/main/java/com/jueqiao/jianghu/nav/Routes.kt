@@ -140,6 +140,7 @@ object Routes {
     const val Volume8Part3 = "volume8-3"
     const val Volume8Part4 = "volume8-4"
     const val Volume8Part5 = "volume8-5"
+    const val Volume8Part6 = "volume8-6"
     const val Gunlun14 = "gunlun14"
     const val Gunlun15 = "gunlun15"
     const val Gunlun16 = "gunlun16"
