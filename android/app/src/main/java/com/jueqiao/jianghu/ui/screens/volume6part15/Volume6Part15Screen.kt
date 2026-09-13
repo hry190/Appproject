@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume6part15
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,10 +43,13 @@ import com.jueqiao.jianghu.R
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
  *   - 图1:D:\图\image 435.png(已复制为 res/drawable-nodpi/img_volume6part15_image_435.png)
+ *
+ * 卷末闭环:点击"不知看命中率"标题 → Gunlun14(创建于 2026-09-13,本屏兑现 §35.3/§48/§78 卷末闭环链沉淀 + Vol-6 唯一已知漏;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 / Vol-10-14→Gunlun13 模式;**第六卷入口卷** Gunlun14)。
  */
 @Composable
 fun Volume6Part15Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun14: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -84,7 +88,7 @@ fun Volume6Part15Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"不知看命中率"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 4 字 W=213(沿用 5 字规约宽度)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-6-16 创建时按历次约定回填 onOpenVolume6Part16)。
+            // 卷末闭环:点击"不知看命中率"标题 → Gunlun14(第六卷入口卷,仿 §48 模式)。
             Text(
                 text = "不知看命中率",
                 color = Color.Black,
@@ -92,7 +96,8 @@ fun Volume6Part15Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 213.dp, height = 32.dp),
+                    .size(width = 213.dp, height = 32.dp)
+                    .clickable(onClick = onOpenGunlun14),
             )
 
             // 图1(image 435.png,X=18, Y=135, W=355, H=333)— 在书框之上、上部。
