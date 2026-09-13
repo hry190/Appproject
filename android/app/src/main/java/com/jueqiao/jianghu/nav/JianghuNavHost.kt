@@ -178,6 +178,10 @@ import com.jueqiao.jianghu.ui.screens.volume7part5.Volume7Part5Screen
 import com.jueqiao.jianghu.ui.screens.volume7part6.Volume7Part6Screen
 import com.jueqiao.jianghu.ui.screens.volume7part7.Volume7Part7Screen
 import com.jueqiao.jianghu.ui.screens.volume7part8.Volume7Part8Screen
+import com.jueqiao.jianghu.ui.screens.volume7part9.Volume7Part9Screen
+import com.jueqiao.jianghu.ui.screens.volume7part10.Volume7Part10Screen
+import com.jueqiao.jianghu.ui.screens.volume7part11.Volume7Part11Screen
+import com.jueqiao.jianghu.ui.screens.volume7part12.Volume7Part12Screen
 import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
@@ -1217,7 +1221,31 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume7Part8) {
-            Volume7Part8Screen(onBack = { navController.popBackStack() })
+            Volume7Part8Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part9 = { navController.navigate(Routes.Volume7Part9) },
+            )
+        }
+        composable(Routes.Volume7Part9) {
+            Volume7Part9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part10 = { navController.navigate(Routes.Volume7Part10) },
+            )
+        }
+        composable(Routes.Volume7Part10) {
+            Volume7Part10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part11 = { navController.navigate(Routes.Volume7Part11) },
+            )
+        }
+        composable(Routes.Volume7Part11) {
+            Volume7Part11Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part12 = { navController.navigate(Routes.Volume7Part12) },
+            )
+        }
+        composable(Routes.Volume7Part12) {
+            Volume7Part12Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(

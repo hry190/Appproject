@@ -119,7 +119,7 @@ fun Volume3Part7Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 491.dp)
+                    .offset(x = 18.dp, y = 891.dp)
                     .size(width = 355.dp, height = 300.dp),
             ) {
                 Image(
