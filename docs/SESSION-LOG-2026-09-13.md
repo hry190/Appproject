@@ -562,3 +562,55 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
  M JianghuNavHost.kt (Vol-8-14 composable 加 onOpenGunlun11)
  M Volume8Part14Screen.kt (import clickable + onOpenGunlun11 函数参数 + .clickable on Title + KDoc)
 ```
+
+## §49 Vol-9-1 创建 + 标题改为"长句先切成符" + 多次修正(2026-09-13 14:30~14:55)
+
+### §49.1 Vol-9-1 创建(2026-09-13 14:30)
+
+- **新卷**! 用户 2026-09-13 "创建第九卷-1,在滚轮9页面点击已解锁9图像时可以跳转"
+- **新入口**: Gunlun9 「已解锁秘籍9」图像 → Vol-9-1
+- Gunlun9Screen 添加 `onOpenVolume9Part1` 函数参数 + 「已解锁9」图 `.clickable { onOpenVolume9Part1?.invoke() }`
+- 复制第一卷-1 → Group 255
+- 标题「皮影戏之状态、行动、奖励」12 字 W=400 (沿用 Vol-8-1/2/3 模式)
+- 图 1 image 491 (1.084 ratio) → W=355 H=328
+- 图 2 image 492 (1.035 ratio) → W=355 H=343
+- Routes.kt 加 `const val Volume9Part1 = "volume9-1"` (在 Gunlun16 之前)
+- RoutesTest 加 `assertEquals("volume9-1", Routes.Volume9Part1)`
+- NavHost 加 composable + 接线
+
+### §49.2 标题改为"长句先切成符"(2026-09-13 14:50)
+
+- 用户 2026-09-13 "标题改为'长句先切成符'" — 6 字 W=192(沿用 6-8 字规约)
+- 修订位置: KDoc 标题行 + Text 文本 + KDoc 字符数说明 + W 修饰符(400→192)
+- **首次留单引号**: 用户 2026-09-13 输入"长句先切成符'"带尾随单引号(估计打字笔误,引号应配对但只打了尾)
+- 用户 2026-09-13 "不要单引号" — 删单引号,最终标题"长句先切成符"
+- 字符数 6 字,渲染比 ~33 字宽估 W=192
+
+### §49.3 用户报错"无法跳转" (2026-09-13 14:55)
+
+- 用户报"点击滚轮9页面的已解锁秘籍9图像无法跳转"
+- 审计 5 个文件(Gunlun9Screen/Volume9Part1Screen/Routes/RoutesTest/JianghuNavHost):
+  - Gunlun9Screen: `onOpenVolume9Part1` ✓ + `.clickable` ✓ + brace 7/7
+  - Volume9Part1Screen: brace 8/8(终屏无需 clickable)
+  - Routes.kt: `const val Volume9Part1 = "volume9-1"` ✓
+  - RoutesTest.kt: `assertEquals("volume9-1", Routes.Volume9Part1)` ✓
+  - NavHost: `composable(Routes.Volume9Part1) { Volume9Part1Screen(onBack = ...) }` ✓ + `navigate(Routes.Volume9Part1)` 接线 ✓ + brace 831/831
+- **无 BUG 找到** — 可能是 stale build 缓存或未重新 build
+- 建议: 重新 build + adb install -r + 重测
+
+### §49.4 Vol-9 累计 + 持久化
+
+- Vol-9 共 1 屏(Vol-9-1) — 第 6 个进入卷(继 Vol-1~8)
+- 今日 Vol-8 共 14 屏(已完整自检无漂移)
+- 今日已 commit 5 次(Vol-8-7/8/9 + Vol-8-10/11 + Vol-8-12/13/14 闭环 + Vol-8-11/13 BUG 修复 + Vol-8-14 闭环)
+- Vol-9 改动未 commit(本次 commit)
+
+### §49.5 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-9-1 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part1 const/assert)
+ M Volume9Part1Screen.kt (新建 + 标题改 4 处)
+ M Gunlun9Screen.kt (新增 import clickable + onOpenVolume9Part1 + 已解锁9 .clickable)
+?? img_volume9part1_image_{491,492}.png
+```
