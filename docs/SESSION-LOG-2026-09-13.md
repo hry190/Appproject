@@ -390,3 +390,79 @@
 ?? img_volume7part{9,10,11,12}_*.png (10 张 PNG)
 ?? docs/SESSION-LOG-2026-09-13.md (今日独立文件补建 + §39 段)
 ```
+
+## §45 Vol-8 import 修复(3 轮编译失败)(2026-09-13 11:30~11:35)
+
+### §45.1 编译失败链路
+
+- **失败 1**:`Unresolved reference 'Volume8Part8Screen' / 'Volume9Screen'` — NavHost 缺 import + Vol-8-7 重复 import
+- **失败 2**:`Unresolved reference 'fillMaxWidth' / 'height'` (Vol-8-1~6) — 改 wrapContentWidth X 居中模式时漏 2 个 import
+- **失败 3**:`Unresolved reference 'wrapContentWidth'` (Vol-8-1~6) — 漏第 3 个 import
+
+### §45.2 修复明细
+
+- **NavHost import 修复**:删 Vol-8-7 重复 import + 加 Vol-8-8 / Vol-8-9 import
+- **Vol-8-1~6 补 imports**:
+  - `androidx.compose.foundation.layout.fillMaxWidth` (wrapContentWidth X 居中需要)
+  - `androidx.compose.foundation.layout.height` (替代 .size 的 height 维度)
+  - `androidx.compose.foundation.layout.wrapContentWidth` (X 居中核心)
+- Vol-8-7~9 创建时已写完整,无需补充
+
+### §45.3 沉淀
+
+- **写 N 屏 modifier 时,需要列"新 modifier 所需 import 清单"**:
+  - `fillMaxWidth` (X 居中需要)
+  - `wrapContentWidth` (X 居中需要)
+  - `height` (替代 .size 高度维度)
+- **之前 commit 时漏 import 的根因**:我用 Python 脚本批量改 6 屏 modifier 时,只改了 modifier 文本,没同步加 import — 应当用同一脚本顺手 import 排版
+- **commit 前的 import 验证清单**:
+  1. grep 新 modifier 名(fillMaxWidth, wrapContentWidth 等)是否每屏都有
+  2. grep 对应 import 是否齐全
+  3. 编译验证(此处用户是 build 时才发现)
+- **10 屏都用 wrapContentWidth X 居中**(Vol-8-1~9 全部)— 1 屏没有就编译失败
+
+### §45.4 Git 状态(commit 后)
+
+```
+05e944e fix(vol8-screens): add missing imports fillMaxWidth/height/wrapContentWidth
+100fb1e feat(vol8-screens): add Vol-8-7/8/9 + first X-axis center + 4-layer single-image
+c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
+```
+
+7 files changed, 20 insertions(+), 1 deletion(-)
+
+
+## §46 Vol-8-10/11 创建(2026-09-13 13:39~13:44)
+
+### §46.1 Vol-8-10 创建 — Vol-8 首次 3 图布局
+
+- 复制第一卷-1 → Group 255(连续两屏异常,Vol-8-9 255 → 8-10 255)
+- **首次 3 图布局**(7 层 z-order,Vol-1~7 系列也有 3 图屏,Vol-8 首次):
+  - 图 1 image 531 (1.709 ratio) → W=355 H=208(用户字面 H=311 → 自然 H=208)
+  - 图 2 image 532 (2.525 ratio) → **W=358 非常用 355**,H=142(用户字面 W=358)
+  - 图 3 image 533 (1.162 ratio) → **W=358**,H=308(用户字面 W=358)
+- 新标题系列「皮影戏之奖励塑形」**8 字 W=192**(沿用 6-8 字规约)
+- Y 位置:135/369/545(用户字面)— 图 3 Y=545+308=853(书框底 872 余量 19dp 较紧)
+
+### §46.2 Vol-8-11 创建 — Vol-8 第 2 个单图屏
+
+- 复制第一卷-2 → Group 256(恢复交替 Vol-8-10 255 → 8-11 256)
+- 图 1 image 534 (2.114 ratio,极扁横图) → W=355 H=168(0% 失真,完全匹配)
+- 沿用 Vol-8-10 同款 8 字 W=192
+- 4 层 z-order 单图,沿用 Vol-5-9/6-6/6-15/8-9 单图先例
+
+### §46.3 沉淀
+
+- **首次 Vol-8 3 图布局 + 首次 W=358 非常用 355**:Vol-8-1~7 都是 2 图或单图,Vol-8-10 是 3 图(W=358 用户字面)
+- **极扁横图 H 自然值小**: image 534 (2.114 ratio) W=355 H=168 — 比用户字面 H=311 小很多,屏幕留白多
+- **首次 Vol-8 第 2 个单图屏**:V1=Vol-8-9(单图,新规首例),V2=Vol-8-11
+- **Vol-8 累计 11 屏**(还差 4 屏到 Vol-4/5/6 的 15 屏规模)
+
+### §46.4 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt / Routes.kt / RoutesTest.kt
+ M Volume8Part10Screen.kt (Vol-8-11 入口 + clickable)
+?? Volume8Part11Screen.kt (新建 4 层单图)
+?? img_volume8part11_image_534.png
+```
