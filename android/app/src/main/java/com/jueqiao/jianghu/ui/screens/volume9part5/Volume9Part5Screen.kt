@@ -110,8 +110,8 @@ fun Volume9Part5Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 365.dp),
+                    .offset(x = 18.dp, y = 120.dp)
+                    .size(width = 355.dp, height = 355.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume9part5_image_498),
@@ -126,8 +126,8 @@ fun Volume9Part5Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 319.dp),
+                    .offset(x = 18.dp, y = 485.dp)
+                    .size(width = 355.dp, height = 320.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume9part5_image_499),

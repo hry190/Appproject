@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume9part6
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,11 +48,12 @@ import com.jueqiao.jianghu.R
  *   - 图1:D:\图\image 500.png(已复制为 res/drawable-nodpi/img_volume9part6_image_500.png)
  *   - 图2:D:\图\image 502.png(已复制为 res/drawable-nodpi/img_volume9part6_image_502.png)— **用户字面跳过 image 501(直接 500→502)**,可能 image 501 缺失或为笔误;沿用字面
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-9-7 创建时按历次约定回填 onOpenVolume9Part7)。
+ * 本屏跳转目标:点击"语义也有远近"标题 → Vol-9-7(创建于 2026-09-13,本屏兑现 §50.6 KDoc 承诺,回填 onOpenVolume9Part7)。
  */
 @Composable
 fun Volume9Part6Screen(
     onBack: () -> Unit = {},
+    onOpenVolume9Part7: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -90,7 +92,7 @@ fun Volume9Part6Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"语义也有远近"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 W=192(沿用 6-8 字规约,与 Vol-9-5 同款)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-9-7 创建时按历次约定回填 onOpenVolume9Part7)。
+            // 点击跳 Vol-9-7(创建于 2026-09-13)。
             Text(
                 text = "语义也有远近",
                 color = Color.Black,
@@ -100,14 +102,15 @@ fun Volume9Part6Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenVolume9Part7),
             )
 
             // 图1(image 500.png,X=18, Y=135, W=355, H=324)— 在书框之上、上部(横图)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 135.dp)
+                    .offset(x = 18.dp, y = 130.dp)
                     .size(width = 355.dp, height = 324.dp),
             ) {
                 Image(
@@ -123,8 +126,8 @@ fun Volume9Part6Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 354.dp),
+                    .offset(x = 18.dp, y = 470.dp)
+                    .size(width = 355.dp, height = 334.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume9part6_image_502),

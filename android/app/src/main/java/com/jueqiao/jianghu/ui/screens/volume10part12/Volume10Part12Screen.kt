@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume10part12
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,11 +48,12 @@ import com.jueqiao.jianghu.R
  *   - 图1:D:\图\image 485.png(已复制为 res/drawable-nodpi/img_volume10part12_image_485.png)
  *   - 图2:D:\图\image 85.png(已复制为 res/drawable-nodpi/img_volume10part12_image_85.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-10-13 创建时按历次约定回填 onOpenVolume10Part13)。
+ * 本屏跳转目标:点击"人作主，机助力"标题 → Vol-10-13(创建于 2026-09-13,本屏兑现 §74.3 KDoc 承诺,回填 onOpenVolume10Part13)。
  */
 @Composable
 fun Volume10Part12Screen(
     onBack: () -> Unit = {},
+    onOpenVolume10Part13: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -90,7 +92,7 @@ fun Volume10Part12Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"人作主，机助力"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 7 字符 (6 字 + 1 中文逗号) W=192(沿用 7 字规约)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-10-13 创建时按历次约定回填 onOpenVolume10Part13)。
+            // 点击跳 Vol-10-13(创建于 2026-09-13)。
             Text(
                 text = "人作主，机助力",
                 color = Color.Black,
@@ -100,7 +102,8 @@ fun Volume10Part12Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenVolume10Part13),
             )
 
             // 图1(image 485.png,X=18, Y=135, W=355, H=330)— 在书框之上、上部(横图)。
