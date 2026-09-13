@@ -126,6 +126,38 @@
 
 ---
 
+## §42 Vol-8-5 创建(2026-09-13 10:18)
+
+### §42.1 Vol-8-5
+
+- 复制第一卷-2 → Group 256(恢复交替 Vol-8-4 255 → 8-5 256)
+- 图 1 image 524 (1.189 ratio) → W=355 H=299
+- 图 2 image 522 (1.259 ratio) → W=355 H=282
+- 标题沿用 Vol-8-4 同款 10 字 W=302「皮影戏之探新还是用熟」
+
+### §42.2 Vol-8 累计统计
+
+- Vol-8-1~5 共 **5 屏**(用户持续建)
+- 标题系列:Vol-8-1/2/3「皮影戏之状态、行动、奖励」(12 字 × 3 屏)→ Vol-8-4/5「皮影戏之探新还是用熟」(10 字 × 2 屏)
+- 图像失真都 <0.2%(新规则 100% 应用)
+
+### §42.3 沉淀
+
+- **Edit 工具使用教训**:参数名严格用 `file_path` `old_string` `new_string`(无连字符,无前缀冒号),错误形式 `file_path:` `old-string` `old_string:` 会 InputValidationError — Edit 失败但 brace check 仍运行(基于文件变更前状态)
+- **pre-emptive brace check 不受 Edit 失败影响**:即使所有 Edit 失败,braces 仍平衡 → 给"看似成功"假象,需看 Edit 实际返回"updated successfully"
+
+### §42.4 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-8-5 接线)
+ M Routes.kt / RoutesTest.kt
+ M Volume8Part4Screen.kt (Vol-8-5 入口 + clickable)
+?? Volume8Part5Screen.kt
+?? img_volume8part5_image_{524,522}.png
+```
+
+---
+
 ## §41 Vol-8-3/8-4 创建(2026-09-13 10:00~10:11)
 
 ### §41.1 Vol-8-3 创建
