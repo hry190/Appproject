@@ -123,3 +123,75 @@
 11. **每天新建独立 SESSION-LOG-YYYY-MM-DD.md** — ⚠️ 今日首次补建,日后严格遵守
 12. **图像尺寸完全忽略用户 W/H** — 新规则 fit-to-natural-bounds 取代 image-size-by-width-default
 13. **3 张图布局变体可用 Y=135/381/606** — 2 张图布局变体可用 Y=381 替代 Y=478(中部位置)
+
+---
+
+## §39 Vol-7-9~12 创建 + Vol-7-11 4 张图布局 + import clickable 漏修(2026-09-13 09:05~09:25)
+
+### §39.1 Vol-7-9 / 7-10 创建
+
+- **Vol-7-9**: 复制第一卷-2 → Group 256(恢复交替);图 1 W=355 H=300,图 2 W=355 H=298;标题沿用 11 字 W=360
+- **Vol-7-10**: 复制第一卷-1 → Group 255(连续两屏异常);图 1 W=355 H=288,图 2 W=355 H=286
+
+### §39.2 Vol-7-11 首次4 张图布局 + 用户修正 image 459 三次复用
+
+- **Vol-7-11**: 复制第一卷-1 → Group 255;**7 层 z-order(4 张图首次)** — Y=135/295/497/690
+- **用户笔误**: 初版给图 3 + 图 4 都用 `image 459.png`(与图 2 重复)— 我沿用字面并 KDoc 留痕"用户字面重复"
+- **用户立即修正**: "图 3 改为 image 460,图 4 为 image 461"
+  - 复制 image 460 (2.000 ratio) → W=355 H=178
+  - 复制 image 461 (2.316 ratio) → W=355 H=153
+  - 更新 painterResource + KDoc + 资源来源段
+  - **图 3 Y=497+178=675,图 4 Y=690+153=843**(书框底 872 余量 29dp,比原 9dp 宽裕)
+- 标题 10 字「皮影戏之误差逆流改招」W=302
+
+### §39.3 Vol-7-12 创建(回到 2 图布局)
+
+- **Vol-7-12**: 复制第一卷-2 → Group 256(恢复交替);图 1 W=355 H=300,图 2 W=355 H=284
+- 标题沿用 Vol-7-11 同款 10 字 W=302
+- 5 层 z-order(末屏,无需 callback/clickable)
+
+### §39.4 import clickable 漏修 + 编译失败 + 修复
+
+- **build failed** `Volume7Part9Screen.kt: Unresolved reference 'clickable'`
+- 根因: Vol-7-9 创建时我加了 `onOpenVolume7Part10` callback + `.clickable()` 调用,**但漏了 `import androidx.compose.foundation.clickable`**
+- 扫描 5 屏: Vol-7-8/9/10/11 都 OK,Vol-7-12 无 callback 无需 import
+- 修复: `Vol-7-9:6` 加 `import androidx.compose.foundation.clickable`
+- **预防**: 未来给 N 屏加 callback 时,先 grep `foundation.clickable` 再 grep `\.clickable(` 双重验证
+
+### §39.5 adb 重设
+
+- 初始: `21908b7a` + 虚 `127.0.0.1:16448` + 虚 `emulator-5558`
+- `adb kill-server` + `start-server` + `disconnect everything`
+- 最终: 仅 `21908b7a device`
+- reverse 端口 8010 + 8081 都建立
+
+### §39.6 累计今日(2026-09-13)总进度
+
+- Vol-7-1~12 共 **12 屏**
+- 3 次 commit + push
+- 1 次新 memory 规则升级(fit-to-natural-bounds)
+- 首次 3 张图布局(Vol-7-4/5) + 首次 4 张图布局(Vol-7-11)
+- 首次 11 字标题 × 4(Vol-7-4/5/8/9)
+- 首次 10 字标题 × 2(Vol-7-1/2/3/11/12)
+- 首次 9 字标题 × 2(Vol-7-6/7)
+- 首次空标题(Vol-7-8 初版已修订)
+- 首次 image 同 PNG 3 次复用(Vol-7-11 初版,用户立即修正)
+
+### §39.7 沉淀
+
+- **首次4 张图布局变体可用 Y=135/295/497/690** — 比 3 张图布局(135/381/606)更密
+- **Vol-7-11 资源策略**: 4 个独立 drawable(458/459/460/461),不复用
+- **image 459 三次复用修复**: 用户立即指出笔误并提供正确 image 460/461
+- **commit 前 SESSION-LOG 同步**: 此次发现 commit 时 SESSION-LOG 已 untracked,故 commit 包含 docs 改动;但 SESSION-LOG §39 段写入时参数名 typo `file_path:` 失败 — 已手动补,沉淀"Edit 时参数名严格用 `file_path`(无前缀冒号)"
+
+### §39.8 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (加 import + 接线 Vol-7-9/10/11/12)
+ M Routes.kt / RoutesTest.kt (Vol-7-9/10/11/12 const)
+ M Volume3Part7Screen.kt (hry190 自动 commit)
+ M Volume7Part8Screen.kt (加 onOpenVolume7Part9 + clickable)
+?? Volume7Part9Screen.kt / 10 / 11 / 12 (4 个新目录)
+?? img_volume7part{9,10,11,12}_*.png (10 张 PNG)
+?? docs/SESSION-LOG-2026-09-13.md (今日独立文件补建 + §39 段)
+```
