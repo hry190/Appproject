@@ -190,7 +190,8 @@ import com.jueqiao.jianghu.ui.screens.volume8part4.Volume8Part4Screen
 import com.jueqiao.jianghu.ui.screens.volume8part5.Volume8Part5Screen
 import com.jueqiao.jianghu.ui.screens.volume8part6.Volume8Part6Screen
 import com.jueqiao.jianghu.ui.screens.volume8part7.Volume8Part7Screen
-import com.jueqiao.jianghu.ui.screens.volume8part7.Volume8Part7Screen
+import com.jueqiao.jianghu.ui.screens.volume8part8.Volume8Part8Screen
+import com.jueqiao.jianghu.ui.screens.volume8part9.Volume8Part9Screen
 import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
