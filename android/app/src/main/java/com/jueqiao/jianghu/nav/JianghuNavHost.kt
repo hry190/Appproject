@@ -210,6 +210,20 @@ import com.jueqiao.jianghu.ui.screens.volume9part10.Volume9Part10Screen
 import com.jueqiao.jianghu.ui.screens.volume9part11.Volume9Part11Screen
 import com.jueqiao.jianghu.ui.screens.volume9part12.Volume9Part12Screen
 import com.jueqiao.jianghu.ui.screens.volume9part13.Volume9Part13Screen
+import com.jueqiao.jianghu.ui.screens.volume9part14.Volume9Part14Screen
+import com.jueqiao.jianghu.ui.screens.volume9part15.Volume9Part15Screen
+import com.jueqiao.jianghu.ui.screens.volume10part1.Volume10Part1Screen
+import com.jueqiao.jianghu.ui.screens.volume10part2.Volume10Part2Screen
+import com.jueqiao.jianghu.ui.screens.volume10part3.Volume10Part3Screen
+import com.jueqiao.jianghu.ui.screens.volume10part4.Volume10Part4Screen
+import com.jueqiao.jianghu.ui.screens.volume10part5.Volume10Part5Screen
+import com.jueqiao.jianghu.ui.screens.volume10part6.Volume10Part6Screen
+import com.jueqiao.jianghu.ui.screens.volume10part7.Volume10Part7Screen
+import com.jueqiao.jianghu.ui.screens.volume10part8.Volume10Part8Screen
+import com.jueqiao.jianghu.ui.screens.volume10part9.Volume10Part9Screen
+import com.jueqiao.jianghu.ui.screens.volume10part10.Volume10Part10Screen
+import com.jueqiao.jianghu.ui.screens.volume10part11.Volume10Part11Screen
+import com.jueqiao.jianghu.ui.screens.volume10part12.Volume10Part12Screen
 import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
@@ -1064,7 +1078,22 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume9Part13) {
-            Volume9Part13Screen(onBack = { navController.popBackStack() })
+            Volume9Part13Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume9Part14 = { navController.navigate(Routes.Volume9Part14) },
+            )
+        }
+        composable(Routes.Volume9Part14) {
+            Volume9Part14Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume9Part15 = { navController.navigate(Routes.Volume9Part15) },
+            )
+        }
+        composable(Routes.Volume9Part15) {
+            Volume9Part15Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) },
+            )
         }
         composable(Routes.Gunlun10) {
             Gunlun10Screen(
@@ -1265,7 +1294,77 @@ fun JianghuNavHost(
             Gunlun13Screen(
                 onBack = { navController.popBackStack() },
                 onPandaClick = { navController.navigate(Routes.Gunlun14) },
+                onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },
             )
+        }
+        composable(Routes.Volume10Part1) {
+            Volume10Part1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part2 = { navController.navigate(Routes.Volume10Part2) },
+            )
+        }
+        composable(Routes.Volume10Part2) {
+            Volume10Part2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part3 = { navController.navigate(Routes.Volume10Part3) },
+            )
+        }
+        composable(Routes.Volume10Part3) {
+            Volume10Part3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part4 = { navController.navigate(Routes.Volume10Part4) },
+            )
+        }
+        composable(Routes.Volume10Part4) {
+            Volume10Part4Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part5 = { navController.navigate(Routes.Volume10Part5) },
+            )
+        }
+        composable(Routes.Volume10Part5) {
+            Volume10Part5Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part6 = { navController.navigate(Routes.Volume10Part6) },
+            )
+        }
+        composable(Routes.Volume10Part6) {
+            Volume10Part6Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part7 = { navController.navigate(Routes.Volume10Part7) },
+            )
+        }
+        composable(Routes.Volume10Part7) {
+            Volume10Part7Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part8 = { navController.navigate(Routes.Volume10Part8) },
+            )
+        }
+        composable(Routes.Volume10Part8) {
+            Volume10Part8Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part9 = { navController.navigate(Routes.Volume10Part9) },
+            )
+        }
+        composable(Routes.Volume10Part9) {
+            Volume10Part9Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part10 = { navController.navigate(Routes.Volume10Part10) },
+            )
+        }
+        composable(Routes.Volume10Part10) {
+            Volume10Part10Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part11 = { navController.navigate(Routes.Volume10Part11) },
+            )
+        }
+        composable(Routes.Volume10Part11) {
+            Volume10Part11Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume10Part12 = { navController.navigate(Routes.Volume10Part12) },
+            )
+        }
+        composable(Routes.Volume10Part12) {
+            Volume10Part12Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Gunlun14) {
             Gunlun14Screen(

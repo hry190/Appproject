@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume9part13
+package com.jueqiao.jianghu.ui.screens.volume10part5
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -28,33 +28,32 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第九卷-13 页 — 第九卷-12 → 点击"会说不等于知道"标题跳转目标。
+ * 第十卷-5 页 — 第十卷-4 → 点击"偏见从何而来"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";Vol-9-12(255)→ Vol-9-13(255) **连续两屏异常**,字面"复制第一卷-1"=255 优先于交替模式)
- *   - 标题文本"会说不等于知道"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **6 字** W=192 沿用 6-8 字规约(Vol-9-1「长句先切成符」、Vol-9-4/5/6「语义也有远近」同款 6 字真机基线;**标题变更史**:初版 7 字"上下文决定答法" → 修订 6 字"会说不等于知道" 2026-09-13 用户指令)
- *   - 图1(image 515.png,X=18, Y=135, **W=355, H=340**)— 上部(应用新规则 fit-to-natural-bounds:横图 ratio 1.043 自动 fit W=355 H=round(355/1.043)=340)
- *   - 图2(image 516.png,X=18, Y=478, **W=386, H=394**)— 中下部(应用新规则:近正方形 ratio 0.980 自动 fit H=394 max W=round(394×0.980)=386,与 Vol-9-7 image 504 ratio 0.975 → W=384 同模式)
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-13 指定"复制第一卷-2";Vol-10-4(255)→ Vol-10-5(256) 奇偶交替恢复,非异常)
+ *   - 标题文本"偏见从何而来"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **5 字** W=213 沿用 5 字规约(Vol-5-10/11/12「偏差的数据」、Vol-6-1「相似要有尺」、Vol-9-1「长句先切成符」同款真机基线;与 Vol-10-4 同款 5 字标题,跨页同标题叙述)
+ *   - 图1(image 475.png,X=18, Y=135, **W=355, H=340**)— 上部(应用新规则 fit-to-natural-bounds:横图 ratio 1.045 自动 fit W=355 H=round(355/1.045)=340)
+ *   - 图2(image 474.png,X=18, Y=478, **W=355, H=314**)— 中下部(应用新规则:横图 ratio 1.132 自动 fit W=355 H=round(355/1.132)=314)
  *
  * 坐标说明:
- *   - image 515 实测 1008×966(横图,比率 1.043);自然 W=355 H=340,渲染比 1.044 与原图差 0.10%,几乎完美
- *   - image 516 实测 1035×1056(近正方形,比率 0.980);自然 W=386 H=394,渲染比 0.980 与原图差 0%,完全匹配
- *   - 图1 Y=135+340=475,图2 Y=478+394=872,**Y=872 正好顶到书框底 Y=88-872(余量 0dp)** — 紧贴设计约束,近正方形自动 fit 的可接受代价(参照 Vol-9-7 image 504、Vol-8-1 image 465 同模式)
- *   - 图1 W=355,图2 W=386 — 宽度不一致(31dp 差),由新规则按各自 PNG 比例 fit 自然形成,布局上 image 2 偏右突出 X=18+386=404(父 Box 宽 854 余量 450)
+ *   - image 475 实测 1047×1002(横图,比率 1.045);自然 W=355 H=340,渲染比 1.044 与原图差 0.10%,几乎完美
+ *   - image 474 实测 1089×962(横图,比率 1.132);自然 W=355 H=314,渲染比 1.132 与原图差 0%,完全匹配
+ *   - 图1 Y=135+340=475,图2 Y=478+314=792(均在书框 Y=88-872 范围内,余量 397/80dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 515.png(已复制为 res/drawable-nodpi/img_volume9part13_image_515.png)
- *   - 图2:D:\图\image 516.png(已复制为 res/drawable-nodpi/img_volume9part13_image_516.png)
+ *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:D:\图\image 475.png(已复制为 res/drawable-nodpi/img_volume10part5_image_475.png)
+ *   - 图2:D:\图\image 474.png(已复制为 res/drawable-nodpi/img_volume10part5_image_474.png)
  *
- * 本屏跳转目标:点击"会说不等于知道"标题 → Vol-9-14(创建于 2026-09-13,本屏兑现 §57.4 KDoc 承诺,回填 onOpenVolume9Part14;Vol-9-13 标题同日 §58.2 由"上下文决定答法"修订为"会说不等于知道")。
+ * 本屏跳转目标:点击"偏见从何而来"标题 → Vol-10-6(创建于 2026-09-13,本屏兑现 §67.3 KDoc 承诺,回填 onOpenVolume10Part6)。
  */
 @Composable
-fun Volume9Part13Screen(
+fun Volume10Part5Screen(
     onBack: () -> Unit = {},
-    onOpenVolume9Part14: () -> Unit = {},
+    onOpenVolume10Part6: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -71,7 +70,7 @@ fun Volume9Part13Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷素材。
+        // 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 素材。
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -79,7 +78,7 @@ fun Volume9Part13Screen(
                 .size(width = 854.dp, height = 784.dp),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_volume1_group_255),
+                painter = painterResource(R.drawable.img_volume1part2_group_256),
                 contentDescription = "书框",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds,
@@ -92,10 +91,10 @@ fun Volume9Part13Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"会说不等于知道"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 6 字 W=192(沿用 6-8 字规约)。
-            // 点击跳 Vol-9-14(创建于 2026-09-13)。
+            // 标题"偏见从何而来"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 5 字 W=213(沿用 5 字规约,与 Vol-10-4 同款跨页同标题叙述)。
+            // 点击跳 Vol-10-6(创建于 2026-09-13)。
             Text(
-                text = "会说不等于知道",
+                text = "偏见从何而来",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -104,10 +103,10 @@ fun Volume9Part13Screen(
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
                     .height(32.dp)
-                    .clickable(onClick = onOpenVolume9Part14),
+                    .clickable(onClick = onOpenVolume10Part6),
             )
 
-            // 图1(image 515.png,X=18, Y=135, W=355, H=340)— 在书框之上、上部(横图)。
+            // 图1(image 475.png,X=18, Y=135, W=355, H=340)— 在书框之上、上部(横图)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -115,23 +114,23 @@ fun Volume9Part13Screen(
                     .size(width = 355.dp, height = 340.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part13_image_515),
+                    painter = painterResource(R.drawable.img_volume10part5_image_475),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 516.png,X=18, Y=478, W=386, H=394)— 在书框之上、中下部(近正方形)。
-            // Y=478+394=872 正好顶到书框底(余量 0dp);W=386 超出标准 max_W=355(近正方形自动 fit 的可接受代价)。
+            // 图2(image 474.png,X=18, Y=478, W=355, H=314)— 在书框之上、中下部(横图)。
+            // Y=478+314=792,在书框 Y=88-872 范围内(余量 80dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 386.dp, height = 394.dp),
+                    .size(width = 355.dp, height = 314.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume9part13_image_516),
+                    painter = painterResource(R.drawable.img_volume10part5_image_474),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,

@@ -1242,3 +1242,1345 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
 ?? Volume9Part13Screen.kt
 ?? img_volume9part13_image_{515,516}.png
 ```
+
+## §58 Vol-9-13 标题修订 7 字 → 6 字 (2026-09-13 17:10)
+
+### §58.1 用户指令
+
+- "第9卷-13"页面标题改成"会说不等于知道"
+
+### §58.2 标题变更
+
+| 维度 | 旧 | 新 |
+|---|---|---|
+| 标题文案 | 上下文决定答法(7字) | **会说不等于知道**(6字) |
+| 字数 W | W=192(7 字规约) | **W=192**(沿用 6-8 字规约,W 不变) |
+| 真机基线 | Vol-5-13/14/15「死记硬背不可行」7字 | **Vol-9-1「长句先切成符」+ Vol-9-4/5/6「语义也有远近」**6 字同款 |
+
+- **W=192 不变**:6 字和 7 字都在 6-8 字规约内,都用 W=192 — 改标题不改宽度
+- **标题系列回归 6 字**:Vol-9-13 之前是 Vol-9-10/11/12「上下文决定答法」(7字 ×3 屏),修订为 Vol-9-13「会说不等于知道」(6 字 ×1 屏)
+
+### §58.3 修改(4 处)
+
+| 位置 | 修改 |
+|---|---|
+| KDoc line 30 | "点击'上下文决定答法'标题跳转目标" → "点击'会说不等于知道'标题跳转目标" |
+| KDoc line 35 | 标题文案 + 字数说明 + 真机基线 全面更新 + 加"**标题变更史**"留痕(7字"上下文决定答法"→ 6字"会说不等于知道" 2026-09-13 用户指令) |
+| inline line 93 | 标题文案 + 字数说明 更新 |
+| Text line 96 | `text = "上下文决定答法"` → `text = "会说不等于知道"` |
+
+### §58.4 验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 3s** ✓(只改字符串,几乎所有 tasks UP-TO-DATE)
+- grep 确认 Vol-9-13 无残留"上下文决定答法"
+
+### §58.5 Git 状态(commit 前)
+
+```
+ M Volume9Part13Screen.kt (标题 4 处修改)
+ M Volume9Part4Screen.kt / 5Screen.kt / 6Screen.kt ← hry190 本地改动(未 commit)
+ M docs/SESSION-LOG-2026-09-13.md (待本次追加后)
+```
+
+## §59 Vol-9-14 创建 + Vol-9-13 兑现 §57.4 承诺 + Vol-9 与 Vol-8 同进度 14 屏 (2026-09-13 17:20)
+
+### §59.1 用户指令
+
+- "创建第9卷-14页面,点击第9卷-13标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第9卷-14页面,图1 D:\图\image 517.png X18Y135W355H311,图2 D:\图\image 518.png X18Y478W355H321,标题文本改成'会说不等于知道'"
+
+### §59.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 517 | 1059×891 | 1.189(横图) | W=355 H=311 | **W=355 H=299** | 0.17% |
+| image 518 | 1068×837 | 1.276(横图) | W=355 H=321 | **W=355 H=278** | 0.08% |
+
+- **image 517**: 横图规则 W=355 max, H=round(355/1.189)=299
+- **image 518**: 横图规则 W=355 max, H=round(355/1.276)=278
+
+### §59.3 Vol-9-14 创建
+
+- **新目录**: `volume9part14/Volume9Part14Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-9-13(255)→ Vol-9-14(256)(非异常,完美交替)
+- **标题**: "会说不等于知道" **6 字 W=192**(沿用 6-8 字规约,与 Vol-9-13 同款 6 字标题)— **首次 6 字标题二次复用**
+- **图 1**: W=355 H=299(用户字面 H=311 忽略)
+- **图 2**: W=355 H=278(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=299 = 434;图 2 Y=478 + H=278 = 756(均在书框 Y=88-872 范围内,余量 438/116dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-15 创建时按历次约定回填 onOpenVolume9Part15"
+
+### §59.4 Vol-9-13 兑现 §57.4 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-13 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part14: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part14)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'会说不等于知道'标题 → Vol-9-14(创建于 2026-09-13,本屏兑现 §57.4 KDoc 承诺,回填 onOpenVolume9Part14;**Vol-9-13 标题同日 §58.2 由'上下文决定答法'修订为'会说不等于知道'**)" |
+
+**关键细节**:Vol-9-13 KDoc 跳转描述特意引用 §58.2 标题变更史,因为同日 Vol-9-13 标题已修订为"会说不等于知道",跳转描述不能用旧标题"上下文决定答法"。
+
+### §59.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 213 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part14.Volume9Part14Screen` |
+| line 1067-1072 | Vol-9-13 composable 加 `onOpenVolume9Part14 = { navController.navigate(Routes.Volume9Part14) }` |
+| line 1073-1075 | 新加 `composable(Routes.Volume9Part14) { Volume9Part14Screen(onBack = { navController.popBackStack() }) }` |
+
+### §59.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 40s** ✓
+- Brace check: NavHost 870/870, Vol-9-13 9/9, Vol-9-14 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-14 终屏无需 clickable)
+
+### §59.7 Vol-9 累计
+
+- **Vol-9 共 14 屏**(Vol-9-1~9-14)— 🎉 **与 Vol-8 同进度,均为 14 屏!**
+
+### §59.8 沉淀
+
+- **首次 6 字标题二次复用**: Vol-9-13、Vol-9-14 标题完全相同(6 字 W=192)
+- **Vol-9 标题系列最终汇总**:
+  - Vol-9-1「长句先切成符」(6字 W=192)
+  - Vol-9-4/5/6「语义也有远近」(6字 W=192 ×3 屏)
+  - Vol-9-7/8/9「大模型核心」(5字 W=213 ×3 屏)
+  - Vol-9-10/11/12「上下文决定答法」(7字 W=192 ×3 屏)
+  - **Vol-9-13/14「会说不等于知道」**(6字 W=192 ×2 屏,Vol-9-13 标题由 7 字"上下文决定答法"修订为 6 字"会说不等于知道" §58.2)
+- **书框交替恢复链**: Vol-9-13(255)→ Vol-9-14(256)— 字面"复制第一卷-2"自然恢复交替
+- **Vol-9-13 KDoc 跳转描述引用 §58.2**:同日标题修订,KDoc 必须引用变更史避免描述与实际标题不一致
+- **N 屏新增 6 件事清单(本日第 14 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §59.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part14 + Vol-9-13 callback + Vol-9-14 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part14 const/assert)
+ M Volume9Part13Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M Volume9Part13Screen.kt (含 §58.2 标题修订)← 已合并,一次 commit
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part14Screen.kt
+?? img_volume9part14_image_{517,518}.png
+```
+
+## §60 Vol-9-15 创建 + Vol-9-14 兑现 §59.3 承诺 + 首次 Vol-9 单图屏 + 卷末规模 15 屏 (2026-09-13 17:35)
+
+### §60.1 用户指令
+
+- "创建第9卷-15页面,点击第9卷-14标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-15页面,图1 D:\图\image 519.png X18Y135W355H311,标题文本改成'会说不等于知道'"
+
+### §60.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 519 | 1044×789 | 1.323(横图) | W=355 H=311 | **W=355 H=268** | 0.15% |
+
+- **image 519**: 横图规则 W=355 max, H=round(355/1.323)=268
+
+### §60.3 Vol-9-15 创建
+
+- **新目录**: `volume9part15/Volume9Part15Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **奇偶交替恢复**: Vol-9-14(256)→ Vol-9-15(255)(非异常,完美交替)
+- **标题**: "会说不等于知道" **6 字 W=192**(沿用 6-8 字规约,与 Vol-9-13/9-14 同款 6 字标题)— **首次 6 字标题三次复用**
+- **图 1**: W=355 H=268(用户字面 H=311 忽略)
+- **首次 Vol-9 单图屏**:**4 层 z-order**(沿用 Vol-5-9/5-15/6-6/6-15/8-9 单图先例)— 用户字面只指定 image 519,无图 2
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-16 创建时按历次约定回填 onOpenVolume9Part16"(可能为 Vol-9 卷末,待用户决定)
+
+### §60.4 Vol-9-14 兑现 §59.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-14 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part15: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part15)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'会说不等于知道'标题 → Vol-9-15(创建于 2026-09-13,本屏兑现 §59.3 KDoc 承诺,回填 onOpenVolume9Part15)" |
+
+### §60.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 214 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part15.Volume9Part15Screen` |
+| line 1074-1079 | Vol-9-14 composable 加 `onOpenVolume9Part15 = { navController.navigate(Routes.Volume9Part15) }` |
+| line 1080-1082 | 新加 `composable(Routes.Volume9Part15) { Volume9Part15Screen(onBack = { navController.popBackStack() }) }` |
+
+### §60.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 38s** ✓
+- Brace check: NavHost 873/873, Vol-9-14 9/9, Vol-9-15 7/7 (4 层 z-order 单图屏), Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-15 终屏无需 clickable)
+
+### §60.7 Vol-9 累计
+
+- **Vol-9 共 15 屏**(Vol-9-1~9-15)— 🎉 **与 Vol-4(14)/Vol-5(15)/Vol-6(15)/Vol-7(12)/Vol-8(14) 同规模!**
+
+### §60.8 沉淀
+
+- **首次 Vol-9 单图屏**(Vol-9-15)— 沿用 Vol-5-9/5-15/6-6/6-15/8-9 单图先例 4 层 z-order,无图 2 Box
+- **首次 6 字标题三次复用**: Vol-9-13/9-14/9-15 标题完全相同(6 字 W=192)
+- **书框交替恢复链**: Vol-9-14(256)→ Vol-9-15(255)— 字面"复制第一卷-1"自然恢复交替
+- **N 屏新增 6 件事清单(本日第 15 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import ✓
+ 5. NavHost composable ✓
+ 6. 父屏函数参数 + .clickable + KDoc ✓
+ 7. PNG 复制到 drawable-nodpi ✓
+ 8. 主动 compile 验证 ✓
+
+### §60.9 卷末闭环选项(待用户决策)
+
+**当前状态**:Vol-9-15 已创建,无 callback 无 .clickable。KDoc 标注"等 Vol-9-16 创建时回填",但根据历次卷末闭环模式,**Vol-9-15 → Gunlun9** 是预期的卷末闭环(参照 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-6-15→Gunlun14 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11)。
+
+**选项**:
+- A) **卷末闭环 Vol-9-15 → Gunlun9**:仿 §48 模式,5 处修改(Vol-9-15 加 onOpenGunlun9 / import clickable / Title .clickable / KDoc / NavHost 接线)— 这是最可能用户想要的
+- B) **继续建 Vol-9-16**:扩展 Vol-9 到 16+ 屏(历史仅 Vol-5/6 达到 15 屏,从未超过)
+- C) **保持现状**:Vol-9 = 15 屏卷末,不卷末闭环
+
+### §60.10 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part15 + Vol-9-14 callback + Vol-9-15 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part15 const/assert)
+ M Volume9Part14Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part15Screen.kt
+?? img_volume9part15_image_519.png
+```
+
+## §61 Vol-9 卷末闭环 Vol-9-15 → Gunlun9 (2026-09-13 17:45)
+
+### §61.1 用户指令
+
+- "A"(采纳 §60.9 选项 A:卷末闭环 Vol-9-15 → Gunlun9,仿 §48 模式)
+
+### §61.2 卷末闭环 5 处修改
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import clickable | `import androidx.compose.foundation.clickable`(Vol-9-15 原本无) |
+| 2 | 函数参数 | 加 `onOpenGunlun9: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenGunlun9)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "**卷末闭环**:点击'会说不等于知道'标题 → Gunlun9(创建于 2026-09-13,本屏兑现 §60.3 KDoc '等 Vol-9-16 回填'承诺改为卷末闭环,仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 模式;**第九卷入口卷** Gunlun9)" |
+| 5 | NavHost 接线 | Vol-9-15 composable 加 `onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) }` |
+
+### §61.3 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 6s** ✓
+- Brace check: NavHost 874/874, Vol-9-15 8/8 (单图屏从 4 层变 5 层 z-order) (全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓
+
+### §61.4 卷末闭环链汇总(本日沉淀)
+
+| 卷 | 末屏 | 跳转到入口 Gunlun | 沉淀节 |
+|---|---|---|---|
+| Vol-4 | Vol-4-14 | Gunlun8 | §33.1 |
+| Vol-5 | Vol-5-15 | Gunlun12 | §33.1 |
+| Vol-6 | Vol-6-15 | (无闭环,可能是已知漏) | - |
+| Vol-7 | Vol-7-12 | Gunlun16 | §40.2 |
+| Vol-8 | Vol-8-14 | Gunlun11 | §48 |
+| **Vol-9** | **Vol-9-15** | **Gunlun9** | **§61** ✓ |
+
+**Pattern 标准化**:每次卷末闭环都涉及 5 处修改(父屏函数参数 / import clickable / Title .clickable / KDoc / NavHost composable 接线)— 沿用 §48 沉淀。
+
+### §61.5 沉淀
+
+- **5 处卷末闭环 Pattern 完全复用** §48 — 没有新增漂移,Vol-9-15 是第 4 个完整闭环(Vol-4 / Vol-5 / Vol-7 / Vol-8 + Vol-9)
+- **Vol-9 卷末闭环 + 单图屏 = Vol-9-15 双特征**:既是 15 屏卷末,又是首次 Vol-9 单图屏
+- **Vol-9 共 15 屏,完整闭环** — 第六卷(15 屏)未闭环可能是已知漏(待"注意注释"轮核对)
+
+### §61.6 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-9-15 composable 加 onOpenGunlun9 接线)
+ M Volume9Part15Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+```
+
+## §62 第十卷启动 Vol-10-1 + Gunlun13 新增 callback + 前导空格 (2026-09-13 17:55)
+
+### §62.1 用户指令
+
+- "创建第十卷-1页面,在滚轮13页面点击'已解锁9'图像时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-1页面,图1 D:\图\image 470.png X18Y135W355H311,图2 D:\图\image 70.png X18Y478W355H321,标题文本改成' 少取才安全'"
+
+### §62.2 新卷拓扑
+
+- **新入口**: Gunlun13 「已解锁秘籍9」图像 → Vol-10-1(仿 Gunlun9→Vol-9 模式)
+- **Gunlun13 现状**: 已有 1 个 callback (onPandaClick → Gunlun14),新增第 2 个 callback (onOpenVolume10Part1)
+
+### §62.3 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 470 | 1047×966 | 1.084(横图) | W=355 H=311 | **W=355 H=328** | 0.09% |
+| image 70 | 1068×1023 | 1.044(横图) | W=355 H=321 | **W=355 H=340** | 0% |
+
+- **image 470**: 横图规则 W=355 max, H=round(355/1.084)=328
+- **image 70**: 横图规则 W=355 max, H=round(355/1.044)=340 — **注意编号小(70),drawable 名独立为 img_volume10part1_image_70 避免与 image 7/70x 冲突**
+
+### §62.4 Vol-10-1 创建
+
+- **新目录**: `volume10part1/Volume10Part1Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1";第十卷首屏)
+- **标题**: " 少取才安全" **4 字 + 1 前导空格** W=213(沿用 5 字规约区域)— **首次前导空格新建屏**(沿用 §50.3 Vol-9-5 模式,KDoc 留痕待用户指令决定是否删除)
+- **图 1**: W=355 H=328(用户字面 H=311 忽略)
+- **图 2**: W=355 H=340(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=328 = 463;图 2 Y=478 + H=340 = 818(均在书框 Y=88-872 范围内,余量 409/54dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-2 创建时按历次约定回填 onOpenVolume10Part2"
+
+### §62.5 Gunlun13 新增 callback(5 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Gunlun13 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part1: (() -> Unit)? = null`(与 Gunlun13 现有 `onPandaClick` nullable 风格一致) |
+| 3 | Image `.clickable` | "已解锁秘籍9" Image 加 `.clickable { onOpenVolume10Part1?.invoke() }` |
+| 4 | inline 注释 | "占'秘籍'原槽位" → 加 "— 点击跳 Vol-10-1" |
+| 5 | KDoc 资源段 | line 43 "已解锁秘籍9 (X=135)" 加 "→ **点击跳 Vol-10-1**(2026-09-13 新增)" |
+
+### §62.6 NavHost 接线(2 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 215 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part1.Volume10Part1Screen` |
+| line 1282-1287 | Gunlun13 composable 加 `onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) }` |
+| line 1289-1291 | 新加 `composable(Routes.Volume10Part1) { Volume10Part1Screen(onBack = { navController.popBackStack() }) }` |
+
+### §62.7 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 1m 1s** ✓
+- Brace check: NavHost 877/877, Gunlun13 5/5 (nullable callback 加 import clickable 后 +1 平衡), Vol-10-1 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-1 终屏无需 clickable)
+
+### §62.8 沉淀
+
+- **Gunlun13 第 2 个 callback 模式**:函数签名从 `onPandaClick: (() -> Unit)?` 扩到 `onPandaClick + onOpenVolume10Part1`(两者都是 nullable)— 与 Gunlun9 模式不同(Gunlun9 是非 nullable,但 Gunlun13 既有 nullable onPandaClick,沿用同一风格)
+- **新卷拓扑汇总**(Gunlun → Vol-N 入口):
+  - Gunlun8 → Vol-4
+  - Gunlun11 → Vol-7 + Vol-8 (卷末闭环)
+  - Gunlun12 → Vol-5
+  - Gunlun13 → Vol-10(本卷入口)
+  - Gunlun14 → Vol-6
+  - Gunlun15 → Vol-7 备用
+  - Gunlun16 → Vol-8 备用
+  - Gunlun9 → Vol-9
+- **首次前导空格新建屏**(Vol-10-1):沿用 §50.3 Vol-9-5 模式,KDoc 留痕"用户字面前导空格按字面保留"— 等用户指令决定是否删除
+- **N 屏新增 6 件事清单(本日第 16 次,新卷首屏)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc 资源段 ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §62.9 第十卷累计
+
+- **Vol-10 共 1 屏**(Vol-10-1)
+
+### §62.10 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part1 + Gunlun13 callback + Vol-10-1 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part1 const/assert)
+ M Gunlun13Screen.kt (import clickable + 函数参数 + Image .clickable + KDoc 资源段)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part1Screen.kt
+?? img_volume10part1_image_{470,70}.png
+```
+
+## §63 Vol-10-2 创建 + Vol-10-1 兑现 §62.4 承诺 + 奇偶交替恢复 + 首次 Vol-10 6 字标题 (2026-09-13 18:05)
+
+### §63.1 用户指令
+
+- "创建第十卷-2页面,点击第十卷-1标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第十卷-2页面,图1 D:\图\image 471.png X18Y135W355H311,图2 D:\图\image 41.png X18Y478W355H321,标题文本改成'会说不等于知道'"
+
+### §63.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 471 | 1046×885 | 1.182(横图) | W=355 H=311 | **W=355 H=300** | 0.08% |
+| image 41 | 1059×840 | 1.261(横图) | W=355 H=321 | **W=355 H=282** | 0.16% |
+
+- **image 471**: 横图规则 W=355 max, H=round(355/1.182)=300
+- **image 41**: 横图规则 W=355 max, H=round(355/1.261)=282
+
+### §63.3 Vol-10-2 创建
+
+- **新目录**: `volume10part2/Volume10Part2Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-10-1(255)→ Vol-10-2(256)(非异常,完美交替)
+- **标题**: "会说不等于知道" **6 字 W=192**(沿用 6-8 字规约,与 Vol-9-13/9-14/9-15 同款 6 字标题)— **首次 Vol-10 系列 6 字标题**(Vol-10-1 是 4 字" 少取才安全"+ 前导空格)
+- **图 1**: W=355 H=300(用户字面 H=311 忽略)
+- **图 2**: W=355 H=282(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=300 = 435;图 2 Y=478 + H=282 = 760(均在书框 Y=88-872 范围内,余量 437/112dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-3 创建时按历次约定回填 onOpenVolume10Part3"
+
+### §63.4 Vol-10-1 兑现 §62.4 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-1 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part2: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part2)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击' 少取才安全'标题 → Vol-10-2(创建于 2026-09-13,本屏兑现 §62.4 KDoc 承诺,回填 onOpenVolume10Part2)" |
+
+### §63.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 216 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part2.Volume10Part2Screen` |
+| line 1290-1295 | Vol-10-1 composable 加 `onOpenVolume10Part2 = { navController.navigate(Routes.Volume10Part2) }` |
+| line 1296-1298 | 新加 `composable(Routes.Volume10Part2) { Volume10Part2Screen(onBack = { navController.popBackStack() }) }` |
+
+### §63.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 40s** ✓
+- Brace check: NavHost 880/880, Vol-10-1 9/9, Vol-10-2 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-2 终屏无需 clickable)
+
+### §63.7 Vol-10 累计
+
+- **Vol-10 共 2 屏**(Vol-10-1~10-2)
+
+### §63.8 沉淀
+
+- **首次 Vol-10 6 字标题**:"会说不等于知道" — Vol-10-1 是 4 字" 少取才安全"+ 1 前导空格,Vol-10-2 是 6 字"会说不等于知道"
+- **奇偶交替恢复链**: Vol-10-1(255)→ Vol-10-2(256)— 字面"复制第一卷-2"自然恢复交替
+- **Edit 8 处一次成功**:先 Read Vol-10-1:94 注释原文,避免重蹈 §53 坑
+- **N 屏新增 6 件事清单(本日第 17 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §63.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part2 + Vol-10-1 callback + Vol-10-2 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part2 const/assert)
+ M Volume10Part1Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part2Screen.kt
+?? img_volume10part2_image_{471,41}.png
+```
+
+## §64 Vol-10-1/10-2 标题双修 4 字对齐 (2026-09-13 18:15)
+
+### §64.1 用户指令
+
+- "标题文本改成 少取才安全"(用户回答选项"两屏都改")
+
+### §64.2 两屏标题变更
+
+| 屏 | 旧 | 新 | W |
+|---|---|---|---|
+| Vol-10-1 | " 少取才安全"(4 字 + 1 前导空格) | **"少取才安全"**(4 字,删除前导空格) | W=213 |
+| Vol-10-2 | "会说不等于知道"(6 字) | **"少取才安全"**(4 字) | W=213 |
+
+- **W=213(沿用 5 字规约,4 字按 5 字符宽度估算)**:Vol-5-10/11/12「偏差的数据」、Vol-6-1「相似要有尺」、Vol-6-4/6-5「问问近邻」、Vol-9-1「长句先切成符」同款真机基线
+- **Vol-10 标题统一**:Vol-10-1 / Vol-10-2 同款 4 字"少取才安全" W=213(跨页同标题叙述)
+
+### §64.3 修改(5 处,2 个文件)
+
+**Vol-10-1**(3 处):
+| 位置 | 修改 |
+|---|---|
+| KDoc line 36 | 标题行 + 字数 + 真机基线全面更新 + **标题变更史**留痕(4字+1空格→4字无空格) |
+| KDoc line 51 | 跳转描述"点击' 少取才安全'标题" → "点击'少取才安全'标题" |
+| inline line 94 + Text line 97 | 标题行更新 + Text text = "少取才安全"(删前导空格) |
+
+**Vol-10-2**(2 处,2 个 Edit):
+| 位置 | 修改 |
+|---|---|
+| KDoc line 30 + 35 | 跳转描述 + 标题行全面更新(6字→4字)+ **标题变更史**留痕 + 同款 Vol-10-1 标注 |
+| inline line 92 + Text line 95 | 标题行更新 + Text text = "少取才安全" |
+
+### §64.4 验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 22s** ✓(只改字符串)
+- grep 确认 Vol-10-1 无残留"会说不等于知道"和"前导空格",Vol-10-2 无残留"会说不等于知道"
+
+### §64.5 沉淀(同款标题变更历史)
+
+| 屏 | 标题变更 |
+|---|---|
+| Vol-7-8 | 空标题 → 11 字"皮影戏之转折让网络会弯"(§38.6) |
+| Vol-9-5 | 前导空格 → 删2 个前导空格(§50.3) |
+| Vol-9-13 | 7 字"上下文决定答法" → 6 字"会说不等于知道"(§58.2) |
+| **Vol-10-1** | **4 字 + 1 前导空格" 少取才安全" → 4 字无前导空格"少取才安全"**(§64)— 沿用 §50.3 Vol-9-5 删除前导空格模式 |
+| **Vol-10-2** | **6 字"会说不等于知道" → 4 字"少取才安全"**(§64)— 与 Vol-10-1 对齐 |
+
+### §64.6 Git 状态(commit 前)
+
+```
+ M Volume10Part1Screen.kt (3 处: KDoc line 36/51 + inline line 94 + Text line 97)
+ M Volume10Part2Screen.kt (2 处: KDoc line 30/35 + inline line 92 + Text line 95)
+ M docs/SESSION-LOG-2026-09-13.md
+```
+
+## §65 Vol-10-3 创建 + Vol-10-2 兑现 §63.3 承诺 + 字面前导空格反复 (2026-09-13 18:25)
+
+### §65.1 用户指令
+
+- "创建第十卷-3页面,点击第十卷-2标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-3页面,图1 D:\图\image 472.png X18Y135W355H311,图2 D:\图\image 72.png X18Y478W355H321,标题文本改成' 少取才安全'"
+
+### §65.2 ⚠️ 字面前导空格反复(§64 修订后再次字面带空格)
+
+- **Vol-10-1/10-2**(§64 修订后):"少取才安全"(无空格)— W=213
+- **Vol-10-3**(本次创建):" 少取才安全"(**1 前导空格**)— W=213(沿用 5 字规约)
+- **用户字面优先**:沿用 §50.3 Vol-9-5 模式,KDoc 留痕"待用户指令决定是否删除"
+- **跨屏不一致**:Vol-10-1/2(无空格)vs Vol-10-3(有空格)— KDoc 必须明确标注,避免后续"注意注释"轮发现 KDoc 漂移
+
+### §65.3 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 472 | 1046×912 | 1.147(横图) | W=355 H=311 | **W=355 H=310** | 0.17% |
+| image 72 | 1067×918 | 1.162(横图) | W=355 H=321 | **W=355 H=305** | 0.17% |
+
+- **image 472**: 横图规则 W=355 max, H=round(355/1.147)=310
+- **image 72**: 横图规则 W=355 max, H=round(355/1.162)=305
+
+### §65.4 Vol-10-3 创建
+
+- **新目录**: `volume10part3/Volume10Part3Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **交替恢复**: Vol-10-2(256)→ Vol-10-3(255)
+- **标题**: " 少取才安全" **4 字 + 1 前导空格** W=213(沿用 5 字规约,与 Vol-10-1 创建时同款)— **字面前导空格按字面保留,KDoc 留痕待用户指令决定是否删除**
+- **图 1**: W=355 H=310(用户字面 H=311 忽略)
+- **图 2**: W=355 H=305(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=310 = 445;图 2 Y=478 + H=305 = 783(均在书框 Y=88-872 范围内,余量 427/89dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-4 创建时按历次约定回填 onOpenVolume10Part4"
+
+### §65.5 Vol-10-2 兑现 §63.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-2 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part3: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part3)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'少取才安全'标题 → Vol-10-3(创建于 2026-09-13,本屏兑现 §63.3 KDoc 承诺,回填 onOpenVolume10Part3)" |
+
+### §65.6 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 217 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part3.Volume10Part3Screen` |
+| line 1297-1302 | Vol-10-2 composable 加 `onOpenVolume10Part3 = { navController.navigate(Routes.Volume10Part3) }` |
+| line 1303-1305 | 新加 `composable(Routes.Volume10Part3) { Volume10Part3Screen(onBack = { navController.popBackStack() }) }` |
+
+### §65.7 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 55s** ✓
+- Brace check: NavHost 883/883, Vol-10-2 9/9, Vol-10-3 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-3 终屏无需 clickable)
+
+### §65.8 Vol-10 累计
+
+- **Vol-10 共 3 屏**(Vol-10-1~10-3)
+
+### §65.9 沉淀
+
+- **首次字面前导空格反复**:Vol-10-1(创建时带空格)→ §64 修订(无空格)→ Vol-10-3(再次字面带空格)— 模式:"创建字面带,修订无,再次创建字面带",KDoc 留痕待后续统一
+- **Vol-10 标题系列现状**:
+  - Vol-10-1「少取才安全」(无空格,§64 修订) W=213
+  - Vol-10-2「少取才安全」(无空格,§64 修订) W=213
+  - Vol-10-3「 少取才安全」(1 前导空格,字面) W=213
+- **3 屏 W 都是 W=213**:4 字 + 前导空格 vs 4 字 无空格 = 5 字符宽度相同
+- **N 屏新增 6 件事清单(本日第 18 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §65.10 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part3 + Vol-10-2 callback + Vol-10-3 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part3 const/assert)
+ M Volume10Part2Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part3Screen.kt
+?? img_volume10part3_image_{472,72}.png
+```
+
+## §66 Vol-10-4 创建 + Vol-10-3 兑现 §65.4 承诺 + 新 5 字标题"偏见从何而来" + 连续两屏异常 (2026-09-13 18:35)
+
+### §66.1 用户指令
+
+- "创建第十卷-4页面,点击第十卷-3标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-4页面,图1 D:\图\image 473.png X18Y135W355H311,图2 D:\图\image 43.png X18Y478W355H321,标题文本改成'偏见从何而来'"
+
+### §66.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 473 | 1047×948 | 1.104(横图) | W=355 H=311 | **W=355 H=321** | 0% |
+| image 43 | 1068×1023 | 1.044(横图) | W=355 H=321 | **W=355 H=340** | 0% |
+
+- **image 473**: 横图规则 W=355 max, H=round(355/1.104)=321
+- **image 43**: 横图规则 W=355 max, H=round(355/1.044)=340
+
+### §66.3 Vol-10-4 创建
+
+- **新目录**: `volume10part4/Volume10Part4Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-10-3(255)→ Vol-10-4(255)(字面"复制第一卷-1"=255 优先于交替模式,§28 沉淀规则)
+- **标题**: "偏见从何而来" **5 字 W=213**(沿用 5 字规约,与 Vol-5-10/11/12「偏差的数据」、Vol-6-1「相似要有尺」、Vol-9-1「长句先切成符」同款真机基线)— **首次 Vol-10 系列 5 字无前缀空格标题**
+- **图 1**: W=355 H=321(用户字面 H=311 忽略)
+- **图 2**: W=355 H=340(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=321 = 456;图 2 Y=478 + H=340 = 818(均在书框 Y=88-872 范围内,余量 416/54dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-5 创建时按历次约定回填 onOpenVolume10Part5"
+
+### §66.4 Vol-10-3 兑现 §65.4 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-3 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part4: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part4)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击' 少取才安全'标题 → Vol-10-4(创建于 2026-09-13,本屏兑现 §65.4 KDoc 承诺,回填 onOpenVolume10Part4)" |
+
+### §66.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 218 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part4.Volume10Part4Screen` |
+| line 1304-1309 | Vol-10-3 composable 加 `onOpenVolume10Part4 = { navController.navigate(Routes.Volume10Part4) }` |
+| line 1310-1312 | 新加 `composable(Routes.Volume10Part4) { Volume10Part4Screen(onBack = { navController.popBackStack() }) }` |
+
+### §66.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 53s** ✓
+- Brace check: NavHost 886/886, Vol-10-3 9/9, Vol-10-4 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-4 终屏无需 clickable)
+
+### §66.7 Vol-10 累计
+
+- **Vol-10 共 4 屏**(Vol-10-1~10-4)
+
+### §66.8 沉淀
+
+- **首次 Vol-10 5 字标题**"偏见从何而来" W=213 — 与 Vol-10-1/2(4 字"少取才安全"无空格)+ Vol-10-3(4 字 + 1 前导空格)形成对比
+- **跨屏标题切换**:Vol-10-3「 少取才安全」→ Vol-10-4「偏见从何而来」 — 每屏标题独立(不是跨页同标题叙述)
+- **连续两屏异常 Vol-10-3/4 255**:字面"复制第一卷-1"反复触发 255 优先
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - **Vol-10-4「偏见从何而来」 W=213(5 字新标题,本次)**
+- **N 屏新增 6 件事清单(本日第 19 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §66.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part4 + Vol-10-3 callback + Vol-10-4 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part4 const/assert)
+ M Volume10Part3Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part4Screen.kt
+?? img_volume10part4_image_{473,43}.png
+```
+
+## §67 Vol-10-5 创建 + Vol-10-4 兑现 §66.3 承诺 + 跨页同标题叙述"偏见从何而来" (2026-09-13 18:45)
+
+### §67.1 用户指令
+
+- "创建第十卷-5页面,点击第十卷-4标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第十卷-5页面,图1 D:\图\image 475.png X18Y135W355H311,图2 D:\图\image 474.png X18Y478W355H321,标题文本改成'偏见从何而来'"
+
+### §67.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 475 | 1047×1002 | 1.045(横图) | W=355 H=311 | **W=355 H=340** | 0.10% |
+| image 474 | 1089×962 | 1.132(横图) | W=355 H=321 | **W=355 H=314** | 0% |
+
+- **image 475**: 横图规则 W=355 max, H=round(355/1.045)=340
+- **image 474**: 横图规则 W=355 max, H=round(355/1.132)=314
+
+### §67.3 Vol-10-5 创建
+
+- **新目录**: `volume10part5/Volume10Part5Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-10-4(255)→ Vol-10-5(256)(非异常,完美交替)
+- **标题**: "偏见从何而来" **5 字 W=213**(沿用 5 字规约)— **首次 5 字标题跨页同标题叙述**(与 Vol-10-4 同款)
+- **图 1**: W=355 H=340(用户字面 H=311 忽略)
+- **图 2**: W=355 H=314(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=340 = 475;图 2 Y=478 + H=314 = 792(均在书框 Y=88-872 范围内,余量 397/80dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-6 创建时按历次约定回填 onOpenVolume10Part6"
+
+### §67.4 Vol-10-4 兑现 §66.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-4 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part5: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part5)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'偏见从何而来'标题 → Vol-10-5(创建于 2026-09-13,本屏兑现 §66.3 KDoc 承诺,回填 onOpenVolume10Part5)" |
+
+### §67.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 219 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part5.Volume10Part5Screen` |
+| line 1311-1316 | Vol-10-4 composable 加 `onOpenVolume10Part5 = { navController.navigate(Routes.Volume10Part5) }` |
+| line 1317-1319 | 新加 `composable(Routes.Volume10Part5) { Volume10Part5Screen(onBack = { navController.popBackStack() }) }` |
+
+### §67.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 44s** ✓
+- Brace check: NavHost 889/889, Vol-10-4 9/9, Vol-10-5 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-5 终屏无需 clickable)
+
+### §67.7 Vol-10 累计
+
+- **Vol-10 共 5 屏**(Vol-10-1~10-5)— Vol-9 同期也 5 屏规模(Vol-9-1~9-5)
+
+### §67.8 沉淀
+
+- **首次 5 字标题跨页同标题叙述**:Vol-10-4「偏见从何而来」+ Vol-10-5「偏见从何而来」 W=213 — 与 Vol-9-4/5/6「语义也有远近」、Vol-9-7/8/9「大模型核心」同款跨页同标题模式
+- **奇偶交替恢复链**: Vol-10-4(255)→ Vol-10-5(256)— 字面"复制第一卷-2"自然恢复交替
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4「偏见从何而来」 W=213(5 字新标题)
+  - **Vol-10-5「偏见从何而来」 W=213(与 Vol-10-4 跨页同标题)**
+- **N 屏新增 6 件事清单(本日第 20 次,双数里程碑)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §67.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part5 + Vol-10-4 callback + Vol-10-5 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part5 const/assert)
+ M Volume10Part4Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part5Screen.kt
+?? img_volume10part5_image_{475,474}.png
+```
+
+## §68 Vol-10-6 创建 + Vol-10-5 兑现 §67.3 承诺 + 跨页同标题 3 屏"偏见从何而来" (2026-09-13 18:55)
+
+### §68.1 用户指令
+
+- "创建第十卷-6页面,点击第十卷-5标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-6页面,图1 D:\图\image 47.png X18Y135W355H311,图2 D:\图\image 45.png X18Y478W355H321,标题文本改成'偏见从何而来'"
+
+### §68.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 47 | 1047×945 | 1.108(横图) | W=355 H=311 | **W=355 H=320** | 0.09% |
+| image 45 | 1065×1024 | 1.040(横图) | W=355 H=321 | **W=355 H=341** | 0% |
+
+- **image 47**: 横图规则 W=355 max, H=round(355/1.108)=320
+- **image 45**: 横图规则 W=355 max, H=round(355/1.040)=341
+
+### §68.3 Vol-10-6 创建
+
+- **新目录**: `volume10part6/Volume10Part6Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **交替**: Vol-10-5(256)→ Vol-10-6(255)(非异常,完美交替)
+- **标题**: "偏见从何而来" **5 字 W=213**(沿用 5 字规约)— **跨页同标题 3 屏**(Vol-10-4/5/6 同款)
+- **图 1**: W=355 H=320(用户字面 H=311 忽略)
+- **图 2**: W=355 H=341(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=320 = 455;图 2 Y=478 + H=341 = 819(均在书框 Y=88-872 范围内,余量 417/53dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-7 创建时按历次约定回填 onOpenVolume10Part7"
+
+### §68.4 Vol-10-5 兑现 §67.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-5 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part6: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part6)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'偏见从何而来'标题 → Vol-10-6(创建于 2026-09-13,本屏兑现 §67.3 KDoc 承诺,回填 onOpenVolume10Part6)" |
+
+### §68.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 220 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part6.Volume10Part6Screen` |
+| line 1318-1323 | Vol-10-5 composable 加 `onOpenVolume10Part6 = { navController.navigate(Routes.Volume10Part6) }` |
+| line 1324-1326 | 新加 `composable(Routes.Volume10Part6) { Volume10Part6Screen(onBack = { navController.popBackStack() }) }` |
+
+### §68.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 39s** ✓
+- Brace check: NavHost 892/892, Vol-10-5 9/9, Vol-10-6 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-6 终屏无需 clickable)
+
+### §68.7 Vol-10 累计
+
+- **Vol-10 共 6 屏**(Vol-10-1~10-6)— 与 Vol-4 = Vol-5-1~5-6 = Vol-6-1~6-6 = 6 屏同期规模
+
+### §68.8 沉淀
+
+- **首次 5 字标题跨页同标题 3 屏**:Vol-10-4「偏见从何而来」+ Vol-10-5「偏见从何而来」+ Vol-10-6「偏见从何而来」 W=213 — 与 Vol-9-4/5/6「语义也有远近」(6 字 ×3 屏)、Vol-9-7/8/9「大模型核心」(5 字 ×3 屏)同款跨页同标题模式
+- **交替恢复链**: Vol-10-5(256)→ Vol-10-6(255)— 字面"复制第一卷-1"自然恢复交替
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - **Vol-10-4/5/6「偏见从何而来」 W=213**(跨页同标题 3 屏,本次 §68)
+- **N 屏新增 6 件事清单(本日第 21 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §68.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part6 + Vol-10-5 callback + Vol-10-6 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part6 const/assert)
+ M Volume10Part5Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part6Screen.kt
+?? img_volume10part6_image_{47,45}.png
+```
+
+## §69 Vol-10-7 创建 + Vol-10-6 兑现 §68.3 承诺 + 首次 Vol-10 6 字标题"借招也要署名" + 连续两屏异常 (2026-09-13 19:05)
+
+### §69.1 用户指令
+
+- "创建第十卷-7页面,点击第十卷-6标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-7页面,图1 D:\图\image 476.png X18Y135W355H311,图2 D:\图\image 46.png X18Y478W355H321,标题文本改成'借招也要署名'"
+
+### §69.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 476 | 1047×972 | 1.077(横图) | W=355 H=311 | **W=355 H=330** | 0.09% |
+| image 46 | 1068×1023 | 1.044(横图) | W=355 H=321 | **W=355 H=340** | 0% |
+
+- **image 476**: 横图规则 W=355 max, H=round(355/1.077)=330
+- **image 46**: 横图规则 W=355 max, H=round(355/1.044)=340
+
+### §69.3 Vol-10-7 创建
+
+- **新目录**: `volume10part7/Volume10Part7Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-10-6(255)→ Vol-10-7(255)(字面"复制第一卷-1"=255 优先于交替模式,§28 沉淀规则)
+- **标题**: "借招也要署名" **6 字 W=192**(沿用 6-8 字规约,Vol-9-1/4/5/6/13/14/15 同款真机基线)— **首次 Vol-10 系列 6 字标题**
+- **图 1**: W=355 H=330(用户字面 H=311 忽略)
+- **图 2**: W=355 H=340(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=330 = 465;图 2 Y=478 + H=340 = 818(均在书框 Y=88-872 范围内,余量 407/54dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-8 创建时按历次约定回填 onOpenVolume10Part8"
+
+### §69.4 Vol-10-6 兑现 §68.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-6 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part7: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part7)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'偏见从何而来'标题 → Vol-10-7(创建于 2026-09-13,本屏兑现 §68.3 KDoc 承诺,回填 onOpenVolume10Part7)" |
+
+### §69.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 221 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part7.Volume10Part7Screen` |
+| line 1325-1330 | Vol-10-6 composable 加 `onOpenVolume10Part7 = { navController.navigate(Routes.Volume10Part7) }` |
+| line 1331-1333 | 新加 `composable(Routes.Volume10Part7) { Volume10Part7Screen(onBack = { navController.popBackStack() }) }` |
+
+### §69.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 37s** ✓
+- Brace check: NavHost 895/895, Vol-10-6 9/9, Vol-10-7 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-7 终屏无需 clickable)
+
+### §69.7 Vol-10 累计
+
+- **Vol-10 共 7 屏**(Vol-10-1~10-7)— 与 Vol-8 同期规模
+
+### §69.8 沉淀
+
+- **首次 Vol-10 6 字标题**"借招也要署名" W=192 — 与 Vol-10-4/5/6「偏见从何而来」(5字 ×3 屏)对比,跨屏标题切换
+- **跨屏标题系列扩展**:Vol-10-3「 少取才安全」→ Vol-10-4/5/6「偏见从何而来」→ Vol-10-7「借招也要署名」 — 3 种不同标题
+- **连续两屏异常 Vol-10-6/7 255**:字面"复制第一卷-1"反复触发 255 优先
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - **Vol-10-7「借招也要署名」 W=192**(6 字新标题,本次)
+- **N 屏新增 6 件事清单(本日第 22 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §69.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part7 + Vol-10-6 callback + Vol-10-7 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part7 const/assert)
+ M Volume10Part6Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part7Screen.kt
+?? img_volume10part7_image_{476,46}.png
+```
+
+## §70 Vol-10-8 创建 + Vol-10-7 兑现 §69.3 承诺 + 跨页同标题 2 屏"借招也要署名" (2026-09-13 19:15)
+
+### §70.1 用户指令
+
+- "创建第十卷-8页面,点击第十卷-7标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第十卷-8页面,图1 D:\图\image 477.png X18Y135W355H311,图2 D:\图\image 478.png X18Y478W355H321,标题文本改成'借招也要署名'"
+
+### §70.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 477 | 1047×1002 | 1.045(横图) | W=355 H=311 | **W=355 H=340** | 0.10% |
+| image 478 | 1089×962 | 1.132(横图) | W=355 H=321 | **W=355 H=314** | 0% |
+
+- **image 477**: 横图规则 W=355 max, H=round(355/1.045)=340
+- **image 478**: 横图规则 W=355 max, H=round(355/1.132)=314
+
+### §70.3 Vol-10-8 创建
+
+- **新目录**: `volume10part8/Volume10Part8Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-10-7(255)→ Vol-10-8(256)(非异常,完美交替)
+- **标题**: "借招也要署名" **6 字 W=192**(沿用 6-8 字规约)— **跨页同标题 2 屏**(与 Vol-10-7 同款)
+- **图 1**: W=355 H=340(用户字面 H=311 忽略)
+- **图 2**: W=355 H=314(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=340 = 475;图 2 Y=478 + H=314 = 792(均在书框 Y=88-872 范围内,余量 397/80dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-9 创建时按历次约定回填 onOpenVolume10Part9"
+
+### §70.4 Vol-10-7 兑现 §69.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-7 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part8: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part8)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'借招也要署名'标题 → Vol-10-8(创建于 2026-09-13,本屏兑现 §69.3 KDoc 承诺,回填 onOpenVolume10Part8)" |
+
+### §70.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 222 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part8.Volume10Part8Screen` |
+| line 1332-1337 | Vol-10-7 composable 加 `onOpenVolume10Part8 = { navController.navigate(Routes.Volume10Part8) }` |
+| line 1338-1340 | 新加 `composable(Routes.Volume10Part8) { Volume10Part8Screen(onBack = { navController.popBackStack() }) }` |
+
+### §70.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 37s** ✓
+- Brace check: NavHost 898/898, Vol-10-7 9/9, Vol-10-8 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-8 终屏无需 clickable)
+
+### §70.7 Vol-10 累计
+
+- **Vol-10 共 8 屏**(Vol-10-1~10-8)— 与 Vol-8 同规模(Vol-8 = 14 屏,Vol-10 = 8 屏差 6 屏)
+
+### §70.8 沉淀
+
+- **首次 6 字标题跨页同标题 2 屏**:Vol-10-7「借招也要署名」+ Vol-10-8「借招也要署名」 W=192 — 与 Vol-9-13/14/15「会说不等于知道」(6字 ×3 屏)、Vol-10-4/5/6「偏见从何而来」(5字 ×3 屏)同款跨页同标题模式
+- **奇偶交替恢复链**: Vol-10-7(255)→ Vol-10-8(256)— 字面"复制第一卷-2"自然恢复交替
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - **Vol-10-7/8「借招也要署名」 W=192**(6 字跨页同标题 2 屏,本次 §70)
+- **N 屏新增 6 件事清单(本日第 23 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §70.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part8 + Vol-10-7 callback + Vol-10-8 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part8 const/assert)
+ M Volume10Part7Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part8Screen.kt
+?? img_volume10part8_image_{477,478}.png
+```
+
+## §71 Vol-10-9 创建 + Vol-10-8 兑现 §70.3 承诺 + 跨页同标题 3 屏"借招也要署名" (2026-09-13 19:25)
+
+### §71.1 用户指令
+
+- "创建第十卷-9页面,点击第十卷-8标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-9页面,图1 D:\图\image 479.png X18Y135W355H311,图2 D:\图\image 9.png X18Y478W355H321,标题文本改成'借招也要署名'"
+
+### §71.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 479 | 1047×945 | 1.108(横图) | W=355 H=311 | **W=355 H=320** | 0.09% |
+| image 9 | 1067×1024 | 1.042(横图) | W=355 H=321 | **W=355 H=341** | 0% |
+
+- **image 479**: 横图规则 W=355 max, H=round(355/1.108)=320
+- **image 9**: 横图规则 W=355 max, H=round(355/1.042)=341 — **注意编号小(9),易与 image 90/99 系列混淆;drawable 名独立为 img_volume10part9_image_9 避免冲突**
+
+### §71.3 Vol-10-9 创建
+
+- **新目录**: `volume10part9/Volume10Part9Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **交替**: Vol-10-8(256)→ Vol-10-9(255)(非异常,完美交替)
+- **标题**: "借招也要署名" **6 字 W=192**(沿用 6-8 字规约)— **跨页同标题 3 屏**(Vol-10-7/8/9 同款)
+- **图 1**: W=355 H=320(用户字面 H=311 忽略)
+- **图 2**: W=355 H=341(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=320 = 455;图 2 Y=478 + H=341 = 819(均在书框 Y=88-872 范围内,余量 417/53dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-10 创建时按历次约定回填 onOpenVolume10Part10"
+
+### §71.4 Vol-10-8 兑现 §70.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-8 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part9: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part9)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'借招也要署名'标题 → Vol-10-9(创建于 2026-09-13,本屏兑现 §70.3 KDoc 承诺,回填 onOpenVolume10Part9)" |
+
+### §71.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 223 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part9.Volume10Part9Screen` |
+| line 1339-1344 | Vol-10-8 composable 加 `onOpenVolume10Part9 = { navController.navigate(Routes.Volume10Part9) }` |
+| line 1345-1347 | 新加 `composable(Routes.Volume10Part9) { Volume10Part9Screen(onBack = { navController.popBackStack() }) }` |
+
+### §71.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 36s** ✓
+- Brace check: NavHost 901/901, Vol-10-8 9/9, Vol-10-9 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-9 终屏无需 clickable)
+
+### §71.7 Vol-10 累计
+
+- **Vol-10 共 9 屏**(Vol-10-1~10-9)— 与 Vol-9 同期(Vol-9 = 14 屏,Vol-10 = 9 屏差 5 屏)
+
+### §71.8 沉淀
+
+- **首次 6 字标题跨页同标题 3 屏**:Vol-10-7/8/9 同款「借招也要署名」 W=192 — 与 Vol-9-13/14/15「会说不等于知道」(6字 ×3 屏)、Vol-10-4/5/6「偏见从何而来」(5字 ×3 屏)同款跨页同标题模式
+- **交替恢复链**: Vol-10-8(256)→ Vol-10-9(255)— 字面"复制第一卷-1"自然恢复交替
+- **image 9 编号小易混淆**:drawable 名独立为 `img_volume10part9_image_9`(沿用 Vol-10-1 image 70、Vol-9-13 image 504 经验)— 编号 9 极少出现,易与 image 90/99 系列混淆
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - **Vol-10-7/8/9「借招也要署名」 W=192**(6 字跨页同标题 3 屏,本次 §71)
+- **N 屏新增 6 件事清单(本日第 24 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §71.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part9 + Vol-10-8 callback + Vol-10-9 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part9 const/assert)
+ M Volume10Part8Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part9Screen.kt
+?? img_volume10part9_image_{479,9}.png
+```
+
+## §72 Vol-10-10 创建 + Vol-10-9 兑现 §71.3 承诺 + 首次 Vol-10 3 张图布局 + 新 5 字标题"眼见未必为实" + 连续两屏异常 (2026-09-13 19:35)
+
+### §72.1 用户指令
+
+- "创建第十卷-10页面,点击第十卷-9标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-10页面,图1 D:\图\image 480.png X18Y135W355H311,图2 D:\图\image 40.png X18Y381W355H321,图三 D:\图\image 482.png X18Y606W355H218,标题文本改成'眼见未必为实'"
+
+### §72.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 480 | 1056×606 | 1.743(扁横图) | W=355 H=311 | **W=355 H=204** | 0.17% |
+| image 40 | 1068×597 | 1.789(扁横图) | W=355 H=321 | **W=355 H=198** | 0.06% |
+| image 482 | 1068×636 | 1.679(扁横图) | W=355 H=218 | **W=355 H=211** | 0.18% |
+
+- **3 张都是扁横图**(ratio > 1.6),自然 H 都很小(198-211)
+- **image 480**: 横图规则 W=355 max, H=round(355/1.743)=204
+- **image 40**: 横图规则 W=355 max, H=round(355/1.789)=198
+- **image 482**: 横图规则 W=355 max, H=round(355/1.679)=211
+
+### §72.3 Vol-10-10 创建
+
+- **新目录**: `volume10part10/Volume10Part10Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-10-9(255)→ Vol-10-10(255)(字面"复制第一卷-1"=255 优先于交替模式,§28 沉淀规则)
+- **标题**: "眼见未必为实" **5 字 W=213**(沿用 5 字规约,与 Vol-5-10/11/12「偏差的数据」、Vol-6-1「相似要有尺」、Vol-10-4/5/6「偏见从何而来」同款真机基线)— **首次 Vol-10 系列 5 字新标题**
+- **首次 Vol-10 3 张图布局**(7 层 z-order)— 沿用 Vol-7-4/5 Y=135/381/606 布局:
+  - **图 1**(image 480) W=355 H=204 Y=135
+  - **图 2**(image 40) W=355 H=198 Y=381(非常用 Y=478,3 张图布局的中部 Y)
+  - **图 3**(image 482) W=355 H=211 Y=606
+- **3 张扁横图紧凑堆叠**:图 1 Y=135+204=339,图 2 Y=381+198=579,图 3 Y=606+211=817(均在书框 Y=88-872 范围内,余量 533/293/55dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-11 创建时按历次约定回填 onOpenVolume10Part11"
+
+### §72.4 Vol-10-9 兑现 §71.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-9 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part10: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part10)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'借招也要署名'标题 → Vol-10-10(创建于 2026-09-13,本屏兑现 §71.3 KDoc 承诺,回填 onOpenVolume10Part10)" |
+
+### §72.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 224 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part10.Volume10Part10Screen` |
+| line 1346-1351 | Vol-10-9 composable 加 `onOpenVolume10Part10 = { navController.navigate(Routes.Volume10Part10) }` |
+| line 1352-1354 | 新加 `composable(Routes.Volume10Part10) { Volume10Part10Screen(onBack = { navController.popBackStack() }) }` |
+
+### §72.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 37s** ✓
+- Brace check: NavHost 904/904, Vol-10-9 9/9, **Vol-10-10 9/9 (7 层 z-order 3 张图布局,比 5 层多 1 个 Box)**, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-10 终屏无需 clickable)
+
+### §72.7 Vol-10 累计
+
+- **Vol-10 共 10 屏**(Vol-10-1~10-10)— 🎉 **与 Vol-9 = Vol-8 同规模差 4 屏!**
+
+### §72.8 沉淀
+
+- **首次 Vol-10 3 张图布局**(Vol-10-10)— 沿用 Vol-7-4/5 Y=135/381/606 模式,Vol-7-2/10-7 等也曾用过
+- **首次 Vol-10 5 字新标题**"眼见未必为实" W=213 — 与 Vol-10-4/5/6「偏见从何而来」(5字 ×3 屏)同款 5 字规约
+- **跨屏标题切换**:Vol-10-9「借招也要署名」→ Vol-10-10「眼见未必为实」 — 6字 → 5字
+- **连续两屏异常 Vol-10-9/10 255**:字面"复制第一卷-1"反复触发 255 优先
+- **3 张图布局变体可用 Y=135/381/606** — 与 §38.2 沉淀一致(Vol-7-4/5/7-5 等)
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - Vol-10-7/8/9「借招也要署名」 W=192(6 字跨页同标题 3 屏)
+  - **Vol-10-10「眼见未必为实」 W=213**(5 字新标题,本次 §72)
+- **N 屏新增 6 件事清单(本日第 25 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §72.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part10 + Vol-10-9 callback + Vol-10-10 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part10 const/assert)
+ M Volume10Part9Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part10Screen.kt
+?? img_volume10part10_image_{480,40,482}.png
+```
+
+## §73 Vol-10-11 创建 + Vol-10-10 兑现 §72.3 承诺 + 2 张图布局变体 Y=135/381 + 跨页同标题 2 屏"眼见未必为实" (2026-09-13 19:45)
+
+### §73.1 用户指令
+
+- "创建第十卷-11页面,点击第十卷-10标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第十卷-11页面,图1 D:\图\image 480.png X18Y135W355H311,图2 D:\图\image 40.png X18Y381W355H321,标题文本改成'眼见未必为实'"
+
+### §73.2 ⚠️ 2 张图布局变体(非标准 Y=478)
+
+- **Y=135/381**:与 Vol-7-7/Vol-10-10 同款 2 张图布局变体(§38.4 沉淀),**非标准 Y=135/478**
+- Vol-10-11 是 Vol-10-10 的"减图"版 — 用户字面只给图1/图2,无图3
+- Y=381 沿用 Vol-7-7(2 张图布局变体)而非 Vol-9 标准 Y=478
+
+### §73.3 PNG 校验(复用 Vol-10-10 的 PNG)
+
+| 文件 | PNG 头 | 比率 | **自然 fit** | 畸变 |
+|---|---|---|---|---|
+| image 480 | 1056×606 | 1.743(扁横图) | **W=355 H=204** | 0.17% |
+| image 40 | 1068×597 | 1.789(扁横图) | **W=355 H=198** | 0.06% |
+
+- 2 张图沿用 Vol-10-10 的 PNG,drawable 名独立(`img_volume10part11_image_{480,40}`)避免冲突
+- 2 张都是扁横图(ratio > 1.7),自然 H 都很小
+
+### §73.4 Vol-10-11 创建
+
+- **新目录**: `volume10part11/Volume10Part11Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-10-10(255)→ Vol-10-11(256)(非异常,完美交替)
+- **标题**: "眼见未必为实" **5 字 W=213**(沿用 5 字规约)— **跨页同标题 2 屏**(与 Vol-10-10 同款)
+- **图 1**: W=355 H=204(用户字面 H=311 忽略)
+- **图 2**: W=355 H=198(用户字面 H=321 忽略)— **Y=381 非常用**
+- **Y 位置**: 图 1 Y=135 + H=204 = 339;图 2 Y=381 + H=198 = 579(均在书框 Y=88-872 范围内,余量 533/293dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-12 创建时按历次约定回填 onOpenVolume10Part12"
+
+### §73.5 Vol-10-10 兑现 §72.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-10 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part11: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part11)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'眼见未必为实'标题 → Vol-10-11(创建于 2026-09-13,本屏兑现 §72.3 KDoc 承诺,回填 onOpenVolume10Part11)" |
+
+### §73.6 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 225 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part11.Volume10Part11Screen` |
+| line 1353-1358 | Vol-10-10 composable 加 `onOpenVolume10Part11 = { navController.navigate(Routes.Volume10Part11) }` |
+| line 1359-1361 | 新加 `composable(Routes.Volume10Part11) { Volume10Part11Screen(onBack = { navController.popBackStack() }) }` |
+
+### §73.7 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 37s** ✓
+- Brace check: NavHost 907/907, **Vol-10-10 10/10 (7 层 z-order 3 张图布局)**, Vol-10-11 8/8 (5 层 z-order 2 张图布局变体), Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-11 终屏无需 clickable)
+
+### §73.8 Vol-10 累计
+
+- **Vol-10 共 11 屏**(Vol-10-1~10-11)— 与 Vol-8 = Vol-9 同期差 3 屏
+
+### §73.9 沉淀
+
+- **首次 Vol-10 2 张图布局变体 Y=135/381**(Vol-10-11)— 与 §38.4 Vol-7-7 同款;Vol-10-10 是 3 张图布局(7 层 z-order),Vol-10-11 是 2 张图布局变体(5 层 z-order)
+- **2 张图布局变体 vs 标准 2 张图布局**:变体 Y=135/381(中部位置),标准 Y=135/478(中下部位置)— 沿用历史
+- **跨屏同标题 2 屏**:Vol-10-10/10-11 同款「眼见未必为实」 W=213
+- **奇偶交替恢复链**: Vol-10-10(255)→ Vol-10-11(256)— 字面"复制第一卷-2"自然恢复交替
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - Vol-10-7/8/9「借招也要署名」 W=192(6 字跨页同标题 3 屏)
+  - **Vol-10-10/11「眼见未必为实」 W=213**(5 字跨页同标题 2 屏,本次 §73)
+- **N 屏新增 6 件事清单(本日第 26 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §73.10 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part11 + Vol-10-10 callback + Vol-10-11 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part11 const/assert)
+ M Volume10Part10Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part11Screen.kt
+?? img_volume10part11_image_{480,40}.png
+```
+
+## §74 Vol-10-12 创建 + Vol-10-11 兑现 §73.4 承诺 + 首次含标点标题"人作主，机助力" (2026-09-13 19:55)
+
+### §74.1 用户指令
+
+- "创建第十卷-12页面,点击第十卷-11标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第十卷-12页面,图1 D:\图\image 485.png X18Y135W355H311,图2 D:\图\image 85.png X18Y478W355H321,标题文本改成'人作主，机助力'"
+
+### §74.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 485 | 1047×972 | 1.077(横图) | W=355 H=311 | **W=355 H=330** | 0.09% |
+| image 85 | 1068×1023 | 1.044(横图) | W=355 H=321 | **W=355 H=340** | 0% |
+
+- **image 485**: 横图规则 W=355 max, H=round(355/1.077)=330
+- **image 85**: 横图规则 W=355 max, H=round(355/1.044)=340
+
+### §74.3 Vol-10-12 创建
+
+- **新目录**: `volume10part12/Volume10Part12Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **交替**: Vol-10-11(256)→ Vol-10-12(255)(非异常,完美交替)
+- **标题**: "人作主，机助力" **6 字 + 1 中文逗号 = 7 字符** W=192(沿用 7 字规约,中文逗号算字符位,与 Vol-5-7「训练，检验，测试」8 字含 2 个中文逗号 W=192 同款;真机基线 Vol-5-13/14/15「死记硬背不可行」7 字 W=192)— **首次 Vol-10 系列含标点标题**
+- **图 1**: W=355 H=330(用户字面 H=311 忽略)
+- **图 2**: W=355 H=340(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=330 = 465;图 2 Y=478 + H=340 = 818(均在书框 Y=88-872 范围内,余量 407/54dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-10-13 创建时按历次约定回填 onOpenVolume10Part13"
+
+### §74.4 Vol-10-11 兑现 §73.4 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-11 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume10Part12: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume10Part12)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'眼见未必为实'标题 → Vol-10-12(创建于 2026-09-13,本屏兑现 §73.4 KDoc 承诺,回填 onOpenVolume10Part12)" |
+
+### §74.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 226 | 加 `import com.jueqiao.jianghu.ui.screens.volume10part12.Volume10Part12Screen` |
+| line 1360-1365 | Vol-10-11 composable 加 `onOpenVolume10Part12 = { navController.navigate(Routes.Volume10Part12) }` |
+| line 1366-1368 | 新加 `composable(Routes.Volume10Part12) { Volume10Part12Screen(onBack = { navController.popBackStack() }) }` |
+
+### §74.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 38s** ✓
+- Brace check: NavHost 910/910, Vol-10-11 9/9, Vol-10-12 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-10-12 终屏无需 clickable)
+
+### §74.7 Vol-10 累计
+
+- **Vol-10 共 12 屏**(Vol-10-1~10-12)— 与 Vol-8 = Vol-9 同期差 2 屏
+
+### §74.8 沉淀
+
+- **首次 Vol-10 含标点标题**"人作主，机助力" 7 字符 W=192 — 中文逗号算字符位,沿用 7 字规约(Vol-5-13/14/15 真机基线)
+- **跨屏标题切换**:Vol-10-11「眼见未必为实」→ Vol-10-12「人作主，机助力」 — 5字 → 7字符(带中文逗号)
+- **交替恢复链**: Vol-10-11(256)→ Vol-10-12(255)— 字面"复制第一卷-1"自然恢复交替
+- **Vol-10 标题系列更新**:
+  - Vol-10-1「少取才安全」 W=213(§64 修订)
+  - Vol-10-2「少取才安全」 W=213(§64 修订)
+  - Vol-10-3「 少取才安全」 W=213(字面 1 前导空格)
+  - Vol-10-4/5/6「偏见从何而来」 W=213(5 字跨页同标题 3 屏)
+  - Vol-10-7/8/9「借招也要署名」 W=192(6 字跨页同标题 3 屏)
+  - Vol-10-10/11「眼见未必为实」 W=213(5 字跨页同标题 2 屏)
+  - **Vol-10-12「人作主，机助力」 W=192**(6 字 + 1 中文逗号 = 7 字符,首次含标点,本次 §74)
+- **N 屏新增 6 件事清单(本日第 27 次)**:
+ 1. 新建 .kt ✓
+ 2. `Routes.X = "x"` const ✓
+ 3. `RoutesTest` assert ✓
+ 4. NavHost import + 父屏 callback + composable 接线 ✓
+ 5. 父屏函数参数 + .clickable + KDoc ✓
+ 6. PNG 复制到 drawable-nodpi ✓
+ 7. 主动 compile 验证 ✓
+
+### §74.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume10Part12 + Vol-10-11 callback + Vol-10-12 composable)
+ M Routes.kt / RoutesTest.kt (Volume10Part12 const/assert)
+ M Volume10Part11Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume10Part12Screen.kt
+?? img_volume10part12_image_{485,85}.png
+```
