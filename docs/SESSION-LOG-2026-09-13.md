@@ -614,3 +614,58 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
  M Gunlun9Screen.kt (新增 import clickable + onOpenVolume9Part1 + 已解锁9 .clickable)
 ?? img_volume9part1_image_{491,492}.png
 ```
+
+## §50 Vol-9-4/5/6 创建 + Vol-9-5 标题去前导空格(2026-09-13 14:30~15:10)
+
+### §50.1 Vol-9-4 创建
+
+- 复制第一卷-1 → Group 255
+- 标题「语义也有远近」6 字 W=192(无前导空格,用户字面)
+- 图 1 image 497 (1.003) → W=355 H=354;图 2 image 49 (0.997) → W=355 H=356
+- 注意:用户字面跳过 image 501(直接 500→502)— 可能 image 501 缺失或笔误;沿用字面,KDoc 标注
+
+### §50.2 Vol-9-5 创建
+
+- 复制第一卷-2 → Group 256
+- 标题"  语义也有远近"(2 前导空格,用户字面)— W=192
+- 图 1 image 498 (0.974) → W=355 H=365;图 2 image 499 (1.113) → W=355 H=319
+- KDoc 初始标注"用户字面前导空格按字面保留,2 个空格"
+
+### §50.3 Vol-9-5 标题去前导空格(用户指令)
+
+- 用户 2026-09-13 "删掉前导空格" — 删除 2 个前导空格
+- 修订 4 处:
+  - Text text: `"  语义也有远近"` → `"语义也有远近"`
+  - KDoc 标题行: `"  语义也有远近"` → `"语义也有远近"`
+  - KDoc 字数注释: `6 字 + 2 前导空格` → `6 字`
+  - KDoc "用户字面前导空格按字面保留,2 个空格" 备注 → 删除
+- 同步 inline 注释
+
+### §50.4 Vol-9-6 创建
+
+- 复制第一卷-1 → Group 255
+- 标题「语义也有远近」(无前导空格,沿用 Vol-9-5 修正后)— 6 字 W=192
+- 图 1 image 500 (1.094) → W=355 H=324;图 2 image 502 (1.002) → W=355 H=354
+
+### §50.5 今日累计(2026-09-13 14:30~15:10)
+
+- Vol-9 共 6 屏(Vol-9-1~9-6),与 Vol-8 同进度
+- 1 次 commit 修复(Vol-9-1 import 缺失,e2b6a43)
+- 1 次 commit Vol-8-11/13 BUG 修复(de5c843)
+- 多次 SESSION-LOG 修正
+- Vol-9-5/9-6 改动未 commit,待下次 commit
+
+### §50.6 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-9-4/5/6 + Vol-9-5 callback)
+ M Routes.kt / RoutesTest.kt (Vol-9-4/5/6 const/assert)
+ M Volume9Part3Screen.kt (Vol-9-4 入口)
+ M Volume9Part4Screen.kt (Vol-9-5 入口)
+ M Volume9Part5Screen.kt (Vol-9-6 入口 + 去前导空格 4 处)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part6Screen.kt (新建)
+?? img_volume9part4_image_{497,49}.png
+?? img_volume9part5_image_{498,499}.png
+?? img_volume9part6_image_{500,502}.png
+```
