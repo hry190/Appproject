@@ -171,6 +171,13 @@ import com.jueqiao.jianghu.ui.screens.volume6part13.Volume6Part13Screen
 import com.jueqiao.jianghu.ui.screens.volume6part14.Volume6Part14Screen
 import com.jueqiao.jianghu.ui.screens.volume6part15.Volume6Part15Screen
 import com.jueqiao.jianghu.ui.screens.volume7part1.Volume7Part1Screen
+import com.jueqiao.jianghu.ui.screens.volume7part2.Volume7Part2Screen
+import com.jueqiao.jianghu.ui.screens.volume7part3.Volume7Part3Screen
+import com.jueqiao.jianghu.ui.screens.volume7part4.Volume7Part4Screen
+import com.jueqiao.jianghu.ui.screens.volume7part5.Volume7Part5Screen
+import com.jueqiao.jianghu.ui.screens.volume7part6.Volume7Part6Screen
+import com.jueqiao.jianghu.ui.screens.volume7part7.Volume7Part7Screen
+import com.jueqiao.jianghu.ui.screens.volume7part8.Volume7Part8Screen
 import com.jueqiao.jianghu.ui.screens.volume4part2.Volume4Part2Screen
 import com.jueqiao.jianghu.ui.screens.volume4part3.Volume4Part3Screen
 import com.jueqiao.jianghu.ui.screens.volume4part4.Volume4Part4Screen
@@ -1168,7 +1175,49 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume7Part1) {
-            Volume7Part1Screen(onBack = { navController.popBackStack() })
+            Volume7Part1Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part2 = { navController.navigate(Routes.Volume7Part2) },
+            )
+        }
+        composable(Routes.Volume7Part2) {
+            Volume7Part2Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part3 = { navController.navigate(Routes.Volume7Part3) },
+            )
+        }
+        composable(Routes.Volume7Part3) {
+            Volume7Part3Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part4 = { navController.navigate(Routes.Volume7Part4) },
+            )
+        }
+        composable(Routes.Volume7Part4) {
+            Volume7Part4Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part5 = { navController.navigate(Routes.Volume7Part5) },
+            )
+        }
+        composable(Routes.Volume7Part5) {
+            Volume7Part5Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part6 = { navController.navigate(Routes.Volume7Part6) },
+            )
+        }
+        composable(Routes.Volume7Part6) {
+            Volume7Part6Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part7 = { navController.navigate(Routes.Volume7Part7) },
+            )
+        }
+        composable(Routes.Volume7Part7) {
+            Volume7Part7Screen(
+                onBack = { navController.popBackStack() },
+                onOpenVolume7Part8 = { navController.navigate(Routes.Volume7Part8) },
+            )
+        }
+        composable(Routes.Volume7Part8) {
+            Volume7Part8Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
