@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume10part14
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,11 +47,12 @@ import com.jueqiao.jianghu.R
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
  *   - 图1:D:\图\image 488.png(已复制为 res/drawable-nodpi/img_volume10part14_image_488.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-10-15 创建时按历次约定回填 onOpenVolume10Part15)。
+ * 卷末闭环:点击"人作主，机助力"标题 → Gunlun13(创建于 2026-09-13,本屏兑现 §76.3 KDoc "等 Vol-10-15 回填"承诺改为卷末闭环,**Vol-10 = 14 屏卷末**;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 模式;**第十卷入口卷** Gunlun13)。
  */
 @Composable
 fun Volume10Part14Screen(
     onBack: () -> Unit = {},
+    onOpenGunlun13: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -89,7 +91,7 @@ fun Volume10Part14Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"人作主，机助力"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 7 字符 (6 字 + 1 中文逗号) W=192(沿用 7 字规约,与 Vol-10-12/13 同款跨页同标题叙述)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-10-15 创建时按历次约定回填 onOpenVolume10Part15)。
+            // 卷末闭环:点击"人作主，机助力"标题 → Gunlun13(第十卷入口卷,仿 §48 模式)。
             Text(
                 text = "人作主，机助力",
                 color = Color.Black,
@@ -99,7 +101,8 @@ fun Volume10Part14Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenGunlun13),
             )
 
             // 图1(image 488.png,X=18, Y=135, W=355, H=320)— 在书框之上、上部(单图屏)。

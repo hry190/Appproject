@@ -2823,3 +2823,122 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
 ?? img_volume10part11_image_484.png (新增)
  M docs/SESSION-LOG-2026-09-13.md
 ```
+
+## §78 Vol-10-14 卷末闭环 → Gunlun13 (2026-09-13 20:35)
+
+### §78.1 用户指令
+
+- "点击Vol-10-15的标题可以回到滚轮13页"
+- **用户选项**(AskUserQuestion):"Vol-10-14 直接闭环" — **不创建 Vol-10-15**,Vol-10-14 直接变卷末屏,跳转 Gunlun13
+
+### §78.2 卷末闭环 5 处修改(沿用 §48 Pattern)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-10-14 原本无) |
+| 2 | 函数参数 | 加 `onOpenGunlun13: () -> Unit = {}`(替代原 `onOpenVolume10Part15`,卷末闭环语义) |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenGunlun13)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页(等 Vol-10-15 回填)" → "**卷末闭环**:点击'人作主，机助力'标题 → Gunlun13(...Vol-10 = 14 屏卷末;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 模式;**第十卷入口卷** Gunlun13)" |
+| 5 | NavHost 接线 | Vol-10-14 composable 加 `onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) }` |
+
+### §78.3 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 5s** ✓(只改 1 文件 + 接线)
+- Brace check: NavHost 917/917, Vol-10-14 8/8 (4 层 z-order 单图屏 + clickable) (全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓
+
+### §78.4 Vol-10 累计
+
+- **Vol-10 共 14 屏 + 卷末闭环 → Gunlun13** ✓ — 🎉🎉 **第 5 个完整闭环卷**(继 Vol-4/5/7/8/9 后)
+
+### §78.5 卷末闭环链汇总(全 5 处 Pattern 复用 §48)
+
+| 卷 | 末屏 | 入口 Gunlun | 沉淀节 | 状态 |
+|---|---|---|---|---|
+| Vol-4 | Vol-4-14 | Gunlun8 | §33.1 | ✓ |
+| Vol-5 | Vol-5-15 | Gunlun12 | §33.1 | ✓ |
+| Vol-6 | Vol-6-15 | (无闭环) | - | ⚠️ 已知漏 |
+| Vol-7 | Vol-7-12 | Gunlun16 | §40.2 | ✓ |
+| Vol-8 | Vol-8-14 | Gunlun11 | §48 | ✓ |
+| Vol-9 | Vol-9-15 | Gunlun9 | §61 | ✓ |
+| **Vol-10** | **Vol-10-14** | **Gunlun13** | **§78** | **✓ 本次** |
+
+### §78.6 沉淀
+
+- **5 处卷末闭环 Pattern 完全复用 §48**:Vol-10-14 是第 6 个完整闭环(Vol-4 / Vol-5 / Vol-7 / Vol-8 / Vol-9 + Vol-10)
+- **首次卷末屏选择**:用户通过 AskUserQuestion 选 "Vol-10-14 直接闭环" — 14 屏替代标准 15 屏规模,与 Vol-6(15 屏未闭环)/Vol-7(12 屏闭环)各有不同
+- **用户选项沉淀**:用户明确选"Vol-10-14 直接闭环",说明用户认为 Vol-10 = 14 屏是合适的卷末规模 — 沿用 §60.10 Vol-10 创建时的同等评估
+- **N 屏修改清单(本日第 31 次)**:
+ 1. Vol-10-14 import clickable ✓
+ 2. Vol-10-14 函数参数加 `onOpenGunlun13` ✓
+ 3. Vol-10-14 Title .clickable ✓
+ 4. Vol-10-14 KDoc 全文更新(卷末闭环 + 模式 + 第十卷入口卷)✓
+ 5. NavHost 接线 ✓
+ 6. 主动 compile 验证 ✓
+
+### §78.7 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-10-14 composable 加 onOpenGunlun13 接线)
+ M Volume10Part14Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc 全文更新)
+ M docs/SESSION-LOG-2026-09-13.md
+```
+
+## §79 Vol-6-15 卷末闭环 → Gunlun14 (修复唯一已知漏) (2026-09-13 20:45)
+
+### §79.1 用户指令
+
+- "点击Vol-6-15屏的标题会跳转滚轮14页面"
+- **修复 §78 链中 Vol-6 唯一已知漏** — 全 7 卷闭环
+
+### §79.2 卷末闭环 5 处修改(沿用 §48 Pattern)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-6-15 原本无) |
+| 2 | 函数参数 | 加 `onOpenGunlun14: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenGunlun14)` 加在 .size(width = 213.dp, height = 32.dp) 之后 |
+| 4 | KDoc 全文更新 | 资源段后新增 "**卷末闭环**:点击'不知看命中率'标题 → Gunlun14(...本屏兑现 §35.3/§48/§78 卷末闭环链沉淀 + Vol-6 唯一已知漏;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 / Vol-10-14→Gunlun13 模式;**第六卷入口卷** Gunlun14)" |
+| 5 | NavHost 接线 | Vol-6-15 composable 加 `onOpenGunlun14 = { navController.navigate(Routes.Gunlun14) }` |
+
+### §79.3 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 6s** ✓(只改 1 文件 + 接线)
+- Brace check: NavHost 918/918, Vol-6-15 8/8 (4 层 z-order 单图屏 + clickable) (全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓
+
+### §79.4 🎉🎉🎉 全 7 卷闭环汇总
+
+| 卷 | 末屏 | 入口 Gunlun | 沉淀节 | 状态 |
+|---|---|---|---|---|
+| Vol-4 | Vol-4-14 | Gunlun8 | §33.1 | ✓ |
+| Vol-5 | Vol-5-15 | Gunlun12 | §33.1 | ✓ |
+| **Vol-6** | **Vol-6-15** | **Gunlun14** | **§79** | **✓ 本次 (修复唯一已知漏)** |
+| Vol-7 | Vol-7-12 | Gunlun16 | §40.2 | ✓ |
+| Vol-8 | Vol-8-14 | Gunlun11 | §48 | ✓ |
+| Vol-9 | Vol-9-15 | Gunlun9 | §61 | ✓ |
+| Vol-10 | Vol-10-14 | Gunlun13 | §78 | ✓ |
+
+**🎉 跨卷统计(全 main 分支):Vol-4 / Vol-5 / Vol-6 / Vol-7 / Vol-8 / Vol-9 / Vol-10 = 全部 7 卷闭环 → Gunlun8 / 12 / 14 / 16 / 11 / 9 / 13**
+
+### §79.5 沉淀
+
+- **唯一已知漏修复**:§78.5 闭环链中"Vol-6 ⚠️ 已知漏"状态更新为"✓" — 全 7 卷 100% 闭环
+- **5 处卷末闭环 Pattern 完全复用 §48**:Vol-6-15 是第 7 个完整闭环(Vol-4 / Vol-5 / Vol-6 / Vol-7 / Vol-8 / Vol-9 / Vol-10)
+- **首次补旧屏 KDoc 增量**:Vol-6-15 KDoc 创建时(§35.3)没有 "本屏跳转目标" 行(因为当时不知道卷末会跳 Gunlun14)— 本次新增该 KDoc 段,沿用 §48 Pattern
+- **修复时机**:用户在 Vol-10-14 闭环后立刻补 Vol-6-15 闭环,说明用户清楚知道这个漏 — 主动修复,而非被动等用户发现
+- **N 屏修改清单(本日第 32 次)**:
+ 1. Vol-6-15 import clickable ✓
+ 2. Vol-6-15 函数参数加 `onOpenGunlun14` ✓
+ 3. Vol-6-15 Title .clickable ✓
+ 4. Vol-6-15 KDoc 全文更新(卷末闭环 + 6 个卷末闭环模式 + 第六卷入口卷)✓
+ 5. NavHost 接线 ✓
+ 6. 主动 compile 验证 ✓
+
+### §79.6 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (Vol-6-15 composable 加 onOpenGunlun14 接线)
+ M Volume6Part15Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc 全文更新)
+ M docs/SESSION-LOG-2026-09-13.md
+```
