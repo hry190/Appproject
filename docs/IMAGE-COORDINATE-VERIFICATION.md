@@ -130,7 +130,7 @@ PNG 校验**发现问题时**,不要默改、不要猜,要把数据+选项摆给
 - **决策**:用户给出**新规则**——所有内容图像一律 `H = round(W / 原图比例)`,消除 `ContentScale.FillBounds` 拉伸
 - **结果**:42 项自动 + 1 项手动修复,**剩余 0 项 >5%**
 - **KDoc 留痕**:每处加"用户 2026-09-12 按宽度调整消除畸变,H=X→Y 自然高度 W/比例"
-- **沉淀**:规则写入 [[image-size-by-width-default]](~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md)(跨会话生效)
+- **沉淀**:规则写入 [[image-fit-to-natural-bounds]](~/.claude/projects/d--Appproject/memory/image-fit-to-natural-bounds.md)(跨会话生效)
 
 ---
 
@@ -149,7 +149,7 @@ PYTHONIOENCODING=utf-8 python audit_distortion.py
   ...
 ```
 
-阈值 5% 是用户规则定的(image-size-by-width-default memory)。
+阈值 5% 是用户规则定的(image-fit-to-natural-bounds memory)。
 
 ### 脚本实现要点(供以后移植到 `tools/audit_distortion.py`)
 
@@ -215,8 +215,36 @@ H_natural = round(W_given / 原图_width_height_ratio)
 | > 5% | **自动按比例重算 H**,KDoc 留痕"用户字面 H=X→自然 H=Y 消除畸变"|
 | 用户显式说"按 H=X"或真机已调过 | 尊重用户 H,留痕 |
 
-详见 [[image-size-by-width-default memory]](~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md)。
+详见 [[image-fit-to-natural-bounds memory]](~/.claude/projects/d--Appproject/memory/image-fit-to-natural-bounds.md)。
+## 按 PNG 自然尺寸 fit 进标准框(2026-09-12 第 2 次新规则,取代"按宽度调整")
 
+**完全忽略用户给的 W/H**,只取 PNG 原图尺寸 + 标准列框约束。
+
+```
+orig_w, orig_h = PNG 头 16-24 字节
+ratio = orig_w / orig_h
+max_W = 355   # 列宽标准
+max_H = 394   # 书框底 872 - Y=478 (图像 2 起点)
+
+if ratio >= 1:   # 横图 / 近正方
+    W = max_W = 355
+    H = round(W / ratio)
+else:             # 竖图 (ratio < 1)
+    H = max_H = 394
+    W = round(H * ratio)
+```
+
+| 场景 | 处理 |
+|---|---|
+| 横图(典型 ratio 1.0~1.2) | W=355, H = round(355/ratio) |
+| 竖图(典型 ratio 0.7~0.9) | H=394, W = round(394×ratio) |
+| 原图近正方形 (0.9~1.1) | W=355, H=~330(看 ratio)|
+| 原图极扁/极高 | 可能超 max — AskUserQuestion |
+| 用户显式"按 H=X"或真机已调过 | 尊重用户值 |
+
+详见 [[image-fit-to-natural-bounds memory]](~/.claude/projects/d--Appproject/memory/image-fit-to-natural-bounds.md)。
+
+> 旧规则(2026-09-12 上午) "按宽度调整"以用户给的 W 为锚,已被本规则取代,见 [[#按宽度调整 H 的标准公式(2026-09-12 新规则)]] 旧版段落。
 ---
 
 ## 决策树(快速参考)
@@ -276,7 +304,7 @@ H_natural = round(W_given / 原图_width_height_ratio)
 - **沉淀出处**:2026-09-11 一天 11 屏 Vol-3 创建批 + 3 轮"注意注释"修复;**2026-09-12 增量**:案例 E 全卷批量"按宽度调整"消畸变 + 4 个新 memory/image rules
 - **配套 memory**:
   - `~/.claude/projects/d--Appproject/memory/screen-copy-verify-coordinates.md` — 跨会话生效
-  - `~/.claude/projects/d--Appproject/memory/image-size-by-width-default.md` — 2026-09-12 新增,H = W / 比例
+  - `~/.claude/projects/d--Appproject/memory/image-fit-to-natural-bounds.md` — 2026-09-12 新增,H = W / 比例
 - **相关文档**:
   - [docs/CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) — Vol-2 doc 批审计,本方法源自该审计的 H2-H4 + M6
   - [docs/SESSION-LOG-2026-09-11.md § 19-27](./SESSION-LOG-2026-09-11.md) — 每天操作记录,含本方法所有使用实例

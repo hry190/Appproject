@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume7part1
+package com.jueqiao.jianghu.ui.screens.volume7part6
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -25,32 +25,32 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第七卷-1 页 — 滚轮15 → 点击"已解锁9"图像跳转目标(新卷首屏)。**Vol-7-1 标题点击跳 Vol-7-2**。
+ * 第七卷-6 页 — 第七卷-5 → 点击"皮影戏之层层见不同"标题跳转目标。**Vol-7-6 标题点击跳 Vol-7-7**。
  *
- * 布局(z-order 由下到上):
+ * 布局(z-order 由下到上,**5 层,回到 2 图布局**—Vol-7-4/7-5 是 3 图,Vol-7-6 是 2 图):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";第七卷首屏)
- *   - 标题文本"皮影戏之小节点会加权"(字号 24,bold,黑色,X=110, Y=67, **W=302, H=32**)— **10 字**(含 1 个中文`,`)W=302 沿用 9 字规约(10 字无独立规约,KDoc 标注异常,真机可微调)
- *   - 图1(image 436.png,X=18, Y=135, **W=355, H=277**)— 上部(**应用 2026-09-12 第 2 次新规则 fit-to-natural-bounds**:横图 W=355 H=round(355/ratio)=277,完全忽略用户字面 H=311)
- *   - 图2(image 437.png,X=18, Y=478, **W=355, H=267**)— 中下部(**应用新规则 fit-to-natural-bounds**:横图 W=355 H=round(355/ratio)=267,完全忽略用户字面 H=321)
+ *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-12 指定"复制第一卷-1";Vol-7-5(256)→ Vol-7-6(255) 恢复交替)
+ *   - 标题文本"皮影戏之层层见不同"(字号 24,bold,黑色,X=110, Y=67, **W=302, H=32**)— **9 字**W=302 沿用 9 字规约(新标题系列,无独立规约)
+ *   - 图1(image 448.png,X=18, Y=135, **W=355, H=281**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.264)=281)
+ *   - 图2(image 449.png,X=18, Y=478, **W=355, H=265**)— 中下部(应用新规则:横图 W=355 H=round(355/1.338)=265)
  *
  * 坐标说明:
- *   - image 436 实测 1047×816(横向矩形,比率 1.283);**自然 W=355 H=277**(按 fit-to-natural-bounds),渲染比 1.282 与原图差 0.12%,几乎完美
- *   - image 437 实测 1065×801(横向矩形,比率 1.330);**自然 W=355 H=267**(按 fit-to-natural-bounds),渲染比 1.330 与原图差 0%,完全匹配
- *   - 图2 Y=478+267=745,在书框 Y=88-872 范围内(余量 127dp)
+ *   - image 448 实测 1047×828(横向矩形,比率 1.264);自然 W=355 H=281,渲染比 1.263 与原图差 0.09%,几乎完美
+ *   - image 449 实测 1068×798(横向矩形,比率 1.338);自然 W=355 H=265,渲染比 1.340 与原图差 0.10%,几乎完美
+ *   - 图2 Y=478+265=743,在书框 Y=88-872 范围内(余量 129dp)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
  *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 436.png(已复制为 res/drawable-nodpi/img_volume7part1_image_436.png)
- *   - 图2:D:\图\image 437.png(已复制为 res/drawable-nodpi/img_volume7part1_image_437.png)
+ *   - 图1:D:\图\image 448.png(已复制为 res/drawable-nodpi/img_volume7part6_image_448.png)
+ *   - 图2:D:\图\image 449.png(已复制为 res/drawable-nodpi/img_volume7part6_image_449.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-7-2 创建时按历次约定回填 onOpenVolume7Part2)。
+ * 本屏暂无后继页,故未接 clickable(等 Vol-7-7 创建时按历次约定回填 onOpenVolume7Part7)。
  */
 @Composable
-fun Volume7Part1Screen(
+fun Volume7Part6Screen(
     onBack: () -> Unit = {},
-    onOpenVolume7Part2: () -> Unit = {},
+    onOpenVolume7Part7: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -88,43 +88,43 @@ fun Volume7Part1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之小节点会加权"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 10 字 W=302(沿用 9 字规约宽度,无独立规约),点击跳第七卷-2。
+            // 标题"皮影戏之层层见不同"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 9 字 W=302(沿用 9 字规约),点击跳第七卷-7。
             Text(
-                text = "皮影戏之小节点会加权",
+                text = "皮影戏之层层见不同",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
                     .size(width = 302.dp, height = 32.dp)
-                    .clickable(onClick = onOpenVolume7Part2),
+                    .clickable(onClick = onOpenVolume7Part7),
             )
 
-            // 图1(image 436.png,X=18, Y=135, W=355, H=277)— 在书框之上、上部(fit-to-natural-bounds 自然尺寸)。
+            // 图1(image 448.png,X=18, Y=135, W=355, H=281)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 277.dp),
+                    .size(width = 355.dp, height = 281.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume7part1_image_436),
+                    painter = painterResource(R.drawable.img_volume7part6_image_448),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 437.png,X=18, Y=478, W=355, H=267)— 在书框之上、中下部(fit-to-natural-bounds)。
-            // Y=478+267=745,在书框 Y=88-872 范围内(余量 127dp)。
+            // 图2(image 449.png,X=18, Y=478, W=355, H=265)— 在书框之上、中下部。
+            // Y=478+265=743,在书框 Y=88-872 范围内(余量 129dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 267.dp),
+                    .size(width = 355.dp, height = 265.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume7part1_image_437),
+                    painter = painterResource(R.drawable.img_volume7part6_image_449),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
