@@ -88,15 +88,15 @@ fun Volume8Part1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之状态、行动、奖励"(字号 24,bold,黑色,X=110, Y=67, W=400, H=32)— 12 字 W=400(沿用估算 ~33/字宽度,12 字无独立规约),点击跳第八卷-2。
+            // 标题"皮影戏之状态、行动、奖励"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=400, H=32)— 12 字 W=400(沿用估算 ~33/字宽度,12 字无独立规约),点击跳第八卷-2。
             Text(
                 text = "皮影戏之状态、行动、奖励",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 400.dp, height = 32.dp)
+                    .fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).offset(y = 67.dp)
+                    .height(32.dp)
                     .clickable(onClick = onOpenVolume8Part2),
             )
 
@@ -120,8 +120,8 @@ fun Volume8Part1Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 382.dp, height = 394.dp),
+                    .offset(x = 18.dp, y = 408.dp)
+                    .size(width = 355.dp, height = 394.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_volume8part1_image_465),

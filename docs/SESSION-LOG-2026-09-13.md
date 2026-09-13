@@ -126,6 +126,54 @@
 
 ---
 
+## §44 Vol-8-6~9 创建 + X 轴居中 + import typo 修复 + 撤回重做(2026-09-13 20:25~20:55)
+
+### §44.1 Vol-8-6 创建 + Vol-8-3 import typo 修复(已 commit c68828b)
+
+- Vol-8-6: Group 255 恢复交替 Vol-8-5 256 → 8-6 255;图 1 523 (1.267 ratio) → W=355 H=280;图 2 525 (1.331 ratio) → W=355 H=267;10 字 W=302
+- Vol-8-3 import typo 修复:`androidx.compose.layout.offset` → `androidx.compose.foundation.layout.offset`(漏 `.foundation.`);扫描 Vol-8-1~6 仅 Vol-8-3 有 typo
+
+### §44.2 X 轴居中 改造(2 次反复)
+
+- **第一轮**:用户要求标题 X 轴居中 → 用 `.align(Alignment.CenterHorizontally)`(Alignment.Horizontal 类型)— **编译失败**(`Box.align` 期望 `Alignment` 超类型,不是 `Alignment.Horizontal`)
+- **改用 `.align(Alignment.Center)`** → 编译通过但 **Y 位置漂移**到父 Box 中央(用户撤回)
+- **最终方案**:`.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).offset(y=67).height(32)` — **X 居中 + Y 保持 67**(首 Vol-8-7 创建时直接采用新模式)
+
+### §44.3 Vol-8-7~9 创建
+
+- **Vol-8-7**(首用 wrapContentWidth X 居中): 复制第一卷-1 → Group 255;图 1 526 (1.191) → W=355 H=298;图 2 527 (1.199) → W=355 H=296;标题「皮影戏之每一步奖励」9 字 W=302
+- **Vol-8-8**: 复制第一卷-2 → Group 256;图 1 528 (1.341) → W=355 H=265;图 2 529 (1.280) → W=355 H=277;同款标题
+- **Vol-8-9**(首 Vol-8 单图先例): 复制第一卷-1 → Group 255;只指定图 1 530 (1.278) → W=355 H=278;4 层 z-order 沿用 Vol-5-9/6-6/6-15 模式;同款标题
+
+### §44.4 Vol-8 累计统计
+
+- **Vol-8-1~9 共 9 屏**(用户持续建)
+- 入口: Gunlun11「已解锁秘籍9」图像
+- 标题系列:Vol-8-1/2/3「皮影戏之状态、行动、奖励」12 字(3 屏)→ Vol-8-4/5/6/7/8/9「皮影戏之探新还是用熟」10 字 + 「皮影戏之每一步奖励」9 字(6 屏)
+- 失真都 <0.2%(新规则 100% 应用)
+- 首次 X 轴居中 6 屏(Vol-8-4~9)Vol-8-1~3 仍 X=110 旧模式
+- 首次 Vol-8 单图先例(Vol-8-9)
+
+### §44.5 沉淀
+
+- **`fillMaxWidth + wrapContentWidth(CenterH)`** X 轴居中标准模式 — 适用于所有后续卷的标题
+- **`Alignment.Center` vs `wrapContentWidth(CenterH)` 区别**:
+  - `Alignment.Center` 居中两轴(会让 Y 漂移)— 用于 Box 的 contentAlignment
+  - `wrapContentWidth(Alignment.CenterHorizontally)` 仅水平居中 — 用于 Text 等单子元素
+- **Build 编译错误 + Edit 失败处理**:Edit 失败不报错回滚,但 brace check 仍运行(基于文件状态)— 需看 Edit 返回的 "updated successfully" 才确认成功
+
+### §44.6 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt / Routes.kt / RoutesTest.kt
+ M Volume8Part7Screen.kt / Volume8Part8Screen.kt (callback + clickable)
+?? Volume8Part9Screen.kt (新建 4 层单图)
+?? img_volume8part8_image_{528,529}.png
+?? img_volume8part9_image_530.png
+```
+
+---
+
 ## §43 Vol-8-6 创建 + Vol-8-3 import typo 修复 + 编译失败(2026-09-13 10:25~10:27)
 
 ### §43.1 Vol-8-6 创建

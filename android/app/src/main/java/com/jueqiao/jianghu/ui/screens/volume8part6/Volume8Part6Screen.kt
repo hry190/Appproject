@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.volume8part6
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -24,12 +25,12 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第八卷-6 页 — 第八卷-5 → 点击"皮影戏之探新还是用熟"标题跳转目标。
+ * 第八卷-6 页 — 第八卷-5 → 点击"皮影戏之探新还是用熟"标题跳转目标。**Vol-8-6 标题点击跳 Vol-8-7**。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
  *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";Vol-8-5(256)→ Vol-8-6(255) 恢复交替)
- *   - 标题文本"皮影戏之探新还是用熟"(字号 24,bold,黑色,X=110, Y=67, **W=302, H=32**)— **10 字**(全中文无标点)W=302 沿用 9 字规约(与 Vol-8-4/8-5 同款 10 字规约,跨页同标题)
+ *   - 标题文本"皮影戏之探新还是用熟"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **10 字**(全中文无标点)W=302 沿用 9 字规约(与 Vol-8-4/8-5 同款 10 字规约,跨页同标题)
  *   - 图1(image 523.png,X=18, Y=135, **W=355, H=280**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.267)=280)
  *   - 图2(image 525.png,X=18, Y=478, **W=355, H=267**)— 中下部(应用新规则:横图 W=355 H=round(355/1.331)=267)
  *
@@ -52,6 +53,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume8Part6Screen(
     onBack: () -> Unit = {},
+    onOpenVolume8Part7: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -89,16 +91,16 @@ fun Volume8Part6Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之探新还是用熟"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 10 字 W=302(沿用 9 字规约,与 Vol-8-4/8-5 同款)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-8-7 创建时按历次约定回填 onOpenVolume8Part7)。
+            // 标题"皮影戏之探新还是用熟"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=302, H=32)— 10 字 W=302,点击跳第八卷-7。
             Text(
                 text = "皮影戏之探新还是用熟",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 302.dp, height = 32.dp),
+                    .fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).offset(y = 67.dp)
+                    .height(32.dp)
+                    .clickable(onClick = onOpenVolume8Part7),
             )
 
             // 图1(image 523.png,X=18, Y=135, W=355, H=280)— 在书框之上、上部。

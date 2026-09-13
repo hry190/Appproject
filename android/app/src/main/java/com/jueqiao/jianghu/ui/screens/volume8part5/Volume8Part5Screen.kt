@@ -91,15 +91,15 @@ fun Volume8Part5Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之探新还是用熟"(字号 24,bold,黑色,X=110, Y=67, W=302, H=32)— 10 字 W=302,点击跳第八卷-6。
+            // 标题"皮影戏之探新还是用熟"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=302, H=32)— 10 字 W=302,点击跳第八卷-6。
             Text(
                 text = "皮影戏之探新还是用熟",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 302.dp, height = 32.dp)
+                    .fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).offset(y = 67.dp)
+                    .height(32.dp)
                     .clickable(onClick = onOpenVolume8Part6),
             )
 
