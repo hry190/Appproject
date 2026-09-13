@@ -51,7 +51,7 @@ import com.jueqiao.jianghu.R
  *   - 图2:D:\图\image 532.png(已复制为 res/drawable-nodpi/img_volume8part10_image_532.png)
  *   - 图3:D:\图\image 533.png(已复制为 res/drawable-nodpi/img_volume8part10_image_533.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-8-11 创建时按历次约定回填 onOpenVolume8Part11)。
+ * 点击跳 Vol-8-11(Vol-8-11 创建时回填 callback 与 .clickable)。
  */
 @Composable
 fun Volume8Part10Screen(
@@ -113,7 +113,7 @@ fun Volume8Part10Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 135.dp)
+                    .offset(x = 18.dp, y = 125.dp)
                     .size(width = 355.dp, height = 208.dp),
             ) {
                 Image(
@@ -129,7 +129,7 @@ fun Volume8Part10Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 369.dp)
+                    .offset(x = 18.dp, y = 345.dp)
                     .size(width = 358.dp, height = 142.dp),
             ) {
                 Image(
@@ -145,7 +145,7 @@ fun Volume8Part10Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 545.dp)
+                    .offset(x = 18.dp, y = 505.dp)
                     .size(width = 358.dp, height = 308.dp),
             ) {
                 Image(

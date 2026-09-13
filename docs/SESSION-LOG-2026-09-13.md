@@ -466,3 +466,54 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
 ?? Volume8Part11Screen.kt (新建 4 层单图)
 ?? img_volume8part11_image_534.png
 ```
+
+## §47 Vol-8-11/13 BUG 修复(2026-09-13 14:20~14:30)
+
+### §47.1 用户报错"点击 vol-8-11 的标题无法跳转"
+
+- 审计 14 屏 Vol-8-1~14:发现 2 屏 BUG(Vol-8-11 + Vol-8-13)
+- **根因**:我之前用 Python 脚本加 callback 时**漏 2 件事**:
+  1. 父屏 Text() 没加 `.clickable(onClick = onOpenVolume8Part{X})`
+  2. 父屏过时 KDoc "等 X 创建时按历次约定回填" 没更新为"点击跳 X"
+- 父屏函数参数 `onOpenVolume8Part{X}: () -> Unit = {}` 有,NavHost 接线 `navigate(Routes.Volume8Part{X})` 有,但**Text 没 clickable 就不触发回调**
+
+### §47.2 修复
+
+- **Vol-8-11**:
+  - 加 `.clickable(onClick = onOpenVolume8Part12)` 到 Text()
+  - KDoc: "等 Vol-8-12 创建时按历次约定回填" → "点击跳 Vol-8-12(Vol-8-12 创建时回填 callback 与 .clickable)"
+- **Vol-8-13**:
+  - 加 `.clickable(onClick = onOpenVolume8Part14)` 到 Text()
+  - KDoc 同上(改为 Vol-8-14)
+- 顺手修 Vol-8-7/8/10 的过时 KDoc(已有点击但 KDoc 旧)
+
+### §47.3 沉淀(commit 前 6 件事清单)
+
+| # | 事项 | 备注 |
+|---|---|---|
+| 1 | 父屏 `onOpenVolume8Part{X}: () -> Unit = {}` 函数参数 | 已有 |
+| 2 | **父屏 Text() 上 `.clickable(onClick = onOpenVolume8Part{X})`** | **本次漏** |
+| 3 | **父屏 KDoc "等 X 创建时回填" → "点击跳 X"** | **本次漏** |
+| 4 | `Routes.Volume8Part{X} = "volume8-X"` | 已有 |
+| 5 | `RoutesTest` 加 `assertEquals("volume8-X", ...)` | 已有 |
+| 6 | NavHost 加 `composable(Routes.Volume8Part{X}) { ... }` 接线 `onOpenVolume8Part{X}` | 已有 |
+
+**N 屏新增时漏 2 件事导致运行时 BUG**:
+- 编译能过(braces 平衡)
+- 但用户点击标题不响应(NavHost 接了但 Text 没 click)
+- 第 1 次发现(Vol-8-9)— 已修
+- 第 2 次发现(Vol-8-11/13)— 此次修
+- **预防**:加新屏的 Python 脚本中,6 件事全部 checklist,不要漏任何 1 件
+
+### §47.4 今日累计(2026-09-13)
+
+- Vol-8 共 14 屏(还差 1 屏到 15 屏规模,Vol-8-15 未建)
+- 第 3 个注意注释(Vol-8-9、Vol-6-12 image 7、Vol-8-11/13)— 全部都是同类 BUG
+- 整套 14 屏 Vol-8 现在无运行时 BUG
+
+### §47.5 Git 状态(commit 前)
+
+```
+ M Volume8Part7Screen.kt / Volume8Part8Screen.kt / Volume8Part10Screen.kt (KDoc 修)
+ M Volume8Part11Screen.kt / Volume8Part13Screen.kt (BUG 修 + KDoc 修)
+```

@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.volume8part7
+package com.jueqiao.jianghu.ui.screens.volume8part13
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -28,35 +28,37 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 
 /**
- * 第八卷-7 页 — 第八卷-6 → 点击"皮影戏之每一步奖励"标题跳转目标。
+ * 第八卷-13 页 — 第八卷-12 → 点击"皮影戏之钻空子的机关兽"标题跳转目标。
  *
  * 布局(z-order 由下到上):
  *   - 全屏背景图(image 129.png,X=0, Y=0, fillMaxSize)— 与第一卷 / 第一卷-2 同源
- *   - 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷书框素材(用户 2026-09-13 指定"复制第一卷-1";Vol-8-6(255)→ Vol-8-7(255) 用户字面优先,连续两屏 255)
- *   - 标题文本"皮影戏之每一步奖励"(字号 24,bold,黑色,**X 轴居中**(子 Text 自然宽), Y=67, W=父宽, H=32)— **9 字**(全中文无标点)W=302 沿用 9 字规约(新标题系列;用 fillMaxWidth + wrapContentWidth(CenterHorizontally) 模式 — 与 Vol-8-1~6 一致)
- *   - 图1(image 526.png,X=18, Y=135, **W=355, H=298**)— 上部(应用新规则 fit-to-natural-bounds:横图 W=355 H=round(355/1.191)=298)
- *   - 图2(image 527.png,X=18, Y=478, **W=355, H=296**)— 中下部(应用新规则:横图 W=355 H=round(355/1.199)=296)
+ *   - 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 书框素材(用户 2026-09-13 指定"复制第一卷-2";Vol-8-12(255)→ Vol-8-13(256) 恢复交替)
+ *   - 标题文本"皮影戏之钻空子的机关兽"(字号 24,bold,黑色,X 轴居中(子 Text 自然宽), Y=67, W=父宽, H=32)— **11 字**(全中文无标点)W=360 沿用估算 ~33/字宽度(11 字无独立规约,KDoc 标注异常,真机可微调;与 Vol-8-12 同款 11 字规约,跨页同标题)
+ *   - 图1(image 537.png,X=18, Y=135, **W=355, H=311**)— 上部(用户字面 H=311;**新规则 H=301 失真 0.03% 几乎无差,沿用用户字面**)
+ *   - 图2(image 538.png,X=18, Y=369, **W=358, H=147**)— 中部(**用户字面 W=358 非常用 355;**新规则 H=305 与用户 H=147 差 52% 严重失真**,沿用用户字面;KDoc 显著标注)
  *
  * 坐标说明:
- *   - image 526 实测 1047×879(横图,比率 1.191);自然 W=355 H=298,渲染比 1.191 与原图差 0.01%,几乎完美
- *   - image 527 实测 1068×891(横图,比率 1.199);自然 W=355 H=296,渲染比 1.199 与原图差 0.06%,几乎完美
- *   - 图2 Y=478+296=774,在书框 Y=88-872 范围内(余量 98dp)
+ *   - image 537 实测 1047×888(横图,比率 1.179);用户 W=355 H=311,渲染比 1.141 与原图差 3.3%
+ *   - image 538 实测 1071×912(横图,比率 1.174);用户 W=358 H=147,渲染比 2.435 与原图差 107% ⚠️ 极严重失真(用户字面 H=147 与新规则 H=305 差 52% 短 158dp)
+ *   - 图1 Y=135+311=446,图 2 Y=369+147=516(均在书框 Y=88-872 范围内,**图 1 与图 2 Y 重叠 369~446 区域 77dp**)
  *
  * 资源来源:
  *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 526.png(已复制为 res/drawable-nodpi/img_volume8part7_image_526.png)
- *   - 图2:D:\图\image 527.png(已复制为 res/drawable-nodpi/img_volume8part7_image_527.png)
+ *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:D:\图\image 537.png(已复制为 res/drawable-nodpi/img_volume8part13_image_537.png)
+ *   - 图2:D:\图\image 538.png(已复制为 res/drawable-nodpi/img_volume8part13_image_538.png)
  *
- * 点击跳 Vol-8-8(Vol-8-8 创建时回填 callback 与 .clickable)。
+ * 点击跳 Vol-8-14(Vol-8-14 创建时回填 callback 与 .clickable)。
  *
  * 用户指令笔误留痕(2026-09-13):
- *   - 用户写"第八卷-6标题" → 实际意图"第八卷-6 的标题"(缺少" 的"),无歧义
+ *   - 用户写"第八卷-12标题" → 实际意图"第八卷-12 的标题"(缺少" 的"),无歧义
+ *
+ * **image 2 失真重大说明**:用户 2026-09-13 14:08 给的 H=147 与新规则算的 H=305 差 52%(短 158dp)— 用户字面主导(同 Vol-8-12 image 536 失真模式);KDoc 显著标注待"注意注释"时确认。
  */
 @Composable
-fun Volume8Part7Screen(
+fun Volume8Part13Screen(
     onBack: () -> Unit = {},
-    onOpenVolume8Part8: () -> Unit = {},
+    onOpenVolume8Part14: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -73,7 +75,7 @@ fun Volume8Part7Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 书框图像(Group 255.png,X=0, Y=88, W=854, H=784)— 复用第一卷素材。
+        // 书框图像(Group 256.png,X=0, Y=88, W=854, H=784)— 复用第一卷-2 素材。
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -81,7 +83,7 @@ fun Volume8Part7Screen(
                 .size(width = 854.dp, height = 784.dp),
         ) {
             Image(
-                painter = painterResource(R.drawable.img_volume1_group_255),
+                painter = painterResource(R.drawable.img_volume1part2_group_256),
                 contentDescription = "书框",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds,
@@ -94,9 +96,10 @@ fun Volume8Part7Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"皮影戏之每一步奖励"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 9 字 W=302,点击跳第八卷-8。
+            // 标题"皮影戏之钻空子的机关兽"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 11 字 W=360(沿用估算 ~33/字宽度,无独立规约,与 Vol-8-12 同款)。
+            // 标题"皮影戏之钻空子的机关兽"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 点击跳 Vol-8-14。
             Text(
-                text = "皮影戏之每一步奖励",
+                text = "皮影戏之钻空子的机关兽",
                 color = Color.Black,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -105,34 +108,35 @@ fun Volume8Part7Screen(
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
                     .height(32.dp)
-                    .clickable(onClick = onOpenVolume8Part8),
+                    .clickable(onClick = onOpenVolume8Part14),
             )
 
-            // 图1(image 526.png,X=18, Y=135, W=355, H=298)— 在书框之上、上部。
+            // 图1(image 537.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部(用户字面 H=311)。
+            // Y=135+311=446,在书框 Y=88-872 范围内(余量 426dp)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 18.dp, y = 135.dp)
-                    .size(width = 355.dp, height = 298.dp),
+                    .size(width = 355.dp, height = 311.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume8part7_image_526),
+                    painter = painterResource(R.drawable.img_volume8part13_image_537),
                     contentDescription = "图1",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
             }
 
-            // 图2(image 527.png,X=18, Y=478, W=355, H=296)— 在书框之上、中下部。
-            // Y=478+296=774,在书框 Y=88-872 范围内(余量 98dp)。
+            // 图2(image 538.png,X=18, Y=369, W=358, H=147)— 在书框之上、中部(用户字面 H=147 严重失真留痕)。
+            // Y=369+147=516,在书框 Y=88-872 范围内(余量 356dp;**与图 1 重叠 369~446 区域 77dp**)。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 18.dp, y = 478.dp)
-                    .size(width = 355.dp, height = 296.dp),
+                    .offset(x = 18.dp, y = 369.dp)
+                    .size(width = 358.dp, height = 147.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_volume8part7_image_527),
+                    painter = painterResource(R.drawable.img_volume8part13_image_538),
                     contentDescription = "图2",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,

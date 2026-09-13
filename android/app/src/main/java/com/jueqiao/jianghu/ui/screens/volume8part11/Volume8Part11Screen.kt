@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.volume8part11
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -46,7 +47,7 @@ import com.jueqiao.jianghu.R
  *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
  *   - 图1:D:\图\image 534.png(已复制为 res/drawable-nodpi/img_volume8part11_image_534.png)
  *
- * 本屏暂无后继页,故未接 clickable(等 Vol-8-12 创建时按历次约定回填 onOpenVolume8Part12)。
+ * 点击跳 Vol-8-12(Vol-8-12 创建时回填 callback 与 .clickable)。
  *
  * 用户指令笔误留痕(2026-09-13):
  *   - 用户写"第八卷-10标题" → 实际意图"第八卷-10 的标题"(缺少" 的"),无歧义
@@ -54,6 +55,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume8Part11Screen(
     onBack: () -> Unit = {},
+    onOpenVolume8Part12: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -92,7 +94,7 @@ fun Volume8Part11Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"皮影戏之奖励塑形"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 8 字 W=192(沿用 6-8 字规约,与 Vol-8-10 同款)。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-8-12 创建时按历次约定回填 onOpenVolume8Part12)。
+            // 标题"皮影戏之奖励塑形"(字号 24,bold,黑色,X 轴居中, Y=67, W=父宽, H=32)— 点击跳 Vol-8-12。
             Text(
                 text = "皮影戏之奖励塑形",
                 color = Color.Black,
@@ -102,7 +104,8 @@ fun Volume8Part11Screen(
                     .fillMaxWidth()
                     .wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(y = 67.dp)
-                    .height(32.dp),
+                    .height(32.dp)
+                    .clickable(onClick = onOpenVolume8Part12),
             )
 
             // 图1(image 534.png,X=18, Y=135, W=355, H=168)— 在书框之上、上部(单图屏)。
