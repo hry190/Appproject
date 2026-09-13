@@ -669,3 +669,576 @@ c68828b feat(vol8-screens): add Vol-8-6 + fix Vol-8-3 import layout typo
 ?? img_volume9part5_image_{498,499}.png
 ?? img_volume9part6_image_{500,502}.png
 ```
+
+## §51 Vol-9-7 创建 + Vol-9-6 兑现 §50.6 承诺 + 近正方形 W=384 (2026-09-13 16:00)
+
+### §51.1 用户指令
+
+- "创建第9卷-7页面,点击第9卷-6标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-7页面,图1 D:\图\image 503.png X18Y135W355H311,图2 D:\图\image 504.png X18Y478W355H321,标题文本改成'大模型核心'"
+
+### §51.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 503 | 1008×966 | 1.043(横图) | W=355 H=311 | **W=355 H=340** | 0.10% |
+| image 504 | 1035×1062 | 0.975(近正方形) | W=355 H=321 | **W=384 H=394** | 0%(完美) |
+
+- **image 503**: 横图规则 W=355 max, H=round(355/1.043)=340
+- **image 504**: ratio 0.975 < 1 → 走竖图规则 H=394 max, W=round(394×0.975)=384 — **W=384 超出 max_W=355**(近正方形自动 fit 的可接受代价,参照 Vol-8-1 image 465 ratio 0.970 → W=382 同模式)
+
+### §51.3 Vol-9-7 创建
+
+- **新目录**: `volume9part7/Volume9Part7Screen.kt`(6.8 KB)
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-9-6 255 → Vol-9-7 255(字面优先于交替模式,§28 沉淀规则)
+- **标题**: "大模型核心" **5 字 W=213**(沿用 5 字规约:Vol-5-10/11/12「偏差的数据」、Vol-6-1「相似要有尺」同款真机测过宽度)
+- **图 1**: W=355 H=340(用户字面 H=311 忽略)
+- **图 2**: W=384 H=394(用户字面 H=321 忽略,近正方形自动 fit)
+- **Y 位置**: 图 1 Y=135 + H=340 = 475;图 2 Y=478 + H=394 = **872 正好顶到书框底**(余量 0dp)
+- **首次 image 1 与 image 2 宽度不一致**(W=355 vs W=384,19dp 差)— 由新规则按各自 PNG 比例 fit 自然形成,KDoc 留痕
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-8 创建时按历次约定回填 onOpenVolume9Part8"
+
+### §51.4 Vol-9-6 兑现 §50.6 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-6 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part7: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part7)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页,故未接 clickable" → "本屏跳转目标:点击标题 → Vol-9-7(创建于 2026-09-13,本屏兑现 §50.6 KDoc 承诺,回填 onOpenVolume9Part7)" |
+
+### §51.5 NavHost 接线(2 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 206 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part7.Volume9Part7Screen` |
+| line 1017-1023 | Vol-9-6 composable 加 `onOpenVolume9Part7 = { navController.navigate(Routes.Volume9Part7) }` |
+| line 1024-1026 | 新加 `composable(Routes.Volume9Part7) { Volume9Part7Screen(onBack = { navController.popBackStack() }) }` |
+
+### §51.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 58s** ✓
+- Brace check: NavHost 849/849, Vol-9-6 9/9, Vol-9-7 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-7 终屏无需 clickable)
+
+### §51.7 Vol-9 累计
+
+- **Vol-9 共 7 屏**(Vol-9-1~9-7),与 Vol-8 同进度(Vol-8 也是 14 屏差 1 屏到 15 屏规模,Vol-9-7 才 7 屏)
+
+### §51.8 沉淀
+
+- **近正方形自动 fit W=384**(ratio 0.975):与 Vol-8-1 image 465 ratio 0.970 → W=382 同模式 — 这是规则明示的例外(近正方形 W 可超出 max_W=355)
+- **Y=872 顶到书框底**(余量 0):由近正方形 H=394 自动 fit + Y=478 固定决定 — 紧贴设计约束,可接受
+- **图 1 vs 图 2 宽度不一致**(W=355 vs W=384):布局上 image 2 偏右(突出 19dp),但保证 0% 畸变 — 设计权衡
+- **§50.6 KDoc 承诺 → §51.4 兑现闭环**:Vol-9-6 创建时写"等 Vol-9-7 创建时回填",本次 4 处修改全部兑现
+- **N 屏新增 6 件事清单(本日第 7 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓(本次预防了未来编译失败)
+
+### §51.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part7 + Vol-9-6 callback + Vol-9-7 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part7 const/assert)
+ M Volume9Part6Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part7Screen.kt
+?? img_volume9part7_image_{503,504}.png
+```
+
+## §52 Vol-9-8 创建 + Vol-9-7 兑现 §51.3 承诺 + 奇偶交替恢复 (2026-09-13 16:15)
+
+### §52.1 用户指令
+
+- "创建第9卷-8页面,点击第9卷-7标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第9卷-8页面,图1 D:\图\image 505.png X18Y135W355H311,图2 D:\图\image 506.png X18Y478W355H321,标题文本改成'大模型核心'"
+
+### §52.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 505 | 1068×1047 | 1.020(近正方形横图) | W=355 H=311 | **W=355 H=348** | 0% |
+| image 506 | 1089×669 | 1.628(扁横图) | W=355 H=321 | **W=355 H=218** | 0% |
+
+- **image 505**: 横图规则 W=355 max, H=round(355/1.020)=348
+- **image 506**: 横图规则 W=355 max, H=round(355/1.628)=218 — 扁横图自然 H 较小,留白较多
+
+### §52.3 Vol-9-8 创建
+
+- **新目录**: `volume9part8/Volume9Part8Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-9-7 255 → Vol-9-8 256(非异常,完美交替)
+- **标题**: "大模型核心" **5 字 W=213**(沿用 5 字规约,与 Vol-9-7 同款 5 字标题)
+- **图 1**: W=355 H=348(用户字面 H=311 忽略)
+- **图 2**: W=355 H=218(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=348 = 483;图 2 Y=478 + H=218 = 696(均在书框 Y=88-872 范围内,余量 389/176dp)
+- **首次 5 字标题二次复用**: Vol-9-7 与 Vol-9-8 标题完全相同
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-9 创建时按历次约定回填 onOpenVolume9Part9"
+
+### §52.4 Vol-9-7 兑现 §51.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-7 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part8: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part8)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'大模型核心'标题 → Vol-9-8(创建于 2026-09-13,本屏兑现 §51.3 KDoc 承诺,回填 onOpenVolume9Part8)" |
+
+### §52.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 207 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part8.Volume9Part8Screen` |
+| line 1025-1030 | Vol-9-7 composable 加 `onOpenVolume9Part8 = { navController.navigate(Routes.Volume9Part8) }` |
+| line 1031-1033 | 新加 `composable(Routes.Volume9Part8) { Volume9Part8Screen(onBack = { navController.popBackStack() }) }` |
+
+### §52.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 53s** ✓
+- Brace check: NavHost 852/852, Vol-9-7 9/9, Vol-9-8 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-8 终屏无需 clickable)
+
+### §52.7 Vol-9 累计
+
+- **Vol-9 共 8 屏**(Vol-9-1~9-8)
+
+### §52.8 沉淀
+
+- **奇偶交替恢复**: Vol-9-7 异常 255 → Vol-9-8 字面 256,完美交替恢复 — 与 §51 连续两屏异常形成对比,符合"复制第一卷-2" = Group 256 的字面优先
+- **扁横图 H 自然值小**: image 506 ratio 1.628 → H=218 — 比用户字面 H=321 小 103dp,屏幕下方留白较多(176dp 余量)
+- **§51.3 KDoc 承诺 → §52.4 兑现闭环**:Vol-9-7 创建时写"等 Vol-9-8 创建时回填",本次 4 处修改全部兑现
+- **N 屏新增 6 件事清单(本日第 8 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §52.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part8 + Vol-9-7 callback + Vol-9-8 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part8 const/assert)
+ M Volume9Part7Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part8Screen.kt
+?? img_volume9part8_image_{505,506}.png
+```
+
+## §53 Vol-9-9 创建 + Vol-9-8 兑现 §52.3 承诺 + 奇偶交替恢复 (2026-09-13 16:25)
+
+### §53.1 用户指令
+
+- "创建第9卷-9页面,点击第9卷-8标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-9页面,图1 D:\图\image 507.png X18Y135W355H311,图2 D:\图\image 508.png X18Y478W355H321,标题文本改成'大模型核心'"
+
+### §53.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 507 | 1047×597 | 1.754(扁横图) | W=355 H=311 | **W=355 H=202** | 0.16% |
+| image 508 | 1059×1050 | 1.009(近正方形) | W=355 H=321 | **W=355 H=352** | 0% |
+
+- **image 507**: 横图规则 W=355 max, H=round(355/1.754)=202 — 扁横图自然 H 较小(用户字面 311 → 自然 202,小 109dp)
+- **image 508**: 横图规则 W=355 max, H=round(355/1.009)=352 — 近正方形(用户字面 321 → 自然 352,大 31dp)
+
+### §53.3 Vol-9-9 创建
+
+- **新目录**: `volume9part9/Volume9Part9Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **奇偶交替恢复**: Vol-9-8 256 → Vol-9-9 255(非异常,完美交替)
+- **标题**: "大模型核心" **5 字 W=213**(沿用 5 字规约,与 Vol-9-7/9-8 同款 5 字标题)
+- **图 1**: W=355 H=202(用户字面 H=311 忽略,扁横图)
+- **图 2**: W=355 H=352(用户字面 H=321 忽略,近正方形)
+- **Y 位置**: 图 1 Y=135 + H=202 = 337(余量 535dp,因扁横图自然 H 小);图 2 Y=478 + H=352 = 830(余量 42dp)
+- **首次 5 字标题三次复用**: Vol-9-7、Vol-9-8、Vol-9-9 标题完全相同
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-10 创建时按历次约定回填 onOpenVolume9Part10"
+
+### §53.4 Vol-9-8 兑现 §52.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-8 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part9: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part9)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'大模型核心'标题 → Vol-9-9(创建于 2026-09-13,本屏兑现 §52.3 KDoc 承诺,回填 onOpenVolume9Part9)" |
+
+### §53.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 208 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part9.Volume9Part9Screen` |
+| line 1032-1037 | Vol-9-8 composable 加 `onOpenVolume9Part9 = { navController.navigate(Routes.Volume9Part9) }` |
+| line 1038-1040 | 新加 `composable(Routes.Volume9Part9) { Volume9Part9Screen(onBack = { navController.popBackStack() }) }` |
+
+### §53.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 41s** ✓
+- Brace check: NavHost 855/855, Vol-9-8 9/9, Vol-9-9 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-9 终屏无需 clickable)
+
+### §53.7 Vol-9 累计
+
+- **Vol-9 共 9 屏**(Vol-9-1~9-9)
+
+### §53.8 沉淀
+
+- **奇偶交替恢复链**: Vol-9-7(255)→ Vol-9-8(256)→ Vol-9-9(255)— 连续交替恢复,无异常
+- **扁横图 H 自然值很小**: image 507 ratio 1.754 → H=202 — 比用户字面 H=311 小 109dp,屏幕上下余量都较多(图1 上方 535dp,图2 下方 42dp)
+- **Edit 失败恢复**: 第 8 处 Edit(Title .clickable)首次因注释字符串不匹配失败 — **重读 Vol-9-8:94 行**发现注释原文是"与 Vol-9-7 同款"而非我的旧字符串"与 Vol-9-9 同款",重新构造 old_string 成功
+- **§52.3 KDoc 承诺 → §53.4 兑现闭环**:Vol-9-8 创建时写"等 Vol-9-9 创建时回填",本次 4 处修改全部兑现
+- **N 屏新增 6 件事清单(本日第 9 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §53.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part9 + Vol-9-8 callback + Vol-9-9 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part9 const/assert)
+ M Volume9Part8Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part9Screen.kt
+?? img_volume9part9_image_{507,508}.png
+```
+
+## §54 Vol-9-10 创建 + Vol-9-9 兑现 §53.3 承诺 + 新 7 字标题 (2026-09-13 16:35)
+
+### §54.1 用户指令
+
+- "创建第9卷-10页面,点击第9卷-9标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-10页面,图1 D:\图\image 509.png X18Y135W355H311,图2 D:\图\image 510.png X18Y478W355H321,标题文本改成'上下文决定答法'"
+
+### §54.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 509 | 1008×942 | 1.070(横图) | W=355 H=311 | **W=355 H=332** | 0.06% |
+| image 510 | 1035×957 | 1.082(横图) | W=355 H=321 | **W=355 H=328** | 0% |
+
+- **image 509**: 横图规则 W=355 max, H=round(355/1.070)=332
+- **image 510**: 横图规则 W=355 max, H=round(355/1.082)=328
+
+### §54.3 Vol-9-10 创建
+
+- **新目录**: `volume9part10/Volume9Part10Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-9-9 255 → Vol-9-10 255(字面"复制第一卷-1"=255 优先于交替模式,§28 沉淀规则)
+- **标题**: "上下文决定答法" **7 字 W=192**(沿用 7 字规约:Vol-5-13/14/15「死记硬背不可行」7 字 W=192 真机测过宽度)— **首次 7 字新标题**
+- **图 1**: W=355 H=332(用户字面 H=311 忽略)
+- **图 2**: W=355 H=328(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=332 = 467;图 2 Y=478 + H=328 = 806(均在书框 Y=88-872 范围内,余量 405/66dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-11 创建时按历次约定回填 onOpenVolume9Part11"
+
+### §54.4 Vol-9-9 兑现 §53.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-9 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part10: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part10)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'大模型核心'标题 → Vol-9-10(创建于 2026-09-13,本屏兑现 §53.3 KDoc 承诺,回填 onOpenVolume9Part10)" |
+
+### §54.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 209 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part10.Volume9Part10Screen` |
+| line 1039-1044 | Vol-9-9 composable 加 `onOpenVolume9Part10 = { navController.navigate(Routes.Volume9Part10) }` |
+| line 1045-1047 | 新加 `composable(Routes.Volume9Part10) { Volume9Part10Screen(onBack = { navController.popBackStack() }) }` |
+
+### §54.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 39s** ✓
+- Brace check: NavHost 858/858, Vol-9-9 9/9, Vol-9-10 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-10 终屏无需 clickable)
+
+### §54.7 Vol-9 累计
+
+- **Vol-9 共 10 屏**(Vol-9-1~9-10)— 与 Vol-8 = Vol-8-10 同进度
+
+### §54.8 沉淀
+
+- **首次 7 字新标题**"上下文决定答法" W=192(沿用 Vol-5-13/14/15 真机基线)— Vol-9 系列 7 字首次
+- **Vol-9 标题系列**: Vol-9-1「长句先切成符」(6字)→ Vol-9-4/5/6「语义也有远近」(6字 ×3 屏)→ Vol-9-7/8/9「大模型核心」(5字 ×3 屏)→ Vol-9-10「上下文决定答法」(7字)
+- **连续两屏异常恢复路径**: Vol-9-7/9/10 三次异常 Vol-9-7(255)→ Vol-9-8(256)→ Vol-9-9(255)→ Vol-9-10(255)— 字面"复制第一卷-1"反复触发 255 优先
+- **N 屏新增 6 件事清单(本日第 10 次,双数里程碑)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+- **Edit 前先 Read 注释原文避免重蹈 §53 坑**:本次 8 处 Edit 全部一次成功(关键:先 Read Vol-9-9:92 拿到注释实际文字"与 Vol-9-7/9-8 同款"再 Edit)
+
+### §54.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part10 + Vol-9-9 callback + Vol-9-10 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part10 const/assert)
+ M Volume9Part9Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part10Screen.kt
+?? img_volume9part10_image_{509,510}.png
+```
+
+## §55 Vol-9-11 创建 + Vol-9-10 兑现 §54.3 承诺 + 奇偶交替恢复 (2026-09-13 16:45)
+
+### §55.1 用户指令
+
+- "创建第9卷-11页面,点击第9卷-10标题时可以跳转,复制第一卷-2页面的背景和标题和书框这些素材到第9卷-11页面,图1 D:\图\image 511.png X18Y135W355H311,图2 D:\图\image 512.png X18Y478W355H321,标题文本改成'上下文决定答法'"
+
+### §55.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 511 | 1050×852 | 1.232(横图) | W=355 H=311 | **W=355 H=288** | 0.07% |
+| image 512 | 1068×939 | 1.137(横图) | W=355 H=321 | **W=355 H=312** | 0.07% |
+
+- **image 511**: 横图规则 W=355 max, H=round(355/1.232)=288
+- **image 512**: 横图规则 W=355 max, H=round(355/1.137)=312
+
+### §55.3 Vol-9-11 创建
+
+- **新目录**: `volume9part11/Volume9Part11Screen.kt`
+- **书框**: Group 256(用户字面"复制第一卷-2")— **奇偶交替恢复**: Vol-9-10(255)→ Vol-9-11(256)(非异常,完美交替)
+- **标题**: "上下文决定答法" **7 字 W=192**(沿用 7 字规约,与 Vol-9-10 同款 7 字标题)— **首次 7 字标题二次复用**
+- **图 1**: W=355 H=288(用户字面 H=311 忽略)
+- **图 2**: W=355 H=312(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=288 = 423;图 2 Y=478 + H=312 = 790(均在书框 Y=88-872 范围内,余量 449/82dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-12 创建时按历次约定回填 onOpenVolume9Part12"
+
+### §55.4 Vol-9-10 兑现 §54.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-10 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part11: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part11)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'上下文决定答法'标题 → Vol-9-11(创建于 2026-09-13,本屏兑现 §54.3 KDoc 承诺,回填 onOpenVolume9Part11)" |
+
+### §55.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 210 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part11.Volume9Part11Screen` |
+| line 1046-1051 | Vol-9-10 composable 加 `onOpenVolume9Part11 = { navController.navigate(Routes.Volume9Part11) }` |
+| line 1052-1054 | 新加 `composable(Routes.Volume9Part11) { Volume9Part11Screen(onBack = { navController.popBackStack() }) }` |
+
+### §55.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 39s** ✓
+- Brace check: NavHost 861/861, Vol-9-10 9/9, Vol-9-11 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-11 终屏无需 clickable)
+
+### §55.7 Vol-9 累计
+
+- **Vol-9 共 11 屏**(Vol-9-1~9-11)— 与 Vol-8 同进度(Vol-8 = 14 屏,Vol-9 = 11 屏差 3 屏)
+
+### §55.8 沉淀
+
+- **首次 7 字标题二次复用**: Vol-9-10、Vol-9-11 标题完全相同(7 字 W=192)
+- **Vol-9 标题系列更新**: Vol-9-1(6字)→ Vol-9-4/5/6(6字 ×3)→ Vol-9-7/8/9(5字 ×3)→ Vol-9-10/11(7字 ×2)
+- **书框交替恢复链**: Vol-9-10(255)→ Vol-9-11(256)— 字面"复制第一卷-2"自然恢复交替
+- **N 屏新增 6 件事清单(本日第 11 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §55.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part11 + Vol-9-10 callback + Vol-9-11 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part11 const/assert)
+ M Volume9Part10Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part11Screen.kt
+?? img_volume9part11_image_{511,512}.png
+```
+
+## §56 Vol-9-12 创建 + Vol-9-11 兑现 §55.3 承诺 + 奇偶交替恢复 (2026-09-13 16:55)
+
+### §56.1 用户指令
+
+- "创建第9卷-12页面,点击第9卷-11标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-12页面,图1 D:\图\image 513.png X18Y135W355H311,图2 D:\图\image 514.png X18Y478W355H321,标题文本改成'上下文决定答法'"
+
+### §56.2 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 513 | 1047×879 | 1.191(横图) | W=355 H=311 | **W=355 H=298** | 0% |
+| image 514 | 1074×1044 | 1.029(近正方形) | W=355 H=321 | **W=355 H=345** | 0% |
+
+- **image 513**: 横图规则 W=355 max, H=round(355/1.191)=298
+- **image 514**: 横图规则 W=355 max, H=round(355/1.029)=345
+
+### §56.3 Vol-9-12 创建
+
+- **新目录**: `volume9part12/Volume9Part12Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **奇偶交替恢复**: Vol-9-11(256)→ Vol-9-12(255)(非异常,完美交替)
+- **标题**: "上下文决定答法" **7 字 W=192**(沿用 7 字规约,与 Vol-9-10/9-11 同款 7 字标题)— **首次 7 字标题三次复用**
+- **图 1**: W=355 H=298(用户字面 H=311 忽略)
+- **图 2**: W=355 H=345(用户字面 H=321 忽略)
+- **Y 位置**: 图 1 Y=135 + H=298 = 433;图 2 Y=478 + H=345 = 823(均在书框 Y=88-872 范围内,余量 439/49dp)
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-13 创建时按历次约定回填 onOpenVolume9Part13"
+
+### §56.4 Vol-9-11 兑现 §55.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-11 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part12: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part12)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'上下文决定答法'标题 → Vol-9-12(创建于 2026-09-13,本屏兑现 §55.3 KDoc 承诺,回填 onOpenVolume9Part12)" |
+
+### §56.5 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 211 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part12.Volume9Part12Screen` |
+| line 1053-1058 | Vol-9-11 composable 加 `onOpenVolume9Part12 = { navController.navigate(Routes.Volume9Part12) }` |
+| line 1059-1061 | 新加 `composable(Routes.Volume9Part12) { Volume9Part12Screen(onBack = { navController.popBackStack() }) }` |
+
+### §56.6 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 41s** ✓
+- Brace check: NavHost 864/864, Vol-9-11 9/9, Vol-9-12 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-12 终屏无需 clickable)
+
+### §56.7 Vol-9 累计
+
+- **Vol-9 共 12 屏**(Vol-9-1~9-12)— 与 Vol-8 同进度(Vol-8 = 14 屏,Vol-9 = 12 屏差 2 屏)
+
+### §56.8 沉淀
+
+- **首次 7 字标题三次复用**: Vol-9-10/9-11/9-12 标题完全相同(7 字 W=192)
+- **Vol-9 标题系列更新**: Vol-9-1(6字)→ Vol-9-4/5/6(6字 ×3)→ Vol-9-7/8/9(5字 ×3)→ Vol-9-10/11/12(7字 ×3)
+- **书框交替恢复链**: Vol-9-11(256)→ Vol-9-12(255)— 字面"复制第一卷-1"自然恢复交替
+- **N 屏新增 6 件事清单(本日第 12 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §56.9 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part12 + Vol-9-11 callback + Vol-9-12 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part12 const/assert)
+ M Volume9Part11Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part12Screen.kt
+?? img_volume9part12_image_{513,514}.png
+```
+
+## §57 Vol-9-13 创建 + Vol-9-12 兑现 §56.3 承诺 + hry190 真机改动 4 屏 (2026-09-13 17:05)
+
+### §57.1 用户指令
+
+- "创建第9卷-13页面,点击第9卷-12标题时可以跳转,复制第一卷-1页面的背景和标题和书框这些素材到第9卷-13页面,图1 D:\图\image 515.png X18Y135W355H311,图2 D:\图\image 516.png X18Y478W355H321,标题文本改成'上下文决定答法'"
+
+### §57.2 hry190 真机手动调整 4 屏(创建 Vol-9-13 时发现)
+
+| 屏 | 原(创建时) | 真机改后 | 备注 |
+|---|---|---|---|
+| Vol-9-7 | 图1 Y=135, 图2 Y=478 W=384 H=394 | 图1 **Y=120**, 图2 **Y=465 W=354 H=380** | 大幅调整,图 2 缩小让出书框底 |
+| Vol-9-8 | 图 2 Y=478 | 图 2 **Y=508** | 下移 30dp |
+| Vol-9-9 | 图 2 Y=478 | 图 2 **Y=378** | 上移 100dp,大幅调整 |
+| Vol-9-12 | (创建时已合并调整) | (继续调整) | 系统提示改动 |
+
+**沉淀**: KDoc/inline 注释已被 hry190 的真机改动甩开 — 后续"注意注释"轮需统一修复(沿用 §33.2 沉淀模式)。
+
+### §57.3 PNG 校验(新规则完全忽略用户 W/H)
+
+| 文件 | PNG 头 | 比率 | 用户字面 | **自然 fit** | 畸变 |
+|---|---|---|---|---|---|
+| image 515 | 1008×966 | 1.043(横图) | W=355 H=311 | **W=355 H=340** | 0.10% |
+| image 516 | 1035×1056 | 0.980(近正方形) | W=355 H=321 | **W=386 H=394** | 0% |
+
+- **image 515**: 横图规则 W=355 max, H=round(355/1.043)=340
+- **image 516**: 竖图规则 H=394 max, W=round(394×0.980)=386 — W=386 超出 max_W=355(近正方形自动 fit,与 Vol-9-7 image 504 ratio 0.975 → W=384 同模式)
+
+### §57.4 Vol-9-13 创建
+
+- **新目录**: `volume9part13/Volume9Part13Screen.kt`
+- **书框**: Group 255(用户字面"复制第一卷-1")— **连续两屏异常**: Vol-9-12(255)→ Vol-9-13(255)(字面"复制第一卷-1"=255 优先于交替模式,§28 沉淀规则)
+- **标题**: "上下文决定答法" **7 字 W=192**(沿用 7 字规约,与 Vol-9-10/9-11/9-12 同款 7 字标题)— **首次 7 字标题四次复用**
+- **图 1**: W=355 H=340(用户字面 H=311 忽略)
+- **图 2**: W=386 H=394(用户字面 H=321 忽略,近正方形自动 fit)
+- **Y 位置**: 图 1 Y=135 + H=340 = 475;图 2 Y=478 + H=394 = 872,**Y=872 正好顶到书框底**(余量 0dp)— 与 Vol-9-7 image 504 同模式
+- **图 1 W=355,图 2 W=386**:宽度不一致(31dp 差),新规则按各自 PNG 比例 fit 自然形成
+- **终屏**: 无 callback 无 .clickable,KDoc 标注"等 Vol-9-14 创建时按历次约定回填 onOpenVolume9Part14"
+
+### §57.5 Vol-9-12 兑现 §56.3 承诺(4 处修改)
+
+| # | 修改 | 详情 |
+|---|---|---|
+| 1 | import | `import androidx.compose.foundation.clickable`(Vol-9-12 原本无) |
+| 2 | 函数参数 | 加 `onOpenVolume9Part13: () -> Unit = {}` |
+| 3 | Title `.clickable` | `.clickable(onClick = onOpenVolume9Part13)` 加在 .height(32.dp) 之后 |
+| 4 | KDoc 更新 | "本屏暂无后继页" → "本屏跳转目标:点击'上下文决定答法'标题 → Vol-9-13(创建于 2026-09-13,本屏兑现 §56.3 KDoc 承诺,回填 onOpenVolume9Part13)" |
+
+### §57.6 NavHost 接线(3 处)
+
+| 位置 | 修改 |
+|---|---|
+| line 212 | 加 `import com.jueqiao.jianghu.ui.screens.volume9part13.Volume9Part13Screen` |
+| line 1060-1065 | Vol-9-12 composable 加 `onOpenVolume9Part13 = { navController.navigate(Routes.Volume9Part13) }` |
+| line 1066-1068 | 新加 `composable(Routes.Volume9Part13) { Volume9Part13Screen(onBack = { navController.popBackStack() }) }` |
+
+### §57.7 主动编译验证
+
+- **`compileDebugKotlin`: BUILD SUCCESSFUL in 41s** ✓
+- Brace check: NavHost 867/867, Vol-9-12 9/9, Vol-9-13 8/8, Routes 15/15, RoutesTest 5/5(全部 diff=0)
+- import 完整:`import androidx.compose.foundation.clickable` ✓ (Vol-9-13 终屏无需 clickable)
+
+### §57.8 Vol-9 累计
+
+- **Vol-9 共 13 屏**(Vol-9-1~9-13)— 与 Vol-8 同进度(Vol-8 = 14 屏,Vol-9 = 13 屏差 1 屏)
+
+### §57.9 沉淀
+
+- **hry190 真机改动 4 屏**:Vol-9-7/8/9/12 — 与 §33.2 / §36.3 沉淀模式一致,**KDoc/inline 注释 vs 代码漂移,待"注意注释"轮统一修复**
+- **首次 7 字标题四次复用**: Vol-9-10/9-11/9-12/9-13 标题完全相同(7 字 W=192)
+- **近正方形自动 fit 重复**: Vol-9-7 image 504 (ratio 0.975 → W=384)、Vol-9-13 image 516 (ratio 0.980 → W=386)、Vol-8-1 image 465 (ratio 0.970 → W=382)— 同一规则 3 处应用
+- **连续两屏异常 Vol-9-12/13 255**:字面"复制第一卷-1"反复触发 255 优先,符合 §28 沉淀规则
+- **N 屏新增 6 件事清单(本日第 13 次)**:
+  1. 新建 .kt ✓
+  2. `Routes.X = "x"` const ✓
+  3. `RoutesTest` assert ✓
+  4. NavHost import ✓
+  5. NavHost composable ✓
+  6. 父屏函数参数 + .clickable + KDoc ✓
+  7. PNG 复制到 drawable-nodpi ✓
+  8. 主动 compile 验证 ✓
+
+### §57.10 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (import Volume9Part13 + Vol-9-12 callback + Vol-9-13 composable)
+ M Routes.kt / RoutesTest.kt (Volume9Part13 const/assert)
+ M Volume9Part12Screen.kt (import clickable + 函数参数 + Title .clickable + KDoc)
+ M Volume9Part7Screen.kt / 8Screen.kt / 9Screen.kt / 12Screen.kt ← hry190 真机手动调整
+ M docs/SESSION-LOG-2026-09-13.md
+?? Volume9Part13Screen.kt
+?? img_volume9part13_image_{515,516}.png
+```
