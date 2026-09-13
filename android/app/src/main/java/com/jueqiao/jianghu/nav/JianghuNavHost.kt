@@ -1378,7 +1378,10 @@ fun JianghuNavHost(
             )
         }
         composable(Routes.Volume10Part14) {
-            Volume10Part14Screen(onBack = { navController.popBackStack() })
+            Volume10Part14Screen(
+                onBack = { navController.popBackStack() },
+                onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) },
+            )
         }
         composable(Routes.Gunlun14) {
             Gunlun14Screen(
