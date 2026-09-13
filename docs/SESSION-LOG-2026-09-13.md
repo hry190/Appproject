@@ -126,6 +126,53 @@
 
 ---
 
+## §40 第八卷 Vol-8-1/2 创建 + Vol-7-12 闭环 Gunlun16(2026-09-13 09:48~09:57)
+
+### §40.1 第八卷启动:Vol-8-1
+
+- **新入口**: Gunlun11「已解锁秘籍9」图像 (仿 Gunlun14→Vol-7 / Gunlun12→Vol-5 模式)
+- Gunlun11 已加 `onOpenVolume8Part1: (() -> Unit)?` 参数 + 「已解锁秘籍9」 `.clickable { onOpenVolume8Part1?.invoke() }`
+- **Vol-8-1 创建**: 复制第一卷-1 → Group 255, 标题「皮影戏之状态、行动、奖励」
+- **首次 12 字标题** W=400 (沿用估算 ~33/字宽度; 顿号「、」算字符; 12 字无独立规约 KDoc 标注异常)
+- **完全按新规则 fit-to-natural-bounds**:
+  - image 464 (1047×669, ratio 1.565) → W=355 H=227 (用户字面 H=311 忽略) — 畸变 0.07%
+  - image 465 (1065×1098, **ratio 0.970 近正方形**) → W=382 H=394 (新规则 fit: H=394 max, W=round(394×0.970)=382) — **0% 畸变,完美 fit** — 与 Vol-6-12 image 7 (ratio 0.772 旧规则 AskUserQuestion) 对比:新规则直接 fit 0% 失真
+- 12 字标题 W=400(Vol-1~8 标题最长历史)
+
+### §40.2 Vol-7-12 卷末闭环:Vol-7-12 标题 → Gunlun16
+
+- 用户 2026-09-13 09:51 指令:"点击 vol-7-12 页面的标题会跳转到滚轮16 页面"
+- **新建 Gunlun16Screen**(最小 stub,StandardGunlunScaffold + 占位文本)— Gunlun1~15 之外第 1 个新滚轮
+- 仿 Vol-4-14 → Gunlun8 / Vol-5-15 → Gunlun12 模式:卷末屏标题 → 入口滚轮
+- Vol-7-12 加 `import clickable` + `onOpenGunlun16` + 标题 `.clickable` + KDoc 卷末闭环留痕
+
+### §40.3 Vol-8-2 创建
+
+- **Vol-8-2**: 复制第一卷-2 → Group 256 (恢复交替 Vol-8-1 255 → 8-2 256)
+- 图 1 image 466 (1.474 ratio) → W=355 H=241;图 2 image 467 (1.385 ratio) → W=355 H=256
+- 标题沿用 Vol-8-1 同款 12 字 W=400
+- Vol-8-1 加 `onOpenVolume8Part2` + 标题 `.clickable` + KDoc 第一行加 "Vol-8-1 标题点击跳 Vol-8-2"
+
+### §40.4 沉淀
+
+- **第八卷入口卷**: Gunlun16 = Vol-8 入口卷(对应 Gunlun8=Vol-4 / Gunlun11=Vol-7 / Gunlun12=Vol-5)
+- **最小 stub 模式**: Gunlun16 只有 back navigation + 占位文本,待 Vol-8 续建时补标准 10 本书 + 介绍布局
+- **新规则 0% 失真 vs 旧规则 AskUserQuestion**: image 465 ratio 0.970 (近正方形) 用新规则 fit-to-natural-bounds 直接算出 W=382 H=394 (0% 畸变,完美 fit) — 旧规则在 Vol-6-12 image 7 ratio 0.772 触发了 AskUserQuestion,新规则无需任何询问
+
+### §40.5 Git 状态(commit 前)
+
+```
+ M JianghuNavHost.kt (加 Gunlun16 接线 + Vol-7-12 onOpenGunlun16 + Vol-8-1/2 接线)
+ M Routes.kt / RoutesTest.kt
+ M Volume7Part12Screen.kt (加 import clickable + onOpenGunlun16 + 标题 .clickable + KDoc 卷末闭环留痕)
+ M Volume8Part1Screen.kt (加 import clickable + onOpenVolume8Part2 + 标题 .clickable)
+?? Gunlun16Screen.kt (新建,最小 stub)
+?? Volume8Part2Screen.kt (新建)
+?? img_volume8part{1,2}_*.png (4 张 PNG)
+```
+
+---
+
 ## §39 Vol-7-9~12 创建 + Vol-7-11 4 张图布局 + import clickable 漏修(2026-09-13 09:05~09:25)
 
 ### §39.1 Vol-7-9 / 7-10 创建
