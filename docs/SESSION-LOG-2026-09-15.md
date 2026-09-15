@@ -361,6 +361,88 @@ val cloud60Y by cloud60Transition.animateFloat(
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+8 行:1 行 import + 7 行 transition + offset 改 1 行)
 
+### §12 云朵 60 自然飘动:X ±100 + Y ±15 + Alpha 0.5~1.0 随机(2026-09-15 下午)
+
+**用户指令**:"我希望'D:\图\Ellipse 60.png'还可以随机地上下移动,在移动的路上还可以变化透明度,左右移动的范围还可以达到 100 单位"
+
+**用户需求拆解**:
+1. 随机上下移动(无固定周期/无固定幅度)
+2. 移动过程中透明度变化
+3. 左右移动范围 ±100 单位
+
+**实现**:`Animatable + LaunchedEffect + Random`(比 `rememberInfiniteTransition` 复杂但能产生"随机感")
+```kotlin
+val cloud60X = remember { Animatable(0f) }
+val cloud60Y = remember { Animatable(0f) }
+val cloud60Alpha = remember { Animatable(1f) }
+
+// 3 个独立 LaunchedEffect 协程并行
+LaunchedEffect(Unit) {
+    while (isActive) {
+        cloud60X.animateTo(
+            targetValue = Random.nextFloat() * 200f - 100f,  // ±100
+            animationSpec = tween(durationMillis = Random.nextInt(1500, 3000), easing = LinearEasing),
+        )
+        delay(Random.nextLong(500, 1500))
+    }
+}
+LaunchedEffect(Unit) {
+    while (isActive) {
+        cloud60Y.animateTo(
+            targetValue = Random.nextFloat() * 30f - 15f,  // ±15
+            animationSpec = tween(durationMillis = Random.nextInt(1000, 2000), easing = LinearEasing),
+        )
+        delay(Random.nextLong(300, 800))
+    }
+}
+LaunchedEffect(Unit) {
+    while (isActive) {
+        cloud60Alpha.animateTo(
+            targetValue = 0.5f + Random.nextFloat() * 0.5f,  // 0.5~1.0
+            animationSpec = tween(durationMillis = Random.nextInt(1500, 3000), easing = LinearEasing),
+        )
+        delay(Random.nextLong(500, 1200))
+    }
+}
+```
+
+云朵 60 Image 改为:
+```kotlin
+Image(
+    painter = painterResource(R.drawable.img_houshan1_cloud_60),
+    modifier = Modifier
+        .offset(x = (-21f + cloud60X.value).dp, y = (570f + cloud60Y.value).dp)
+        .size(width = 355.dp, height = 137.dp),
+    alpha = cloud60Alpha.value,
+    contentScale = ContentScale.FillBounds,
+)
+```
+
+**新加 imports**:
+- `androidx.compose.animation.core.Animatable`
+- `androidx.compose.runtime.{LaunchedEffect, remember}`
+- `kotlin.random.Random`
+- `kotlinx.coroutines.{delay, isActive}`
+
+**§11 → §12 变化**:
+| 项 | §11 | §12 |
+|---|---|---|
+| 实现 | rememberInfiniteTransition + tween + RepeatMode.Reverse | Animatable + LaunchedEffect + Random |
+| X 范围 | 0(不动)| ±100 随机 |
+| Y 范围 | ±15 周期性 | ±15 随机 |
+| Alpha | 1f 固定 | 0.5~1.0 随机 |
+| 节奏 | 周期 4s | 每次 1~3s,delay 0.3~1.5s 随机 |
+
+**运动特征**:
+- 每次到目标值后随机 delay,再选下一个目标值
+- X/Y/Alpha 三者独立变化,产生"自然飘动"感
+- 50 commit 链上 `df2a2b6 fix(houshan1): 改用 Animatable + LaunchedEffect 手动驱动云朵动画` 即此模式
+
+**注意**:`while (isActive)` 是协程挂起函数,在 LaunchedEffect 中保留 scope;屏幕销毁时自动取消循环。
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+30 行:5 行 import + 25 行 LaunchedEffect 代码;Image offset/alpha 改 3 行)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

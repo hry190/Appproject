@@ -1,6 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.houshan1
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -21,7 +22,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,9 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
@@ -68,17 +74,47 @@ fun Houshan1Screen(
     val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
     val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 
-    // 云朵 60 上下浮动:±15 dp / 4s(half-cycle 2s,RepeatMode.Reverse)(§11)
-    val cloud60Transition = rememberInfiniteTransition(label = "cloud60Float")
-    val cloud60Y by cloud60Transition.animateFloat(
-        initialValue = -15f,
-        targetValue = 15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "cloud60Y",
-    )
+    // 云朵 60 自然飘动:X ±100 / Y ±15 / Alpha 0.5~1.0,每条独立随机周期 + 间隔 (§12)
+    val cloud60X = remember { Animatable(0f) }
+    val cloud60Y = remember { Animatable(0f) }
+    val cloud60Alpha = remember { Animatable(1f) }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            cloud60X.animateTo(
+                targetValue = Random.nextFloat() * 200f - 100f,  // ±100
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1500, 3000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(500, 1500))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            cloud60Y.animateTo(
+                targetValue = Random.nextFloat() * 30f - 15f,  // ±15
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1000, 2000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(300, 800))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            cloud60Alpha.animateTo(
+                targetValue = 0.5f + Random.nextFloat() * 0.5f,  // 0.5~1.0
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1500, 3000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(500, 1200))
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -140,13 +176,14 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10);上下浮动 ±15 / 4s (§11)
+            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10);自然飘动 X±100/Y±15/Alpha 0.5~1.0 随机 (§12)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_60),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (-21).dp, y = (570f + cloud60Y).dp)
+                    .offset(x = (-21f + cloud60X.value).dp, y = (570f + cloud60Y.value).dp)
                     .size(width = 355.dp, height = 137.dp),
+                alpha = cloud60Alpha.value,
                 contentScale = ContentScale.FillBounds,
             )
 
