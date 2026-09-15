@@ -112,6 +112,40 @@
 - `M Houshan1Screen.kt` (+10)
 - `?? img_houshan1_cloud_58.png` (新增)
 
+### §5 加云朵 61(Ellipse 61.png)+ 云朵 58 用户调整(2026-09-15 上午)
+
+**用户指令**:
+1. (uncommitted)用户调整云朵 58:X=-47 Y=429 W=355 H=199 → X=-70 Y=320 W=455 H=259(真机看着比例不对)
+2. "'D:\图\Ellipse 61.png' 放在后山1页的 X=101 Y=304 W=90 H=43"
+
+**云朵 58 调整合理性**:
+- 新尺寸 W=455 H=259,比 1.758
+- 与 PNG 实际比 1.781 几乎完美匹配(偏差 0.023)
+- 比之前的 355×199(比 1.78)略大且向左上移动,合理
+
+**云朵 61 尺寸问题**:
+- 源图 `D:\图\Ellipse 61.png` 351×210,比 1.671(横图)
+- 用户给的 W=90 H=43,比 2.093 — 偏差 1.25 倍
+- 按 [image-fit-to-natural-bounds](image-fit-to-natural-bounds) 横图 fit max_W=355 × max_H=394 → **W=355 H=213**
+- 按 [screen-copy-verify-coordinates](screen-copy-verify-coordinates) 不一致就问 → 用户选 fit-to-natural-bounds
+
+**操作**:
+1. 复制源图到 `android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_61.png`(21243 bytes, 351×210)
+2. 在云朵 58 Image 之后插入云朵 61 Image(line 78 之前)
+3. 同步更新云朵 58 注释(`-47/429/355/199` → `-70/320/455/259`)— 注释之前没改,代码改了导致不一致
+4. z-order:云朵 58 → 云朵 61 → 熊猫 → 标签 → 气泡 → 返回(均在下,熊猫等前景在上)
+
+**文件变化**:
+- 新增:`android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_61.png` (21243 bytes, 351×210)
+- 修改:`android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt`(+12 行:云朵 61 + 注释更新)
+
+**云朵 61 警告**:W=355 H=213 是非常大的云朵,放在 X=101 Y=304 会覆盖屏幕大部分(包括熊猫(184,621)、标签(168,345)、Rectangle156(136,508))。用户明确选了 fit-to-natural-bounds。
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+12)
+- `M docs/SESSION-LOG-2026-09-15.md` (+本节)
+- `?? img_houshan1_cloud_61.png` (新增)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

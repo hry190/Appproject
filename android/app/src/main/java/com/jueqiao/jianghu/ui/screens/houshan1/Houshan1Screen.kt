@@ -65,13 +65,23 @@ fun Houshan1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 云朵 58 (Ellipse 58.png, X=-47, Y=429, W=355, H=199) — fit-to-natural-bounds, 横图源 844×474 (比 1.781)
+            // 云朵 58 (Ellipse 58.png, X=-70, Y=320, W=455, H=259) — fit-to-natural-bounds, 横图源 844×474 (比 1.781)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_58),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = -47.dp, y = 429.dp)
-                    .size(width = 355.dp, height = 199.dp),
+                    .offset(x = -70.dp, y = 320.dp)
+                    .size(width = 455.dp, height = 259.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 云朵 61 (Ellipse 61.png, X=101, Y=304, W=355, H=213) — fit-to-natural-bounds, 横图源 351×210 (比 1.671)
+            Image(
+                painter = painterResource(R.drawable.img_houshan1_cloud_61),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 101.dp, y = 304.dp)
+                    .size(width = 355.dp, height = 213.dp),
                 contentScale = ContentScale.FillBounds,
             )
 
