@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -183,7 +184,12 @@ fun Houshan2Screen(
             Box(
                 modifier = Modifier
                     .offset(x = -13.dp, y = 570.dp)
-                    .size(width = 106.dp, height = 188.dp),
+                    .size(width = 106.dp, height = 188.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§19)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -215,7 +221,12 @@ fun Houshan2Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 168.dp, y = 345.dp)
-                    .size(width = 74.dp, height = 131.dp),
+                    .size(width = 74.dp, height = 131.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§19)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -245,7 +256,12 @@ fun Houshan2Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 113.dp, y = 322.dp)
-                    .size(width = 50.dp, height = 88.dp),
+                    .size(width = 50.dp, height = 88.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§19)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -275,7 +291,12 @@ fun Houshan2Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 151.dp, y = 248.dp)
-                    .size(width = 30.dp, height = 53.5.dp),
+                    .size(width = 30.dp, height = 53.5.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§19)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),

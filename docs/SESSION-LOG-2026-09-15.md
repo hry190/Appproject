@@ -693,6 +693,51 @@ val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
 - `M` `Houshan1Screen.kt`(用户 IDE 调整云朵 60b Y)
 - `M` `docs/SESSION-LOG-2026-09-15.md` (+本节)
 
+### §19 后山2 跳转逻辑:点击除 4 个标签外才跳转 Houshan3(2026-09-15 下午)
+
+**用户指令**:"把'后山2'页面跳转到'后山3'页面的方式改为点击除这四个标签之外的位置"
+
+**问题分析**:
+- 当前 Houshan2 整屏 `.clickable(onClick = onOpenHoushan3)` 在外层 Box
+- 4 个标签 Box **没有** `.clickable`
+- Compose 事件分发:子 Box 不可点击时,点击事件会**冒泡**到父 Box
+- 结果:**点击标签时也会触发 Houshan3 跳转**(不符合用户需求)
+
+**解决方案**:给 4 个标签 Box 加 `.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = {})` — 消费事件但不执行任何动作,不显示 ripple:
+```kotlin
+Box(
+    modifier = Modifier
+        .offset(x = -13.dp, y = 570.dp)
+        .size(width = 106.dp, height = 188.dp)
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,        // 禁止 ripple 视觉反馈
+            onClick = {},               // 空 lambda,仅消费事件
+        ),
+) { ... }
+```
+
+**为什么需要 `indication = null`**:
+- 默认 `Modifier.clickable` 会启用 ripple 效果(Material Design)
+- 如果允许 ripple,点击标签会显示涟漪(用户可能不喜欢)
+- `indication = null` 完全禁用视觉反馈,标签点击"静默消费"
+
+**为什么需要 `MutableInteractionSource`**:
+- Compose API 要求 clickable 接收 `interactionSource`(可选参数)
+- 默认值是 `remember { MutableInteractionSource() }`,但配合 `indication = null` 必须显式传(否则编译错)
+- 每次 Box 重创建时通过 `remember { ... }` 复用 InteractionSource 实例
+
+**新加 import**:`androidx.compose.foundation.interaction.MutableInteractionSource`
+
+**改动**:4 个标签 Box(标签1/2/3/4)各加 4 行 clickable 块(+ 1 行 import = 17 行)
+
+**事件流**:
+- 点击 4 个标签区域 → 标签 Box clickable 消费事件 → 不冒泡 → **不跳转**
+- 点击其他位置(背景、云朵、标签外空白) → 事件直接到外层 Box clickable → **跳转 Houshan3**
+
+**git 状态**(commit 后):
+- `M Houshan2Screen.kt` (+17 行:1 行 import + 4 × 4 行 clickable 块)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
