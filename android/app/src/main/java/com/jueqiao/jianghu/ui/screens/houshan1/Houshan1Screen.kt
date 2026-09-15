@@ -80,18 +80,19 @@ fun Houshan1Screen(
                 painter = painterResource(R.drawable.img_houshan1_cloud_61),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 101.dp, y = 304.dp)
+                    .offset(x = -50.dp, y = 304.dp)
                     .size(width = 355.dp, height = 213.dp),
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 56 (Ellipse 56.png, X=236, Y=715, W=335, H=297) — 用户原值, 比 1.128 ≈ PNG 1.083 (4% 偏差可接受)
+            // 云朵 56 (Ellipse 56.png, X=196, Y=595, W=335, H=297) — 用户原值, 比 1.128 ≈ PNG 1.083 (4% 偏差可接受);alpha=1f 100% 不透明 (§7)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_56),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 236.dp, y = 715.dp)
+                    .offset(x = 196.dp, y = 595.dp)
                     .size(width = 335.dp, height = 297.dp),
+                alpha = 1f,  // 100% 不透明 — 用户指令 2026-09-15 §7
                 contentScale = ContentScale.FillBounds,
             )
 

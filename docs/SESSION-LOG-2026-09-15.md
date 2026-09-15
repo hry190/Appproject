@@ -173,6 +173,41 @@
 
 **位置观察**:Y=715 在熊猫(621)下方,Rect156(508)下方,接近屏幕底部。W=335 H=297 是云朵 61 (W=355 H=213) 的"放大版"——比云朵 61 还宽一点,高很多。**会盖住熊猫(184,621)+ 标签 1(-13,570)下方**。
 
+### §7 Ellipse 56.png 不透明度 100% + 云朵 61/56 用户调整(2026-09-15 上午)
+
+**用户指令**:"Ellipse 56.png 的不透明度达到 100%"
+
+**操作**:
+1. 在云朵 56 的 Image 添加 `alpha = 1f`(Compose `Image` 参数)— 100% 不透明
+2. 同步云朵 56 的注释坐标(IDE 调整后未同步:X=236/Y=715 → X=196/Y=595)
+3. uncommitted 改动一并 commit:
+   - 云朵 61:X=101 → -50(用户 IDE 调整)
+   - 云朵 56:X=236/Y=715 → X=196/Y=595(用户 IDE 调整)
+   - 云朵 56 alpha=1f(本次新增)
+
+**代码改动**:
+```kotlin
+Image(
+    painter = painterResource(R.drawable.img_houshan1_cloud_56),
+    ...
+    modifier = Modifier
+        .offset(x = 196.dp, y = 595.dp)
+        .size(width = 335.dp, height = 297.dp),
+    alpha = 1f,  // 100% 不透明 — 用户指令 2026-09-15 §7
+    contentScale = ContentScale.FillBounds,
+)
+```
+
+**为什么用 alpha 参数**(而不是 `Modifier.graphicsLayer(alpha = ...)`):
+- Compose `Image` 自带 `alpha: Float` 参数,默认 1.0f
+- 设置为 1.0f 等价"完全不透明",但**显式声明**可避免被未来 graphicsLayer 链上的 alpha 透明度影响
+- 这正是之前回退的 50 个 commit 链上 `ca06570 feat(houshan1): Ellipse 56 不透明度 100% — 移除透明度时变动画` 的本意
+
+**注意**:`alpha=1f` 控制 Image 整体不透明度,不影响 PNG 内部像素的 alpha 通道。如果 PNG 本身有透明区域,那些区域仍然透明(被背景显示)。
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+3 行:alpha 参数 + 注释同步)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
