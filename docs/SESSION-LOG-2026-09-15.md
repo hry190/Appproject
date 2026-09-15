@@ -505,6 +505,37 @@ contentScale = ContentScale.FillBounds,
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (~+50 行 helper + Image 改 12 行,§12 旧 LaunchedEffect 删 -25 行)
 
+### §14 云朵 60 X 速度放慢约 2 倍(2026-09-15 下午)
+
+**用户指令**:"'D:\图\Ellipse 60.png' 左右移动的速度太快了点,降低一些,其他云朵的速度不用改动"
+
+**改动**:
+- 给 `rememberCloudFloat()` helper 加 2 个新参数:`xDuration: IntRange`(X 动画时长)和 `xDelay: LongRange`(X delay 间隔)
+- 默认值不变(1500..3000 / 500..1500)— 保持其他 3 朵云(58/61/57)行为不变
+- **云朵 60 单独传慢节奏参数**:
+  ```kotlin
+  val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
+      xDuration = 4000..6000,  // X 节奏放慢约 2 倍
+      xDelay = 1000..2000,     // X delay 也放慢,目标切换频率减半
+  )
+  ```
+
+**节奏对比**:
+| 云朵 | X duration(ms) | X delay(ms) | 效果 |
+|---|---|---|---|
+| 58/61/57 | 1500~3000 | 500~1500 | 快节奏(原 §13)|
+| **60** | **4000~6000** | **1000~2000** | **慢约 2 倍** |
+
+**注意**:只改了 X 维度,Y 和 Alpha 保持默认节奏(用户只要求 X 慢)。
+
+**为什么用 IntRange + last+1**:
+- `Random.nextInt(from, until)` 是开区间 `[from, until)`
+- `IntRange` 含两端(1500..3000 = [1500,3000])
+- 所以传 `xDuration.last + 1 = 3001` 让 `Random.nextInt(1500, 3001)` 返回 [1500, 3000]
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+5 行 helper 注释 + 参数 + 函数体改;云朵 60 调用改 4 行)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

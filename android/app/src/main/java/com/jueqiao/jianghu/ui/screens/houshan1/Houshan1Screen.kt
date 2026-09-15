@@ -78,7 +78,10 @@ fun Houshan1Screen(
     val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
     val (cloud61Dx, cloud61Dy, cloud61Alpha) = rememberCloudFloat()
     val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()
-    val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat()
+    val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
+        xDuration = 4000..6000,  // X 节奏放慢约 2 倍(用户 2026-09-15 §14)
+        xDelay = 1000..2000,     // X delay 也放慢,目标切换频率减半
+    )
 
     Box(
         modifier = Modifier
@@ -344,6 +347,8 @@ fun Houshan1Screen(
  * @param maxY Y 移动半径(默认 15 dp)
  * @param alphaMin 透明度下限(默认 0.5f)
  * @param alphaMax 透明度上限(默认 1f)
+ * @param xDuration X 单次 animateTo 耗时范围(ms,默认 1500..3000)
+ * @param xDelay X 两次 animateTo 之间延迟范围(ms,默认 500..1500)
  * @return Triple(x, y, alpha) 当前 Float 值
  */
 @Composable
@@ -352,6 +357,8 @@ private fun rememberCloudFloat(
     maxY: Float = 15f,
     alphaMin: Float = 0.5f,
     alphaMax: Float = 1f,
+    xDuration: IntRange = 1500..3000,
+    xDelay: LongRange = 500..1500,
 ): Triple<Float, Float, Float> {
     val x = remember { Animatable(0f) }
     val y = remember { Animatable(0f) }
@@ -361,11 +368,11 @@ private fun rememberCloudFloat(
             x.animateTo(
                 targetValue = Random.nextFloat() * 2f * maxX - maxX,
                 animationSpec = tween(
-                    durationMillis = Random.nextInt(1500, 3000),
+                    durationMillis = Random.nextInt(xDuration.first, xDuration.last + 1),
                     easing = LinearEasing,
                 ),
             )
-            delay(Random.nextLong(500, 1500))
+            delay(Random.nextLong(xDelay.first, xDelay.last + 1))
         }
     }
     LaunchedEffect(Unit) {
