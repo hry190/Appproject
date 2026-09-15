@@ -55,18 +55,13 @@ fun Houshan3Screen(
 ) {
     BackHandler(enabled = true) { onBack() }
 
-    // Ellipse 56 渐变色循环:Animatable A9C3C0 ↔ 白色,4s 来回 (§23 + §24 修复)
-    val tintColor = remember { Animatable(Color(0xFFA9C3C0)) }
+    // Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25 修复)
+    // 0 = A9C3C0, 1 = White;在 graphicsLayer 块内合成 Color
+    val tintProgress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         while (isActive) {
-            tintColor.animateTo(
-                targetValue = Color.White,
-                animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
-            )
-            tintColor.animateTo(
-                targetValue = Color(0xFFA9C3C0),
-                animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
-            )
+            tintProgress.animateTo(1f, animationSpec = tween(durationMillis = 4000, easing = LinearEasing))
+            tintProgress.animateTo(0f, animationSpec = tween(durationMillis = 4000, easing = LinearEasing))
         }
     }
 
@@ -108,7 +103,14 @@ fun Houshan3Screen(
                     .offset(x = 263.dp, y = 755.dp)
                     .size(width = 335.dp, height = 297.dp)
                     .graphicsLayer {
-                        colorFilter = ColorFilter.tint(tintColor.value, BlendMode.Modulate)
+                        val t = tintProgress.value
+                        val r = 0xA9 + ((0xFF - 0xA9) * t).toInt()
+                        val g = 0xC3 + ((0xFF - 0xC3) * t).toInt()
+                        val b = 0xC0 + ((0xFF - 0xC0) * t).toInt()
+                        colorFilter = ColorFilter.tint(
+                            Color(red = r, green = g, blue = b),
+                            BlendMode.Modulate,
+                        )
                     },
                 contentScale = ContentScale.FillBounds,
             )

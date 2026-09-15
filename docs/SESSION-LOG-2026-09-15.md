@@ -1019,6 +1019,49 @@ LaunchedEffect(Unit) {
 **git 状态**(commit 后):
 - `M Houshan3Screen.kt` (净 0 变化,但内部从 `animateColor` 改 `Animatable`)
 
+### §25 修复 §24 编译错误:`Animatable<Color>` 也不支持(2026-09-15 下午)
+
+**用户报告**:"Argument type mismatch: actual type is 'androidx.compose.ui.graphics.Color', but 'kotlin.Float' was expected. Unresolved reference 'colorFilter'."
+
+**根因**:
+- 项目 Compose 版本中 `Animatable` 只支持基础类型 `Float`(需要 `TwoWayConverter<Color, *>` 才支持 Color)
+- §24 用 `Animatable<Color>` 也是错的 — 同样不被支持
+- `Unresolved reference 'colorFilter'` 仍是 graphicsLayer lambda 类型推断失败的次生错误
+
+**最终修复方案**(§25):用 `Animatable<Float>` 在 [0, 1] 插值,在 graphicsLayer 块内动态合成 Color:
+```kotlin
+val tintProgress = remember { Animatable(0f) }  // 0 = A9C3C0, 1 = White
+LaunchedEffect(Unit) {
+    while (isActive) {
+        tintProgress.animateTo(1f, animationSpec = tween(4000, LinearEasing))
+        tintProgress.animateTo(0f, animationSpec = tween(4000, LinearEasing))
+    }
+}
+
+.graphicsLayer {
+    val t = tintProgress.value
+    val r = 0xA9 + ((0xFF - 0xA9) * t).toInt()
+    val g = 0xC3 + ((0xFF - 0xC3) * t).toInt()
+    val b = 0xC0 + ((0xFF - 0xC0) * t).toInt()
+    colorFilter = ColorFilter.tint(
+        Color(red = r, green = g, blue = b),
+        BlendMode.Modulate,
+    )
+}
+```
+
+**3 次失败总结**(§23/§24/§25):
+| 方案 | 错误 |
+|---|---|
+| §23 `InfiniteTransition.animateColor` | `Unresolved reference 'animateColor'` |
+| §24 `Animatable<Color>` | `Argument type mismatch: Color → Float` |
+| §25 `Animatable<Float>` + 合成 Color | ✓ 通过 |
+
+**更新 memory**:`compose-animatecolor-version-trap` — 增加 §24/§25 信息,记录 Color 动画用 `Animatable<Float>` + 合成 Color 模式
+
+**git 状态**(commit 后):
+- `M Houshan3Screen.kt` (净变化小,但内部从 Animatable<Color> 改 Animatable<Float>)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
