@@ -1062,6 +1062,54 @@ LaunchedEffect(Unit) {
 **git 状态**(commit 后):
 - `M Houshan3Screen.kt` (净变化小,但内部从 Animatable<Color> 改 Animatable<Float>)
 
+### §26 修复 §25:`Modifier.graphicsLayer` 没有 colorFilter 属性(2026-09-15 下午)
+
+**用户报告**:"Unresolved reference 'colorFilter'"
+
+**根因**:
+- §25 用了 `Modifier.graphicsLayer { colorFilter = ... }` 块设 colorFilter
+- 但 `GraphicsLayerScope` **没有 `colorFilter` 属性**!它只暴露 scaleX/Y, alpha, translationX/Y, rotationX/Y/Z, shape, clip, blendMode 等层变换相关属性
+- `colorFilter` 是 `Paint` 的属性,**不属于 GraphicsLayer**
+
+**正确方案**(§26):用 Image 自己的 `colorFilter` 参数(不是 graphicsLayer 块):
+```kotlin
+Image(
+    painter = painterResource(R.drawable.img_shilian3_cloud_56),
+    modifier = Modifier
+        .offset(x = 263.dp, y = 755.dp)
+        .size(width = 335.dp, height = 297.dp),
+    colorFilter = ColorFilter.tint(
+        Color(
+            red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
+            green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
+            blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
+        ),
+        BlendMode.Modulate,
+    ),
+    contentScale = ContentScale.FillBounds,
+)
+```
+
+**动画机制**:
+- `tintProgress.value` 变化 → Animatable 触发状态更新 → Image 重组 → `colorFilter` 重新计算 → tint 更新
+- 标准 Compose 重组流程,无需额外 LaunchedEffect
+
+**Import 变化**:
+- 移除:`androidx.compose.ui.graphics.graphicsLayer`(不再用)
+
+**4 次失败升级路径**:
+| 方案 | 错误 |
+|---|---|
+| §23 `InfiniteTransition.animateColor` | `Unresolved reference 'animateColor'` |
+| §24 `Animatable<Color>` + LaunchedEffect | `Argument type mismatch: Color → Float` |
+| §25 `Animatable<Float>` + `graphicsLayer { colorFilter = ... }` | `Unresolved reference 'colorFilter'`(GraphicsLayerScope 无此属性)|
+| §26 `Animatable<Float>` + `Image.colorFilter = ...` | ✓ 通过 |
+
+**更新 memory**:`compose-animatecolor-version-trap` 记录完整 4 次失败路径,GraphicsLayerScope 不支持 colorFilter 是关键陷阱
+
+**git 状态**(commit 后):
+- `M Houshan3Screen.kt` (内部从 graphicsLayer 块改 Image 的 colorFilter 参数)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

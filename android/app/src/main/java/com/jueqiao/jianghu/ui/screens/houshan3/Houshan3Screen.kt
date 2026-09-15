@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -95,23 +94,22 @@ fun Houshan3Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint 颜色 A9C3C0 ↔ 白色循环 (§23)
+            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint 颜色 A9C3C0 ↔ 白色循环 (§23/24/25/26 修复)
+            // 注意:Modifier.graphicsLayer 不支持 colorFilter,改用 Image 自己的 colorFilter 参数
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_56),
                 contentDescription = null,
                 modifier = Modifier
                     .offset(x = 263.dp, y = 755.dp)
-                    .size(width = 335.dp, height = 297.dp)
-                    .graphicsLayer {
-                        val t = tintProgress.value
-                        val r = 0xA9 + ((0xFF - 0xA9) * t).toInt()
-                        val g = 0xC3 + ((0xFF - 0xC3) * t).toInt()
-                        val b = 0xC0 + ((0xFF - 0xC0) * t).toInt()
-                        colorFilter = ColorFilter.tint(
-                            Color(red = r, green = g, blue = b),
-                            BlendMode.Modulate,
-                        )
-                    },
+                    .size(width = 335.dp, height = 297.dp),
+                colorFilter = ColorFilter.tint(
+                    Color(
+                        red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
+                        green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
+                        blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
+                    ),
+                    BlendMode.Modulate,
+                ),
                 contentScale = ContentScale.FillBounds,
             )
 
