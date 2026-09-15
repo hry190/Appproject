@@ -1110,6 +1110,276 @@ Image(
 **git 状态**(commit 后):
 - `M Houshan3Screen.kt` (内部从 graphicsLayer 块改 Image 的 colorFilter 参数)
 
+### §27 后山3 加渐变云朵 Ellipse 58(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"'D:\图\Ellipse 58.png' 也要渐变的放在'后山3'页面的 X=78 Y=170 W=331 H=92"
+
+**操作**(按 A 模式,执行但不 commit):
+1. **复制源图**:`D:\图\Ellipse 58.png` (303,871 bytes) → `android/app/src/main/res/drawable-nodpi/img_shilian3_cloud_58.png`
+2. **加 Image 代码**:与 Ellipse 56 渐变云朵并列,**共用同一个 `tintProgress` Animatable**(同步循环渐变)
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_shilian3_cloud_58),
+       modifier = Modifier
+           .offset(x = 78.dp, y = 170.dp)
+           .size(width = 331.dp, height = 92.dp),
+       colorFilter = ColorFilter.tint(
+           Color(
+               red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
+               green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
+               blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
+           ),
+           BlendMode.Modulate,
+       ),
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+
+**共享 tintProgress 设计**:
+- Houshan3 已经有 `val tintProgress = remember { Animatable(0f) }`(§26 在 line 60)
+- 两个云朵(56 + 58)共享同一个 Animatable,颜色**同步循环**
+- 用户没要求独立动画,默认同步(简单可预测)
+- 如需独立动画,需要 2 个 Animatable
+
+**位置观察**:
+- Ellipse 58:X=78 Y=170 W=331 H=92(顶部偏左,与原"img_shilian3_cloud"位置 X=-46 Y=476 不同)
+- 与 Ellipse 56(Y=755,底部)分屏布局,一个顶部一个底部
+- Ellipse 58 PNG 比例可能 ~1:1(303KB 文件,需实际尺寸)— 暂时不验证(按用户 W/H 直接采纳)
+
+**命名**:
+- `img_shilian3_cloud_58.png`(houshan3 目录命名惯例 `img_shilian3_*`)
+- 注意:Houshan3 已有 `img_shilian3_cloud.png`(侦察报告位置 X=-46 Y=476) — 这是**另一张云朵**(不是 Ellipse 58),可能是之前 houshan1 复制的旧图
+- 不复用,新建独立资源
+
+**A 模式**:
+- 本次改动未 commit(等用户说"commit")
+- 当前工作区:M Houshan3Screen.kt + ?? img_shilian3_cloud_58.png
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (+14 行:Image 代码 + 注释)
+- `?? img_shilian3_cloud_58.png` (新增, 303 KB)
+
+### §28 后山3 2 朵渐变云朵加位置 + 透明度动效(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"两个渐变的云朵还要可以变化位置和透明度的"
+
+**复用 §13 模式**:Houshan3 加 `rememberCloudFloat()` helper,调用 2 次给 Ellipse 56 和 Ellipse 58:
+```kotlin
+val (cloud56Dx, cloud56Dy, cloud56Alpha) = rememberCloudFloat()
+val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
+```
+
+**两个渐变云朵动效对照**:
+| 维度 | Ellipse 56 | Ellipse 58 | 关系 |
+|---|---|---|---|
+| 颜色渐变 | `tintProgress`(共用)| `tintProgress`(共用)| **同步循环**(A9C3C0 ↔ White)|
+| 位置 X/Y | `cloud56Dx/Dy` | `cloud58Dx/Dy` | **各自独立随机** |
+| 透明度 | `cloud56Alpha` | `cloud58Alpha` | **各自独立随机** |
+
+**Image 改动**:
+```kotlin
+modifier = Modifier
+    .offset(x = (263f + cloud56Dx).dp, y = (755f + cloud56Dy).dp)  // 基座位置 + 随机偏移
+    .size(width = 335.dp, height = 297.dp),
+alpha = cloud56Alpha,  // 独立透明度
+```
+
+**`rememberCloudFloat` 参数**(沿用 §13 默认值):
+- X ±100, Y ±15, Alpha 0.5~1.0
+- X 节奏 1.5~3s + delay 0.5~1.5s,Y 1~2s + delay 0.3~0.8s,Alpha 1.5~3s + delay 0.5~1.2s
+
+**helper 复制说明**:
+- `rememberCloudFloat` 是 `private fun`,定义在 [Houshan1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt) 末尾(§13)
+- 在 [Houshan2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt) 已复制过 1 份(§18)
+- 现在 Houshan3 是第 3 份
+- **TODO 标记**:helper 已在 3 个文件重复,可考虑抽出到 `ui/util/CloudFloat.kt` 共享(暂未做,保持最小改动)
+
+**A 模式**:执行但不 commit,等用户说"commit"再 push
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (净 +70 行:3 行 import + 2 行 helper 调用 + 12 行 2 个 Image offset/alpha 改动 + 50 行 helper 函数)
+
+### §29 后山3 加渐变云朵 Ellipse 57 含位置/透明度动效(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"'D:\图\Ellipse 57.png' 也要渐变色和可以上下左右移动和变换透明度,放在 X=-25 Y=500 W=225 H=191"
+
+**操作**(按 A 模式,执行但不 commit):
+1. **复制源图**:`D:\图\Ellipse 57.png` (796 KB, 986×884) → `android/app/src/main/res/drawable-nodpi/img_shilian3_cloud_57.png`
+2. **加 helper 调用**(沿用 §28 模式):
+   ```kotlin
+   val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()
+   ```
+3. **加 Image 代码**(在 Ellipse 58 之后,与 56/58 同样模式):
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_shilian3_cloud_57),
+       modifier = Modifier
+           .offset(x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp)
+           .size(width = 225.dp, height = 191.dp),
+       colorFilter = ColorFilter.tint(
+           Color(red = 0xA9 + ..., green = 0xC3 + ..., blue = 0xC0 + ...),
+           BlendMode.Modulate,
+       ),
+       alpha = cloud57Alpha,
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+
+**Houshan3 3 朵渐变云朵动效对照**(§26/27/28/29):
+| 云朵 | 位置 | 颜色 | 透明度 | 节奏 |
+|---|---|---|---|---|
+| Ellipse 56 | X=263 Y=755 W=335 H=297 | A9C3C0↔White 共用 | 各自随机 0.5~1.0 | 1.5~3s |
+| Ellipse 58 | X=78 Y=170 W=331 H=92 | A9C3C0↔White 共用 | 各自随机 0.5~1.0 | 1.5~3s |
+| **Ellipse 57** | **X=-25 Y=500 W=225 H=191** | **A9C3C0↔White 共用** | **各自随机 0.5~1.0** | **1.5~3s** |
+
+**命名延续**:`img_shilian3_cloud_57.png`(Houshan3 目录 `img_shilian3_*` 命名惯例)
+
+**位置观察**:
+- X=-25 部分屏幕外(左侧)
+- Y=500 在 Houshan3 中部,熊猫(118, 405)下方
+- W=225 H=191 与原 Houshan1/Houshan2 的 Ellipse 57 一致
+
+**A 模式**:本次改动未 commit(等用户说"commit"或累积更多)
+
+**git 状态**(待 commit):
+- `?? img_shilian3_cloud_57.png` (新增, 796 KB)
+- `M Houshan3Screen.kt` (+2 行 helper 调用 + 18 行 Image 代码)
+
+### §30 取消 Ellipse 57 渐变色,保留位置/透明度动效(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"'D:\图\Ellipse 57.png' 就不要渐变了吧"
+
+**操作**:
+- 移除 Ellipse 57 Image 的 `colorFilter = ColorFilter.tint(...)` 参数
+- 保留位置动效 `offset(x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp)`
+- 保留透明度动效 `alpha = cloud57Alpha`
+
+**修改后代码**:
+```kotlin
+Image(
+    painter = painterResource(R.drawable.img_shilian3_cloud_57),
+    modifier = Modifier
+        .offset(x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp)
+        .size(width = 225.dp, height = 191.dp),
+    alpha = cloud57Alpha,  // 透明度动效保留
+    contentScale = ContentScale.FillBounds,
+)
+```
+
+**Houshan3 3 朵云最终动效对比**:
+| 云朵 | 颜色 | 位置 | 透明度 |
+|---|---|---|---|
+| Ellipse 56 | A9C3C0↔White(渐变)| 随机 ±100/±15 | 0.5~1.0 |
+| Ellipse 57 | **原色(无 tint)** | 随机 ±100/±15 | 0.5~1.0 |
+| Ellipse 58 | A9C3C0↔White(渐变)| 随机 ±100/±15 | 0.5~1.0 |
+
+**共享资源不变**:
+- `tintProgress` Animatable(仍驱动 Ellipse 56 + 58 颜色)
+- `rememberCloudFloat()` helper(3 个云朵各自独立调用)
+
+**A 模式**:本次改动未 commit
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (删 12 行 colorFilter 块)
+
+### §31 调整 Ellipse 57 位置到 X=187 Y=308(原色显示)(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"'D:\图\Ellipse 57.png' 白色,X=187 Y=308 W=225 H=191,可以上下左右移动,移动轨迹不要是圆形,要可以变化透明度"
+
+**解读**:
+- "白色" = PNG 原色显示(§30 刚取消渐变,白色云朵 PNG 的自然颜色)
+- 位置调整:X=-25 Y=500 → X=187 Y=308
+- W=225 H=191 保持不变
+- 动效保留(随机位置 + 透明度)— "移动轨迹不要是圆形" = 不使用 sin/cos 圆周模式,使用 §13 rememberCloudFloat 的随机模式(已经是这种)
+
+**操作**:
+- Ellipse 57 Image 的 offset 改为 `x = (187f + cloud57Dx).dp, y = (308f + cloud57Dy).dp`
+- 保留 `alpha = cloud57Alpha`(透明度动效)
+- 不加 `colorFilter`(§30 已取消渐变)
+- 不加新代码,helper 调用已有(`val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()`)
+
+**Houshan3 3 朵云最终状态**:
+| 云朵 | 位置 | 颜色 | 透明度 | 轨迹 |
+|---|---|---|---|---|
+| Ellipse 56 | X=263 Y=755 | A9C3C0↔White | 0.5~1.0 随机 | 随机(非圆)|
+| Ellipse 57 | **X=187 Y=308**(调整)| **原色(白)** | 0.5~1.0 随机 | 随机(非圆)|
+| Ellipse 58 | X=78 Y=170 | A9C3C0↔White | 0.5~1.0 随机 | 随机(非圆)|
+
+**Houshan2Screen.kt 备注**(system-reminder 提到):
+- IDE 自改了 Houshan2Screen.kt(可能是 IDE 自动格式化或未保存改动)
+- 与本指令无关,Houshan2 已有 Ellipse 57 在 X=208 Y=570(原 Houshan1 复刻),保留不动
+
+**A 模式**:本次改动未 commit
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (改 2 行:Image 注释 + offset)
+
+### §32 撤回 §31:Ellipse 57 位置改回 X=-25 Y=500(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"撤回上一步"
+
+**撤回操作**:
+- Ellipse 57 Image offset 改回:`x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp`
+- 注释改回 §30 版本
+
+**最终状态**(等价于 §30 之后,§31 之前):
+- Ellipse 57:X=-25 Y=500 W=225 H=191,原色显示,无 tint
+- 透明度 + 位置随机动效保留
+
+**A 模式本撤回为什么简单**:
+- §31 改动未 commit,所以撤回 = 直接修改文件
+- 不需要 `git revert`(那是已 commit 后撤回)
+- 不需要 force push
+
+**A 模式的价值显现**:本次撤回零代价(只改工作区 + SESSION-LOG),避免了"为了撤回一个小改动而 force push"的麻烦。
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (改 2 行:Image 注释 + offset,回到 §30 值)
+
+### §33 后山3 加云朵 Ellipse 5(X=187 Y=308 W=225 H=191 白色原色)(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"'D:\图\Ellipse 5.png' 白色,放在 X=187 Y=308 W=225 H=191,可以上下左右移动,移动轨迹不要是圆形,要可以变化透明度"
+
+**重要发现**:`D:\图\Ellipse 5.png` 字节数与 `Ellipse 57.png` **完全一致**(都是 796,237 bytes,986×884,比 1.115)— 实际是同一张图(可能文件管理器里有两份,但内容相同)。
+
+按用户明确指定的 `Ellipse 5.png` 新建独立资源:
+- `android/app/src/main/res/drawable-nodpi/img_shilian3_cloud_5.png`(新建,即使内容与 cloud_57.png 相同)
+- 未来 Ellipse 5.png 和 Ellipse 57.png 内容分化时,资源独立
+
+**操作**:
+1. **复制源图**:`D:\图\Ellipse 5.png` → `img_shilian3_cloud_5.png` (796,237 bytes)
+2. **加 helper 调用**(沿用 §28 模式):
+   ```kotlin
+   val (cloud5Dx, cloud5Dy, cloud5Alpha) = rememberCloudFloat()
+   ```
+3. **加 Image 代码**(在 Ellipse 57 之后,X=187 Y=308,白色原色无 tint):
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_shilian3_cloud_5),
+       modifier = Modifier
+           .offset(x = (187f + cloud5Dx).dp, y = (308f + cloud5Dy).dp)
+           .size(width = 225.dp, height = 191.dp),
+       alpha = cloud5Alpha,
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+
+**Houshan3 4 朵云最终状态**:
+| 云朵 | 位置 | 颜色 | 透明度 | 备注 |
+|---|---|---|---|---|
+| Ellipse 56 | X=263 Y=755 | A9C3C0↔White | 0.5~1.0 | 渐变 |
+| Ellipse 57 | X=-25 Y=500 | 原色 | 0.5~1.0 | §30 取消渐变 |
+| Ellipse 58 | X=78 Y=170 | A9C3C0↔White | 0.5~1.0 | 渐变 |
+| **Ellipse 5** | **X=187 Y=308** | **原色** | **0.5~1.0** | **§33 新加(§31 撤回 → Ellipse 5 替代)** |
+
+**轨迹**:全部使用 `rememberCloudFloat()` 随机模式(非 sin/cos 圆周),符合用户"移动轨迹不要是圆形"
+
+**A 模式**:本次改动未 commit
+
+**git 状态**(待 commit):
+- `?? img_shilian3_cloud_5.png` (新增, 796 KB,与 cloud_57.png 内容相同)
+- `M Houshan3Screen.kt` (改 2 行:helper 调用 + Image)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

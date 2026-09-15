@@ -33,6 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.isActive
 
 /**
@@ -64,6 +67,12 @@ fun Houshan3Screen(
         }
     }
 
+    // 2 朵渐变云朵(56/58)位置 + 透明度随机飘动(沿用 §13 rememberCloudFloat 模式)(§28)
+    val (cloud56Dx, cloud56Dy, cloud56Alpha) = rememberCloudFloat()
+    val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
+    val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()  // §29 加 Ellipse 57
+    val (cloud5Dx, cloud5Dy, cloud5Alpha) = rememberCloudFloat()  // §33 加 Ellipse 5(实际与 Ellipse 57 同图)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -94,13 +103,13 @@ fun Houshan3Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint 颜色 A9C3C0 ↔ 白色循环 (§23/24/25/26 修复)
+            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint A9C3C0 ↔ 白色 + 位置 + 透明度随机 (§23/26/28)
             // 注意:Modifier.graphicsLayer 不支持 colorFilter,改用 Image 自己的 colorFilter 参数
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_56),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 263.dp, y = 755.dp)
+                    .offset(x = (263f + cloud56Dx).dp, y = (755f + cloud56Dy).dp)
                     .size(width = 335.dp, height = 297.dp),
                 colorFilter = ColorFilter.tint(
                     Color(
@@ -110,6 +119,48 @@ fun Houshan3Screen(
                     ),
                     BlendMode.Modulate,
                 ),
+                alpha = cloud56Alpha,
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 渐变云朵(Ellipse 58.png, X=78, Y=170, W=331, H=92) — 与 Ellipse 56 共用 tintProgress 同步循环 + 各自位置/透明度独立随机 (§27/28)
+            Image(
+                painter = painterResource(R.drawable.img_shilian3_cloud_58),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = (78f + cloud58Dx).dp, y = (170f + cloud58Dy).dp)
+                    .size(width = 331.dp, height = 92.dp),
+                colorFilter = ColorFilter.tint(
+                    Color(
+                        red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
+                        green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
+                        blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
+                    ),
+                    BlendMode.Modulate,
+                ),
+                alpha = cloud58Alpha,
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示(§30),仅位置 + 透明度随机 (§32 撤回 §31)
+            Image(
+                painter = painterResource(R.drawable.img_shilian3_cloud_57),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp)
+                    .size(width = 225.dp, height = 191.dp),
+                alpha = cloud57Alpha,
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 云朵(Ellipse 5.png, X=187, Y=308, W=225, H=191) — 原色显示,位置 + 透明度随机(§33)
+            Image(
+                painter = painterResource(R.drawable.img_shilian3_cloud_5),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = (187f + cloud5Dx).dp, y = (308f + cloud5Dy).dp)
+                    .size(width = 225.dp, height = 191.dp),
+                alpha = cloud5Alpha,
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -251,4 +302,62 @@ fun Houshan3Screen(
             }
         }
     }
+}
+
+/**
+ * 云朵随机飘动 helper:3 个独立 LaunchedEffect 协程并行,
+ * 每次随机选目标值 + 随机 delay,产生 X/Y/Alpha 三维自然飘动。
+ *
+ * 复制自 Houshan1Screen.kt §13 — 因为 helper 是 private fun,不能跨文件共享。
+ * TODO:后续可抽出到 ui/util/CloudFloat.kt 共享(同 §28 设计考虑)。
+ */
+@Composable
+private fun rememberCloudFloat(
+    maxX: Float = 100f,
+    maxY: Float = 15f,
+    alphaMin: Float = 0.5f,
+    alphaMax: Float = 1f,
+    xDuration: IntRange = 1500..3000,
+    xDelay: LongRange = 500L..1500L,
+): Triple<Float, Float, Float> {
+    val x = remember { Animatable(0f) }
+    val y = remember { Animatable(0f) }
+    val alpha = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            x.animateTo(
+                targetValue = Random.nextFloat() * 2f * maxX - maxX,
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(xDuration.first, xDuration.last + 1),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(xDelay.first, xDelay.last + 1))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            y.animateTo(
+                targetValue = Random.nextFloat() * 2f * maxY - maxY,
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1000, 2000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(300, 800))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            alpha.animateTo(
+                targetValue = alphaMin + Random.nextFloat() * (alphaMax - alphaMin),
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1500, 3000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(500, 1200))
+        }
+    }
+    return Triple(x.value, y.value, alpha.value)
 }
