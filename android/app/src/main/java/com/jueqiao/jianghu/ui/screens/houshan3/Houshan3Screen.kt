@@ -1,6 +1,12 @@
 package com.jueqiao.jianghu.ui.screens.houshan3
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateColor
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,10 +21,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -45,6 +55,18 @@ fun Houshan3Screen(
     onOpenUnfinished: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
+
+    // Ellipse 56 渐变色循环:tint 从 A9C3C0 → 白色,4s 周期 RepeatMode.Reverse (§23)
+    val tintTransition = rememberInfiniteTransition(label = "cloud56Tint")
+    val tintColor by tintTransition.animateColor(
+        initialValue = Color(0xFFA9C3C0),
+        targetValue = Color.White,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "cloud56Tint",
+    )
 
     Box(
         modifier = Modifier
@@ -73,6 +95,19 @@ fun Houshan3Screen(
                 modifier = Modifier
                     .offset(x = (-46).dp, y = 476.dp)
                     .size(width = 331.dp, height = 92.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint 颜色 A9C3C0 ↔ 白色循环 (§23)
+            Image(
+                painter = painterResource(R.drawable.img_shilian3_cloud_56),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 263.dp, y = 755.dp)
+                    .size(width = 335.dp, height = 297.dp)
+                    .graphicsLayer {
+                        colorFilter = ColorFilter.tint(tintColor, BlendMode.Modulate)
+                    },
                 contentScale = ContentScale.FillBounds,
             )
 

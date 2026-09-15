@@ -909,6 +909,67 @@ modifier = Modifier
 - `M Houshan2Screen.kt` (+2 行:函数签名 1 行;标签1 改 1 行;注释 1 行)
 - `M JianghuNavHost.kt` (+2 行:Houshan1 + Houshan2 各加 1 行 onOpenVolume1 接线)
 
+### §23 后山3 渐变云朵 Ellipse 56:tint A9C3C0 ↔ 白色循环(2026-09-15 下午)
+
+**用户指令**:"我希望你可以在'后山3'页面用'D:\图\Ellipse 56.png'图像,这是一个渐变的图像,我希望你可以让图像从 A9C3C0 色到白色不断变换颜色,放在 X=263 Y=755 W=335 H=297"
+
+**操作**:
+1. **复制源图**:`D:\图\Ellipse 56.png` (1.6 MB, 1487×1373, 比 1.083) → `android/app/src/main/res/drawable-nodpi/img_shilian3_cloud_56.png`(同命名惯例 `img_shilian3_*`)
+2. **颜色循环动画**:`rememberInfiniteTransition + animateColor + RepeatMode.Reverse`:
+   ```kotlin
+   val tintTransition = rememberInfiniteTransition(label = "cloud56Tint")
+   val tintColor by tintTransition.animateColor(
+       initialValue = Color(0xFFA9C3C0),  // A9C3C0 + FF 透明度
+       targetValue = Color.White,
+       animationSpec = infiniteRepeatable(
+           animation = tween(durationMillis = 4000, easing = LinearEasing),
+           repeatMode = RepeatMode.Reverse,
+       ),
+       label = "cloud56Tint",
+   )
+   ```
+3. **Image + graphicsLayer.colorFilter**:
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_shilian3_cloud_56),
+       modifier = Modifier
+           .offset(x = 263.dp, y = 755.dp)
+           .size(width = 335.dp, height = 297.dp)
+           .graphicsLayer {
+               colorFilter = ColorFilter.tint(tintColor, BlendMode.Modulate)
+           },
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+
+**色彩行为**:
+- `ColorFilter.tint(tintColor, BlendMode.Modulate)`:tint 颜色与原图像素**相乘**
+- tintColor 在 [A9C3C0, White] 之间循环(4s 来回)
+- 当 tintColor = A9C3C0:原图渐变被染成"青绿偏色"
+- 当 tintColor = White:原图渐变保持原色(白乘任何色 = 原色)
+
+**为什么 Modulate 而不是 SrcOver**:
+- `SrcOver`:tint 色完全覆盖原图 → 图像变成纯色块(丢失 PNG 渐变)
+- `Modulate`:tint 色作为滤镜乘法 → 保留原图渐变结构,只改变色调
+
+**新加 imports**:
+- `androidx.compose.animation.core.{LinearEasing, RepeatMode, animateColor, infiniteRepeatable, rememberInfiniteTransition, tween}`
+- `androidx.compose.runtime.getValue`
+- `androidx.compose.ui.graphics.{BlendMode, ColorFilter, graphicsLayer}`
+
+**位置观察**:
+- X=263, Y=755, W=335, H=297(右下角偏中,接近屏幕底部)
+- 椭圆 PNG 比 1.083(近正方形),但 size 强制 W=335 H=297,内容被横拉 1.27 倍
+- 按 [image-fit-to-natural-bounds](image-fit-to-natural-bounds) 应是 W=297 H=274 — 但用户给了具体 W/H,直接采纳
+
+**z-order**:在 Houshan3 现有云朵之后,熊猫之前 — 渲染顺序:背景 → Ellipse 58 云 → Ellipse 56 渐变云 → 熊猫 → 标签 → 返回
+
+**节奏**:4s 半周期(从 A9C3C0 到 White),8s 完整周期(RepeatMode.Reverse)循环
+
+**git 状态**(commit 后):
+- `M img_shilian3_cloud_56.png`(新增, 1.6 MB)
+- `M Houshan3Screen.kt` (+20 行:5 行 import + 11 行 transition + 12 行 Image)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
