@@ -54,6 +54,26 @@
 
 **已知缺失**:09-14 下午~晚上的 50 个 houshan1 云朵/动效 commit 没有 SESSION-LOG 记录(被回退时也丢失),archive 里只有 §81 段描述了"这些 commit 被丢弃"。
 
+### §3 替换 Houshan1Screen 背景图(2026-09-15 上午)
+
+**用户指令**:"'D:\图\试炼.png' 我已经替换过原图,请替换'后山1'页面中的背景图"
+
+**操作**:
+- 源图:`D:\图\试炼.png` (3.7 MB, 1236×2751, RGBA, Sep 14 20:30 用户已替换过)
+- 目标:`android/app/src/main/res/drawable/img_shilian_bg.png`
+- 操作:直接覆盖(cp 不做 fit 调整,因为是全屏背景 + ContentScale.Crop)
+- `.kt` 代码**无需改**:`R.drawable.img_shilian_bg` 引用对 `drawable/` 目录已正确
+- 8f5a28c 基线上背景图就在 `drawable/`(8f5a28c..HEAD 那 50 个 commit 把它挪到 `drawable-nodpi/`,reset 后回到 `drawable/`)
+
+**文件变化**:
+- 旧:1,901,188 bytes (Sep 9 08:53)
+- 新:3,734,846 bytes (Sep 15 10:10)
+- 增量:+1,833,658 bytes (1.75 MB 增长)
+
+**为什么不需要 fit**:全屏背景 + ContentScale.Crop 自然填满屏幕,不存在列框宽高比问题(fit-to-natural-bounds 规则不适用)。
+
+**git 状态**:`M android/app/src/main/res/drawable/img_shilian_bg.png`
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
