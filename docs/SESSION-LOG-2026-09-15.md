@@ -208,6 +208,49 @@ Image(
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+3 行:alpha 参数 + 注释同步)
 
+### §8 云朵 56 椭圆飘动 ±40 dp / 7s(2026-09-15 上午)
+
+**用户指令**:"Ellipse 56.png 是云朵,要形成一种动效,要修成云朵飘动的特性"
+
+**用户选择**:椭圆轨迹 ±40 半径、7s 一圈
+
+**实现**:Compose `rememberInfiniteTransition + animateFloat`(比 50 commit 链上的 Animatable + LaunchedEffect 模式简洁)
+```kotlin
+val cloud56Transition = rememberInfiniteTransition(label = "cloud56Float")
+val cloud56Angle by cloud56Transition.animateFloat(
+    initialValue = 0f,
+    targetValue = (2 * Math.PI).toFloat(),
+    animationSpec = infiniteRepeatable(
+        animation = tween(durationMillis = 7000, easing = LinearEasing),
+    ),
+    label = "cloud56Angle",
+)
+val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
+val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
+```
+
+云朵 56 Image offset 改为:
+```kotlin
+.offset(x = (196f + cloud56Dx).dp, y = (595f + cloud56Dy).dp)
+```
+
+**新加 imports**:
+- `androidx.compose.animation.core.{animateFloat, infiniteRepeatable, LinearEasing, rememberInfiniteTransition, tween}`
+- `androidx.compose.runtime.getValue`
+- `kotlin.math.{cos, sin}`
+
+**轨迹特征**:
+- X = sin(angle) × 40,起点 0,7s 后回到 0(逆时针/顺时针取决于坐标系)
+- Y = cos(angle) × 40,起点 40(最下),7s 后回到 40(最下)
+- 实际上 Y = cos 在 angle=0 时 = 1,所以起点 Y=595+40=635(下),angle=π/2 时 Y=595-40=555(上)
+- 完整圆周轨迹,中心 (196, 595),半径 40
+
+**其他云朵无动效**:云朵 58/61 保持静止(用户未要求动效)。如需动效,告诉我具体云朵。
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+13 行:5 行 import + 8 行 transition 代码;offset 改 2 行)
+- `M docs/SESSION-LOG-2026-09-15.md` (+本节)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

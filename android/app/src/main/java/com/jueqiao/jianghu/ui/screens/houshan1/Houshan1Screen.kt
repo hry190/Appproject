@@ -1,6 +1,11 @@
 package com.jueqiao.jianghu.ui.screens.houshan1
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
@@ -45,6 +53,19 @@ fun Houshan1Screen(
     onOpenHoushan2: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
+
+    // 云朵 56 椭圆飘动:7s 一圈,半径 ±40 dp (§8)
+    val cloud56Transition = rememberInfiniteTransition(label = "cloud56Float")
+    val cloud56Angle by cloud56Transition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * Math.PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 7000, easing = LinearEasing),
+        ),
+        label = "cloud56Angle",
+    )
+    val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
+    val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 
     Box(
         modifier = Modifier
@@ -85,12 +106,12 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 56 (Ellipse 56.png, X=196, Y=595, W=335, H=297) — 用户原值, 比 1.128 ≈ PNG 1.083 (4% 偏差可接受);alpha=1f 100% 不透明 (§7)
+            // 云朵 56 (Ellipse 56.png, X=196, Y=595, W=335, H=297) — 用户原值, 比 1.128 ≈ PNG 1.083 (4% 偏差可接受);alpha=1f 100% 不透明 (§7);椭圆飘动 ±40 dp / 7s (§8)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_56),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 196.dp, y = 595.dp)
+                    .offset(x = (196f + cloud56Dx).dp, y = (595f + cloud56Dy).dp)
                     .size(width = 335.dp, height = 297.dp),
                 alpha = 1f,  // 100% 不透明 — 用户指令 2026-09-15 §7
                 contentScale = ContentScale.FillBounds,
