@@ -970,6 +970,55 @@ modifier = Modifier
 - `M img_shilian3_cloud_56.png`(新增, 1.6 MB)
 - `M Houshan3Screen.kt` (+20 行:5 行 import + 11 行 transition + 12 行 Image)
 
+### §24 修复 §23 编译错误:`InfiniteTransition.animateColor` 在项目 Compose 版本不存在(2026-09-15 下午)
+
+**用户报告**:"failed — Unresolved reference 'animateColor'. Unresolved reference 'animateColor'. Cannot infer type for this parameter. Unresolved reference 'colorFilter'."
+
+**根因**:
+- `InfiniteTransition.animateColor` API 在项目使用的 Compose 版本中**不存在**
+- `colorFilter = ...` 报"Unresolved reference"是次生错误(graphicsLayer block 的 lambda 类型推断失败,因为 `tintColor` 是 `State<Color>` 但 animateColor 引用失败,类型变成 `Nothing`)
+- Float 动画(`animateFloat`)可工作,但 Color 动画需要 `Animatable<Color>` 手动驱动
+
+**修复方案**:`Animatable<Color>` + `LaunchedEffect` + `while (isActive)` + 两次 `animateTo` 循环(等价于 `RepeatMode.Reverse`):
+```kotlin
+val tintColor = remember { Animatable(Color(0xFFA9C3C0)) }
+LaunchedEffect(Unit) {
+    while (isActive) {
+        tintColor.animateTo(
+            targetValue = Color.White,
+            animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
+        )
+        tintColor.animateTo(
+            targetValue = Color(0xFFA9C3C0),
+            animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
+        )
+    }
+}
+// Image modifier:
+.graphicsLayer {
+    colorFilter = ColorFilter.tint(tintColor.value, BlendMode.Modulate)
+}
+```
+
+**Import 变化**:
+- 移除:`androidx.compose.animation.core.{animateColor, infiniteRepeatable, rememberInfiniteTransition, RepeatMode}`
+- 新加:`androidx.compose.animation.core.Animatable`
+- 新加:`androidx.compose.runtime.LaunchedEffect`
+- 新加:`kotlinx.coroutines.isActive`
+- `LinearEasing` / `tween` 保留
+
+**关键差异**:
+| §23(报错) | §24(修复) |
+|---|---|
+| `val tintColor by tintTransition.animateColor(...)` | `val tintColor = remember { Animatable(...) }` |
+| `tintColor`(State) | `tintColor.value`(显式取值)|
+| `rememberInfiniteTransition` + `animateColor` | `Animatable<Color>` + `LaunchedEffect` + `while (isActive)` |
+
+**新加 memory**:`compose-animatecolor-version-trap` — 记录这个 Compose API 陷阱,避免下次重蹈覆辙
+
+**git 状态**(commit 后):
+- `M Houshan3Screen.kt` (净 0 变化,但内部从 `animateColor` 改 `Animatable`)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

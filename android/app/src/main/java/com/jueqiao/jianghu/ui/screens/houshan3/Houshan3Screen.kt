@@ -1,11 +1,8 @@
 package com.jueqiao.jianghu.ui.screens.houshan3
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateColor
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +18,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlinx.coroutines.isActive
 
 /**
  * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
@@ -56,17 +55,20 @@ fun Houshan3Screen(
 ) {
     BackHandler(enabled = true) { onBack() }
 
-    // Ellipse 56 渐变色循环:tint 从 A9C3C0 → 白色,4s 周期 RepeatMode.Reverse (§23)
-    val tintTransition = rememberInfiniteTransition(label = "cloud56Tint")
-    val tintColor by tintTransition.animateColor(
-        initialValue = Color(0xFFA9C3C0),
-        targetValue = Color.White,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "cloud56Tint",
-    )
+    // Ellipse 56 渐变色循环:Animatable A9C3C0 ↔ 白色,4s 来回 (§23 + §24 修复)
+    val tintColor = remember { Animatable(Color(0xFFA9C3C0)) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            tintColor.animateTo(
+                targetValue = Color.White,
+                animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
+            )
+            tintColor.animateTo(
+                targetValue = Color(0xFFA9C3C0),
+                animationSpec = tween(durationMillis = 4000, easing = LinearEasing),
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -106,7 +108,7 @@ fun Houshan3Screen(
                     .offset(x = 263.dp, y = 755.dp)
                     .size(width = 335.dp, height = 297.dp)
                     .graphicsLayer {
-                        colorFilter = ColorFilter.tint(tintColor, BlendMode.Modulate)
+                        colorFilter = ColorFilter.tint(tintColor.value, BlendMode.Modulate)
                     },
                 contentScale = ContentScale.FillBounds,
             )
