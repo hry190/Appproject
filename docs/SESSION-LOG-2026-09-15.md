@@ -616,6 +616,29 @@ val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+11 行:4 行 helper 调用 + 7 行 Image 代码)
 
+### §17 再替换后山1背景图 — D:\图\试炼.png(2026-09-15 下午)
+
+**用户指令**:"'D:\图\试炼.png' 我已经替换过原图,请把这个图像再替换我页面中的图像"
+
+**文件变化**:
+| 文件 | 大小 | 时间 |
+|---|---|---|
+| `D:\图\试炼.png`(源)| **3,562,012 bytes** (3.4 MB) | Sep 15 16:16(用户替换)|
+| `img_shilian_bg.png`(项目)| 3,734,846 bytes (3.6 MB) | Sep 15 10:10(§3 commit)|
+| `img_shilian_bg.png`(本次后)| 3,562,012 bytes (3.4 MB) | Sep 15 16:18 |
+
+**尺寸**:1236×2751(不变)— 文件大小减小约 172 KB(173 万字节),可能是用户重新压缩或修改了某些细节
+
+**操作**:`cp "D:/图/试炼.png" android/app/src/main/res/drawable/img_shilian_bg.png` 覆盖
+
+**.kt 代码无改动**:`R.drawable.img_shilian_bg` 引用对 `drawable/` 目录已正确(8f5a28c 基线约定)
+
+**历史**:50 commit 链上有 `953e939 feat(houshan1): 第三次替换背景图 — D:\图\试炼.png` 等多次替换记录 — 用户常会反复替换同一张源图
+
+**git 状态**(commit 后):
+- `M img_shilian_bg.png` (3.6 MB → 3.4 MB)
+- `M docs/SESSION-LOG-2026-09-15.md` (+本节)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
