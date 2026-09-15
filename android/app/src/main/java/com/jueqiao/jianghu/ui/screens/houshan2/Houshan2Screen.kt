@@ -65,6 +65,7 @@ import kotlinx.coroutines.isActive
 fun Houshan2Screen(
     onBack: () -> Unit = {},
     onOpenHoushan3: () -> Unit = {},
+    onOpenVolume1: () -> Unit = {},  // 识机真决标签跳转第一卷-1 (§22)
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -180,16 +181,12 @@ fun Houshan2Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "标签1" 图像 (未标题-1-恢复的-恢复的 4.png, X=-13, Y=570, W=106, H=188)
+            // "标签1" 图像 (未标题-1-恢复的-恢复的 4.png, X=-13, Y=570, W=106, H=188) — 点击跳转第一卷-1 (§22)
             Box(
                 modifier = Modifier
                     .offset(x = -13.dp, y = 570.dp)
                     .size(width = 106.dp, height = 188.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§19)
-                    ),
+                    .clickable(onClick = onOpenVolume1),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),

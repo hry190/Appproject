@@ -548,12 +548,14 @@ fun JianghuNavHost(
             Houshan1Screen(
                 onBack = { navController.popBackStack() },
                 onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
+                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
         }
         composable(Routes.Shilian2) {
             Houshan2Screen(
                 onBack = { navController.popBackStack() },
                 onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
+                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
         }
         composable(Routes.Shilian3) {

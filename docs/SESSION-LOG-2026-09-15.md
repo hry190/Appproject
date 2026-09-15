@@ -859,6 +859,56 @@ modifier = Modifier
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+22 行:1 行 import + 13 行 transition + Image 改 5 行)
 
+### §22 后山1+后山2 识机真决标签点击跳转第一卷-1(2026-09-15 下午)
+
+**用户指令**:"点击'后山1'页面和'后山2'页面的'识机真决'标签时可以跳转到'第一卷-1'页面"
+
+**历史背景**:
+- 50 commit 链上 9月13日 §80 和 9月14日 §1.1/§1.2 都做过此改动
+- 9月14日 22:36 reset 到 8f5a28c 后,**改动全部丢失**(`onOpenVolume1` 参数和接线都没了)
+- 当前需要重新实现
+
+**代码改动**(5 个文件):
+
+#### 1. [Houshan1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt)
+- 函数签名加 `onOpenVolume1: () -> Unit = {}`(line 63)
+- "标签1" Box(line 211-220)加 `.clickable(onClick = onOpenVolume1)`
+
+#### 2. [Houshan2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt)
+- 函数签名加 `onOpenVolume1: () -> Unit = {}`(line 52)
+- "标签1" Box(line 183-)改 §19 的 `onClick = {}` → `onClick = onOpenVolume1`
+  - **保留事件消费**(点击标签1 不再冒泡到外层 → 不触发 Houshan3 跳转)
+  - **改为跳转第一卷-1**(用户的意图)
+
+#### 3. [JianghuNavHost.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt)
+- `composable(Routes.Shilian)` block 加 `onOpenVolume1 = { navController.navigate(Routes.Volume1) }`
+- `composable(Routes.Shilian2)` block 加 `onOpenVolume1 = { navController.navigate(Routes.Volume1) }`
+
+**不动**:
+- `Routes.Volume1 = "volume1"`(已存在)
+- `RoutesTest.kt:49` `assertEquals("volume1", Routes.Volume1)`(已存在)
+- Houshan2 标签 2/3/4 仍保留 §19 的 `onClick = {}`(消费事件但不跳转)
+
+**事件流**(Houshan2):
+- 点击标签1 → 标签1 clickable → 跳转 Volume1 ✓
+- 点击标签 2/3/4 → 标签 clickable(onClick = {}) → 消费事件 → 不跳转 ✓
+- 点击其他位置(整屏) → 外层 Box clickable → 跳转 Houshan3 ✓
+
+**事件流**(Houshan1):
+- 点击标签1 → 跳转 Volume1 ✓
+- 点击 Rectangle156 气泡 → 跳转 Houshan2(原本)
+- 点击左上角返回按钮 → 回到修炼页
+
+**与之前 9月14日 §1.2 的差异**:
+- §1.2 当时还做了"标签1 之前从未有 .clickable 是 bug" 的修正(气泡 Box 错绑点击)
+- 现在 Houshan1 已经从 8f5a28c 重写,Rectangle156 气泡的 `.clickable(onClick = onOpenHoushan2)` 是正确绑定
+- 这次只加标签1 → Volume1 的新跳转,不动气泡
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+2 行:函数签名 1 行 + 标签1 clickable 1 行;注释 1 行)
+- `M Houshan2Screen.kt` (+2 行:函数签名 1 行;标签1 改 1 行;注释 1 行)
+- `M JianghuNavHost.kt` (+2 行:Houshan1 + Houshan2 各加 1 行 onOpenVolume1 接线)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
