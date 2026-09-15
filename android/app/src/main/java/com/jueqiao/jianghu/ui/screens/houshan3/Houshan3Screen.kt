@@ -57,7 +57,7 @@ fun Houshan3Screen(
 ) {
     BackHandler(enabled = true) { onBack() }
 
-    // Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25 修复)
+    // Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25/26 修复)
     // 0 = A9C3C0, 1 = White;在 graphicsLayer 块内合成 Color
     val tintProgress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -93,9 +93,9 @@ fun Houshan3Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .clickable(onClick = onOpenUnfinished),
         ) {
-            // 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)— 在熊猫上层
+            // 旧云朵(8f5a28c 基线,重命名为 _old 避免与 Ellipse 58.png 命名冲突 §35)— 资源已 mv → img_shilian3_cloud_old.png
             Image(
-                painter = painterResource(R.drawable.img_shilian3_cloud),
+                painter = painterResource(R.drawable.img_shilian3_cloud_old),
                 contentDescription = "云朵",
                 modifier = Modifier
                     .offset(x = (-46).dp, y = 476.dp)
@@ -142,7 +142,7 @@ fun Houshan3Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示(§30),仅位置 + 透明度随机 (§32 撤回 §31)
+            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示,仅位置 + 透明度随机 (§29/§30)
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_57),
                 contentDescription = null,

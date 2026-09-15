@@ -1380,6 +1380,62 @@ Image(
 - `?? img_shilian3_cloud_5.png` (新增, 796 KB,与 cloud_57.png 内容相同)
 - `M Houshan3Screen.kt` (改 2 行:helper 调用 + Image)
 
+### §34 注释修正:补 §26 引用 + 简化 Ellipse 57 注释(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:"注意注释"
+
+**2 处注释修正**:
+1. **Line 60**:补 §26 引用(GraphicsLayerScope 没 colorFilter 修复)
+   - 改前:`// Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25 修复)`
+   - 改后:`// Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25/26 修复)`
+   - 原因:§26 是 GraphicsLayerScope 没 colorFilter 修复,缺它会让历史不完整
+
+2. **Line 145** Ellipse 57 Image:简化引用(去掉已撤回的 §31)
+   - 改前:`// 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示(§30),仅位置 + 透明度随机 (§32 撤回 §31)`
+   - 改后:`// 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示,仅位置 + 透明度随机 (§29/§30)`
+   - 原因:§31(调到 X=187 Y=308)被 §32 撤回,引用它会造成混淆;注释应反映当前代码状态
+
+**未做(用户未要求)**:
+- **发现命名冲突**:Houshan3 现有 2 朵都标注为 Ellipse 58.png:
+  - 旧云朵(8f5a28c 基线) `img_shilian3_cloud`,X=-46 Y=476 W=331 H=92
+  - 新云朵(§27 我加) `img_shilian3_cloud_58.png`,X=78 Y=170 W=331 H=92
+  - 资源名不同但 PNG 源可能相同("Ellipse 58.png"标注冲突)
+  - **高度都是 W=331 H=92**,可能重叠
+  - 命名重构(改旧云朵资源名)超出本次注释修正范围,等用户决定
+
+**A 模式**:本次改动未 commit
+
+**git 状态**(待 commit):
+- `M Houshan3Screen.kt` (改 2 行注释)
+
+### §35 Houshan3 重命名旧云朵 → img_shilian3_cloud_old(避免命名冲突)(2026-09-15 下午)— A 模式不 commit
+
+**用户指令**:选 A — 把旧云朵 `img_shilian3_cloud` 改名为 `img_shilian3_cloud_old`
+
+**操作**(用 `git mv` 保留历史):
+1. **重命名文件**:`android/app/src/main/res/drawable/img_shilian3_cloud.png` → `img_shilian3_cloud_old.png`
+   - 用 `git mv` 而非 `mv`(保留 git 历史记录,IDE 友好)
+2. **更新引用**:Houshan3Screen.kt line 98
+   - `painterResource(R.drawable.img_shilian3_cloud)` → `painterResource(R.drawable.img_shilian3_cloud_old)`
+   - 注释改为:`// 旧云朵(8f5a28c 基线,重命名为 _old 避免与 Ellipse 58.png 命名冲突 §35)`
+
+**命名对比**:
+| 资源名 | 用途 | 来源 |
+|---|---|---|
+| `img_shilian3_cloud_old.png`(原 `img_shilian3_cloud`)| 旧云朵 | 8f5a28c 基线 |
+| `img_shilian3_cloud_56.png` | §23 我加的 Ellipse 56 | D:\图\Ellipse 56.png |
+| `img_shilian3_cloud_57.png` | §29 我加的 Ellipse 57 | D:\图\Ellipse 57.png |
+| `img_shilian3_cloud_58.png` | §27 我加的 Ellipse 58 | D:\图\Ellipse 58.png |
+| `img_shilian3_cloud_5.png` | §33 我加的 Ellipse 5 | D:\图\Ellipse 5.png |
+
+**结果**:命名唯一,无重复。`_old` 后缀明确标识为 8f5a28c 基线旧资源。
+
+**A 模式**:本次改动未 commit(等用户说 commit)
+
+**git 状态**(待 commit):
+- `R img_shilian3_cloud.png → img_shilian3_cloud_old.png`(重命名)
+- `M Houshan3Screen.kt` (改 2 行:painterResource + 注释)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
