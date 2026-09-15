@@ -639,6 +639,60 @@ val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
 - `M img_shilian_bg.png` (3.6 MB → 3.4 MB)
 - `M docs/SESSION-LOG-2026-09-15.md` (+本节)
 
+### §18 删除后山2页 + 基于后山1页重写,去掉熊猫和气泡(2026-09-15 下午)
+
+**用户指令**:"可以把'后山2'页面删掉,把'后山1'页面复制过去改名叫'后山2'页面,但是不要复制熊猫图像和气泡及其文本"
+
+**侦察结果**(agent 报告):
+- 旧 [Houshan2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt):208 行,已经从 Houshan1 复制并去掉 Rectangle156 气泡,但**没有云朵动画**(旧版时还没加云朵)
+- [JianghuNavHost.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt) 接线:`composable(Routes.Shilian2) { Houshan2Screen(onBack, onOpenHoushan3) }` — **不动**
+- [Routes.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/Routes.kt):`const val Shilian2 = "shilian2"` — **不动**
+- [RoutesTest.kt:39](android/app/src/test/java/com/jueqiao/jianghu/nav/RoutesTest.kt):`assertEquals("shilian2", Routes.Shilian2)` — **不动**(因为 Routes.Shilian2 保持)
+
+**操作**:
+1. **删除旧文件**:`rm Houshan2Screen.kt`(208 行)
+2. **新建** `Houshan2Screen.kt`(~395 行),基于当前 `Houshan1Screen.kt` 复制:
+   - 包名:`com.jueqiao.jianghu.ui.screens.houshan2`
+   - 函数签名:`Houshan2Screen(onBack: () -> Unit = {}, onOpenHoushan3: () -> Unit = {})`(同旧 Houshan2,删 `onOpenHoushan2`)
+   - 整屏 `.clickable(onClick = onOpenHoushan3)`(同旧 Houshan2 设计)
+   - **保留**:6 朵云(58/61/56/57/60/60b)+ 4 个标签(1-4)+ 左上角返回按钮 + rememberCloudFloat helper
+   - **删除**:熊猫 `img_shilian_panda` Image + Rectangle156 气泡 Box + "御剑穿行云雾群山..." Text
+   - 删除 import:`androidx.compose.foundation.layout.padding`(气泡文字用了)
+   - 删除 import:`androidx.compose.animation.core.RepeatMode`(旧 Houshan1 用过但新版不用)
+
+**KDoc 更新**:
+- 顶部说明 §18 重写来源 + 删除的元素
+- 列出所有布局元素(同旧 Houshan1 注释)
+
+**同时 commit 的 uncommitted 改动**:
+- [Houshan1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt):云朵 60b Y=690 → 760(用户 IDE 真机调整)
+- 修改了 cloud_60b 注释 Y 值要保持同步(下次 commit 或 IDE 自动同步)
+
+**最终对照表**(Houshan1 vs 新 Houshan2):
+
+| 元素 | Houshan1 | 新 Houshan2 |
+|---|---|---|
+| 背景图 | ✓ | ✓ |
+| 云朵 58/61/56/57/60/60b(动画)| ✓ | ✓ |
+| 4 个标签 + 文字 | ✓ | ✓ |
+| 返回按钮 | ✓ | ✓ |
+| 熊猫 | ✓ | **❌** |
+| Rectangle156 气泡 + 文字 | ✓ | **❌** |
+| 整屏 clickable | ❌(只气泡可点击)| ✓(整屏 → Houshan3)|
+| onOpenHoushan2 callback | ✓(被 Rectangle156 调用) | **❌**(删除) |
+| onOpenHoushan3 callback | ❌ | ✓(整屏跳转) |
+
+**为什么 Houshan1 不动**:
+- 用户明确说"复制后山1过去",指的是**复制当前 Houshan1 内容到 Houshan2 文件**
+- Houshan1 自身的熊猫和 Rectangle156 气泡保留(它们是 Houshan1 的元素,不是 Houshan2 的)
+- Houshan1 → Houshan2 的跳转通过 Rectangle156 气泡 `onClick = onOpenHoushan2` → `navigate(Routes.Shilian2)`(已在 NavHost 接线,不动)
+
+**git 状态**(commit 后):
+- `D` 旧 `Houshan2Screen.kt`(-208 行,旧版)
+- `M` 新 `Houshan2Screen.kt`(+395 行,新版)— git 视为同一文件修改(rm + Write 同路径)
+- `M` `Houshan1Screen.kt`(用户 IDE 调整云朵 60b Y)
+- `M` `docs/SESSION-LOG-2026-09-15.md` (+本节)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
