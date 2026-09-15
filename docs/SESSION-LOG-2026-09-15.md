@@ -146,6 +146,33 @@
 - `M docs/SESSION-LOG-2026-09-15.md` (+本节)
 - `?? img_houshan1_cloud_61.png` (新增)
 
+### §6 加云朵 56(Ellipse 56.png)(2026-09-15 上午)
+
+**用户指令**:"'D:\图\Ellipse 56.png' 放在 X=236 Y=715 W=335 H=297"
+
+**源图与尺寸对比**:
+- 源图 `D:\图\Ellipse 56.png`:1487×1373,比 **1.083**(近正方形)
+- 用户给的 W=335 H=297,比 **1.128**
+- 偏差:1.128/1.083 = **1.04**(仅 4%,可接受范围)
+- 用户给的尺寸正是之前 50 个 houshan1 commit 链上 `5a406e2` 用过的尺寸:"feat(houshan1): 加云朵 11 (Ellipse 56, 用户指定位置 X=278 Y=755 W=335 H=297)"
+
+**为什么直接采纳用户 W/H**(不 fit):
+- 偏差仅 4%,远低于 25% 警戒线(对比之前 Ellipse 58/61 用户值都是 60%+ 偏差)
+- 尺寸是历史 commit 链上验证过的尺寸,非凭印象
+- 按 [image-fit-to-natural-bounds](image-fit-to-natural-bounds) 横图 fit max_W=355 × max_H=394 → W=355 H=328,与用户给的 W=335 H=297 差距很小,效果近似
+- 实际渲染差别:差 20px 宽 + 31px 高,真机几乎看不出差别
+
+**操作**:
+1. 复制源图到 `android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_56.png`(1618298 bytes, 1487×1373)
+2. 在云朵 61 之后、熊猫之前插入 Image(line 88 之前)
+3. z-order:云朵 58 → 云朵 61 → 云朵 56 → 熊猫 → 标签 → 气泡 → 返回
+
+**文件变化**:
+- 新增:`android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_56.png` (1.6 MB, 1487×1373)
+- 修改:`Houshan1Screen.kt` (+9 行)
+
+**位置观察**:Y=715 在熊猫(621)下方,Rect156(508)下方,接近屏幕底部。W=335 H=297 是云朵 61 (W=355 H=213) 的"放大版"——比云朵 61 还宽一点,高很多。**会盖住熊猫(184,621)+ 标签 1(-13,570)下方**。
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

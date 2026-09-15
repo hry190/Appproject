@@ -85,6 +85,16 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
+            // 云朵 56 (Ellipse 56.png, X=236, Y=715, W=335, H=297) — 用户原值, 比 1.128 ≈ PNG 1.083 (4% 偏差可接受)
+            Image(
+                painter = painterResource(R.drawable.img_houshan1_cloud_56),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = 236.dp, y = 715.dp)
+                    .size(width = 335.dp, height = 297.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
             // 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
             Image(
                 painter = painterResource(R.drawable.img_shilian_panda),
