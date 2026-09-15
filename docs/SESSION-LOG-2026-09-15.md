@@ -443,6 +443,68 @@ Image(
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+30 行:5 行 import + 25 行 LaunchedEffect 代码;Image offset/alpha 改 3 行)
 
+### §13 其他 3 朵云(58/61/57)加随机飘动 + 抽出 rememberCloudFloat helper(2026-09-15 下午)
+
+**用户指令**:"让其他云朵也这样子"
+
+**重构决策**:抽出 `@Composable private fun rememberCloudFloat()` helper,避免 4 朵云重复 ~30 行 LaunchedEffect 代码(每朵云 25 行 × 4 = 100 行重复)
+```kotlin
+@Composable
+private fun rememberCloudFloat(
+    maxX: Float = 100f,
+    maxY: Float = 15f,
+    alphaMin: Float = 0.5f,
+    alphaMax: Float = 1f,
+): Triple<Float, Float, Float> {
+    val x = remember { Animatable(0f) }
+    val y = remember { Animatable(0f) }
+    val alpha = remember { Animatable(1f) }
+    // 3 个 LaunchedEffect 协程并行,每次随机选目标值 + 随机 delay
+    ...
+    return Triple(x.value, y.value, alpha.value)
+}
+```
+
+调用方(只 1 行/朵云):
+```kotlin
+val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
+val (cloud61Dx, cloud61Dy, cloud61Alpha) = rememberCloudFloat()
+val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()
+val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat()
+```
+
+Image 改动(4 朵):
+```kotlin
+modifier = Modifier
+    .offset(x = (-70f + cloud58Dx).dp, y = (320f + cloud58Dy).dp)
+    .size(...),
+alpha = cloud58Alpha,
+contentScale = ContentScale.FillBounds,
+```
+
+**云朵 60 同步改造**:
+- §12 的 3 个 Animatable + 9 个 LaunchedEffect 删除
+- 替换为 1 行 `rememberCloudFloat()` 调用
+- Image 改 `cloud60X.value` → `cloud60Dx`(helper 返回 Triple 解构成 Float)
+
+**云朵 56 不动**:用户 §7 明确要求 alpha=1f 100% 不透明,且当前用 rememberInfiniteTransition + sin/cos 椭圆轨迹动效(§8)。如要也加随机飘动需用户指令。
+
+**最终 5 朵云状态**:
+| 云朵 | 动效类型 | 参数 | 周期/节奏 |
+|---|---|---|---|
+| 56 | 椭圆轨迹 (sin/cos) | X/Y ±40 | 7s 周期 |
+| 58 | 随机飘动 | X±100/Y±15/Alpha 0.5~1.0 | 1~3s + delay 0.3~1.5s |
+| 61 | 随机飘动 | 同上 | 同上 |
+| 57 | 随机飘动 | 同上 | 同上 |
+| 60 | 随机飘动 | 同上(§12) | 同上 |
+
+**代码量对比**:
+- 不抽 helper:4 × 25 = 100 行(重复)
+- 抽 helper:~35 行 helper + 4 × 1 = 39 行(净节省 61 行)
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (~+50 行 helper + Image 改 12 行,§12 旧 LaunchedEffect 删 -25 行)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

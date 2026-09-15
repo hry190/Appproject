@@ -74,47 +74,11 @@ fun Houshan1Screen(
     val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
     val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 
-    // 云朵 60 自然飘动:X ±100 / Y ±15 / Alpha 0.5~1.0,每条独立随机周期 + 间隔 (§12)
-    val cloud60X = remember { Animatable(0f) }
-    val cloud60Y = remember { Animatable(0f) }
-    val cloud60Alpha = remember { Animatable(1f) }
-
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            cloud60X.animateTo(
-                targetValue = Random.nextFloat() * 200f - 100f,  // ±100
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(1500, 3000),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(500, 1500))
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            cloud60Y.animateTo(
-                targetValue = Random.nextFloat() * 30f - 15f,  // ±15
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(1000, 2000),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(300, 800))
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            cloud60Alpha.animateTo(
-                targetValue = 0.5f + Random.nextFloat() * 0.5f,  // 0.5~1.0
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(1500, 3000),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(500, 1200))
-        }
-    }
+    // 4 朵云随机飘动(58/61/57/60):统一 rememberCloudFloat() helper,X/Y/Alpha 三者独立随机 (§13)
+    val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
+    val (cloud61Dx, cloud61Dy, cloud61Alpha) = rememberCloudFloat()
+    val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()
+    val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat()
 
     Box(
         modifier = Modifier
@@ -135,23 +99,25 @@ fun Houshan1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 云朵 58 (Ellipse 58.png, X=-70, Y=320, W=455, H=259) — fit-to-natural-bounds, 横图源 844×474 (比 1.781)
+            // 云朵 58 (Ellipse 58.png, X=-70, Y=320, W=455, H=259) — fit-to-natural-bounds, 横图源 844×474 (比 1.781);随机飘动 (§13)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_58),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = -70.dp, y = 320.dp)
+                    .offset(x = (-70f + cloud58Dx).dp, y = (320f + cloud58Dy).dp)
                     .size(width = 455.dp, height = 259.dp),
+                alpha = cloud58Alpha,
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 61 (Ellipse 61.png, X=101, Y=304, W=355, H=213) — fit-to-natural-bounds, 横图源 351×210 (比 1.671)
+            // 云朵 61 (Ellipse 61.png, X=-50, Y=304, W=355, H=213) — fit-to-natural-bounds, 横图源 351×210 (比 1.671);随机飘动 (§13)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_61),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = -50.dp, y = 304.dp)
+                    .offset(x = (-50f + cloud61Dx).dp, y = (304f + cloud61Dy).dp)
                     .size(width = 355.dp, height = 213.dp),
+                alpha = cloud61Alpha,
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -166,24 +132,25 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 57 (Ellipse 57.png, X=208, Y=570, W=225, H=191) — 用户原值, 比 1.178 ≈ PNG 1.115 (5.7% 偏差可接受);右下角云朵 (§9);X=248→208 用户真机调整
+            // 云朵 57 (Ellipse 57.png, X=208, Y=570, W=225, H=191) — 用户原值, 比 1.178 ≈ PNG 1.115 (5.7% 偏差可接受);右下角云朵 (§9);X=248→208 用户真机调整;随机飘动 (§13)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_57),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 208.dp, y = 570.dp)
+                    .offset(x = (208f + cloud57Dx).dp, y = (570f + cloud57Dy).dp)
                     .size(width = 225.dp, height = 191.dp),
+                alpha = cloud57Alpha,
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10);自然飘动 X±100/Y±15/Alpha 0.5~1.0 随机 (§12)
+            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10);随机飘动 (§13)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_60),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (-21f + cloud60X.value).dp, y = (570f + cloud60Y.value).dp)
+                    .offset(x = (-21f + cloud60Dx).dp, y = (570f + cloud60Dy).dp)
                     .size(width = 355.dp, height = 137.dp),
-                alpha = cloud60Alpha.value,
+                alpha = cloud60Alpha,
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -367,4 +334,63 @@ fun Houshan1Screen(
             }
         }
     }
+}
+
+/**
+ * 云朵随机飘动 helper:3 个独立 LaunchedEffect 协程并行,
+ * 每次随机选目标值 + 随机 delay,产生 X/Y/Alpha 三维自然飘动。
+ *
+ * @param maxX X 移动半径(默认 100 dp)
+ * @param maxY Y 移动半径(默认 15 dp)
+ * @param alphaMin 透明度下限(默认 0.5f)
+ * @param alphaMax 透明度上限(默认 1f)
+ * @return Triple(x, y, alpha) 当前 Float 值
+ */
+@Composable
+private fun rememberCloudFloat(
+    maxX: Float = 100f,
+    maxY: Float = 15f,
+    alphaMin: Float = 0.5f,
+    alphaMax: Float = 1f,
+): Triple<Float, Float, Float> {
+    val x = remember { Animatable(0f) }
+    val y = remember { Animatable(0f) }
+    val alpha = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            x.animateTo(
+                targetValue = Random.nextFloat() * 2f * maxX - maxX,
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1500, 3000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(500, 1500))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            y.animateTo(
+                targetValue = Random.nextFloat() * 2f * maxY - maxY,
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1000, 2000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(300, 800))
+        }
+    }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            alpha.animateTo(
+                targetValue = alphaMin + Random.nextFloat() * (alphaMax - alphaMin),
+                animationSpec = tween(
+                    durationMillis = Random.nextInt(1500, 3000),
+                    easing = LinearEasing,
+                ),
+            )
+            delay(Random.nextLong(500, 1200))
+        }
+    }
+    return Triple(x.value, y.value, alpha.value)
 }
