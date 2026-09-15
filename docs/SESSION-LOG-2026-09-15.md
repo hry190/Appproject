@@ -569,6 +569,53 @@ val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+2 字符:`..1500` → `..1500L` 和 `1000..2000` → `1000L..2000L`)
 
+### §16 复制云朵 60 动画到 Y=690(2026-09-15 下午)
+
+**用户指令**:"把'D:\图\Ellipse 60.png'的动画再复制一个到Y轴为690的地方,其他信息不变"
+
+**操作**:
+1. **复用同一 PNG**:`img_houshan1_cloud_60.png`(不复制文件,不创建新资源)
+2. 在 transition 区域添加云朵 60b helper 调用(完全相同参数 xDuration=4000..6000, xDelay=1000L..2000L):
+   ```kotlin
+   val (cloud60bDx, cloud60bDy, cloud60bAlpha) = rememberCloudFloat(
+       xDuration = 4000..6000,
+       xDelay = 1000L..2000L,
+   )
+   ```
+3. 在云朵 60 Image 之后插入云朵 60b Image(Y=690,其他不变):
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_houshan1_cloud_60),  // 同一 PNG
+       modifier = Modifier
+           .offset(x = (-21f + cloud60bDx).dp, y = (690f + cloud60bDy).dp)
+           .size(width = 355.dp, height = 137.dp),
+       alpha = cloud60bAlpha,
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+
+**命名考虑**:
+- 没用 `img_houshan1_cloud_60b.png`(50 commit 链上有此命名)— 因为是**复用同一 PNG**,不需要新文件
+- 变量名用 `cloud60bDx/Dy/Alpha` 表示"60 的 b 副本"
+
+**位置观察**:
+- 云朵 60 Y=570,云朵 60b Y=690 — 垂直相距 120 dp
+- X 都是 -21,W=355(几乎横跨屏幕) — 两朵云在屏幕上"上下叠"的感觉
+- 两朵云的 X 移动各自独立(helper 每次调用创建独立 Animatable),动效**视觉不同步**
+
+**最终 6 朵云状态**:
+| 云朵 | 动效 | X 范围 | Y 范围 | Alpha | 节奏 |
+|---|---|---|---|---|---|
+| 56 | 椭圆轨迹 | ±40 | ±40 | 1f 固定 | 7s 周期 |
+| 58 | 随机 | ±100 | ±15 | 0.5~1.0 | 1.5~3s |
+| 61 | 随机 | ±100 | ±15 | 0.5~1.0 | 1.5~3s |
+| 57 | 随机 | ±100 | ±15 | 0.5~1.0 | 1.5~3s |
+| 60 | 随机(慢)| ±100 | ±15 | 0.5~1.0 | **4~6s** |
+| **60b** | 随机(慢) | ±100 | ±15 | 0.5~1.0 | **4~6s** |
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+11 行:4 行 helper 调用 + 7 行 Image 代码)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

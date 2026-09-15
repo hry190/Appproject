@@ -82,6 +82,10 @@ fun Houshan1Screen(
         xDuration = 4000..6000,  // X 节奏放慢约 2 倍(用户 2026-09-15 §14)
         xDelay = 1000L..2000L,   // X delay 也放慢,目标切换频率减半
     )
+    val (cloud60bDx, cloud60bDy, cloud60bAlpha) = rememberCloudFloat(
+        xDuration = 4000..6000,  // 与 cloud60 同节奏(用户 2026-09-15 §16 复制动画)
+        xDelay = 1000L..2000L,
+    )
 
     Box(
         modifier = Modifier
@@ -154,6 +158,17 @@ fun Houshan1Screen(
                     .offset(x = (-21f + cloud60Dx).dp, y = (570f + cloud60Dy).dp)
                     .size(width = 355.dp, height = 137.dp),
                 alpha = cloud60Alpha,
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 云朵 60 副本 (Ellipse 60.png, X=-21, Y=690, W=355, H=137) — 与 cloud60 同 PNG 同动效,Y=690 (§16)
+            Image(
+                painter = painterResource(R.drawable.img_houshan1_cloud_60),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = (-21f + cloud60bDx).dp, y = (690f + cloud60bDy).dp)
+                    .size(width = 355.dp, height = 137.dp),
+                alpha = cloud60bAlpha,
                 contentScale = ContentScale.FillBounds,
             )
 
