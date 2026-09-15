@@ -65,6 +65,16 @@ fun Houshan1Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
+            // 云朵 58 (Ellipse 58.png, X=-47, Y=429, W=355, H=199) — fit-to-natural-bounds, 横图源 844×474 (比 1.781)
+            Image(
+                painter = painterResource(R.drawable.img_houshan1_cloud_58),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = -47.dp, y = 429.dp)
+                    .size(width = 355.dp, height = 199.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
             // 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
             Image(
                 painter = painterResource(R.drawable.img_shilian_panda),

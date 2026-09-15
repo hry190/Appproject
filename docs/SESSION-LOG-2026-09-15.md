@@ -74,6 +74,44 @@
 
 **git 状态**:`M android/app/src/main/res/drawable/img_shilian_bg.png`
 
+### §4 加云朵 58(Ellipse 58.png)(2026-09-15 上午)
+
+**用户指令**:"'D:\图\Ellipse 58.png' 放在后山页的 X=-47 Y=429 W=277 H=92"
+
+**用户原话尺寸问题**:
+- 用户给的 W=277 H=92(横图,比 3.01)
+- 源图 `D:\图\Ellipse 58.png` 实际 844×474(横图,比 1.781)
+- 两个比例不一致:3.01/1.781 = 1.69,即用户给的"宽高比"是源图实际比的 1.69 倍
+- 按 [image-fit-to-natural-bounds](image-fit-to-natural-bounds) 规则 fit max_W=355 × max_H=394 → **W=355 H=199**(横图,W=355,H=round(355/1.781)=199)
+- 按 [screen-copy-verify-coordinates](screen-copy-verify-coordinates) 不一致就问 → 用户选 "fit-to-natural-bounds: W=355 H=199 (推荐)"
+
+**操作**:
+1. 复制源图到 `android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_58.png`(drawable-nodpi 跳过压缩,符合之前 50 个 commit 链惯例)
+2. Houshan1Screen.kt 在内容层开头(line 67-68 之间)插入 Image 代码:
+   ```kotlin
+   Image(
+       painter = painterResource(R.drawable.img_houshan1_cloud_58),
+       modifier = Modifier
+           .offset(x = -47.dp, y = 429.dp)
+           .size(width = 355.dp, height = 199.dp),
+       contentScale = ContentScale.FillBounds,
+   )
+   ```
+3. z-order:云朵在内容层最开始(熊猫之前绘制,云朵在下,熊猫在上)— 与之前回退的云朵层一致
+
+**文件变化**:
+- 新增:android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_58.png (164135 bytes, 844×474)
+- 修改:android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt (+10 行)
+
+**注意**:
+- 用户本轮尝试 `D:\图\试炼.png` 写过错的图片名,已先不动
+- 本次 `D:\图\Ellipse 58.png` 才是真正的源图
+- 命名:`Ellipse 58.png` → `img_houshan1_cloud_58.png`(Android 资源不能有空格/大写,符合 cloud 命名系列)
+
+**git 状态**:
+- `M Houshan1Screen.kt` (+10)
+- `?? img_houshan1_cloud_58.png` (新增)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
