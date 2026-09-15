@@ -175,7 +175,7 @@ fun Houshan2Screen(
                 painter = painterResource(R.drawable.img_houshan1_cloud_60),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (-21f + cloud60bDx).dp, y = (690f + cloud60bDy).dp)
+                    .offset(x = (-21f + cloud60bDx).dp, y = (770f + cloud60bDy).dp)
                     .size(width = 355.dp, height = 137.dp),
                 alpha = cloud60bAlpha,
                 contentScale = ContentScale.FillBounds,
