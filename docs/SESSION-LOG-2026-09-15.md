@@ -251,6 +251,37 @@ val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 - `M Houshan1Screen.kt` (+13 行:5 行 import + 8 行 transition 代码;offset 改 2 行)
 - `M docs/SESSION-LOG-2026-09-15.md` (+本节)
 
+### §9 加云朵 57(Ellipse 57.png)(2026-09-15 下午)
+
+**用户指令**:"'D:\图\Ellipse 57.png' X=248 Y=570 W=225 H=191"
+
+**尺寸决策**(直接采纳):
+- 源图 `D:\图\Ellipse 57.png`:**986×884,比 1.115**(近正方形)
+- 用户给的 W=225 H=191:比 **1.178**
+- 偏差:1.178/1.115 = **1.057**(仅 5.7%,可接受)
+- 与 §6 Ellipse 56 (4% 偏差) 类似,采纳用户值而非 fit-to-natural-bounds
+- 命名:沿用 cloud 系列 `img_houshan1_cloud_57.png`
+
+**操作**:
+1. 复制源图到 `android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_57.png`(796237 bytes, 986×884)
+2. 在云朵 56 后、熊猫前插入 Image 代码
+
+**z-order**:云朵 58 → 61 → 56(飘动)→ **57(静态)** → 熊猫 → 标签 → 气泡 → 返回
+
+**位置观察**:
+- X=248~473, Y=570~761 — 右下角云朵
+- 与云朵 56 飘动范围(156~236)×(555~635):
+  - X 方向不重叠(云朵 56 max X=236,云朵 57 min X=248)
+  - Y 方向有重叠(云朵 56 Y 555~635,云朵 57 Y 570~761)
+- 云朵 56 在飘动时不会盖到云朵 57(只在 X 上接近但不接触)
+
+**历史**:`4481499 feat(houshan1): 加右下角云朵 Ellipse 57, 上下飘动效` — 50 commit 链上 Ellipse 57 原本有"上下飘动效",用户这次没要求动效(只给了静态位置)。
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+9 行)
+- `M docs/SESSION-LOG-2026-09-15.md` (+本节)
+- `?? img_houshan1_cloud_57.png` (新增)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
