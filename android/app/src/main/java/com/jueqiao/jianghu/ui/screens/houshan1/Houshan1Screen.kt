@@ -2,6 +2,7 @@ package com.jueqiao.jianghu.ui.screens.houshan1
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -67,6 +68,18 @@ fun Houshan1Screen(
     val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
     val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 
+    // 云朵 60 上下浮动:±15 dp / 4s(half-cycle 2s,RepeatMode.Reverse)(§11)
+    val cloud60Transition = rememberInfiniteTransition(label = "cloud60Float")
+    val cloud60Y by cloud60Transition.animateFloat(
+        initialValue = -15f,
+        targetValue = 15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "cloud60Y",
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -127,12 +140,12 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10)
+            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10);上下浮动 ±15 / 4s (§11)
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_60),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (-21).dp, y = 570.dp)
+                    .offset(x = (-21).dp, y = (570f + cloud60Y).dp)
                     .size(width = 355.dp, height = 137.dp),
                 contentScale = ContentScale.FillBounds,
             )

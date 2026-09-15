@@ -316,6 +316,51 @@ val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 - `M docs/SESSION-LOG-2026-09-15.md` (+本节)
 - `?? img_houshan1_cloud_60.png` (新增)
 
+### §11 云朵 60 上下浮动 ±15 dp / 4s(2026-09-15 下午)
+
+**用户指令**:"'D:\图\Ellipse 60.png' 我希望云朵能具有动画效果"
+
+**用户选择**:
+- 仅云朵 60(云朵 58/57 仍静止)
+- 上下浮动 ±15 / 4s(half-cycle 2s,RepeatMode.Reverse)
+
+**实现**:`rememberInfiniteTransition + animateFloat` 用 tween + RepeatMode.Reverse(比 sin/cos 模式更简洁,因为是纯上下浮动)
+```kotlin
+val cloud60Transition = rememberInfiniteTransition(label = "cloud60Float")
+val cloud60Y by cloud60Transition.animateFloat(
+    initialValue = -15f,
+    targetValue = 15f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(durationMillis = 2000, easing = LinearEasing),
+        repeatMode = RepeatMode.Reverse,
+    ),
+    label = "cloud60Y",
+)
+```
+
+云朵 60 Image offset 改为:
+```kotlin
+.offset(x = (-21).dp, y = (570f + cloud60Y).dp)
+```
+
+**新加 import**:`androidx.compose.animation.core.RepeatMode`
+
+**运动轨迹**:
+- 0s: Y=-15(上偏 15dp)
+- 2s: Y=+15(下偏 15dp)
+- 4s: Y=-15(回到上)
+- X 始终 -21(不动)
+- LinearEasing 匀速
+
+**与云朵 56 的差异**:
+| 云朵 | 动效 | 周期 | 实现 |
+|---|---|---|---|
+| 56 | 椭圆轨迹 (X,Y 都动) | 7s | sin/cos + LinearEasing |
+| 60 | 上下浮动 (仅 Y) | 4s (2s reverse) | tween + RepeatMode.Reverse |
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+8 行:1 行 import + 7 行 transition + offset 改 1 行)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
