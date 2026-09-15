@@ -738,6 +738,63 @@ Box(
 **git 状态**(commit 后):
 - `M Houshan2Screen.kt` (+17 行:1 行 import + 4 × 4 行 clickable 块)
 
+### §20 后山3 跳转未完待续:点击除 3 个标签外区域(2026-09-15 下午)
+
+**用户指令**:"把'后山3'页面跳转到'未完待续'页面的方式改为点击除这几个标签之外的位置"
+
+**侦察结果**(agent 报告):
+- [Houshan3Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan3/Houshan3Screen.kt):200 行
+- 函数签名:`Houshan3Screen(onBack: () -> Unit = {}, onOpenUnfinished: () -> Unit = {})`
+- 整屏 clickable:外层 Box `.clickable(onClick = onOpenUnfinished)`(第 60-66 行)
+- **3 个标签**(注意:不是 4 个):
+  - 标签3:`offset(43, 390) size(51×91)` — "万\n象\n谱" + "炼"
+  - 标签4:`offset(105, 295) size(30×53.5)` — "寻\n径\n迷\n踪\n步" + "炼"
+  - 标签2:`offset(124, 521) size(96×170)` — "拆\n招\n心\n法" + "炼"
+- 返回按钮:**已有** `.clickable(onClick = onBack)`(已正确消费事件)
+- 接线:JianghuNavHost.kt:559-564 `composable(Routes.Shilian3) { Houshan3Screen(onBack, onOpenUnfinished = { navController.navigate(Routes.Unfinished) }) }` — **不动**
+
+**问题**:3 个标签 Box 没有 `.clickable`,点击事件冒泡到整屏 Box,触发跳转
+
+**实现**:同 §19 模式,给 3 个标签 Box 加 `.clickable(indication = null, onClick = {})` 消费事件:
+```kotlin
+Box(
+    modifier = Modifier
+        .offset(x = 43.dp, y = 390.dp)
+        .size(width = 51.dp, height = 91.dp)
+        .clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = {},
+        ),
+) { ... }
+```
+
+**新加 imports**:
+- `androidx.compose.foundation.interaction.MutableInteractionSource`
+- `androidx.compose.runtime.remember`
+
+**注释更新**:line 62 旧的"标签2/3/4 区域不消费点击"过时,改为"整屏 clickable,但 3 个标签 Box 自带消费事件 clickable (§20)"
+
+**KDoc 对照**:Houshan3Screen.kt:31 KDoc 已写明意图
+> 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;**点击标签2-4 之外的空白区域跳转未完待续页**
+
+**这次改动正好实现 KDoc 描述的意图**(但代码之前没真正实现,因为标签点击会冒泡)
+
+**事件流**:
+- 点击 3 个标签区域 → 标签 Box clickable 消费 → 不冒泡 → **不跳转**
+- 点击其他位置(背景/云朵/熊猫/标签外空白) → 外层 Box clickable → **跳转未完待续**
+- 点击左上角返回按钮 → 按钮 clickable 已存在 → 回到 Houshan2
+
+**与 §19 的差异**:
+| 项 | §19 Houshan2 | §20 Houshan3 |
+|---|---|---|
+| 跳转目标 | Houshan3 | "未完待续" (Routes.Unfinished) |
+| 标签数 | 4 个(标签1-4) | **3 个**(标签2-4,无标签1)|
+| 跳转 callback | `onOpenHoushan3` | `onOpenUnfinished` |
+
+**git 状态**(commit 后):
+- `M Houshan3Screen.kt` (+16 行:2 行 import + 3 × 4 行 clickable 块 + 1 行注释更新)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

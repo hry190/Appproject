@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,7 +59,7 @@ fun Houshan3Screen(
             contentScale = ContentScale.Crop,
         )
 
-        // 内容层(避开系统导航条)— 标签2/3/4 区域不消费点击(让父 Box 接收,触发跳未完待续)
+        // 内容层(避开系统导航条)— 整屏 clickable,但 3 个标签 Box 自带消费事件 clickable (§20),点击标签不会冒泡触发跳转
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -88,7 +90,12 @@ fun Houshan3Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 43.dp, y = 390.dp)
-                    .size(width = 51.dp, height = 91.dp),
+                    .size(width = 51.dp, height = 91.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -120,7 +127,12 @@ fun Houshan3Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 105.dp, y = 295.dp)
-                    .size(width = 30.dp, height = 53.5.dp),
+                    .size(width = 30.dp, height = 53.5.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -152,7 +164,12 @@ fun Houshan3Screen(
             Box(
                 modifier = Modifier
                     .offset(x = 124.dp, y = 521.dp)
-                    .size(width = 96.dp, height = 170.dp),
+                    .size(width = 96.dp, height = 170.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
+                    ),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
