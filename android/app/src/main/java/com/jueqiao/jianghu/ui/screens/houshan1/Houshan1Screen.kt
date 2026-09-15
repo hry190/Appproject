@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -73,6 +74,27 @@ fun Houshan1Screen(
     )
     val cloud56Dx = (sin(cloud56Angle).toFloat() * 40f)
     val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
+
+    // 熊猫上下浮 + 呼吸缩放:Scale 0.95~1.05 / 3s, Y ±10 dp / 4s (§21)
+    val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
+    val pandaScale by pandaTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaScale",
+    )
+    val pandaDy by pandaTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaDy",
+    )
 
     // 4 朵云随机飘动(58/61/57/60):统一 rememberCloudFloat() helper,X/Y/Alpha 三者独立随机 (§13)
     val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
@@ -172,13 +194,17 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
+            // 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192) — 上下浮 ±10 / 4s + 呼吸缩放 0.95~1.05 / 3s (§21)
             Image(
                 painter = painterResource(R.drawable.img_shilian_panda),
                 contentDescription = "熊猫",
                 modifier = Modifier
-                    .offset(x = 184.dp, y = 621.dp)
-                    .size(width = 210.dp, height = 192.dp),
+                    .offset(x = 184.dp, y = (621f + pandaDy).dp)
+                    .size(width = 210.dp, height = 192.dp)
+                    .graphicsLayer(
+                        scaleX = pandaScale,
+                        scaleY = pandaScale,
+                    ),
                 contentScale = ContentScale.FillBounds,
             )
 

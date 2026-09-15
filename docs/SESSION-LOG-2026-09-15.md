@@ -795,6 +795,70 @@ Box(
 **git 状态**(commit 后):
 - `M Houshan3Screen.kt` (+16 行:2 行 import + 3 × 4 行 clickable 块 + 1 行注释更新)
 
+### §21 后山1 熊猫动画:上下浮 + 呼吸缩放(2026-09-15 下午)
+
+**用户指令**:"在'后山1'页面,'D:\图\image 75.png' 熊猫图像也要具有动画"
+
+**用户选择**:上下浮 + 呼吸缩放(50 commit 链历史选项 `50489a3 feat(houshan1): 熊猫图像也变生动`)
+
+**源图确认**:
+- `D:\图\image 75.png` (420×384, 比 1.094) **字节数与项目里 `img_shilian_panda.png` 完全一致** (165767 bytes)
+- 不需要复制,直接用现有资源
+
+**实现**:`rememberInfiniteTransition` + 两个 `animateFloat`(Scale + Y):
+```kotlin
+val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
+val pandaScale by pandaTransition.animateFloat(
+    initialValue = 0.95f,
+    targetValue = 1.05f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(durationMillis = 3000, easing = LinearEasing),
+        repeatMode = RepeatMode.Reverse,
+    ),
+    label = "pandaScale",
+)
+val pandaDy by pandaTransition.animateFloat(
+    initialValue = -10f,
+    targetValue = 10f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(durationMillis = 4000, easing = LinearEasing),
+        repeatMode = RepeatMode.Reverse,
+    ),
+    label = "pandaDy",
+)
+```
+
+熊猫 Image 改动:
+```kotlin
+modifier = Modifier
+    .offset(x = 184.dp, y = (621f + pandaDy).dp)  // Y 动态
+    .size(width = 210.dp, height = 192.dp)
+    .graphicsLayer(  // 缩放
+        scaleX = pandaScale,
+        scaleY = pandaScale,
+    ),
+```
+
+**节奏**:
+- Scale 0.95 ↔ 1.05,half-cycle 3s (full 6s,RepeatMode.Reverse 来回)— 缓慢呼吸
+- Y -10 ↔ +10 dp,half-cycle 4s (full 8s,RepeatMode.Reverse 来回)— 缓慢上下浮
+- 两个周期不同步(3s vs 4s),产生"不重复"自然感
+
+**新加 import**:`androidx.compose.ui.graphics.graphicsLayer`
+
+**技术细节**:
+- `graphicsLayer` 默认 `transformOrigin = Center`,缩放从中心开始,不会偏移原位置
+- `offset` 在 `size` 之前,符合 Compose 布局顺序
+- Modifier 链:`offset → size → graphicsLayer`,scale 在最后,作用于 Image 内容
+
+**为什么不用 rememberCloudFloat helper**:
+- 熊猫需要 Scale 维度(graphicsLayer),不是云朵的 X/Y/Alpha 三维
+- 熊猫节奏需要"温和呼吸"而非"随机飘动"
+- 自定义 transition 更精准
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+22 行:1 行 import + 13 行 transition + Image 改 5 行)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
