@@ -80,7 +80,7 @@ fun Houshan1Screen(
     val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()
     val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
         xDuration = 4000..6000,  // X 节奏放慢约 2 倍(用户 2026-09-15 §14)
-        xDelay = 1000..2000,     // X delay 也放慢,目标切换频率减半
+        xDelay = 1000L..2000L,   // X delay 也放慢,目标切换频率减半
     )
 
     Box(
@@ -358,7 +358,7 @@ private fun rememberCloudFloat(
     alphaMin: Float = 0.5f,
     alphaMax: Float = 1f,
     xDuration: IntRange = 1500..3000,
-    xDelay: LongRange = 500..1500,
+    xDelay: LongRange = 500L..1500L,
 ): Triple<Float, Float, Float> {
     val x = remember { Animatable(0f) }
     val y = remember { Animatable(0f) }

@@ -536,6 +536,39 @@ contentScale = ContentScale.FillBounds,
 **git 状态**(commit 后):
 - `M Houshan1Screen.kt` (+5 行 helper 注释 + 参数 + 函数体改;云朵 60 调用改 4 行)
 
+### §15 修复云朵 60 LongRange 类型不匹配编译错误(2026-09-15 下午)
+
+**用户报告**:"failed — Argument type mismatch: actual type is 'kotlin.ranges.IntRange', but 'kotlin.ranges.LongRange' was expected"
+
+**根因**:
+- helper 函数声明 `xDelay: LongRange = 500..1500`
+- `500..1500` 在 Kotlin 中默认推断为 `IntRange`(因为字面量是 Int)
+- 虽然赋值给 `LongRange` 目标类型时 Kotlin 会**尝试**升级为 LongRange,但有歧义时编译器报错
+- 云朵 60 调用 `xDelay = 1000..2000` — `1000..2000` 显式是 `IntRange`,与参数 `LongRange` 不匹配 → **编译失败**
+
+**修复**(加 L 后缀强制 Long 字面量):
+```kotlin
+// helper 默认值
+xDelay: LongRange = 500L..1500L
+
+// 云朵 60 调用
+val (cloud60Dx, cloud60Dy, cloud60Alpha) = rememberCloudFloat(
+    xDuration = 4000..6000,
+    xDelay = 1000L..2000L,  // 加 L
+)
+```
+
+**IntRange / LongRange 区分**:
+- `1..10` → `IntRange`(Int 字面量)
+- `1L..10L` → `LongRange`(Long 字面量)
+- 两者**不**自动转换,必须显式用 L 后缀
+- `xDuration: IntRange = 1500..3000` — 默认就是 IntRange,字面量 Int 没问题
+
+**新 memory 候选**:`Range 字面量类型不自动升级 — IntRange vs LongRange 必须显式 L 后缀`
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+2 字符:`..1500` → `..1500L` 和 `1000..2000` → `1000L..2000L`)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
