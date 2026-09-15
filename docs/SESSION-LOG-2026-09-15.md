@@ -282,6 +282,40 @@ val cloud56Dy = (cos(cloud56Angle).toFloat() * 40f)
 - `M docs/SESSION-LOG-2026-09-15.md` (+本节)
 - `?? img_houshan1_cloud_57.png` (新增)
 
+### §10 加云朵 60(Ellipse 60.png)+ 云朵 57 用户调整(2026-09-15 下午)
+
+**用户指令**:"'D:\图\Ellipse 60.png' X=-21 Y=570 W=247.5 H=61.64"
+
+**尺寸决策**(用 fit-to-natural-bounds):
+- 源图 `D:\图\Ellipse 60.png`:**911×353,比 2.581**(扁长横图)
+- 用户给的 W=247.5 H=61.64:比 **4.014**
+- 偏差:**55%**,远超 4-6% 可接受标准 — 按 [screen-copy-verify-coordinates](screen-copy-verify-coordinates) 必须问用户
+- 用户选择:**fit-to-natural-bounds:W=355 H=round(355/2.581)=137**(横图 fit max_W=355 × max_H=394)
+
+**为什么偏差这么大**:
+- W=247.5 H=61.64 是 Figma 设计稿里的精确小数(2 位/3 位小数)
+- PNG 实际比 2.581,等于设计比的一半左右
+- 可能 PNG 不是设计稿用的那张图(也许叫 Ellipse 60b 或别的),但用户没提供其他候选
+
+**操作**:
+1. 复制源图到 `android/app/src/main/res/drawable-nodpi/img_houshan1_cloud_60.png`(90897 bytes, 911×353)
+2. 在云朵 57 后插入 Image 代码(X=-21, Y=570, W=355, H=137)
+3. 同时 commit uncommitted 改动:云朵 57 offset X=248 → 208(用户 IDE 调整)+ 注释同步
+
+**z-order**:云朵 58 → 61 → 56(飘动)→ 57(静态,用户调整)→ **60(静态)** → 熊猫 → 标签 → 气泡 → 返回
+
+**位置观察**:
+- X=-21 → 起始部分屏幕外,W=355 几乎横跨整个屏幕宽度
+- Y=570 → 在标签 1 同一行高度
+- 与云朵 57(208~433 × 570~761)重叠 X 范围(208~355)
+- 与 Rectangle156(136,508,177,107)Y 范围(508~615)重叠 (570~615 部分)
+- 命名:`Ellipse 60.png` → `img_houshan1_cloud_60.png`(注意:50 commit 链上 `cloud_60b` 是另一张图,这里用 `cloud_60`)
+
+**git 状态**(commit 后):
+- `M Houshan1Screen.kt` (+11 行:云朵 60 + 云朵 57 注释更新)
+- `M docs/SESSION-LOG-2026-09-15.md` (+本节)
+- `?? img_houshan1_cloud_60.png` (新增)
+
 ## 沉淀(新)
 
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)

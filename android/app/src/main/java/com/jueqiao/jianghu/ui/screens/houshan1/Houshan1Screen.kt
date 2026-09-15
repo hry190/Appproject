@@ -117,13 +117,23 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵 57 (Ellipse 57.png, X=248, Y=570, W=225, H=191) — 用户原值, 比 1.178 ≈ PNG 1.115 (5.7% 偏差可接受);右下角云朵 (§9)
+            // 云朵 57 (Ellipse 57.png, X=208, Y=570, W=225, H=191) — 用户原值, 比 1.178 ≈ PNG 1.115 (5.7% 偏差可接受);右下角云朵 (§9);X=248→208 用户真机调整
             Image(
                 painter = painterResource(R.drawable.img_houshan1_cloud_57),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 248.dp, y = 570.dp)
+                    .offset(x = 208.dp, y = 570.dp)
                     .size(width = 225.dp, height = 191.dp),
+                contentScale = ContentScale.FillBounds,
+            )
+
+            // 云朵 60 (Ellipse 60.png, X=-21, Y=570, W=355, H=137) — fit-to-natural-bounds, 扁长横图源 911×353 (比 2.581) (§10)
+            Image(
+                painter = painterResource(R.drawable.img_houshan1_cloud_60),
+                contentDescription = null,
+                modifier = Modifier
+                    .offset(x = (-21).dp, y = 570.dp)
+                    .size(width = 355.dp, height = 137.dp),
                 contentScale = ContentScale.FillBounds,
             )
 
