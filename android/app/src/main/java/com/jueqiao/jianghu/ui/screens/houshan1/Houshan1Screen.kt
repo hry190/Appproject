@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
 import com.jueqiao.jianghu.ui.components.CloudMotion
+import com.jueqiao.jianghu.ui.components.CloudTintCool
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.components.rememberCloudProgress
@@ -181,6 +182,8 @@ fun Houshan1Screen(
             motion = CloudMotion.Oscillate,
             amplitudeX = 200f, amplitudeY = 10f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
+            // §21h:cloud_58 平均亮度 250、带色像素 0% → 叠浅底看不见,用冷青 tint 提对比
+            tint = CloudTintCool,
         )
         FocusCloudBand(
             xOffset = 0f, yOffset = 178.5f,
@@ -199,6 +202,8 @@ fun Houshan1Screen(
             motion = CloudMotion.DriftWrap,
             amplitudeX = 0f, amplitudeY = 8f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
+            // §21h:cloud_60 是纯白 (255,255,255)、带色像素 0% → 必须 tint
+            tint = CloudTintCool,
         )
         FocusCloudBand(
             xOffset = 0f, yOffset = 477.5f,
@@ -217,6 +222,8 @@ fun Houshan1Screen(
             motion = CloudMotion.Oscillate,
             amplitudeX = 200f, amplitudeY = 8f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
+            // §21h:cloud_62 平均亮度 237、带色像素 0% → 同样 tint
+            tint = CloudTintCool,
         )
         // 第 6 个 = 最底部素材:底边 844.5dp,距导航栏上沿(857dp)留 12.5dp → 满足"最底部必须有一个动画素材"
         // §21b 用户指令:从 FocusCloudBand(程序化冷青雾)换成 AnimatedCloudImage(**实图云 PNG**)。
