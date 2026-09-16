@@ -202,8 +202,6 @@ fun Houshan1Screen(
             motion = CloudMotion.DriftWrap,
             amplitudeX = 0f, amplitudeY = 8f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
-            // §21h:cloud_60 是纯白 (255,255,255)、带色像素 0% → 必须 tint
-            tint = CloudTintCool,
         )
         FocusCloudBand(
             xOffset = 0f, yOffset = 477.5f,
@@ -222,8 +220,6 @@ fun Houshan1Screen(
             motion = CloudMotion.Oscillate,
             amplitudeX = 200f, amplitudeY = 8f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
-            // §21h:cloud_62 平均亮度 237、带色像素 0% → 同样 tint
-            tint = CloudTintCool,
         )
         // 第 6 个 = 最底部素材:底边 844.5dp,距导航栏上沿(857dp)留 12.5dp → 满足"最底部必须有一个动画素材"
         // §21b 用户指令:从 FocusCloudBand(程序化冷青雾)换成 AnimatedCloudImage(**实图云 PNG**)。
@@ -242,6 +238,9 @@ fun Houshan1Screen(
             motion = CloudMotion.Oscillate,
             amplitudeX = 200f, amplitudeY = 10f,
             baseAlpha = 0.50f, alphaAmp = 0.25f,
+            // §21m:按各朵**所在竖带的实测背景亮度**决定 tint。ACI57 在浅底部(234),
+            //   素材 cloud_57 亮度 221 → 对比度只有 6.3;Modulate 冷青后约 162 → 对比度 35.8
+            tint = CloudTintCool,
         )
 
         // 内容层(避开系统导航条)
