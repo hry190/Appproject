@@ -54,6 +54,16 @@ enum class CloudMotion {
 private val FocusCloudColor = Color(0xFFA9C3C0)
 
 /**
+ * §21h 冷青 `#A9C3C0` —— 项目里沿用的高频冷色(§11 雾层、§23-§26 渐变云)。
+ *
+ * 用途:给**近白/纯白的云素材**做 tint。§21b 实测动画栈里的 `cloud_58 / 60 / 62`
+ * 平均亮度是 250 / 255 / 237、**带色像素 0%**,叠在浅色水彩底上几乎不可见;
+ * 用本色 + [androidx.compose.ui.graphics.BlendMode.Modulate] 相乘后,白云会变成冷青色的云,
+ * 在暖白底上"冷暖对立"(与 §11 把雾层从暖白 #F7F5EE 改成冷青是同一个手段)。
+ */
+val CloudTintCool = Color(0xFFA9C3C0)
+
+/**
  * 后山 3 页共同的"聚焦前景飘带"组件 —— 09-16 §43 提取
  *
  * 程序化径向渐变 + canvas 非等比缩放,出图像水墨晕染;**不建 render layer**

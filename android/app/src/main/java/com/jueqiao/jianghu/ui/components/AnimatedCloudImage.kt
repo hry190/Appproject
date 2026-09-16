@@ -17,8 +17,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -70,6 +72,10 @@ fun AnimatedCloudImage(
     // 老云(§21f 重新动画的 6 朵)是画好的水彩云,不需要额外叠白光 → 两者都传 0f 即可完全关闭。
     pulseBase: Float = 0.20f,
     pulseAmp: Float = 0.16f,
+    // §21h:可选的 tint(默认 null = 不染色,行为与以前完全一致)。
+    // 传 [CloudTintCool] 时用 BlendMode.Modulate 相乘 —— 素材本身接近纯白,乘完就等于"整体变成冷青色",
+    // 用于解决 §21b 查出的"近白素材叠浅底 = 看不见"问题。
+    tint: Color? = null,
 ) {
     val screenWidthDp = LocalConfiguration.current.screenWidthDp.toFloat()
     // 09-16 §18 抖动参数:1900 → 3000ms 周期(频率 0.53 → 0.33 Hz);
@@ -116,6 +122,8 @@ fun AnimatedCloudImage(
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds,
+            // §21h:tint 为 null 时不传 ColorFilter(= 原行为);非 null 时 Modulate 相乘
+            colorFilter = tint?.let { ColorFilter.tint(it, BlendMode.Modulate) },
         )
         // §7 + §8 白色脉冲高光 —— 让云中心"发光/呼吸"
         // 参数:base 0.20,amp 0.16 → range 0.04~0.36,相位 +0.37 与位置/alpha 都错开
