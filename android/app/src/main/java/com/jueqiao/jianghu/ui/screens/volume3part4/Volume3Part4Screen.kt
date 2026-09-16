@@ -89,7 +89,7 @@ fun Volume3Part4Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 新标题系列,点击跳第三卷-5。
+            // 标题"特征与信息是否有关"(字号 24,bold,黑色,X=110, Y=67, W=409, H=32)— 新标题系列,点击跳第三卷-5。
             Text(
                 text = "特征与信息是否有关",
                 color = Color.Black,

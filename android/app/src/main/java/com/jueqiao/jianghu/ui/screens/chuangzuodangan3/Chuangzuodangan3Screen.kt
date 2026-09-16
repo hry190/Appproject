@@ -318,7 +318,7 @@ Box(
     }
 }
 
-// image 64.png(X=204, Y=687, W=190, H=212)— 熊猫图
+// image 64.png(X=204, Y=667, W=200, H=222)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image64),
     contentDescription = null,
@@ -328,7 +328,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 61.png(X=35, Y=484, W=193, H=203)— 飘雾
+// image 61.png(X=35, Y=434, W=193, H=203)— 飘雾
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image61),
     contentDescription = null,
@@ -338,7 +338,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 52.png(X=14, Y=596, W=214, H=172)— 莲花图
+// image 52.png(X=8, Y=556, W=214, H=172)— 莲花图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan3_image52),
     contentDescription = null,
@@ -348,7 +348,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Rectangle 16.png(X=279, Y=622, W=128, H=68)— 气泡
+// Rectangle 16.png(X=269, Y=622, W=128, H=68)— 气泡
 Box(
     modifier = Modifier
         .offset(x = 269.dp, y = 622.dp)

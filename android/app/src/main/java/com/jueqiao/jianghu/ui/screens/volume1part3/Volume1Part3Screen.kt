@@ -96,7 +96,7 @@ fun Volume1Part3Screen(
                 )
             }
 
-            // 图2(image 232.png,X=19, Y=489, W=353, H=283)— 在书框之上、下半区域。
+            // 图2(image 232.png,X=19, Y=489, W=353, H=267)— 在书框之上、下半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

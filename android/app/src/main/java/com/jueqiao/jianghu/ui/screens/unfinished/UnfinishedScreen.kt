@@ -74,7 +74,7 @@ fun UnfinishedScreen(
             contentScale = ContentScale.FillBounds,
         )
 
-        // "未完待续"图像(未 完 待 续.png,X=158, Y=168, W=96, H=464,Figma 滤镜渲染)— 点击跳转到滚轮1
+        // "未完待续"图像(未 完 待 续.png,X=152, Y=140, W=96, H=464,Figma 滤镜渲染)— 点击跳转到滚轮1
         Image(
             painter = painterResource(R.drawable.img_unfinished_text),
             contentDescription = "未完待续",

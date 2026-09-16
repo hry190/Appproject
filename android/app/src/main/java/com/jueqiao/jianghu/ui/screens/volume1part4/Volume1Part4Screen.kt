@@ -81,7 +81,7 @@ fun Volume1Part4Screen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            // 图1(image 237.png,X=19, Y=131, W=356, H=329)— 在书框之上、上半区域。
+            // 图1(image 237.png,X=19, Y=131, W=356, H=300)— 在书框之上、上半区域。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

@@ -98,7 +98,7 @@ fun Volume5Part3Screen(
                     .clickable(onClick = onOpenVolume5Part4),
             )
 
-            // 图1(image 387.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 387.png,X=18, Y=135, W=355, H=337)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

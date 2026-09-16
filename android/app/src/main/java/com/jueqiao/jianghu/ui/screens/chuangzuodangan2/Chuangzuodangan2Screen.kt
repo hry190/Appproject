@@ -294,7 +294,7 @@ Box(
         .clickable(onClick = onOpenChuangzuodangan3),
 )
 
-// 未标题-1 72.png(X=201, Y=614, W=212, H=245)
+// 未标题-1 72.png(X=201, Y=584, W=212, H=245)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
     contentDescription = null,

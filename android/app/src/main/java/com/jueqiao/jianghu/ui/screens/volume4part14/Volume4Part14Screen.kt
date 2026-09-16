@@ -99,7 +99,7 @@ fun Volume4Part14Screen(
                     .clickable(onClick = onOpenGunlun8),
             )
 
-            // 图1(image 0.png,X=18, Y=135, W=355, H=311)— 在书框之上、上部。
+            // 图1(image 0.png,X=18, Y=135, W=355, H=342)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

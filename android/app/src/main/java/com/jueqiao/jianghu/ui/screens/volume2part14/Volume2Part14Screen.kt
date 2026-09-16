@@ -93,7 +93,7 @@ fun Volume2Part14Screen(
                     .clickable(onClick = onOpenVolume2Part15),
             )
 
-            // 图1(image 303.png,X=18, Y=155, W=352, H=303)— 上部
+            // 图1(image 303.png,X=18, Y=155, W=352, H=323)— 上部
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

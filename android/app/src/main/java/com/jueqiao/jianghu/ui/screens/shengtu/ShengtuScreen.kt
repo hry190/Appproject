@@ -361,7 +361,7 @@ fun ShengtuScreen(
                 }
             }
 
-            // 未标题-1 41.png(X=310, Y=605, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
+            // 未标题-1 41.png(X=300, Y=530, W=92, H=143)— @2x,放 drawable-xxhdpi/(实际 184×286)
             Image(
                 painter = painterResource(R.drawable.img_shengtu_untitled41),
                 contentDescription = null,

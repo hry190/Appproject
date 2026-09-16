@@ -304,7 +304,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// image 62.png(X=204, Y=687, W=204, H=219)— 熊猫图
+// image 62.png(X=174, Y=646, W=204, H=219)— 熊猫图
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan4_image62),
     contentDescription = null,

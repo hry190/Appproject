@@ -182,7 +182,7 @@ fun Gunlun5Screen(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds,
             )
-            // 气泡文本(W=127, H=80, 字号 14, 黑色, YaHei)— translationY -5 上移
+            // 气泡文本(W=128, H=88, 字号 14, 黑色, YaHei)— translationY -5 上移
             Text(
                 text = "山水作伴，秘籍环绕。静下心来研读秘籍。选一本心仪秘籍，开始江湖修行。",
                 color = Color.Black,

@@ -93,7 +93,7 @@ fun Volume3Part1Screen(
                     .clickable(onClick = onOpenVolume3Part2),
             )
 
-            // 图1(image 316.png,X=18, Y=130, W=352, H=327)— 在书框之上、上部。
+            // 图1(image 316.png,X=18, Y=130, W=352, H=309)— 在书框之上、上部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -108,7 +108,7 @@ fun Volume3Part1Screen(
                 )
             }
 
-            // 图2(image 319.png,X=18, Y=471, W=356, H=324)— 在书框之上、中部。
+            // 图2(image 319.png,X=18, Y=471, W=356, H=353)— 在书框之上、中部。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
