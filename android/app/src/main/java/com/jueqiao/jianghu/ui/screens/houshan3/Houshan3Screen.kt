@@ -62,7 +62,7 @@ private val TWO_PI = (2.0 * PI).toFloat()
  * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
  *
  * 布局:
- *   - 全屏背景图(后山3 转换.png)
+ *   - 全屏背景图(试炼转换.png — §10 替换)
  *   - 云雾层(程序化水墨云海,持续循环 — HoushanMistVariant.Houshan3 位置表)(§37/§38)
  *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)— 屏幕空白点击无效
  *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— **上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s (§44)**
@@ -119,14 +119,14 @@ fun Houshan3Screen(
     // 拆招心法下方三朵云动画 (§6)— 用 Ellipse 58/60/62 三张素材
     // 资源:58/60 复用现有 img_houshan1_cloud_58/60(同一张图,fit 版本 — 见 09-15 §4);
     // 62 是新导入:D:\图\Ellipse 62.png → drawable-nodpi/img_houshan3_cloud_62.png
-    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 13/17/23s
-    //   → 合成周期 = 13×17×23 = 5083s(约 85 分钟)→ 视觉上 3 朵永远不在同一拍点
+    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 7/11/13s(§8 提速)
+    //   → 合成周期 = 7×11×13 = 1001s(约 17 分钟)→ 视觉上 3 朵永远不在同一拍点
     val cloudTransition = rememberInfiniteTransition(label = "h3CloudBands")
     val c58Progress = cloudTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            animation = tween(durationMillis = 7_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud58",
@@ -135,7 +135,7 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 17_000, easing = LinearEasing),
+            animation = tween(durationMillis = 11_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud60",
@@ -144,7 +144,7 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 23_000, easing = LinearEasing),
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud62",
@@ -155,7 +155,7 @@ fun Houshan3Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景图(后山3 转换.png)
+        // 全屏背景图(试炼转换.png,§10 从"后山3 转换.png"替换;长宽比 0.449 一致,ContentScale.Crop 适配)
         Image(
             painter = painterResource(R.drawable.img_shilian2_bg),
             contentDescription = null,
@@ -174,6 +174,7 @@ fun Houshan3Screen(
         // 比起 HoushanMistLayer 的均匀细雾团,这一个更大、更浓,让"下方有东西在缓慢飘动"一眼可辨;
         // 位于内容层之下,不会遮挡标签或熊猫
         // §45:周期 19000 → 11000 ms(1.73× 更快,与 HoushanMistLayer 13/17/19 互质,观感更明显)
+        // §9:透明度大扩:baseAlpha 0.32→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(峰谷差 0.60,6×于原 0.10)
         FocusCloudBand(
             xOffset = 12f,
             yOffset = 740f,
@@ -181,8 +182,8 @@ fun Houshan3Screen(
             heightDp = 110f,
             amplitudeX = 40f,
             amplitudeY = 28f,
-            baseAlpha = 0.32f,
-            alphaAmp = 0.10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.30f,
             periodMs = 11_000,
         )
 
@@ -191,6 +192,7 @@ fun Houshan3Screen(
         // 标签 x=124..220 在飘带的右端下方,飘带在标签之下层,标签的米色不透明图版遮住右端,
         // 实际视觉可见的就是"标签左侧"那一段 — 严格满足"左下方"
         // §45:周期 23000 → 9000 ms(2.56× 更快,与 §43 的 11s 互质)→ 两条飘带节奏不同步,观感更自然
+        // §9:透明度大扩:baseAlpha 0.30→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(与 §43 同步)
         FocusCloudBand(
             xOffset = -30f,
             yOffset = 740f,
@@ -198,8 +200,8 @@ fun Houshan3Screen(
             heightDp = 120f,
             amplitudeX = 35f,
             amplitudeY = 24f,
-            baseAlpha = 0.30f,
-            alphaAmp = 0.10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.30f,
             periodMs = 9_000,
         )
 
@@ -221,8 +223,8 @@ fun Houshan3Screen(
             phase = 0.13f,
             amplitudeX = 25f,
             amplitudeY = 10f,
-            baseAlpha = 0.45f,
-            alphaAmp = 0.10f,
+            baseAlpha = 0.50f,   // §8:0.45 → 0.50(峰值更实)
+            alphaAmp = 0.25f,    // §8:0.10 → 0.25(谷值 0.25 / 峰值 0.75,"忽隐忽现"明显得多)
         )
         AnimatedCloudImage(
             painter = painterResource(R.drawable.img_houshan1_cloud_60),
@@ -235,8 +237,8 @@ fun Houshan3Screen(
             phase = 0.31f,
             amplitudeX = 30f,
             amplitudeY = 5f,
-            baseAlpha = 0.45f,
-            alphaAmp = 0.10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.25f,
         )
         AnimatedCloudImage(
             painter = painterResource(R.drawable.img_houshan3_cloud_62),
@@ -249,8 +251,8 @@ fun Houshan3Screen(
             phase = 0.71f,
             amplitudeX = 27f,
             amplitudeY = 7f,
-            baseAlpha = 0.45f,
-            alphaAmp = 0.10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.25f,
         )
 
         // 内容层(避开系统导航条)— 整屏 clickable,但 3 个标签 Box 自带消费事件 clickable (§20),点击标签不会冒泡触发跳转
@@ -543,6 +545,23 @@ private fun rememberCloudFloat(
  * 用与 HoushanMistLayer 同样的椭圆雾团画法(单源 + canvas 非等比缩放),不建 render layer;
  * 周期 19000ms(质数)与近景 17000ms 互质 → 避免拍点重合。
  *
+ * §11 加**高频抖动**(jitter):在慢速 sin 漂移之上叠加颤动 → 即使 sin 漂移到极值附近
+ * (那里 sin' ≈ 0,云几乎"停")时,抖动层仍持续让云**始终在动**,人眼持续被吸引
+ *
+ * §12 抖动频率降档 —— 用户反馈"频率太高"
+ *   600ms (3.3 Hz) → 1800ms (1.1 Hz),振幅 ±3 → ±2 dp X / ±1.5 → ±1 dp Y
+ *
+ * §13 抖动平衡档 —— 用户反馈"想平衡"
+ *   1800 → **1500ms (0.67 Hz)**,振幅 ±2 dp X 不变 / ±1 dp Y 不变
+ *
+ * §14 抖动稍慢 + 颤更明显 —— 用户反馈"稍慢 + 颤不够明显"
+ *   1500 → **1700ms (0.59 Hz)**,振幅 ±2 → **±3 dp X** / ±1 → **±1.5 dp Y**
+ *   峰值速度 = 2π × 3 / 1.7 ≈ **11.1 dp/s**(§11: 31.4,§12: 6.98,§13: 8.4)
+ *
+ * §15 抖动再稍慢 —— 用户反馈"稍慢"
+ *   1700 → **1900ms (0.53 Hz)**,振幅不变(±3 / ±1.5) — 保有 §14 的"颤更明显",只是周期小步上行
+ *   峰值速度 = 2π × 3 / 1.9 ≈ **9.92 dp/s**(§14: 11.1)
+ *
  * 文件私有 —— 这只针对后山3 拆招心法位置的局部增强;
  * 后山1/2 的拆招心法在另一位置,如需也加同样的聚焦,另起一处即可。
  */
@@ -568,24 +587,41 @@ private fun FocusCloudBand(
             ),
             label = "focusCloudBandP",
         )
+    // §15 抖动再稍慢 —— 1700 → 1900ms (0.59 → 0.53 Hz)
+    // 用户反馈"稍慢",§14 已经是慢+大组合,周期小步上行
+    // 振幅保有 §14 提升(±3 / ±1.5 dp),不动
+    // 峰值速度 = 2π × 3 / 1.9 ≈ 9.92 dp/s(§14: 11.1)
+    val jitter by rememberInfiniteTransition(label = "fcJitter")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1900, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "fcJitterP",
+        )
     val twoPi = (2.0 * PI).toFloat()
     Box(
         modifier = Modifier
             .offset {
                 val a = progress * twoPi
+                val jt = jitter * twoPi * 2f  // 2 cycles / 1900ms ≈ 0.53 Hz
                 IntOffset(
-                    (xOffset + sin(a) * amplitudeX).dp.roundToPx(),
-                    (yOffset + cos(a) * amplitudeY).dp.roundToPx(),
+                    (xOffset + sin(a) * amplitudeX + sin(jt) * 3f).dp.roundToPx(),
+                    (yOffset + cos(a) * amplitudeY + cos(jt) * 1.5f).dp.roundToPx(),
                 )
             }
             .size(width = widthDp.dp, height = heightDp.dp)
             .drawWithCache {
                 val r = size.minDimension / 2f
+                // §11:暖白 #F7F5EE → 冷青 #A9C3C0 —— 在 §10 新背景下对比度更高
+                val c1 = Color(0xFFA9C3C0)
                 val brush = Brush.radialGradient(
                     colors = listOf(
-                        Color(0xFFF7F5EE),
-                        Color(0xFFF7F5EE).copy(alpha = 0.55f),
-                        Color(0xFFF7F5EE).copy(alpha = 0f),
+                        c1,
+                        c1.copy(alpha = 0.55f),
+                        c1.copy(alpha = 0f),
                     ),
                     center = Offset(size.width / 2f, size.height / 2f),
                     radius = r,
@@ -609,14 +645,35 @@ private fun FocusCloudBand(
 }
 
 /**
- * §6 拆招心法下方三朵云动画 —— **实图 PNG** 版本(与 FocusCloudBand 的程序化径向渐变不同)
+ * §6 + §7 + §8 + §11 拆招心法下方三朵云动画
  *
  * FocusCloudBand 是"程序化径向渐变 + canvas 非等比缩放",出图像水墨晕染
- * 本函数是"现成云朵 PNG + 漂移/聚散",出图像实体水彩云
+ * 本函数是"现成云朵 PNG + 漂移 + 大幅透明度脉动 + 高频抖动",出图像实体水彩云
  *
- * 性能同 §43/§44:位置在 layout 阶段读(Modifier.offset lambda)、alpha 在 layer 阶段读
- * (graphicsLayer block),**每帧零重组**;1 个 rememberInfiniteTransition 共享给 3 朵,
- * 互不竞争。
+ * §7 新增:**白色脉冲高光** —— 用户反馈"动画效果不够明显",
+ * 在云 PNG 上**叠一层白色径向渐变**,alpha 按 `sin(progress)` 脉动
+ *
+ * §8 加强:**整体透明度脉动** —— 用户反馈"希望素材可以变换透明度",
+ * 把 `baseAlpha ± alphaAmp` 从 0.45±0.10(范围 0.35~0.55)扩到 **0.50±0.25(范围 0.25~0.75)**
+ *
+ * §11 新增:**高频抖动** —— 在慢速 sin 漂移之上叠加颤动,让云在慢速 sin 极值附近仍持续抖动
+ *
+ * §12 抖动频率降档 —— 用户反馈"频率太高"
+ *   600ms (3.3 Hz) → 1800ms (1.1 Hz),振幅 ±3 → ±2 dp X / ±1.5 → ±1 dp Y
+ *
+ * §13 抖动平衡档 —— 用户反馈"想平衡"
+ *   1800 → **1500ms (0.67 Hz)**,振幅 ±2 dp X 不变 / ±1 dp Y 不变
+ *
+ * §14 抖动稍慢 + 颤更明显 —— 用户反馈"稍慢 + 颤不够明显"
+ *   1500 → **1700ms (0.59 Hz)**,振幅 ±2 → **±3 dp X** / ±1 → **±1.5 dp Y**
+ *   峰值速度 = 2π × 3 / 1.7 ≈ **11.1 dp/s**(§11: 31.4,§12: 6.98,§13: 8.4)
+ *
+ * §15 抖动再稍慢 —— 用户反馈"稍慢"
+ *   1700 → **1900ms (0.53 Hz)**,振幅不变(±3 / ±1.5) — 保有 §14 的"颤更明显",只是周期小步上行
+ *   峰值速度 = 2π × 3 / 1.9 ≈ **9.92 dp/s**(§14: 11.1)
+ *
+ * 性能:位置在 layout 阶段读、整体 alpha 在 layer 阶段读、
+ * 白色脉冲 + 抖动都在 draw 阶段读 —— **每帧零重组**
  */
 @Composable
 private fun AnimatedCloudImage(
@@ -633,13 +690,26 @@ private fun AnimatedCloudImage(
     baseAlpha: Float,
     alphaAmp: Float,
 ) {
+    // §15 高频抖动 —— 1900ms,±3 dp X / ±1.5 dp Y(§14 是 1700ms;§15 再稍慢)
+    // 与 FocusCloudBand 同款;phase 用现有 phase * 7 偏移 → 3 朵云的抖动互不同步
+    val jitter by rememberInfiniteTransition(label = "aciJitter")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1900, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "aciJitterP",
+        )
     Box(
         modifier = Modifier
             .offset {
                 val a = (progress.value + phase) * TWO_PI
+                val jt = jitter * TWO_PI * 2f + phase * 7f  // 2 cycles / 1900ms × phase 偏移
                 IntOffset(
-                    (xOffset + sin(a) * amplitudeX).dp.roundToPx(),
-                    (yOffset + cos(a) * amplitudeY).dp.roundToPx(),
+                    (xOffset + sin(a) * amplitudeX + sin(jt) * 3f).dp.roundToPx(),
+                    (yOffset + cos(a) * amplitudeY + cos(jt) * 1.5f).dp.roundToPx(),
                 )
             }
             .size(width = widthDp.dp, height = heightDp.dp)
@@ -654,6 +724,30 @@ private fun AnimatedCloudImage(
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds,
+        )
+        // §7 + §8 白色脉冲高光 —— 让"动画"看上去明显
+        // 用径向渐变 + phase 偏移 + alpha 脉动,使云中心像在"发光/呼吸"
+        // §8 加强:base 0.15→0.20,amp 0.12→0.16 → range 0.04~0.36(原来是 0.03~0.27)
+        //       配合整体 alpha 0.25~0.75 的大幅脉动,"素材变换透明度"的诉求就更明显
+        Box(
+            modifier = Modifier.fillMaxSize().drawWithCache {
+                val r = size.minDimension / 2f
+                val brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White,
+                        Color.White.copy(alpha = 0.4f),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = r,
+                )
+                onDrawBehind {
+                    // 与位置/alpha 都错开相位 (0.37),避免整齐
+                    val a = (progress.value + phase + 0.37f) * TWO_PI
+                    val pulseAlpha = (0.20f + sin(a) * 0.16f).coerceIn(0f, 1f)
+                    drawRect(brush = brush, alpha = pulseAlpha)
+                }
+            },
         )
     }
 }
