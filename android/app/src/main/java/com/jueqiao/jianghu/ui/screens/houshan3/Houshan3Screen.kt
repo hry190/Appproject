@@ -121,14 +121,16 @@ fun Houshan3Screen(
     // 拆招心法下方三朵云动画 (§6)— 用 Ellipse 58/60/62 三张素材
     // 资源:58/60 复用现有 img_houshan1_cloud_58/60(同一张图,fit 版本 — 见 09-15 §4);
     // 62 是新导入:D:\图\Ellipse 62.png → drawable-nodpi/img_houshan3_cloud_62.png
-    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 11/17/19s(§18 拉长 + 振幅加大)
-    //   → 合成周期 = 7×11×13 = 1001s(约 17 分钟)→ 视觉上 3 朵永远不在同一拍点
+    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 7/8/9s(§19)
+    //   §19:用户要"横向 4 秒跑完屏宽"→ 周期 = 2 × 4s = 8s(半周期 = 单程),
+    //        取 7/8/9s 三个值让往返时间 3.5/4/4.5s,都是"大概 4 秒"但互不同步
+    //        (7/8/9 两两互质:gcd(7,8)=gcd(7,9)=gcd(8,9)=1)
     val cloudTransition = rememberInfiniteTransition(label = "h3CloudBands")
     val c58Progress = cloudTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11_000, easing = LinearEasing),
+            animation = tween(durationMillis = 7_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud58",
@@ -137,7 +139,7 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 17_000, easing = LinearEasing),
+            animation = tween(durationMillis = 8_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud60",
@@ -146,7 +148,7 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 19_000, easing = LinearEasing),
+            animation = tween(durationMillis = 9_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud62",
@@ -177,17 +179,18 @@ fun Houshan3Screen(
         // 位于内容层之下,不会遮挡标签或熊猫
         // §45:周期 19000 → 11000 ms(1.73× 更快,与 HoushanMistLayer 13/17/19 互质,观感更明显)
         // §9:透明度大扩:baseAlpha 0.32→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(峰谷差 0.60,6×于原 0.10)
-        // §18:振幅大幅加大(X 40→60, Y 28→42),周期 11000→17000ms(频率从 0.091→0.059 Hz)
+        // §19:横向 4 秒跑完屏宽 → amplitudeX 60→200(= 2×200 = 400dp ≈ 屏宽 412dp),
+        //      周期 17→8s(半周期 4s = 单程)
         FocusCloudBand(
             xOffset = 12f,
             yOffset = 740f,
             widthDp = 320f,
             heightDp = 110f,
-            amplitudeX = 60f,
+            amplitudeX = 200f,
             amplitudeY = 42f,
             baseAlpha = 0.50f,
             alphaAmp = 0.30f,
-            periodMs = 17_000,
+            periodMs = 8_000,
         )
 
         // 拆招心法**左下方**聚焦前景飘带 (§44)— 用户反馈"左下方没动画"
@@ -196,17 +199,17 @@ fun Houshan3Screen(
         // 实际视觉可见的就是"标签左侧"那一段 — 严格满足"左下方"
         // §45:周期 23000 → 9000 ms(2.56× 更快,与 §43 的 11s 互质)→ 两条飘带节奏不同步,观感更自然
         // §9:透明度大扩:baseAlpha 0.30→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(与 §43 同步)
-        // §18:振幅大幅加大(X 35→52, Y 24→36),周期 9000→14000ms(频率从 0.111→0.071 Hz)
+        // §19:横向 amplitudeX 52→200,周期 14→9s(单程 4.5s)
         FocusCloudBand(
             xOffset = -30f,
             yOffset = 740f,
             widthDp = 240f,
             heightDp = 120f,
-            amplitudeX = 52f,
+            amplitudeX = 200f,
             amplitudeY = 36f,
             baseAlpha = 0.50f,
             alphaAmp = 0.30f,
-            periodMs = 14_000,
+            periodMs = 9_000,
         )
 
         // 拆招心法下方三朵云(§6)— Ellipse 58/60/62 实图素材,带漂移 + 聚散
@@ -225,8 +228,8 @@ fun Houshan3Screen(
             heightDp = 135f,
             progress = c58Progress,
             phase = 0.13f,
-            amplitudeX = 38f,    // §18:25 → 38
-            amplitudeY = 15f,    // §18:10 → 15
+            amplitudeX = 200f,   // §19:38 → 200(2×200=400dp ≈ 屏宽)
+            amplitudeY = 15f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
         )
@@ -239,8 +242,8 @@ fun Houshan3Screen(
             heightDp = 108f,
             progress = c60Progress,
             phase = 0.31f,
-            amplitudeX = 45f,    // §18:30 → 45
-            amplitudeY = 8f,     // §18:5 → 8
+            amplitudeX = 200f,   // §19:45 → 200
+            amplitudeY = 8f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
         )
@@ -253,8 +256,8 @@ fun Houshan3Screen(
             heightDp = 98f,
             progress = c62Progress,
             phase = 0.71f,
-            amplitudeX = 40f,    // §18:27 → 40
-            amplitudeY = 10f,    // §18:7 → 10
+            amplitudeX = 200f,   // §19:40 → 200
+            amplitudeY = 10f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
         )
