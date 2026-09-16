@@ -140,7 +140,7 @@ fun Houshan2Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8_000, easing = LinearEasing),
+            animation = tween(durationMillis = 10_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud58",
@@ -229,19 +229,19 @@ fun Houshan2Screen(
                     // 中下:拆招心法正下方,底边 +49dp gap
                     xOffset = 45f, yOffset = 525f,
                     widthDp = 320f, heightDp = 110f,
-                    // §19:横向 4 秒跑完屏宽 → amplitudeX 60→200, 周期 17→8s
+                    // §20:周期 8→10s(单程 5s),amplitudeX 保持 200
                     amplitudeX = 200f, amplitudeY = 42f,
                     baseAlpha = 0.50f, alphaAmp = 0.30f,
-                    periodMs = 8_000,
+                    periodMs = 10_000,
                 )
                 FocusCloudBand(
                     // 左下:在标签 1(识机真决)附近,后山2 还有这个标签
                     xOffset = -30f, yOffset = 740f,
                     widthDp = 240f, heightDp = 120f,
-                    // §19:横向 amplitudeX 52→200, 周期 14→9s
+                    // §20:周期 9→11s
                     amplitudeX = 200f, amplitudeY = 36f,
                     baseAlpha = 0.50f, alphaAmp = 0.30f,
-                    periodMs = 9_000,
+                    periodMs = 11_000,
                 )
                 AnimatedCloudImage(
                     // 云 58:左下角,横椭圆
