@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -39,6 +40,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
+import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.math.cos
@@ -130,6 +133,19 @@ fun Houshan2Screen(
         xDelay = 1000L..2000L,
     )
 
+    // ── 后山2 与后山3 共享的拆招心法下方动画(§44/§6 §11 §15)────────────────
+    // 共享 1 个 rememberInfiniteTransition 给 3 朵 AnimatedCloudImage,与后山3 一致
+    val transition = rememberInfiniteTransition(label = "h2CloudBands")
+    val cloudProgress = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud58",
+    )
+
     // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§36) ──────────────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
@@ -204,6 +220,57 @@ fun Houshan2Screen(
                 // 云雾层(程序化水墨云海,持续循环)— 属大气中层 (§37)
                 // 放在景深平面 2 之内:过渡推进时与云雾一起"相对后移 + 淡出",层次一致
                 HoushanMistLayer()
+
+                // ── 后山2 与后山3 共享的拆招心法下方动画(§44/§6 §11 §15)────────────
+                // 位置基于后山2 拆招心法 center X=205(后山1 同位置,后山3 是 172,横向偏移 +33dp),
+                // Y 基于后山2 拆招心法底边 476dp(后山3 是 691dp,上移 -215dp)。
+                // 放在景深平面 2 内 → 过渡推进时随云朵一起淡出,层次一致
+                FocusCloudBand(
+                    // 中下:拆招心法正下方,底边 +49dp gap
+                    xOffset = 45f, yOffset = 525f,
+                    widthDp = 320f, heightDp = 110f,
+                    amplitudeX = 40f, amplitudeY = 28f,
+                    baseAlpha = 0.50f, alphaAmp = 0.30f,
+                    periodMs = 11_000,
+                )
+                FocusCloudBand(
+                    // 左下:在标签 1(识机真决)附近,后山2 还有这个标签
+                    xOffset = -30f, yOffset = 740f,
+                    widthDp = 240f, heightDp = 120f,
+                    amplitudeX = 35f, amplitudeY = 24f,
+                    baseAlpha = 0.50f, alphaAmp = 0.30f,
+                    periodMs = 9_000,
+                )
+                AnimatedCloudImage(
+                    // 云 58:左下角,横椭圆
+                    painter = painterResource(R.drawable.img_houshan1_cloud_58),
+                    contentDescription = "云朵58",
+                    xOffset = -27f, yOffset = 488f,
+                    widthDp = 240f, heightDp = 135f,
+                    progress = cloudProgress, phase = 0.13f,
+                    amplitudeX = 25f, amplitudeY = 10f,
+                    baseAlpha = 0.50f, alphaAmp = 0.25f,
+                )
+                AnimatedCloudImage(
+                    // 云 60:右侧,扁长
+                    painter = painterResource(R.drawable.img_houshan1_cloud_60),
+                    contentDescription = "云朵60",
+                    xOffset = 153f, yOffset = 471f,
+                    widthDp = 280f, heightDp = 108f,
+                    progress = cloudProgress, phase = 0.31f,
+                    amplitudeX = 30f, amplitudeY = 5f,
+                    baseAlpha = 0.50f, alphaAmp = 0.25f,
+                )
+                AnimatedCloudImage(
+                    // 云 62:正下方,中等扁长
+                    painter = painterResource(R.drawable.img_houshan3_cloud_62),
+                    contentDescription = "云朵62",
+                    xOffset = 83f, yOffset = 556f,
+                    widthDp = 240f, heightDp = 98f,
+                    progress = cloudProgress, phase = 0.71f,
+                    amplitudeX = 27f, amplitudeY = 7f,
+                    baseAlpha = 0.50f, alphaAmp = 0.25f,
+                )
 
                 // 云朵 58
                 Image(

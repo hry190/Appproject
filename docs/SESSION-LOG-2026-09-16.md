@@ -947,3 +947,130 @@ adb shell dumpsys activity        →  topResumedActivity=com.jueqiao.jianghu/.M
 
 - **"某个区域没动画"不一定=没覆盖,可能=没视觉锚点**(新)— §42 后 `HoushanMistLayer` 在拆招心法下方已有满宽覆盖,但都是均匀细雾,**没有明显的运动焦点**——叠在深色近山上读起来像山体本身的渐变。**解决方案不是再加浓度(发白)也不是再加团数(更乱),而是在视线集中位置放一个"聚焦元素"**:更大、更浓、节奏更慢、明确的上下浮动。**关键:单一元素 + 慢节奏,比均匀细雾的视觉效果强得多**
 - **碎屏布局的"聚焦飘带"应在文件私有**(沿用 09-15 §37)— 与近/中/远三层均匀雾不同,聚焦飘带**强位置相关性**(标签 x/y 不同就无法复用),后山3 与后山1/2 的拆招心法位置不同,所以只放在 `Houshan3Screen.kt` 私有处;后山1/2 需要时另起一处,不强求"一处定义三页复用"
+
+### §17 后山1/2 加聚焦飘带 + 3 朵实图云(与后山3 同款动画)(用户指令)(2026-09-16 上午)
+
+**用户指令**:"把后山1和后山2 页面的动画特效变成和后山3页面的动画一样的效果"
+
+#### Step 1 侦察:后山3 vs 后山1/2 差什么
+
+| 元素 | 后山1 | 后山2 | 后山3 |
+|---|---|---|---|
+| 背景图 (img_shilian_bg / _2_bg) | ✅ | ✅ | ✅ (试炼转换.png,§10) |
+| MistLayer 冷青色 (#A9C3C0) | ✅ (§11) | ✅ (§11) | ✅ (§11) |
+| 6 朵老云 (58/61/56/57/60/60b) + 随机飘动 | ✅ | ✅ | ✅ (§35 改名 _old) |
+| 拆招心法标签点击 → 第一卷-1 (§22) | ✅ | ✅ | ✅ |
+| 标签消费事件(§19) | ❌(标签 2/3/4 无消费)| ✅ | ✅ |
+| **FocusCloudBand × 2**(中下+左下,§43/§44)| ❌ | ❌ | ✅ |
+| **AnimatedCloudImage × 3**(实图云 58/60/62,§6-§15)| ❌ | ❌ | ✅ |
+| 沉浸式过渡 dolly-in (§36) | ❌ | ✅ | ❌ |
+| 后山3 熊猫 + 御剑动画 (§3/§21) | ✅ | ❌(§18 去掉)| ✅ |
+
+**核心缺失**:后山1 和后山2 都缺 **5 个聚焦云元素**(2 FocusCloudBand + 3 AnimatedCloudImage)。
+
+#### Step 2 设计:提到 shared components
+
+§6 沉淀说"重复 < 错误抽象",3 个页面 × 2 个 helper = **6 份重复**触发抽象化阈值降低。
+**提到 shared**,避免 3 份 80+50=130 行的复制:
+
+- `ui/components/FocusCloudBand.kt`(新)—— 从 Houshan3Screen.kt 的 private fun 提升为 public fun
+- `ui/components/AnimatedCloudImage.kt`(新)—— 同上
+
+两个文件的 `TWO_PI` 提到各自文件级 private val。
+FocusCloudBand 内部颜色硬编码 `#A9C3C0`(项目 §11 §23-§26 沿用色)。
+AnimatedCloudImage 不带颜色(画 PNG 原色)。
+抖动参数固定(周期 1900ms / ±3 dp X / ±1.5 dp Y,§15 稳定值)。
+
+#### Step 3 后山3 修改:把两个 private fun 删掉,改用 import
+
+Houshan3Screen.kt 中两个 `private fun FocusCloudBand` 和 `private fun AnimatedCloudImage` 都删除,改 `import com.jueqiao.jianghu.ui.components.{FocusCloudBand,AnimatedCloudImage}`。
+删除文件级 `private val TWO_PI`(已无引用)。
+KDoc 迁移到 shared 文件,§43/§44/§6-§15 各 section 改用简短指向。
+
+#### Step 4 后山1/2 加调用(位置参数适配各自拆招心法)
+
+后山1/2 的拆招心法完全相同(offset(168, 345) size(74, 131)):
+- 底边 Y = **476**(后山3 是 691,**差 -215dp**)
+- center X = **205**(后山3 是 172,**差 +33dp**)
+
+**FocusCloudBand × 2**:
+
+| | 后山3 | 后山1/2 |
+|---|---|---|
+| 中下 x_offset | 12 | **45**(center x 205 - width/2 160) |
+| 中下 y_offset | 740 | **525**(底边 476 + 49dp gap) |
+| 左下 x_offset | -30 | **-30**(同 — 标签 1 位置 后山1/2 与 后山3 一致) |
+| 左下 y_offset | 740 | **740**(同) |
+
+**AnimatedCloudImage × 3**(周期同后山3 = 13/17/23s 互质):
+
+| 云 | 后山3 x,y | 后山1/2 x,y | 注释 |
+|---|---|---|---|
+| 58 | -60, 703 | **-27, 488** | "距拆招心法 X 距离 = 后山3 距离" → 后山1 cx=205-112=93 → x_offset=93-120=-27;y_offset 同上 -215 |
+| 60 | 120, 686 | **153, 471** | cx=205+88=293 → x_offset=293-140=153 |
+| 62 | 50, 771 | **83, 556** | cx=205-2=203 → x_offset=203-120=83 |
+
+#### Step 5 后山2 的 z-order:放在景深平面 2(云平面)
+
+后山1 没有 dolly 过渡,直接放在 MistLayer 之后、内容层之前就行。
+
+**后山2 有 §36 dolly 过渡**:3 个景深平面(背景/云/标签)各自缩放和淡出。
+**FocusCloudBand 和 AnimatedCloudImage 必须放在"云平面"里**,跟随 6 朵云一起 scaleX/Y=cloudScale 和 alpha=cloudFade,
+否则 §36 过渡时飘带留在屏幕上不动,**视觉上脱节**。
+
+```kotlin
+// 后山2:放在景深平面 2 之内
+Box(
+    modifier = Modifier.fillMaxSize().graphicsLayer {
+        scaleX = cloudScale; scaleY = cloudScale
+        transformOrigin = focal
+        alpha = cloudFade
+    }
+) {
+    HoushanMistLayer()
+    FocusedCloudBand(...)  // 新加
+    FocusedCloudBand(...)  // 新加
+    AnimatedCloudImage(...) // 新加 (x3)
+    Image(painter = ..., /* 6 朵老云 */)
+    ...
+}
+```
+
+#### Step 6 编译/安装
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 4s
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 14s
+adb install -r app-debug.apk      →  Success
+adb shell dumpsys activity        →  topResumedActivity=com.jueqiao.jianghu/.MainActivity ✓
+```
+
+#### git 状态(待 commit)
+
+- `M android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt`(+2 import,新增 cloudProgress 状态,5 个 animation 调用)
+- `M android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt`(+2 import,新增 cloudProgress 状态,5 个 animation 调用;**放在景深平面 2 里,与云朵一起 fade**)
+- `M android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan3/Houshan3Screen.kt`(删除 2 个 private fun,改 import,移除文件级 TWO_PI)
+- `?? android/app/src/main/java/com/jueqiao/jianghu/ui/components/FocusCloudBand.kt`(新)
+- `?? android/app/src/main/java/com/jueqiao/jianghu/ui/components/AnimatedCloudImage.kt`(新)
+
+## 沉淀(新)
+
+- **"重复 ≥ 3 次 + 跨 ≥ 2 个文件 = 抽"**(跨文件阈值比同文件低,新)— §6 沉淀的"重复 < 错误抽象"针对的是**同文件内** 3+ 次调用,
+  阈值明确(同文件 3+ 次都该抽)。但 §17 的情况是**跨文件** 6 份重复(2 helper × 3 页面),阈值应该更低:
+  - **同文件 3+ 次 = 抽**(§6 的标准)
+  - **跨 2+ 文件 = 抽**(本次新加的阈值)
+  - 跨文件重复的隐性成本高:改一处要同步改 N 个地方,**容易漏**,漏了就行为不一致
+- **z-order 与 dolly 平面层叠不能分开考虑**(新)— 后山2 的 §36 dolly 过渡是"3 个景深平面各自缩放和淡出",
+  新加的云元素**必须放进某个景深平面**(选平面 2 = 云平面)而不是放外层 Box,否则飘带和实图云会留在屏幕上不动,
+  与 6 朵老云的 fade 不同步。**"动画"不仅指"持续循环动效",还包括"在过渡中正确淡入淡出"**;
+  后山1 没这个顾虑(没 dolly),后山2 必须考虑
+- **Kotlin 扩展函数要显式 import**(新)— `DrawScope.scale(...)` 是扩展函数,DrawScope 是
+  `onDrawBehind { }` 的 receiver 类型;但 Kotlin 编译器**不自动 import 扩展函数**——必须显式
+  `import androidx.compose.ui.graphics.drawscope.scale`,否则编译报 `Unresolved reference 'scale'`。
+  从 Houshan3Screen.kt 提取到 FocusCloudBand.kt 时漏了这个 import → 第一次编译挂掉。教训:**复刻带 onDrawBehind/onDrawWithContent 的代码时,
+  扩展函数 import 要逐个核对**(编译器不会提示"忘了 import 扩展函数")
+- **沉淀会"过期"**(新)— 此前 §37 沉淀说"碎屏布局的'聚焦飘带'应在文件私有,后山1/2 需要时另起一处",
+  这是§17 之前的判断。**但**今天 §17 直接证伪了这个沉淀:后山1/2 不仅"另起一处",
+  而且**第二个文件**复制 → §6 的"重复 < 错误抽象"阈值被触发 → 应该提到 shared。
+  沉淀不是金科玉律,会随着代码演进而**反向推翻**。建议:每次新增跨页面改动时,回看 §6 沉淀
+  (重复阈值)和 §37 沉淀(组件放哪),**看是否要重写**

@@ -35,6 +35,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
+import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.math.cos
@@ -111,6 +113,20 @@ fun Houshan1Screen(
         xDelay = 1000L..2000L,
     )
 
+    // ── 后山1 与后山3 共享的拆招心法下方动画(§44)— 周期 13/17/23s 互质 ────
+    // 共享 1 个 rememberInfiniteTransition 给 3 朵 AnimatedCloudImage,各 phase 偏移
+    val transition = rememberInfiniteTransition(label = "h1CloudBands")
+    val cloudProgress = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud58",
+    )
+    // 注释:使用 §44 同样的 progress 给后山1 的 3 朵云,保证同步呼吸节奏
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -128,6 +144,57 @@ fun Houshan1Screen(
         // 本层无 clickable/pointerInput → 不拦截触摸;且下方山峰/标签/文字/熊猫/气泡
         // 均为不透明图版,故不会降低任何文字的对比度
         HoushanMistLayer()
+
+        // ── 后山1 与后山3 共享的拆招心法下方动画(§44/§6 §11 §15)────────────────
+        // 位置基于后山1 拆招心法 center X=205(后山3 是 172,横向偏移 +33dp),
+        // Y 基于后山1 拆招心法底边 476dp(后山3 是 691dp,上移 -215dp)。
+        // 与后山3 一样放在内容层之前(之下),让标签的米色不透明图版自然遮住飘带的右端。
+        FocusCloudBand(
+            // 中下:拆招心法正下方,底边 +49dp gap(与 §43 同样的视觉距离)
+            xOffset = 45f, yOffset = 525f,
+            widthDp = 320f, heightDp = 110f,
+            amplitudeX = 40f, amplitudeY = 28f,
+            baseAlpha = 0.50f, alphaAmp = 0.30f,
+            periodMs = 11_000,
+        )
+        FocusCloudBand(
+            // 左下:在标签 1(识机真决)附近,与 §44 同样的"另一个焦点"
+            xOffset = -30f, yOffset = 740f,
+            widthDp = 240f, heightDp = 120f,
+            amplitudeX = 35f, amplitudeY = 24f,
+            baseAlpha = 0.50f, alphaAmp = 0.30f,
+            periodMs = 9_000,
+        )
+        AnimatedCloudImage(
+            // 云 58:左下角,横椭圆(后山3 用 cx=60 在 后山3 拆招心法 -112dp;后山1 cx=205-112=93)
+            painter = painterResource(R.drawable.img_houshan1_cloud_58),
+            contentDescription = "云朵58",
+            xOffset = -27f, yOffset = 488f,
+            widthDp = 240f, heightDp = 135f,
+            progress = cloudProgress, phase = 0.13f,
+            amplitudeX = 25f, amplitudeY = 10f,
+            baseAlpha = 0.50f, alphaAmp = 0.25f,
+        )
+        AnimatedCloudImage(
+            // 云 60:右侧,扁长(后山3 cx=260;后山1 cx=205+88=293)
+            painter = painterResource(R.drawable.img_houshan1_cloud_60),
+            contentDescription = "云朵60",
+            xOffset = 153f, yOffset = 471f,
+            widthDp = 280f, heightDp = 108f,
+            progress = cloudProgress, phase = 0.31f,
+            amplitudeX = 30f, amplitudeY = 5f,
+            baseAlpha = 0.50f, alphaAmp = 0.25f,
+        )
+        AnimatedCloudImage(
+            // 云 62:正下方,中等扁长(后山3 cx=170;后山1 cx=205-2=203,对齐拆招心法中心)
+            painter = painterResource(R.drawable.img_houshan3_cloud_62),
+            contentDescription = "云朵62",
+            xOffset = 83f, yOffset = 556f,
+            widthDp = 240f, heightDp = 98f,
+            progress = cloudProgress, phase = 0.71f,
+            amplitudeX = 27f, amplitudeY = 7f,
+            baseAlpha = 0.50f, alphaAmp = 0.25f,
+        )
 
         // 内容层(避开系统导航条)
         Box(
