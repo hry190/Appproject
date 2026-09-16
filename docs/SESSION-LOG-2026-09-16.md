@@ -1300,3 +1300,107 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>
   而且**第二个文件**复制 → §6 的"重复 < 错误抽象"阈值被触发 → 应该提到 shared。
   沉淀不是金科玉律,会随着代码演进而**反向推翻**。建议:每次新增跨页面改动时,回看 §6 沉淀
   (重复阈值)和 §37 沉淀(组件放哪),**看是否要重写**
+
+---
+
+## §40 后续 session(2026-09-16 下午~晚上):后山 1 云朵动效大迭代
+
+### 用户指令时间线
+
+1. 加云朵动效(原始 + 透明度时变)— 8 朵云全加,后全删只留 3 朵明显位置
+2. Ellipse 58.png (X=117 Y=322 W=277 H=92) 加为云朵 13
+3. 云朵 13 移到标签 3 之下(X=0 Y=420 W=277 H=92)
+4. 后山 1 改名(试炼→后山 1,学习→后山 2,后山→后山 3)
+5. 云朵 56 移到内容层最内层显示在最上层 + 上移 60
+6. 大云再上移 50:Y=120 → 70
+7. 大云左右移动范围加大 1.5-2 倍
+8. 大云添加透明度时变(绑定 sin/cos 同 X/Y)
+9. 大云 X 半径 50→100
+10. 熊猫也加动效(上下浮 + 呼吸缩放)
+11. 拆招心法右小云等比例放大(W=80→144 H=35→63)
+12. 小云等比例放大(W=72→108 H=43→65)
+13. 加新云朵 Ellipse 60b (X=-12 Y=872 W=247.5 H=61.64)— 用户调整 Y 为 372
+14. 多次"飘动速度/幅度/方向"调整
+
+### 关键 commit (codex/ifthen 分支)
+
+```
+8320794 feat(houshan1): 加云雾飘动效果 — 12 秒水平循环平移
+... 中间多次 commit 调速/调方向 ...
+5a406e2 feat(houshan1): 加云朵 11 (Ellipse 56, 用户指定位置 X=278 Y=755 W=335 H=297)
+4369e72 feat(houshan1): 加云朵 12 (Ellipse 60b) + 修复 cloud_56 位置
+f473d9f feat(houshan1): Ellipse 56 透明度时变 0.6-0.95 (始终不透明到见背景)
+0c0dab6 feat(houshan1): 加云朵 13 (Ellipse 58b, 用户指定 X=117 Y=322 W=277 H=92)
+c58ed19 feat(houshan1): 云朵 13 移到标签3 之下
+ca06570 feat(houshan1): Ellipse 56 不透明度 100% — 移除透明度时变动画
+0e5fd15 feat(houshan1): 替换背景图 — D:\图\试炼.png (1236x2751, 3.6 MB)
+953e939 feat(houshan1): 第三次替换背景图 — D:\图\试炼.png
+5b94943 fix(houshan1): 修复 line 143 多余的 '}' — cloud56Alpha LaunchedEffect 没正确关闭
+```
+
+### 后山 1 最终状态(commit 14f99a6)
+
+**保留 3 朵云**(用户明确"只留明显位置"):
+- **大云** (Ellipse 0, 240×180): X=60 Y=70(原 180,大云移到内容层最内层最上层+上移 110),椭圆轨迹 ±150/±40,16 秒 + 透明度 0.1-0.9 随 Y 同步
+- **拆招心法右** (Ellipse 60, 144×63): X=280 Y=400,上下飘 ±50,4.5 秒 + 透明度 0.15-0.85
+- **小云** (Ellipse 61, 144×86): X=50 Y=750,上下飘 ±60,4 秒(用户要快节奏)
+
+**额外添加 4 朵**(后加):
+- **云朵 11** (Ellipse 56, 335×297): X=118 Y=700(用户调整位置),三个动画(上下+左右+透明度)
+- **云朵 12** (Ellipse 60b, 247.5×61.64): X=-12 Y=372(用户调整),左右飘+透明度
+- **云朵 13** (Ellipse 58b, 277×92): X=0 Y=420,标签 3 之下,左右飘+透明度
+
+**熊猫动效**:上下浮 ±8 px,3 秒 + 呼吸缩放 1.0↔1.05,4 秒
+
+### 后山 1 背景图
+
+替换 3 次 `D:\图\试炼.png` → 最终 `drawable-nodpi/img_shilian_bg.png` (1236×2751, 3.4 MB)
+
+### 调试的痛苦与教训
+
+**问题**:.NET Insert 操作不可靠 — 中文字符、缩进、空格、括号都容易错
+
+**踩坑清单**:
+1. ❌ 漏写 `,` 在 `.blur(6.dp)` 后 → Modifier chain 断裂,级联 20+ 错误
+2. ❌ 写 `}    }` 单行(应当 `}\n    }`)— 语法合法但不规范
+3. ❌ 加 Image 漏 `contentScale = ...,` 行
+4. ❌ Insert 时缩进错 16 空格
+5. ❌ 重复的 `)` 关闭 Image
+6. ❌ 漏写 Animatable 声明但 LaunchedEffect 引用
+7. ❌ 漏 import `import androidx.compose.runtime.LaunchedEffect` 等
+8. ❌ 删 Animatable 时也误删了被引用的 Animatable(cloud60bX/Alpha)
+9. ❌ Y 坐标用户调整过(372),但我误以为是 872 "原始位置"
+
+**关键 commit 修复线**:
+- `5b94943` 修复 `}    }` 单行
+- `8e5c39a` 修复 cloud56Alpha LaunchedEffect 缺 `}`
+- `196d314` 补回 cloud60bX/Alpha Animatable 声明
+- `eade9b7` 补回 cloud60MidRightY/Alpha Animatable 声明
+- `6702628` 修复云朵 13 注释缩进 + 删重复 contentScale
+- `df5bd2b` 修复云朵 12/13 LaunchedEffect 括号不匹配
+- `aed893e` 修复云朵 12 注释缩进(16→8)
+- `9acbc5d` 修 .blur(6.dp) 缺 `,` + 云朵 12 Y 872→372
+- `efb2a5d` 云朵 12 .blur(6.dp) 后加 `,`
+- `8585b54` 加 drawable img_houshan1_cloud_58b.png
+- `3bb2225` 删云朵 13 Image 块多余的 `)`
+- `14f99a6` 补云朵 12 Image 关闭 `)`
+
+### 最终操作
+
+`git reset --hard 8e5c39a` 回退到 merge feature 之后的稳定状态
+→ 用 `edit` 工具加云朵 13 声明
+→ 用 .NET 脚本安全加 2 个 LaunchedEffects + Image(用 IndexOf 找锚点)
+→ 修 .blur 缺 `,`、Y 872→372、Image 缺 `)`
+→ `git push -f origin codex/ifthen` force push
+
+### 沉淀(后山 1 云朵动效相关)
+
+1. **.NET Insert 不可靠** — 中文环境下 Insert 操作经常漏字、加错位置
+   - 优先用 `edit` 工具(它读完整文件上下文,避免误判缩进)
+   - 或先 Read 完整文件,再用精准的 PowerShell `.NET` 脚本(必须用 `"\\"` 双反斜杠转义路径)
+   - **每次 Insert 后用 .NET 脚本 verify 括号深度、`.blur` / `.alpha` 后是否有 `,`**
+2. **错误级联** — 一个 Image 块参数不平衡会报 20+ 个错误,要找第一个 error 修根因
+3. **"modifier chain 内逗号"陷阱** — `.blur(6.dp),` 中的 `,` 是 Image 参数 separator,不是 modifier chain 元素(`.blur` 后不能 `,`)
+4. **用户调整过的值要保护** — Y=372 是用户 IDE 真机微调过的,不要"修复"成 872
+5. **`git reset --hard` 后必须 `fetch + reset origin` 拉新 commit**,否则本地 force push 跟 origin 不一致
+6. **加 Animatable 时配套加 LaunchedEffect 和 Image** — 三个一气呵成,不然编译报 `Unresolved reference`
