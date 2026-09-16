@@ -65,13 +65,14 @@ fun AnimatedCloudImage(
     baseAlpha: Float,
     alphaAmp: Float,
 ) {
-    // 09-16 §15 抖动参数:1900ms 周期 + ±3 dp X / ±1.5 dp Y(共享 FocusCloudBand 的硬编码)
+    // 09-16 §18 抖动参数:1900 → 3000ms 周期(频率 0.53 → 0.33 Hz);
+    // 振幅 ±3 → ±4.5 dp X / ±1.5 → ±2.5 dp Y(共享 FocusCloudBand 的硬编码)
     val jitter by rememberInfiniteTransition(label = "aciJitter")
         .animateFloat(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1900, easing = LinearEasing),
+                animation = tween(durationMillis = 3000, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart,
             ),
             label = "aciJitterP",
@@ -80,10 +81,10 @@ fun AnimatedCloudImage(
         modifier = Modifier
             .offset {
                 val a = (progress.value + phase) * TWO_PI
-                val jt = jitter * TWO_PI * 2f + phase * 7f  // 2 cycles / 1900ms × phase 偏移
+                val jt = jitter * TWO_PI * 2f + phase * 7f  // 2 cycles / 3000ms × phase 偏移
                 IntOffset(
-                    (xOffset + sin(a) * amplitudeX + sin(jt) * 3f).dp.roundToPx(),
-                    (yOffset + cos(a) * amplitudeY + cos(jt) * 1.5f).dp.roundToPx(),
+                    (xOffset + sin(a) * amplitudeX + sin(jt) * 4.5f).dp.roundToPx(),
+                    (yOffset + cos(a) * amplitudeY + cos(jt) * 2.5f).dp.roundToPx(),
                 )
             }
             .size(width = widthDp.dp, height = heightDp.dp)

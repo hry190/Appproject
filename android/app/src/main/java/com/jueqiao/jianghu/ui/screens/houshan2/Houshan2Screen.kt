@@ -140,7 +140,7 @@ fun Houshan2Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            animation = tween(durationMillis = 17_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud58",
@@ -229,17 +229,19 @@ fun Houshan2Screen(
                     // 中下:拆招心法正下方,底边 +49dp gap
                     xOffset = 45f, yOffset = 525f,
                     widthDp = 320f, heightDp = 110f,
-                    amplitudeX = 40f, amplitudeY = 28f,
+                    // §18:振幅大幅加大,周期拉长
+                    amplitudeX = 60f, amplitudeY = 42f,
                     baseAlpha = 0.50f, alphaAmp = 0.30f,
-                    periodMs = 11_000,
+                    periodMs = 17_000,
                 )
                 FocusCloudBand(
                     // 左下:在标签 1(识机真决)附近,后山2 还有这个标签
                     xOffset = -30f, yOffset = 740f,
                     widthDp = 240f, heightDp = 120f,
-                    amplitudeX = 35f, amplitudeY = 24f,
+                    // §18:振幅大幅加大,周期拉长
+                    amplitudeX = 52f, amplitudeY = 36f,
                     baseAlpha = 0.50f, alphaAmp = 0.30f,
-                    periodMs = 9_000,
+                    periodMs = 14_000,
                 )
                 AnimatedCloudImage(
                     // 云 58:左下角,横椭圆
@@ -248,7 +250,8 @@ fun Houshan2Screen(
                     xOffset = -27f, yOffset = 488f,
                     widthDp = 240f, heightDp = 135f,
                     progress = cloudProgress, phase = 0.13f,
-                    amplitudeX = 25f, amplitudeY = 10f,
+                    // §18:振幅加大
+                    amplitudeX = 38f, amplitudeY = 15f,
                     baseAlpha = 0.50f, alphaAmp = 0.25f,
                 )
                 AnimatedCloudImage(
@@ -258,7 +261,8 @@ fun Houshan2Screen(
                     xOffset = 153f, yOffset = 471f,
                     widthDp = 280f, heightDp = 108f,
                     progress = cloudProgress, phase = 0.31f,
-                    amplitudeX = 30f, amplitudeY = 5f,
+                    // §18:振幅加大
+                    amplitudeX = 45f, amplitudeY = 8f,
                     baseAlpha = 0.50f, alphaAmp = 0.25f,
                 )
                 AnimatedCloudImage(
@@ -268,7 +272,8 @@ fun Houshan2Screen(
                     xOffset = 83f, yOffset = 556f,
                     widthDp = 240f, heightDp = 98f,
                     progress = cloudProgress, phase = 0.71f,
-                    amplitudeX = 27f, amplitudeY = 7f,
+                    // §18:振幅加大
+                    amplitudeX = 40f, amplitudeY = 10f,
                     baseAlpha = 0.50f, alphaAmp = 0.25f,
                 )
 

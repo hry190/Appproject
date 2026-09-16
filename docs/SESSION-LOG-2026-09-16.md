@@ -1053,6 +1053,78 @@ adb shell dumpsys activity        →  topResumedActivity=com.jueqiao.jianghu/.M
 - `?? android/app/src/main/java/com/jueqiao/jianghu/ui/components/FocusCloudBand.kt`(新)
 - `?? android/app/src/main/java/com/jueqiao/jianghu/ui/components/AnimatedCloudImage.kt`(新)
 
+### §18 云朵动画再调整 — 振幅大幅加大,周期拉长(用户"速度再快+频率小+振幅大")(2026-09-16 上午)
+
+**用户指令**:"移动的速度再快一些,频率小一些,振幅大一些"
+
+#### 解读:三个参数在"维度空间"里的位置
+
+| 用户说 | 维度 | 解读 |
+|---|---|---|
+| "速度再快一些" | 视觉速度(单次循环距离)| "振幅大"= 看起来飞得更远,**不要解释为周期变短** |
+| "频率小一些" | 频率 = 1/周期 | 频率小 = 周期大 = 慢 |
+| "振幅大一些" | 振幅 | 单次循环距离大 |
+
+**矛盾化解**:"速度"≠"频率",而是与"振幅"同维。"振幅大 + 周期大"= **单次循环距离大幅增加,但循环频率降低** = "深长深呼吸"风格。
+
+#### §18 实际数字(3 个页面共用同一组 §18 参数)
+
+| 参数 | 旧 | **新** | 变化 |
+|---|---|---|---|
+| FocusCloudBand 抖动周期 | 1900ms | **3000ms** | 0.53 → **0.33 Hz**(频率小) |
+| FocusCloudBand 抖动 X 振幅 | ±3 dp | **±4.5 dp** | +50% |
+| FocusCloudBand 抖动 Y 振幅 | ±1.5 dp | **±2.5 dp** | +67% |
+| 云 58 周期 | 7000ms | **11000ms** | +57% |
+| 云 58 漂移 X 振幅 | 25 dp | **38 dp** | +52% |
+| 云 58 漂移 Y 振幅 | 10 dp | **15 dp** | +50% |
+| 云 60 周期 | 11000ms | **17000ms** | +55% |
+| 云 60 漂移 X 振幅 | 30 dp | **45 dp** | +50% |
+| 云 60 漂移 Y 振幅 | 5 dp | **8 dp** | +60% |
+| 云 62 周期 | 13000ms | **19000ms** | +46% |
+| 云 62 漂移 X 振幅 | 27 dp | **40 dp** | +48% |
+| 云 62 漂移 Y 振幅 | 7 dp | **10 dp** | +43% |
+| FocusCloudBand 中下周期 | 11000ms | **17000ms** | +55% |
+| FocusCloudBand 中下 X/Y | 40/28 dp | **60/42 dp** | +50% |
+| FocusCloudBand 左下周期 | 9000ms | **14000ms** | +56% |
+| FocusCloudBand 左下 X/Y | 35/24 dp | **52/36 dp** | +49% / +50% |
+
+#### 互质性自检
+
+新周期 11/17/19s 仍互质(都是质数)。
+合成周期 11×17×19 = 3553 秒 ≈ **59 分钟** → 远超人眼可跟踪范围。
+加上 3000ms 抖动周期,gcd(11000, 3000) = 1000ms,合成周期 = 33000ms = **33 秒**(可接受)。
+
+#### 振幅 vs 周期 vs 峰值速度的代数关系
+
+`峰值速度 = 2π × 振幅 / 周期`。振幅和周期**等比例 ↑** → 峰值速度**几乎不变**:
+- 例:FocusCloudBand 中下 旧 2π×40/11 ≈ **22.8 dp/s**,新 2π×60/17 ≈ **22.2 dp/s**(几乎相同)
+- 所以**不是"加快"而是"加深"** —— 速度一样,但每次循环飞得更远 → 看起来更明显
+
+#### 沉淀(顺带):"速度"和"频率"看似矛盾时的处理
+
+- "速度" 在日常语言里常指**视觉速度**(单次循环距离 = amp × 步数),不是物理公式速度
+- "频率" 才是严格周期频率
+- 用户用"速度"+"频率"矛盾描述时,**先把"速度"翻译为"视觉明显度"**,把矛盾化解为"amp↑ + period↑"
+- 这种组合的视觉:**单次循环更显眼 + 整体节奏更从容** = "深长深呼吸"风格
+- vs 之前 §15 "amp↑ + period↓" = "急促抖"风格
+
+#### 编译/安装
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 11s
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 11s
+adb install -r app-debug.apk      →  Success
+adb shell dumpsys activity        →  topResumedActivity=com.jueqiao.jianghu/.MainActivity ✓
+```
+
+#### git 状态(待 commit)
+
+- `M ui/components/FocusCloudBand.kt`(jitter hardcoded 1900→3000ms, ±3→±4.5, ±1.5→±2.5)
+- `M ui/components/AnimatedCloudImage.kt`(jitter hardcoded 同上)
+- `M Houshan3Screen.kt`(3 个云朵周期 + 2 个 FocusCloudBand 周期和振幅 + 3 个 AnimatedCloudImage 振幅)
+- `M Houshan1Screen.kt`(cloudProgress 周期 + 2 个 FocusCloudBand + 3 个 AnimatedCloudImage 振幅)
+- `M Houshan2Screen.kt`(cloudProgress 周期 + 2 个 FocusCloudBand + 3 个 AnimatedCloudImage 振幅)
+
 ## 沉淀(新)
 
 - **"重复 ≥ 3 次 + 跨 ≥ 2 个文件 = 抽"**(跨文件阈值比同文件低,新)— §6 沉淀的"重复 < 错误抽象"针对的是**同文件内** 3+ 次调用,
