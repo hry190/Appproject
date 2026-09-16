@@ -1436,8 +1436,661 @@ Image(
 - `R img_shilian3_cloud.png → img_shilian3_cloud_old.png`(重命名)
 - `M Houshan3Screen.kt` (改 2 行:painterResource + 注释)
 
+### §36 后山2 → 后山3 沉浸式过渡动画(纵深推进 dolly-in)(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"请为'后山2'切换到'后山3'增加一段沉浸式过渡动画(以两张示意图为准):让画面中的主山峰产生明显的'向用户靠近'的纵深推进感:山峰平滑放大并向前移动,周围的云雾、水墨山峦可轻微后移或淡化…动画结束时自然衔接为'后山3'页面的构图与元素位置,并呈现熊猫角色。整体风格需保持现有国风水墨质感,动画柔和、连贯,不要突兀的页面闪切;建议时长约 0.8~1.2 秒,可使用 ease-in-out 缓动。页面中的按钮、文字和标记应随过渡平滑淡入/淡出或跟随对应山体移动,避免跳动。"
+
+#### 侦察结论(关键,决定方案可行性)
+
+**两张背景图是不同作品,不是同一张图的缩放** —— 这一点必须先验证,否则会做出"以为在形变衔接、实际在硬切"的假过渡:
+
+| 资源 | 用途 | 像素 | 宽高比 |
+|---|---|---|---|
+| `img_shilian_bg.png` | 后山2 背景 | **1236 × 2751** | 0.44929 |
+| `img_shilian2_bg.png` | 后山3 背景(源文件名"后山3 转换.png")| **824 × 1834** | 0.44929 |
+
+- 两者 1236/824 = 2751/1834 = **恰好 1.5**,初看像是"中央 2/3 裁剪 = 1.5 倍推近",**这是陷阱**
+- 实际两者宽高比都 = **0.44929 = 412/917**(Figma 全屏设计稿比例)—— 比例相同只说明"都是全屏稿",**不构成构图关系**
+- **程序化证伪**:以相关系数(Pearson,对亮度/对比度不变)搜索"绕中心裁剪 + 缩放"因子 1.00~2.00,最高仅 **0.3514**(噪声级);直接按整图缩放对比平均灰度差 **26.05**、按 1.5 倍中央裁剪对比 **29.92**,两者都很差 → **确认两张图是不同画作**
+
+**因此**:"同一座山放大后落到下一页构图"在现有素材下**不可能真实实现**。用户要的是"观感上的纵深推进",故采用**三景深平面视差推进 + 交叉淡入接棒**——推进感来自层间速度差,衔接来自灭点对齐 + 交叉淡入。
+
+**另一路侦察**:`Routes.Shilian3` 全仓库仅 2 处引用(navigate + composable),确认**只能从后山2 进入**,因此可以安全地只在 Shilian2/Shilian3 上做方向特异化过渡。
+
+#### 实现
+
+**A. [Houshan2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt)** —— 屏内三景深视差推进
+
+新增文件级常量(便于调参 + 可读):
+```kotlin
+private const val DOLLY_DURATION_MS = 1050   // 落在用户要求 0.8~1.2s 区间
+private const val DOLLY_HANDOFF_MS  = 560L   // 半程交给导航
+private const val DOLLY_BG_SCALE    = 0.34f  // 背景山体 1.00 → 1.34
+private const val DOLLY_CLOUD_SCALE = 0.09f  // 云雾     1.00 → 1.09
+private const val DOLLY_LABEL_SCALE = 0.34f  // 标签     1.00 → 1.34
+private const val FOCAL_X = 0.5f             // 灭点 X
+private const val FOCAL_Y = 0.48f            // 灭点 Y
+```
+
+新增状态 + 触发:
+```kotlin
+val scope = rememberCoroutineScope()
+var isTransitioning by remember { mutableStateOf(false) }
+val dolly = remember { Animatable(0f) }        // 0→1 推进进度,三层共用
+BackHandler(enabled = !isTransitioning) { onBack() }
+```
+
+三条变换层(每层 `fillMaxSize` 包裹,见下方"为什么"):
+```kotlin
+val bgScale    = 1f + DOLLY_BG_SCALE * p
+val cloudScale = 1f + DOLLY_CLOUD_SCALE * p
+val labelScale = 1f + DOLLY_LABEL_SCALE * p
+val cloudFade  = (1f - p).coerceIn(0f, 1f)
+val labelFade  = (1f - p * 1.4f).coerceIn(0f, 1f)   // 文字比云雾先淡出
+val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)   // 返回按钮
+val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
+```
+
+整屏点击改为启动推进,并在半程交给导航:
+```kotlin
+val startDollyIn: () -> Unit = {
+    if (!isTransitioning) {
+        isTransitioning = true
+        scope.launch {
+            dolly.animateTo(1f, tween(DOLLY_DURATION_MS, easing = FastOutSlowInEasing))
+        }
+        scope.launch { delay(DOLLY_HANDOFF_MS); onOpenHoushan3() }
+    }
+}
+```
+
+**B. [JianghuNavHost.kt](android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt)** —— 交叉淡入接棒
+
+```kotlin
+composable(
+    route = Routes.Shilian2,
+    exitTransition = {
+        if (targetState.destination.route == Routes.Shilian3) {
+            fadeOut(tween(durationMillis = 520, easing = LinearEasing))
+        } else {
+            fadeOut(tween(durationMillis = 300, easing = FastOutSlowInEasing))
+        }
+    },
+) { Houshan2Screen(...) }
+
+composable(
+    route = Routes.Shilian3,
+    enterTransition = {
+        scaleIn(tween(760, easing = FastOutSlowInEasing), initialScale = 1.10f,
+                transformOrigin = TransformOrigin(0.5f, 0.48f)) +
+        fadeIn(tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing))
+    },
+    popEnterTransition = { fadeIn(tween(300, easing = FastOutSlowInEasing)) },
+) { Houshan3Screen(...) }
+```
+
+#### 时间轴(以点击为 t=0)
+
+| 时刻 | 事件 |
+|---|---|
+| 0 ms | 点击 → `isTransitioning=true`,dolly 0→1 开始(1050ms, FastOutSlowIn) |
+| ~480 ms | 标签淡出完毕(p=0.714) |
+| **560 ms** | **交接**:`onOpenHoushan3()`;此时山体已推进约 78% |
+| 560→1080 ms | 后山2 淡出(520ms)与后山3 淡入(延迟 120ms,640ms)交叠 → 交叉溶解 |
+| 560→1320 ms | 后山3 由 1.10 回落到 1.00,读作"镜头减速停稳",熊猫随之呈现 |
+| 1050 ms | 后山2 屏内推进走满(此时已在淡出中) |
+
+#### 关键设计决策(为什么这么做)
+
+| 决策 | 原因 |
+|---|---|
+| **每层单独 `Box(fillMaxSize).graphicsLayer{...}`** | `graphicsLayer` 的 `transformOrigin` 是**相对元素自身边界**的,不是相对父容器。要让三层绕**同一个屏幕灭点**缩放,必须让每层边界 = 屏幕;否则每层各自中心缩放,层间速度差会变成"各转各的"而不是纵深 |
+| **标签与背景同速(都 0.34)** | 用户要求"避免跳动"。标签与山体同速、同灭点 ⇒ 相对位置**零漂移**,文字始终"贴"在对应山体上;再叠加淡出,视线自然交还给山体 |
+| **云雾 0.09 < 山体 0.34** | 视差正是**层间速度差**:近景推得多、远景推得少,远景相对后退 → 即用户要的"云雾后移" |
+| **返回按钮只淡出不缩放** | UI chrome 不属于景深;若跟随山体放大,视觉上会"跳" |
+| **`exitTransition` 的 else 分支用轻淡出而非 `ExitTransition.None`** | 若用 None,"后山2 → 后山1"返回会变成**硬切**(回归)。用轻淡出保持原有柔和感 |
+| **显式设 `popEnterTransition`** | Navigation Compose 的坑:`enterTransition` 非空时,`popEnterTransition` 会**默认继承它**。不覆盖的话,从"未完待续"返回后山3 也会播一次推进动画 |
+| **交接点放在半程(560ms)而非动画结束** | 若等推进走满再导航,会出现"推到最大 → 静止 → 再淡入"的顿挫;半程交接让推进与淡入**同时进行**,读作一个连续镜头 |
+
+#### 编译
+
+```
+JAVA_HOME=C:\Users\28784\.jdks\jbr-21.0.11   (java -version → 21.0.11)
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 41s
+```
+
+**首次通过,未重蹈 §23~§26 四次编译失败覆辙**。原因是动手前先核对了 API 可用性:
+- `navigationCompose = 2.8.4` — destination 级 `enterTransition/exitTransition` 自 **2.7.0** 起提供 ✓
+- `composeBom = 2024.12.01` — `scaleIn/fadeIn/TransformOrigin/GraphicsLayerScope.transformOrigin` 均为长期稳定 API ✓
+- 用到的 `GraphicsLayerScope` 属性仅 `scaleX/scaleY/transformOrigin/alpha`(**不含 colorFilter**,与 §26 结论一致)
+
+#### git 状态(待 commit)
+
+- `M Houshan2Screen.kt`(净 +约 60 行:常量块 + 状态 + 触发 + 3 个景深包裹层;原 6 云/4 标签内容不变,仅缩进)
+- `M JianghuNavHost.kt`(+约 30 行:5 个 import + Shilian2 exitTransition + Shilian3 enterTransition/popEnterTransition)
+
+### §37 后山1 + 后山2 持续循环云雾缭绕效果(程序化水墨云海)(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"请为'后山1'和'后山2'两个页面增加持续循环的云雾缭绕动态效果,以参考图中的水墨山景为准。云雾应以半透明、水墨晕染的质感,在山峰之间、山脚和画面边缘缓慢流动、聚散与轻微漂浮,营造山间云海与纵深感。可让前景云雾移动稍快、中远景云雾移动更慢,形成自然的层次与视差。动画整体要轻柔、克制、无明显重复痕迹,保持国风水墨的宁静意境;不要遮挡或影响山峰、关卡标签、文字、熊猫角色及其他交互元素的阅读与点击。建议使用低速、无缝循环的动画,并注意性能表现。"
+
+#### 素材侦察(决定"用图"还是"程序化")
+
+| 候选素材 | 结论 |
+|---|---|
+| `img_zaowu_directional_fog_v2.png` (841×1870, 1.0 MB) | **不可用** — 实为**竖向金色光柱**(god rays),不是横向雾;且为灰度 PNG(colorType=0),色相/形态/方向全不对 |
+| `img_zaowu_bg_shadow_v2.png` (840×1871) | 不可用 — 是阴影层,灰度,非雾 |
+| `img_houshan1_cloud_*` (Ellipse 系列 6 张) | 已在用(6 朵装饰云),再加会重复;但它们保留,与新雾层互补 |
+| 新增整屏雾图 | **否决** — 当前 APK 已 **472 MB**,且 CODE-AUDIT 已把大图列为 CRITICAL;再加图是反向操作 |
+
+**结论:程序化(径向渐变)实现** —— 天然软边、任意分辨率不糊、alpha 可廉价动画,且**零新增素材/零 APK 增长**,正好匹配"半透明水墨晕染"。
+
+#### 实现:[HoushanMistLayer.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/components/HoushanMistLayer.kt)(新建)
+
+**三层视差**(周期互质 → 长期不重复):
+
+| 层 | 位置 | 周期 | 透明度 | 位移 | 对应要求 |
+|---|---|---|---|---|---|
+| 远景 | 远峰山脊之间 (Y≈150~345) | **53s** | 0.09~0.11 | ±15~18dp | "中远景移动更慢" |
+| 中景 | 山腰 + 左右画面边缘 (Y≈430~620) | **41s** | 0.13~0.16 | ±22~26dp | 层次过渡 |
+| 近景 | 山脚 + 画面底部边缘 (Y≈700~862) | **29s** | 0.20~0.22 | ±34~38dp | "前景移动稍快" |
+
+共 **11 个雾团**,每团由 `MistBlob(x, y, w, h, baseAlpha, alphaAmp, driftX, driftY, phase)` 一行描述 —— 调参只改三张表。
+
+**无缝 + 无明显重复痕迹的原理(关键)**:
+- 每层用 **0→1 线性回绕**进度(`RepeatMode.Restart` + `LinearEasing`)→ 匀速漂移
+- 所有派生量取 `sin/cos(2π(t+phase))`。因 sin 在 t=1 与 t=0 取值相同,**回绕瞬间不跳变 → 天然无缝**,无需做首尾对接
+- 三层周期取 **53/41/29(均为质数)** → 合成周期 ≈ **63017s ≈ 17.5 小时**,肉眼不可能看出循环
+- 每团 `phase` 不同 + "聚散"相位再偏移 `0.31` → 位移与明暗不同步,避免整齐划一
+
+**性能(对应"注意性能表现")—— 每帧零重组**:
+| 手段 | 效果 |
+|---|---|
+| 位移用 `Modifier.offset { }`(lambda 版) | 状态读取推迟到 **layout 阶段**,不触发组合 |
+| 透明度在 `onDrawBehind` 内读取 | 状态读取推迟到 **draw 阶段**,不触发组合 |
+| `drawWithCache` 缓存渐变 Brush | 仅尺寸变化时重建,不每帧分配 |
+| 三层各只 hold **1 个**动画值(共 3 个) | 而非每团一个 `Animatable` + 协程(11 协程) |
+| 无 render layer | 不用 `graphicsLayer{alpha}`(那会为每团建一个离屏 FBO) |
+
+**不干扰交互(对应"不要遮挡或影响…阅读和点击")**:
+- 本层**不含任何 `clickable`/`pointerInput`** → 完全不拦截触摸事件
+- 插入位置为**背景图之后、所有内容之前** → 永远位于山峰/标签/文字/熊猫/气泡之下
+- 因上述元素均为**不透明 PNG 图版**(标签是米色竖版、气泡是实体图、熊猫是不透明图),雾层不会降低任何文字对比度
+- 颜色用同色不同 alpha(`MistColor.copy(alpha=0f)`)而非 `Color.Transparent` —— 避免"透明黑"插值产生灰边
+
+#### 接线
+
+| 文件 | 改动 |
+|---|---|
+| [Houshan1Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan1/Houshan1Screen.kt) | 背景图之后、内容层之前插入 `HoushanMistLayer()` |
+| [Houshan2Screen.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/screens/houshan2/Houshan2Screen.kt) | 插入**景深平面 2(云雾层)之内、6 朵云之前** → §36 的过渡推进时,雾与云一起"相对后移 + 淡出",层次一致 |
+
+两个页面共用 `R.drawable.img_shilian_bg`(同一张背景),故雾层位置表完全可共用。
+
+#### 架构说明(偏离既有约定,需用户确认)
+
+ONBOARDING §5.5 记有"❌ 不要抽公共 Composable(用户明确偏好直接复制)"。本次**仍抽到 `ui/components/HoushanMistLayer.kt`**,理由:
+1. 两页**共用同一张背景**,雾层位置表本就应完全一致
+2. 本层是**纯氛围层**,不含任何屏内容(与"教练辅助组"那类逐屏分化的内容不同)
+3. 复制两份 ≈ 180 行且需长期手工同步,收益为负
+4. `ui/components/` 本就是项目放共享 Composable 的地方(StandardGunlunScaffold 等)
+
+**若用户要按原约定逐屏复制,改动是纯机械的**(把文件内容内联为各屏 private fun,再把 `rememberCloudFloat` 那样的 private 副本各留一份)。
+
+#### 编译
+
+```
+JAVA_HOME=C:\Users\28784\.jdks\jbr-21.0.11
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 25s   (首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL
+adb install -r app-debug.apk      →  Success
+```
+
+#### git 状态(待 commit)
+
+- `?? HoushanMistLayer.kt`(新增,约 200 行)
+- `M Houshan1Screen.kt`(+1 import +5 行调用 +注释)
+- `M Houshan2Screen.kt`(+1 import +4 行调用 +注释)
+
+### §38 后山3 也加入云雾缭绕(与后山1/2 效果统一)(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"请在'后山3'页面也加入持续循环的云雾缭绕动画,并与'后山1、后山2'的效果保持统一。云雾以半透明、水墨晕染的质感,在远山、山谷及前景山脚间缓慢流动和聚散;前景云雾可略快,远景云雾更慢,形成自然的景深层次。动画应柔和、低速、无缝循环,避免明显的重复感或现代化特效。注意保留熊猫御剑飞行的视觉焦点:云雾可从其周围及山体之间轻轻掠过,但不要遮挡熊猫角色、关卡标签或影响交互操作。"
+
+#### 关键判断:"统一"统一的是什么
+
+用户说"保持统一",但**后山3 的背景是另一张画**:
+
+| 页面 | 背景资源 | 像素 |
+|---|---|---|
+| 后山1 / 后山2 | `img_shilian_bg` | 1236 × 2751 |
+| **后山3** | **`img_shilian2_bg`** | **824 × 1834**(另一张画作,见 §36 相关系数证伪) |
+
+若直接**照搬坐标**,雾会落在后山3 的空白天空(看不见)或压在深色近山上(发灰发脏)。
+故解读为:**统一的是"效果",不是"坐标"** ——
+
+| 维度 | 处理 |
+|---|---|
+| 三层周期 53/41/29s | **完全共用** → 节奏统一 |
+| 配色 `MistColor` #F7F5EE | **完全共用** → 色调统一 |
+| 透明度区间(0.09~0.22) | **完全共用** → 浓淡统一 |
+| 视差结构(远慢近快)+ 位移幅度 | **完全共用** → 层次统一 |
+| **11 个雾团的坐标** | **后山3 单独一套**,贴合其自身构图 |
+
+用户已明确指定后山3 的位置意图("在远山、山谷及前景山脚间"),这也印证坐标需要按构图调。
+
+#### 实现:组件扩展为双变体
+
+[HoushanMistLayer.kt](android/app/src/main/java/com/jueqiao/jianghu/ui/components/HoushanMistLayer.kt) 增加:
+
+```kotlin
+enum class HoushanMistVariant {
+    Houshan12,   // 后山1 / 后山2(共用 img_shilian_bg)
+    Houshan3,    // 后山3(img_shilian2_bg,构图不同 → 位置表单独调)
+}
+
+@Composable
+fun HoushanMistLayer(
+    variant: HoushanMistVariant = HoushanMistVariant.Houshan12,
+    modifier: Modifier = Modifier,
+)
+
+private class MistLayout(val far: List<MistBlob>, val mid: List<MistBlob>, val near: List<MistBlob>)
+private val Houshan12Mist = MistLayout(...)   // 11 团
+private val Houshan3Mist  = MistLayout(...)   // 11 团
+```
+
+默认值 `Houshan12` → **后山1/后山2 调用处零改动**(仍是 `HoushanMistLayer()`)。
+
+#### 后山3 位置表依据
+
+对照 `img_shilian2_bg` 的水墨留白带(坐标基于 412×917 设计稿):
+
+| 层 | 对应画中位置 | Y 范围 | 理由 |
+|---|---|---|---|
+| 远景 | 顶部远山群之间 | 120 ~ 445 | 用户指定"远山" |
+| 中景 | **熊猫所在的山谷**(熊猫在 Y=405~501)+ 左右画面边缘 | 400 ~ 765 | 用户指定"山谷";同时满足"从熊猫周围轻轻掠过" |
+| 近景 | 前景深色近山的山脚与画面底缘 | 690 ~ 1038 | 用户指定"前景山脚" |
+
+#### 熊猫焦点保护(用户特别强调)
+
+1. **整层位于内容层之外、之前** → 绘制顺序上雾在熊猫**之下**,物理上不可能遮挡熊猫
+2. 熊猫是不透明 PNG(`img_shilian2_recovered_8`),雾在其下层不会透出、不会降低对比度
+3. 位于 3 个关卡标签之下 → 标签是米色不透明竖版,文字对比度不受影响
+4. **本层无 `clickable`/`pointerInput`** → 不拦截触摸,整屏跳转"未完待续"与 3 个标签的
+   事件消费逻辑(§20)完全不受影响
+
+"中景 Y=400 起"这一处正是为"从熊猫周围掠过"设计的:雾带在熊猫同一高度但位于其下层,
+视觉上像从身下/身侧流过,而不会盖住角色。
+
+#### 编译
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 25s   (首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 12s
+adb install -r app-debug.apk      →  Success
+```
+
+#### git 状态(待 commit)
+
+- `M HoushanMistLayer.kt`(加 variant 枚举 + MistLayout + 第二套位置表)
+- `M Houshan3Screen.kt`(+2 import +4 行调用 +KDoc 一行)
+
+### §39 云雾提速 + 加强(用户反馈"动画不够明显")(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"动画不够明显,可以把动画的播放速度加快一点"
+
+#### 先量化:原参数到底慢到什么程度
+
+位移是 `sin` 驱动的,峰值速度 = `2π × driftX / period`:
+
+| 层 | §37/§38 原值 | 峰值速度 |
+|---|---|---|
+| 远景 | driftX=16, period=53s | **1.90 dp/s** |
+| 中景 | driftX=24, period=41s | **3.68 dp/s** |
+| 近景 | driftX=38, period=29s | **8.23 dp/s** |
+
+近景 8.23 dp/s ≈ 每秒移动屏宽的 **2%** —— 用户反馈"不够明显"属实,不是观感错觉。
+
+#### 改动 1:提速(周期调小)
+
+| 层 | 原周期 | 新周期 | 倍数 |
+|---|---|---|---|
+| 远景 | 53s | **29s** | 1.83× |
+| 中景 | 41s | **23s** | 1.78× |
+| 近景 | 29s | **17s** | 1.71× |
+
+**三个新值 29/23/17 仍是两两互质的质数** → 合成周期 = 29×23×17 = **11339s(约 3.1 小时)**。
+比原来的 17.5 小时短,但单次使用时长内仍不可能看出循环节拍,"无明显重复痕迹"依然成立。
+(⚠ 提速时必须保持互质,否则三层的拍点会重合,立刻显出规律)
+
+#### 改动 2:加强幅度
+
+| 参数 | 远景 | 中景 | 近景 |
+|---|---|---|---|
+| `driftX`(原 → 新) | 16 → **26** | 24 → **40** | 38 → **60** |
+| `driftY`(原 → 新) | 6 → **10** | 9 → **16** | 14 → **22** |
+| `baseAlpha`(原 → 新) | 0.09~0.11 → **0.13** | 0.13~0.16 → **0.19** | 0.20~0.22 → **0.27** |
+| `alphaAmp`(原 → 新) | 0.035~0.040 → **0.070** | 0.045~0.055 → **0.100** | 0.062~0.070 → **0.130** |
+| `MIST_BREATHE` | — | — | **新增 0.11** |
+
+**提速 + 加幅度的合成效果**(峰值速度):
+
+| 层 | 原 | 新 | 倍数 |
+|---|---|---|---|
+| 远景 | 1.90 dp/s | **5.63 dp/s** | **2.97×** |
+| 中景 | 3.68 dp/s | **10.93 dp/s** | **2.97×** |
+| 近景 | 8.23 dp/s | **22.18 dp/s** | **2.70×** |
+
+即整体观感约 **2.7~3 倍**强于原来。
+
+#### 改动 3(新功能):真正的"聚散"—— 明暗 + 胀缩
+
+原实现只有明暗起伏,读起来像"渐隐渐显"而不是"聚散"。§39 增加**同相胀缩**:
+
+```kotlin
+val breathe = 1f + cos(angle) * MIST_BREATHE   // ±11%
+scale(scale = breathe, pivot = center) {       // canvas 矩阵变换
+    drawRect(brush = brush, alpha = alpha)
+}
+```
+
+- 用 `DrawScope.scale`(canvas 矩阵)**而非 `graphicsLayer`** → 不建 render layer,性能不退化
+  (沿用 §37 的"每团一个离屏 FBO 太贵"的判断)
+- 明暗与胀缩同相 → 视觉上像水墨在宣纸上**洇开 / 收拢**,而不是单纯淡入淡出
+- 这同时是"更明显"的重要来源:尺寸变化比透明度变化更容易被眼睛捕捉
+
+#### 改动 4(可维护性):调参从 22 行收敛到 3 行
+
+原 `MistBlob` 每团带 9 个参数(坐标 + 浓度 + 幅度),22 个团 = 22 行 × 9 列,用户每次调参都要逐行改。
+
+重构为**分层共用**:
+
+```kotlin
+private data class MistBand(baseAlpha, alphaAmp, driftX, driftY)   // 每层 1 份,共 3 份
+private data class MistBlob(x, y, w, h, phase)                     // 每团只留位置 + 相位
+private val FAR_BAND  = MistBand(baseAlpha = 0.13f, alphaAmp = 0.070f, driftX = 26f, driftY = 10f)
+private val MID_BAND  = MistBand(baseAlpha = 0.19f, alphaAmp = 0.100f, driftX = 40f, driftY = 16f)
+private val NEAR_BAND = MistBand(baseAlpha = 0.27f, alphaAmp = 0.130f, driftX = 60f, driftY = 22f)
+```
+
+**效果:以后"整体更浓/更淡/更快/漂更远"只需改 3 行**(且三条 `*_BAND` 对三个页面同时生效 → 天然保持"效果统一")。
+单团微调仍改位置表里那一行(现在只有 5 个参数,一眼可读)。
+
+文件顶部新增**调参入口表**(KDoc),把"想要什么效果 → 改哪个常量"直接列出来,便于后续迭代。
+
+#### 编译
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 25s   (首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 13s
+adb install -r app-debug.apk      →  Success
+```
+
+#### git 状态(待 commit)
+
+- `M HoushanMistLayer.kt`(周期 53/41/29 → 29/23/17;新增 MistBand 分层参数;新增 MIST_BREATHE 聚散缩放;KDoc 加调参入口表)
+
+### §40 云雾继续加浓(baseAlpha 三层各 +0.05)(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"1"(承接 §39 结尾给出的三步建议,选 **第 1 步:先加浓**)
+
+#### 改动(仅 3 行 —— 正是 §39 重构后"调参入口"的设计目的)
+
+| 层 | baseAlpha 原 → 新 | 透明度实际区间(原 → 新) |
+|---|---|---|
+| 远景 `FAR_BAND` | 0.13 → **0.18** | 0.06~0.20 → **0.11~0.25** |
+| 中景 `MID_BAND` | 0.19 → **0.24** | 0.09~0.29 → **0.14~0.34** |
+| 近景 `NEAR_BAND` | 0.27 → **0.32** | 0.14~0.40 → **0.19~0.45** |
+
+只改 `baseAlpha`,`alphaAmp` / `driftX` / `driftY` / 周期全部不动
+→ **速度与"聚散"幅度保持 §39 的状态,本次只提升浓度**,便于单独判断浓度这一个变量。
+(这正是 §39 结尾"一次只动一项"的原因:三项一起改无法归因)
+
+三个页面(后山1/2/3)因共用 `*_BAND`,**同步生效** → 仍保持"效果统一"。
+
+#### 重叠浓度提醒(未改,供判断)
+
+雾团之间是有重叠的(如后山1/2 近景三团圆心 Y≈790/885/952,间距 95dp < 半径 90dp×2),
+重叠处**有效透明度按 `1-(1-a)^n` 叠加**,两团相叠时最高可达 ≈0.70。
+若真机看着底部发白、把山体冲淡了,说明这一档偏浓,**回退只需把那 3 行的 `baseAlpha` 各减 0.05**。
+
+#### 编译
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 5s   (增量,首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 4s
+adb install -r app-debug.apk      →  Success
+```
+
+> 注:本次 `am start` 因用了 `Select-Object -First 1` 提前掐断管道,导致 adb 非零退出且输出丢失,
+> 一度误判为启动失败。已用 `dumpsys activity` + `pidof` 复核:
+> `topResumedActivity=com.jueqiao.jianghu/.MainActivity`,进程存在 → **实际启动正常**。
+> (教训:`Select-Object -First N` 会提前终止上游原生命令的管道,不要用它截断 `adb` 的输出判断成败)
+
+#### git 状态(待 commit)
+
+- `M HoushanMistLayer.kt`(3 行 `baseAlpha`)
+
+### §41 修复雾团形状 bug —— 后山3 下半屏几乎无雾的真正原因(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"后山3页面的下半个部分的动画不够明显"
+
+#### 先做覆盖率分析,而不是凭感觉加雾团
+
+写了一个脚本,按组件实际的渐变衰减公式(`R = min(w,h)/2`,stops `[0,0.5,1]` → alpha `[1.0,0.55,0.0]`),
+在 412×917 设计稿上按 20dp 网格逐点算**合成透明度**(`1 - Π(1-aᵢ)`),输出 ASCII 覆盖图。
+
+**分析结果直接指出问题**:雾只占了中间约 180dp 宽的一条**竖窄带**,左右大片空白:
+
+```
+      ...            ← 雾被挤在中间窄条里
+      ....
+      ...            ← 下半屏 63% 的格子 alpha < 0.10(几乎无雾)
+```
+
+| 指标 | 实测值 |
+|---|---|
+| 下半屏平均合成 alpha | **0.086** |
+| 下半屏"几乎无雾"格占比 | **63%** |
+
+**用户反馈属实,而且不是"浓度不够",是"根本没铺到"。**
+
+#### 根因:圆渐变被当矩形铺 —— 一个真实实现 bug
+
+原代码:
+
+```kotlin
+val radius = size.minDimension / 2f          // ← 由"高"决定
+val brush = Brush.radialGradient(..., radius = radius)
+onDrawBehind { drawRect(brush = brush, alpha = alpha) }   // ← 铺满整个 Box
+```
+
+- `Brush.radialGradient` 是**圆**渐变,可见范围只有 `radius` 的直径
+- 雾团 Box 是 440~520 **宽** × 150~200 **高**,`min(w,h)` 取的是**高**
+  → `radius` 只有 75~95dp,**可见圆直径仅 150~190dp**
+- 宽出来的那 250~330dp 全是透明 —— **宽的 `w` 参数实际毫无作用**
+
+即:我一直以为"宽扁的 Box = 横向雾带",但代码从来没做到。文件 KDoc 里
+"`min(w,h)` 决定渐变半径,故宽扁的块 = 横向雾带"这句注释**描述的是一个不存在的行为**。
+
+#### 修复:按圆建渐变 + canvas 非等比缩放拉成椭圆
+
+```kotlin
+val radius = size.minDimension / 2f
+val brush = Brush.radialGradient(..., radius = radius)
+// 把半径 radius 的圆拉伸成半轴 (w/2, h/2) 的椭圆
+val stretchX = size.width / size.minDimension
+val stretchY = size.height / size.minDimension
+onDrawBehind {
+    val breathe = 1f + cos(angle) * MIST_BREATHE
+    // pivot = center,与渐变中心重合 → 拉伸后圆心不动
+    scale(scaleX = stretchX * breathe, scaleY = stretchY * breathe, pivot = center) {
+        drawCircle(brush = brush, radius = radius, center = center, alpha = alpha)
+    }
+}
+```
+
+- `drawRect` → `drawCircle`(画圆,再由矩阵拉伸)
+- §39 的 `breathe` 聚散**并入同一个 `scale` 调用**(`stretch * breathe`),没有增加额外变换
+- 仍是 canvas 矩阵变换,**不建 render layer**,性能设计不变
+
+#### 效果(同一套脚本复算)
+
+| 指标 | 修复前 | 修复后 | 变化 |
+|---|---|---|---|
+| 下半屏平均合成 alpha | 0.086 | **0.203** | **2.4×** |
+| 下半屏"几乎无雾"格占比 | 63% | **19%** | **↓44pt** |
+| 全屏"几乎无雾"格占比 | 76% | 44% | ↓32pt |
+| 峰值合成 alpha | 0.41 | 0.56 | 仍在可接受范围 |
+
+**本次刻意只改"形状",不改浓度** —— `baseAlpha` 保持用户 §40 刚确认的 0.18/0.24/0.32。
+理由:这样才能把"下半屏变明显"**单独归因到形状修复**上(§39 结尾我自己定的"一次只动一项")。
+脚本同时算了备选浓度(0.15/0.20/0.26 → 下半屏 0.167 / 空档 25%;0.13/0.17/0.22 → 0.141 / 31%),留档备选。
+
+#### 遗留(未改,供用户决定)
+
+修复后覆盖图显示:**底右角(x>270, y>690)仍偏弱** —— 因为两套位置表的近景团圆心都偏左
+(后山3 近景 cx≈60/160/170/180;后山1/2 cx≈160/170/180)。
+若要补,应在**后山3 与后山1/2 同步**加一团右侧近景(保持"效果统一"),而不是只补后山3。
+
+#### 工具链踩坑(记录,避免重复)
+
+| 坑 | 现象 | 正解 |
+|---|---|---|
+| PowerShell **不支持 `//` 注释** | 首字符 `/` 被当除法运算符,解析器一路吞 token,**报错行号完全误导**(报在 61 行,实际是第 1 行) | 用 `#` |
+| PowerShell **变量名大小写不敏感** | `$A`(alpha 表)被循环里 `$a = ...` **覆盖成数字**,后续索引全空 → 覆盖图全空白、mean=0 | 改名 `$ALPHA` |
+| 脚本含中文 + 无 BOM UTF-8 | PowerShell 按 GBK 读取,中文注释乱码并**破坏字符串终止符** | 分析脚本一律用纯 ASCII |
+
+#### 编译
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 21s   (首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 10s
+adb install -r app-debug.apk      →  Success
+```
+
+#### git 状态(待 commit)
+
+- `M HoushanMistLayer.kt`(drawWithCache 块:`drawRect` → `drawCircle` + 非等比 `scale`;KDoc 补 §41 修复说明与正确行为描述)
+
+### §42 修复"设计稿 ≠ 真机尺寸"导致的雾团出屏 —— 后山3 下半屏补雾(2026-09-15 晚)— A 模式不 commit
+
+**用户指令**:"我觉得后山3页面的下半部分的雾气含量太少了"(附 22:53 真机截图)
+
+#### 根因:我一直在用**设计稿尺寸**算,但真机不是那个尺寸
+
+§41 的覆盖率分析用的是 **412×917**(Figma 设计稿),但真机实测:
+
+| 项 | 值 |
+|---|---|
+| `wm size` | 1080 × 2400 px |
+| `wm density` | 440 dpi → scale **2.75** |
+| **实际 dp** | **392.7 × 872.7 dp** |
+| 绘制区 | `MainActivity` 用了 **`enableEdgeToEdge`** → 可绘制区 = 整个窗口 |
+
+**917 − 873 = 44dp,差的全部在底部** —— 而"底部雾堤"正是放在那里的。
+按 `可见范围 = cy ± 0.72·ry`(由 §41 的 `Falloff` 反解 alpha>0.1)验算后山3 的 4 个近景团:
+
+| 雾团 | 圆心 cy | ry | 可见 Y 区间 | 在 873dp 屏上 |
+|---|---|---|---|---|
+| n1 | 780 | 90 | 715 ~ 845 | ✓ 完整可见 |
+| n2 | 835 | 90 | 770 ~ 900 | 部分(底部超出) |
+| n3 | 875 | 95 | 807 ~ 943 | **只剩上半** |
+| n4 | 948 | 90 | 883 ~ 1013 | **完全在屏外**(顶边 883 > 873) |
+
+**4 个近景团里 1.5 个白费。后山1/2 同样问题**(cy=790/885/952,同样 1.5 个出屏)。
+§41 把圆修成了椭圆(横向铺开了),但纵向这几个团仍然在屏幕外 → 所以用户看着下半屏还是空的。
+
+#### 修复:按真机高度重排近景,并让两个变体共用
+
+```kotlin
+private val NearBlobs = listOf(
+    MistBlob(x = -160f, y = 640f, w = 440f, h = 180f, phase = 0.06f),  // 左下
+    MistBlob(x = -60f,  y = 620f, w = 500f, h = 180f, phase = 0.31f),  // 中下
+    MistBlob(x = 150f,  y = 640f, w = 460f, h = 190f, phase = 0.58f),  // 右下
+    MistBlob(x = -140f, y = 730f, w = 460f, h = 180f, phase = 0.19f),  // 底左
+    MistBlob(x = -30f,  y = 720f, w = 480f, h = 170f, phase = 0.44f),  // 底中
+    MistBlob(x = 170f,  y = 735f, w = 440f, h = 160f, phase = 0.73f),  // 底右
+)
+```
+
+- **4 → 6 团**,圆心 cy = 710/730/735/805/820/835 **全部落在 873 以内**
+- x 分**左/中/右三列**(cx ≈ 60/190/380),每团可见半宽 ≈165dp → 合成后横向无空档
+- **两个变体共用同一份** `NearBlobs`(`Houshan12Mist.near = NearBlobs`,`Houshan3Mist.near = NearBlobs`)
+  - 理由:两张背景的下半部分都是"深色近山 + 画面底缘",这一层是沿底边铺开的云海堤岸,
+    **不依赖具体山峰位置**(不像 far/mid 必须卡在各自画作的山峰之间)
+  - 同时天然满足用户要求的"后山1/2 与后山3 效果统一"
+
+#### 浓度:0.32 → 0.26(用"铺开"换"不加浓")
+
+团数从 4 增到 6 且全部可见后,若维持 `baseAlpha = 0.32`,峰值合成 alpha 会冲到 **0.65**(发白糊成一片)。
+脚本试算四档后选定 0.26:
+
+| 方案 | 下 1/3 平均浓度 | 峰值 | 结论 |
+|---|---|---|---|
+| §41 现状(4 团,1.5 出屏)@.32 | 0.230 | 0.56 | 基准 |
+| 新 6 团 @.32 | 0.382 (+66%) | **0.65** | 峰值过高,发白 |
+| **新 6 团 @.26** | **0.324 (+41%)** | **0.56** | ✅ 选定:峰值不升 |
+| 新 6 团 @.24 | 0.299 (+30%) | 0.52 | 偏保守 |
+
+**关键:单团浓度下调、团数增加 → 底部雾气 +41%,而峰值浓度一点没涨。**
+这是"把雾铺开"而不是"把雾加浓",不会糊成一片。
+
+#### 效果(真机帧 393×873 复算)
+
+| 指标 | §41 后 | §42 后 | 变化 |
+|---|---|---|---|
+| 下半屏平均合成 alpha | 0.197 | **0.257** | +30% |
+| 下半屏"几乎无雾"格占比 | 18% | **12%** | ↓6pt |
+| **下 1/3(y>600)平均浓度** | 0.230 | **0.324** | **+41%** |
+| 峰值合成 alpha | 0.56 | 0.56 | 不变 |
+
+覆盖图(真机帧)显示 y=650~830 已是**满宽**的 `=`/`+` 密度,右侧空档消失;
+此前逐行只有中间几列有雾。
+
+#### 编译
+
+```
+.\gradlew.bat compileDebugKotlin  →  BUILD SUCCESSFUL in 22s   (首次通过)
+.\gradlew.bat assembleDebug       →  BUILD SUCCESSFUL in 13s
+adb install -r app-debug.apk      →  Success
+adb shell dumpsys activity        →  topResumedActivity=com.jueqiao.jianghu/.MainActivity ✓
+```
+
+#### git 状态(待 commit)
+
+- `M HoushanMistLayer.kt`(新增共用 `NearBlobs` 6 团;两变体 `near = NearBlobs`;`NEAR_BAND` alpha 0.32 → 0.26)
+
+> **§43 已迁移到 [SESSION-LOG-2026-09-16.md](./SESSION-LOG-2026-09-16.md) §2**。本节于 2026-09-16 09:30 完成,按"一日一日志"约定放入 09-16 文件,这里不再重复。
+
 ## 沉淀(新)
 
+- **"某个区域没动画"不一定=没覆盖,可能=没视觉锚点**(新)— §42 后 `HoushanMistLayer` 在拆招心法下方已有满宽覆盖,但都是均匀细雾,**没有明显的运动焦点**——叠在深色近山上读起来像山体本身的渐变。**解决方案不是再加浓度(发白)也不是再加团数(更乱),而是在视线集中位置放一个"聚焦元素"**:更大、更浓、节奏更慢、明确的上下浮动。**关键:单一元素 + 慢节奏,比均匀细雾的视觉效果强得多**
+- **碎屏布局的"聚焦飘带"应在文件私有**(沿用 §37)— 与近/中/远三层均匀雾不同,聚焦飘带**强位置相关性**(标签 x/y 不同就无法复用),后山3 与后山1/2 的拆招心法位置不同,所以只放在 `Houshan3Screen.kt` 私有处;后山1/2 需要时另起一处,不强求"一处定义三页复用"
+
+- **写**了。`docs/SESSION-LOG-2026-09-14.md` 今天上午 **§2** 已经从 `docs/_archive/` 合并过来,现 137 行,与 archive 完全一致(刚刚核实)
+- 09-15 今天一直**在持续写**,从上午 §1(adb 重设)到现在的 §42(近景雾团重排),**没断过档**
+
+- **设计稿尺寸 ≠ 真机尺寸,绝对坐标布局前必须查真机 dp**(新)— 本项目设计稿是 **412×917**,但真机(K50 Pro)是 `1080×2400 @ density 440` = **393×873 dp**,且 `enableEdgeToEdge` 使可绘制区 = 整个窗口。**矮了 44dp,全部在底部** → 按设计稿摆在"底部"的元素会直接掉出屏幕。§41/§42 连查两轮才发现:§41 修了横向(圆→椭圆),§42 才发现纵向出屏。**取真机尺寸的命令**:`adb shell wm size` + `adb shell wm density`,dp = px ÷ (density/160)
+- **"某个区域没效果"要同时查横向和纵向覆盖**(新)— §41 只算了横向(发现圆渐变太窄),§42 才算纵向(发现底部团在屏外)。覆盖率脚本应直接输出**真机帧**的 ASCII 图,一眼看出哪一列/哪一行是空的
+- **增加元素数量时要同步下调单元素强度**(新)— 近景团 4 → 6 且全部可见后,若维持 `baseAlpha=0.32` 峰值会冲到 0.65(发白)。**降单团浓度 + 增团数 = 总量上升但峰值不变**,这是"铺开"而非"加浓",观感更自然
+- **雾团的可见范围公式**:`可见半径 = 0.72 × ry`(由 `alpha>0.1` 反解 `Falloff`,其中 `ry = h/2`)。摆位置时用这个算,能让圆心 Y 的上限 = `屏高 - 0.72·ry`,避免出屏
+- **"某个区域效果不够明显"要先算覆盖率,不要凭感觉加元素**(沿用 §41)
+
+- **"某个区域效果不够明显"要先算覆盖率,不要凭感觉加元素**(新)— §41 用户说"后山3 下半个部分动画不明显",直觉会去"多加几个雾团";实际写 20dp 网格的合成 alpha 覆盖图后,发现真因是**雾团形状渲染错了**(圆渐变被当矩形铺),雾根本没铺到那里。加元素是在错误的地基上叠加,算一次覆盖率就直接定位了
+- **KDoc 写了什么不等于代码做了什么**(新)— §37 注释写着"宽扁的块 = 横向雾带",但 `radius = minDimension/2` + `drawRect` 的组合让可见范围只有圆的直径,**宽的 `w` 参数完全无效**。跨了 §37~§40 四个小节都没发现,因为没人验证过形状。注释描述的意图必须与代码行为对照检查
+- **`Brush.radialGradient` 是圆;要椭圆必须自己拉伸**(新)— 正解:按圆建 brush,再用 `DrawScope.scale(scaleX = w/minDim, scaleY = h/minDim, pivot = center)` 把 `drawCircle` 拉成填满 Box 的椭圆。`pivot` 与 brush `center` 重合则圆心不动
+- **PowerShell 三个静默坑**(新)— ① 不支持 `//` 注释(`/` 被当除法,**报错行号会误导到几十行之后**);② **变量名大小写不敏感**,`$a` 会覆盖 `$A`;③ 无 BOM 的 UTF-8 中文脚本被按 GBK 读,**乱码会破坏字符串终止符**。分析脚本建议一律纯 ASCII + `#` 注释 + 变量名带后缀区分
+- **先量化再改**(沿用 §39)— 位移类动画峰值速度 = `2π × 幅度 / 周期`;静态类效果用**网格覆盖率 + 合成 alpha** 比对"改前/改后",能把"感觉"变成可归因的数字(§41 用 63%→19% 与 0.086→0.203 证明修复有效)
+
+- **"动画不明显"要先量化再改**(新)— 位移是 `sin` 驱动时,峰值速度 = `2π × 幅度 / 周期`。§39 算出原设计近景仅 **8.23 dp/s(≈屏宽 2%/秒)**,证实用户反馈属实。只凭"感觉调快点"容易改不到位或改过头;算一次就知道该动幅度还是动周期
+- **提速无限循环动画时必须保持各层周期互质**(新)— §37 用 53/41/29(17.5h 合成周期),§39 提速到 29/23/17(3.1h)。若改成 30/20/10 这类有公倍数的值,三层拍点会重合,**立刻显出循环规律**,违反"无明显重复痕迹"
+- **"聚散"要靠尺寸而非只靠透明度**(新)— 只做明暗起伏读起来像"渐隐渐显";叠加同相胀缩(如 ±11%)才像水墨洇开/收拢。且用 `DrawScope.scale`(canvas 矩阵)实现,**不建 render layer**,不牺牲 §37 的性能设计
+- **同一个效果跨多页时,把"风格参数"与"位置表"分离**(新)— 风格参数按层共用(3 行,三页同时生效 → 天然统一);位置表按页面各自的背景构图单独调(两张背景是不同画作,坐标不能照搬)。§39 把 22 行 × 9 列的调参面收敛成 3 行
+
+- **先核对 API 版本再写动画代码**(新)— 本项目 Compose/Navigation 版本对 API 可用性敏感(§23~§26 因 `animateColor`/`Animatable<Color>`/`GraphicsLayerScope.colorFilter` 连续失败 4 次)。动手前查 `gradle/libs.versions.toml` + 记住关键下限(如 Navigation destination transitions ≥ 2.7.0),可一次通过
+- **两张图宽高比相同 ≠ 构图相关**(新)— 全屏设计稿恒为 412/917=0.44929,比例相同只说明"都是全屏稿"。判断两图是否同一构图,要用**对亮度不变的相关系数**搜索缩放/裁剪因子,不能靠"像素尺寸整除关系"(1236/824=1.5 就是陷阱)
+- **`graphicsLayer.transformOrigin` 是相对元素自身**(新)— 要让多个元素绕同一屏幕点缩放,须各自包一层 `fillMaxSize` Box(使自身边界=屏幕),而非逐个算 origin
+- **Navigation Compose 的 pop 过渡会继承 enter/exit**(新)— 设了 `enterTransition` 就必须检查 `popEnterTransition` 是否被意外继承
 - **adb 重插恢复 SOP**:`adb -s <device> reverse tcp:8010 tcp:8010` 单条命令即可,前提是后端 8010 已在 PC 跑(`infra/start-dev.ps1`)
 - **SESSION-LOG 合并 SOP**:archive 目录可作为 SESSION-LOG 历史快照,合并到 docs/ 时直接复制内容即可(链接相对路径在 docs/ 里反而变正确)
 - **当日 SESSION-LOG 必建**:即使是 commit/push 前的最小动作也要建当日文件

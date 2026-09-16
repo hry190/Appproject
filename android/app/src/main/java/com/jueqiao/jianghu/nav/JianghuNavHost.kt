@@ -2,8 +2,12 @@ package com.jueqiao.jianghu.nav
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -14,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -551,14 +556,44 @@ fun JianghuNavHost(
                 onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
         }
-        composable(Routes.Shilian2) {
+        // 后山2 → 后山3:沉浸式纵深推进(§36)。缩放由 Houshan2Screen 内部按景深分层完成,
+        // 导航层只负责交叉淡入淡出,因此这里不做位移,避免与内部推进叠加成"跳页"。
+        composable(
+            route = Routes.Shilian2,
+            exitTransition = {
+                if (targetState.destination.route == Routes.Shilian3) {
+                    // 与 Houshan2 内部推进在 DOLLY_HANDOFF_MS 处交接,淡出稍长以覆盖后半程
+                    fadeOut(animationSpec = tween(durationMillis = 520, easing = LinearEasing))
+                } else {
+                    // 其他去向(返回后山1、识机真决→第一卷-1)保持轻淡出,不引入硬切
+                    fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+                }
+            },
+        ) {
             Houshan2Screen(
                 onBack = { navController.popBackStack() },
                 onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
                 onOpenVolume1 = { navController.navigate(Routes.Volume1) },
             )
         }
-        composable(Routes.Shilian3) {
+        composable(
+            route = Routes.Shilian3,
+            // 镜头减速停稳:由轻微放大回落到 1.00,灭点与后山2 的推进焦点一致
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            // 显式覆盖:不设则 popEnterTransition 会默认继承上面的 enterTransition,
+            // 导致从"未完待续"返回时也播一次推进动画
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+            },
+        ) {
             Houshan3Screen(
                 onBack = { navController.popBackStack() },
                 onOpenUnfinished = { navController.navigate(Routes.Unfinished) },

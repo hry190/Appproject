@@ -35,6 +35,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.math.cos
 import kotlin.math.sin
@@ -122,6 +123,11 @@ fun Houshan1Screen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )
+
+        // 云雾层(程序化水墨云海,持续循环)— 背景之上、所有内容之下 (§37)
+        // 本层无 clickable/pointerInput → 不拦截触摸;且下方山峰/标签/文字/熊猫/气泡
+        // 均为不透明图版,故不会降低任何文字的对比度
+        HoushanMistLayer()
 
         // 内容层(避开系统导航条)
         Box(

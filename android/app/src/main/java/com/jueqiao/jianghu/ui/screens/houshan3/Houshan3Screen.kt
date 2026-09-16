@@ -3,6 +3,10 @@ package com.jueqiao.jianghu.ui.screens.houshan3
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,32 +23,49 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.ui.components.HoushanMistLayer
+import com.jueqiao.jianghu.ui.components.HoushanMistVariant
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.isActive
+
+// 文件级常量 — FocusCloudBand (§43) 和 AnimatedCloudImage (§6) 都用到
+private val TWO_PI = (2.0 * PI).toFloat()
 
 /**
  * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
  *
  * 布局:
  *   - 全屏背景图(后山3 转换.png)
+ *   - 云雾层(程序化水墨云海,持续循环 — HoushanMistVariant.Houshan3 位置表)(§37/§38)
  *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)— 屏幕空白点击无效
- *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)
+ *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— **上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s (§44)**
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
  *   - 标签4 图像(X=105, Y=295, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
@@ -73,6 +94,62 @@ fun Houshan3Screen(
     val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()  // §29 加 Ellipse 57
     val (cloud5Dx, cloud5Dy, cloud5Alpha) = rememberCloudFloat()  // §33 加 Ellipse 5(实际与 Ellipse 57 同图)
 
+    // 熊猫上下浮 + 呼吸缩放 (§44,与后山1 §21 同款动画)
+    // Scale 0.95~1.05 / 3s + Y ±10 dp / 4s,都用 LinearEasing + RepeatMode.Reverse → 来回无缝
+    val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
+    val pandaScale by pandaTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaScale",
+    )
+    val pandaDy by pandaTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaDy",
+    )
+
+    // 拆招心法下方三朵云动画 (§6)— 用 Ellipse 58/60/62 三张素材
+    // 资源:58/60 复用现有 img_houshan1_cloud_58/60(同一张图,fit 版本 — 见 09-15 §4);
+    // 62 是新导入:D:\图\Ellipse 62.png → drawable-nodpi/img_houshan3_cloud_62.png
+    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 13/17/23s
+    //   → 合成周期 = 13×17×23 = 5083s(约 85 分钟)→ 视觉上 3 朵永远不在同一拍点
+    val cloudTransition = rememberInfiniteTransition(label = "h3CloudBands")
+    val c58Progress = cloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud58",
+    )
+    val c60Progress = cloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 17_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud60",
+    )
+    val c62Progress = cloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 23_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud62",
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -84,6 +161,96 @@ fun Houshan3Screen(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
+        )
+
+        // 云雾层(程序化水墨云海,持续循环)— 背景之上、所有内容之下 (§37/§38)
+        // 用 Houshan3 变体:背景 img_shilian2_bg 与后山1/2 的 img_shilian_bg 是两张不同画作,
+        // 山峰位置不同,故坐标表单独调(远山 / 熊猫所在山谷 / 前景山脚);周期与配色与后山1/2 完全共用
+        // 本层无 clickable/pointerInput → 不拦截触摸,故不影响整屏跳转与标签点击;
+        // 且整层位于熊猫、标签之下,不会遮挡御剑飞行的视觉焦点
+        HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
+
+        // 拆招心法下方聚焦前景飘带 (§43)— 用户反馈该区域"没动画/不够明显"
+        // 比起 HoushanMistLayer 的均匀细雾团,这一个更大、更浓,让"下方有东西在缓慢飘动"一眼可辨;
+        // 位于内容层之下,不会遮挡标签或熊猫
+        // §45:周期 19000 → 11000 ms(1.73× 更快,与 HoushanMistLayer 13/17/19 互质,观感更明显)
+        FocusCloudBand(
+            xOffset = 12f,
+            yOffset = 740f,
+            widthDp = 320f,
+            heightDp = 110f,
+            amplitudeX = 40f,
+            amplitudeY = 28f,
+            baseAlpha = 0.32f,
+            alphaAmp = 0.10f,
+            periodMs = 11_000,
+        )
+
+        // 拆招心法**左下方**聚焦前景飘带 (§44)— 用户反馈"左下方没动画"
+        // x_offset = -30, w = 240 → 覆盖 x=-30..210,圆心 x=90(明显在标签中心 x=172 的左侧)
+        // 标签 x=124..220 在飘带的右端下方,飘带在标签之下层,标签的米色不透明图版遮住右端,
+        // 实际视觉可见的就是"标签左侧"那一段 — 严格满足"左下方"
+        // §45:周期 23000 → 9000 ms(2.56× 更快,与 §43 的 11s 互质)→ 两条飘带节奏不同步,观感更自然
+        FocusCloudBand(
+            xOffset = -30f,
+            yOffset = 740f,
+            widthDp = 240f,
+            heightDp = 120f,
+            amplitudeX = 35f,
+            amplitudeY = 24f,
+            baseAlpha = 0.30f,
+            alphaAmp = 0.10f,
+            periodMs = 9_000,
+        )
+
+        // 拆招心法下方三朵云(§6)— Ellipse 58/60/62 实图素材,带漂移 + 聚散
+        // 绘制顺序 = 背景 → 大雾层 → 2 朵 focus 飘带 → **3 朵云** → 内容:
+        // 云是**不透明 PNG**,放在 focus 飘带**之前**(之下)→ 飘带不挡云,但云的软边看起来"自带雾气"也合理
+        // 位置三角形:
+        //   58 中心 (60, 770)  — 标签左下,横椭圆
+        //   60 中心 (260, 740) — 标签右下,扁长条
+        //   62 中心 (170, 820) — 标签正下,中等扁长
+        AnimatedCloudImage(
+            painter = painterResource(R.drawable.img_houshan1_cloud_58),
+            contentDescription = "云朵58",
+            xOffset = -60f,
+            yOffset = 703f,
+            widthDp = 240f,
+            heightDp = 135f,
+            progress = c58Progress,
+            phase = 0.13f,
+            amplitudeX = 25f,
+            amplitudeY = 10f,
+            baseAlpha = 0.45f,
+            alphaAmp = 0.10f,
+        )
+        AnimatedCloudImage(
+            painter = painterResource(R.drawable.img_houshan1_cloud_60),
+            contentDescription = "云朵60",
+            xOffset = 120f,
+            yOffset = 686f,
+            widthDp = 280f,
+            heightDp = 108f,
+            progress = c60Progress,
+            phase = 0.31f,
+            amplitudeX = 30f,
+            amplitudeY = 5f,
+            baseAlpha = 0.45f,
+            alphaAmp = 0.10f,
+        )
+        AnimatedCloudImage(
+            painter = painterResource(R.drawable.img_houshan3_cloud_62),
+            contentDescription = "云朵62",
+            xOffset = 50f,
+            yOffset = 771f,
+            widthDp = 240f,
+            heightDp = 98f,
+            progress = c62Progress,
+            phase = 0.71f,
+            amplitudeX = 27f,
+            amplitudeY = 7f,
+            baseAlpha = 0.45f,
+            alphaAmp = 0.10f,
         )
 
         // 内容层(避开系统导航条)— 整屏 clickable,但 3 个标签 Box 自带消费事件 clickable (§20),点击标签不会冒泡触发跳转
@@ -165,12 +332,17 @@ fun Houshan3Screen(
             )
 
             // 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— 在云朵下层
+            // §44 加:同后山1 §21 的"上下浮 + 呼吸缩放"动画(Y=405+pandaDy,graphicsLayer 缩放)
             Image(
                 painter = painterResource(R.drawable.img_shilian2_recovered_8),
                 contentDescription = "熊猫",
                 modifier = Modifier
-                    .offset(x = 118.dp, y = 405.dp)
-                    .size(width = 181.dp, height = 96.dp),
+                    .offset(x = 118.dp, y = (405f + pandaDy).dp)
+                    .size(width = 181.dp, height = 96.dp)
+                    .graphicsLayer(
+                        scaleX = pandaScale,
+                        scaleY = pandaScale,
+                    ),
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -360,4 +532,128 @@ private fun rememberCloudFloat(
         }
     }
     return Triple(x.value, y.value, alpha.value)
+}
+
+/**
+ * §43 拆招心法下方的聚焦前景飘带 —— 用户反馈"拆招心法下方区域没动画 / 不够明显"。
+ *
+ * 比起 [HoushanMistLayer] 的均匀细雾团,这一个**更大、更浓、节奏更慢**,
+ * 目的是让"下方有东西在缓慢飘动"这件事一眼可辨。位置直接落在拆招心法标签下方。
+ *
+ * 用与 HoushanMistLayer 同样的椭圆雾团画法(单源 + canvas 非等比缩放),不建 render layer;
+ * 周期 19000ms(质数)与近景 17000ms 互质 → 避免拍点重合。
+ *
+ * 文件私有 —— 这只针对后山3 拆招心法位置的局部增强;
+ * 后山1/2 的拆招心法在另一位置,如需也加同样的聚焦,另起一处即可。
+ */
+@Composable
+private fun FocusCloudBand(
+    xOffset: Float,
+    yOffset: Float,
+    widthDp: Float,
+    heightDp: Float,
+    amplitudeX: Float,
+    amplitudeY: Float,
+    baseAlpha: Float,
+    alphaAmp: Float,
+    periodMs: Int,
+) {
+    val progress by rememberInfiniteTransition(label = "focusCloudBand")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = periodMs, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "focusCloudBandP",
+        )
+    val twoPi = (2.0 * PI).toFloat()
+    Box(
+        modifier = Modifier
+            .offset {
+                val a = progress * twoPi
+                IntOffset(
+                    (xOffset + sin(a) * amplitudeX).dp.roundToPx(),
+                    (yOffset + cos(a) * amplitudeY).dp.roundToPx(),
+                )
+            }
+            .size(width = widthDp.dp, height = heightDp.dp)
+            .drawWithCache {
+                val r = size.minDimension / 2f
+                val brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xFFF7F5EE),
+                        Color(0xFFF7F5EE).copy(alpha = 0.55f),
+                        Color(0xFFF7F5EE).copy(alpha = 0f),
+                    ),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = r,
+                )
+                val stretchX = size.width / size.minDimension
+                val stretchY = size.height / size.minDimension
+                onDrawBehind {
+                    val a = progress * twoPi
+                    val alpha = (baseAlpha + sin(a + 0.41f) * alphaAmp).coerceIn(0f, 1f)
+                    val breathe = 1f + cos(a) * 0.12f
+                    scale(
+                        scaleX = stretchX * breathe,
+                        scaleY = stretchY * breathe,
+                        pivot = center,
+                    ) {
+                        drawCircle(brush = brush, radius = r, center = center, alpha = alpha)
+                    }
+                }
+            },
+    )
+}
+
+/**
+ * §6 拆招心法下方三朵云动画 —— **实图 PNG** 版本(与 FocusCloudBand 的程序化径向渐变不同)
+ *
+ * FocusCloudBand 是"程序化径向渐变 + canvas 非等比缩放",出图像水墨晕染
+ * 本函数是"现成云朵 PNG + 漂移/聚散",出图像实体水彩云
+ *
+ * 性能同 §43/§44:位置在 layout 阶段读(Modifier.offset lambda)、alpha 在 layer 阶段读
+ * (graphicsLayer block),**每帧零重组**;1 个 rememberInfiniteTransition 共享给 3 朵,
+ * 互不竞争。
+ */
+@Composable
+private fun AnimatedCloudImage(
+    painter: Painter,
+    contentDescription: String?,
+    xOffset: Float,
+    yOffset: Float,
+    widthDp: Float,
+    heightDp: Float,
+    progress: State<Float>,
+    phase: Float,
+    amplitudeX: Float,
+    amplitudeY: Float,
+    baseAlpha: Float,
+    alphaAmp: Float,
+) {
+    Box(
+        modifier = Modifier
+            .offset {
+                val a = (progress.value + phase) * TWO_PI
+                IntOffset(
+                    (xOffset + sin(a) * amplitudeX).dp.roundToPx(),
+                    (yOffset + cos(a) * amplitudeY).dp.roundToPx(),
+                )
+            }
+            .size(width = widthDp.dp, height = heightDp.dp)
+            .graphicsLayer {
+                // "聚散" — 与位置错开相位 (0.41),避免整体一起亮/一起暗
+                val a = (progress.value + phase + 0.41f) * TWO_PI
+                alpha = (baseAlpha + sin(a) * alphaAmp).coerceIn(0f, 1f)
+            },
+    ) {
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+        )
+    }
 }
