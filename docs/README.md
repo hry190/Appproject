@@ -26,16 +26,35 @@
 | [SESSION-LOG-2026-09-08.md](./SESSION-LOG-2026-09-08.md) | 2026-09-08 滚轮1-12 + 试炼1-3 + 未完待续/后山页 | 2026-09-08 |
 | [SESSION-LOG-2026-09-09.md](./SESSION-LOG-2026-09-09.md) | 2026-09-09 环境清理 + 登录连不上根因 + 多维度扫描 + 学习2 页面 | 2026-09-09 |
 | [SESSION-LOG-2026-09-10.md](./SESSION-LOG-2026-09-10.md) | 2026-09-10 学习/滚轮 6 新屏 + 修 dead button + v2 审计 | 2026-09-10 |
+| [SESSION-LOG-2026-09-11.md](./SESSION-LOG-2026-09-11.md) | 2026-09-11 第一卷家族收尾(第一卷-12)+ 标题修正 | 2026-09-11 |
+| [SESSION-LOG-2026-09-12.md](./SESSION-LOG-2026-09-12.md) | 2026-09-12 Vol-5 系列 7 屏 + Gunlun12 新入口 + Vol-5-2 中途换素材 | 2026-09-12 |
+| [SESSION-LOG-2026-09-13.md](./SESSION-LOG-2026-09-13.md) | 2026-09-13 Vol-7-1~8(8 屏)+ image-fit-to-natural-bounds 规则 + 首例 3 图布局 | 2026-09-13 |
+| [SESSION-LOG-2026-09-14.md](./SESSION-LOG-2026-09-14.md) | 2026-09-14 后山1「识机真决」回调 Houshan2→Vol-1(应用 / 撤回 / 重新应用) | 2026-09-14 |
+| [SESSION-LOG-2026-09-15.md](./SESSION-LOG-2026-09-15.md) | 2026-09-15 后山1/2/3 云雾缭绕 + 后山2→3 dolly-in + 后山3 云朵系列 + adb reverse 重设 | 2026-09-15 |
+| [SESSION-LOG-2026-09-16.md](./SESSION-LOG-2026-09-16.md) | 2026-09-16 后山三页云素材重排(60~90dp 间隔 / 单向+摆动双模式 / 老云动画 / tint 分带)+ Volume3Part7 坐标修复 + 48 处注释对齐 + 审计脚本 | 2026-09-16 |
+| [MERGE-WORKFLOW.md](./MERGE-WORKFLOW.md) | 分支合并 SOP —— 严格 4 步(侦察 → 评估 → 建议 → 合并),合并任何分支前必读 | - |
+| [acceptance-20260909.md](./acceptance-20260909.md) | 创作与大会双账号阶段验收记录 | 2026-09-09 |
+| [backend-delivery-checklist.md](./backend-delivery-checklist.md) | 后端交付检查清单(以工作区源码为准) | 2026-09-09 |
+| [creation-demo-acceptance.md](./creation-demo-acceptance.md) | 作品创作竞赛演示验收报告 | 2026-09-10 |
 | [CODE-AUDIT-2026-09-09.md](./CODE-AUDIT-2026-09-09.md) | v1 代码审计 — 103 个 finding + 8 个优先行动 | 2026-09-09 |
 | [CODE-AUDIT-2026-09-10.md](./CODE-AUDIT-2026-09-10.md) | v2 代码审计 — 68 个 finding(含 NEW/PERSISTED 标注) | 2026-09-10 |
 | [CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) | v3 代码审计 — Vol-2 doc 批(0 runtime bug,9 HIGH pre-existing)| 2026-09-11 |
 | [IMAGE-COORDINATE-VERIFICATION.md](./IMAGE-COORDINATE-VERIFICATION.md) | 图片坐标验证方法 — PNG 像素校验 + AskUserQuestion 二步决策 + KDoc 真机调整留痕 | 2026-09-11 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 
+> 📌 **最新一天是 `SESSION-LOG-2026-09-16.md`,有 3000+ 行** —— 只想快速了解状态的话,
+> 直接读它顶部的 **「🎯 今日 TL;DR」** 一节(约 40 行),不必从头读。
+
 **项目根目录的文档**(不属于 docs/ 但常参考):
 - [DEV-SETUP.md](../DEV-SETUP.md) — dev 环境完整配置流程
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — 协作约定
 - [android/docs/screen-adaptation.md](../android/docs/screen-adaptation.md) — 屏幕适配方案(两段式/三段式 + 真机 dp 表)
+
+**工具脚本**(不是文档,但排查时常用):
+- [scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1) — 审计注释里的几何值(X/Y/W/H)与代码是否一致;
+  默认只读,`-Fix` 对齐,`-FailOnDrift` 供 CI。判据见 `ONBOARDING.md` §5.4
+- [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
+- [infra/adb-reverse.ps1](../infra/adb-reverse.ps1) — 真机端口转发(每次插拔/重启都要重设)
 
 ---
 
