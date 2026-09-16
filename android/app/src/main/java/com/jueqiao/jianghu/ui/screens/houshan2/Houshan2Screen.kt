@@ -3,11 +3,6 @@ package com.jueqiao.jianghu.ui.screens.houshan2
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,6 +38,7 @@ import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
 import com.jueqiao.jianghu.ui.components.CloudMotion
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
+import com.jueqiao.jianghu.ui.components.rememberCloudProgress
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -108,105 +104,29 @@ fun Houshan2Screen(
 
     // 熊猫已按 §18 去掉;§21 起 6 朵老云也去掉动画,改为静态图层
 
-    // ── §21c 6 个动画云元素的进度:每个元素独立周期(与后山1/后山3 完全同一套)──
-    // 单向组 7/8/9s + 摆动组 10/11/13s → 六个数 lcm ≈ 4.2 天,看不出规律性同步
-    val cloudTransition = rememberInfiniteTransition(label = "h2Clouds")
-    val c58Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 7_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud58",
-    )
-    val c60Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud60",
-    )
-    val c62Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud62",
-    )
-    val c57Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud57",
-    )
+    // ── 6 个动画云元素的进度:每个元素独立周期(与后山1/后山3 完全同一套)────
+    // §21k 用户反馈"最顶部的云速度太快了" → #1 ACI58 周期 7s → 10.7s;
+    // §21l 用户复反馈"速度还是快了,速度调成一半" → 再减半 → **21.4s**
+    //   (114.3 → 74.8 → **37.4 dp/s**;现在它是全页最慢,最快的是 #5 ACI62 的 88.9)
+    // 当前六个周期(上→下):21.4 / 11 / 8 / 10 / 9 / 13 s
+    val c58Progress = rememberCloudProgress(21_400, "cloud58")
+    val c60Progress = rememberCloudProgress(8_000, "cloud60")
+    val c62Progress = rememberCloudProgress(9_000, "cloud62")
+    val c57Progress = rememberCloudProgress(13_000, "cloud57")
 
     // ── §21f 6 朵老云的动画(与后山1/后山3 同一套;用户指令"把 6 朵静态老云的动画也做出来")──
     // 间距约束已放弃;复用 §21c 的 CloudMotion 三模式(替代当初的 rememberCloudFloat 随机游走)。
-    // 周期 17/19/23/21/13/11,6 个数两两互质,与 §21c 的 7/8/9/10/11/13 也互质。
+    // §21i 用户指令"老云的移动速度要向其他的云朵一致" → 周期按"平均速度对齐"重算:
+    //   目标 = 竖排栈 6 个的平均速度 **75.9 dp/s**(栈内 52~114);
+    //   摆动模式 平均速度 = 4A/T,单向模式 = (屏宽+元素宽)/T。
+    //   结果:58 4.7s→76.6、61 9.7s→77.1、56 3.7s→75.7、57 8.2s→75.4、60 4.9s→73.5、60b 10.3s→72.6 dp/s
     // 白色脉冲关闭(老云是画好的水彩云,不再叠白光)。
-    val oldCloudTransition = rememberInfiniteTransition(label = "h2OldClouds")
-    val o58Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 17_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old58",
-    )
-    val o61Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 19_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old61",
-    )
-    val o56Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 23_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old56",
-    )
-    val o57Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 21_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old57",
-    )
-    val o60Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old60",
-    )
-    val o60bProgress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old60b",
-    )
+    val o58Progress = rememberCloudProgress(4_700, "old58")
+    val o61Progress = rememberCloudProgress(9_700, "old61")
+    val o56Progress = rememberCloudProgress(3_700, "old56")
+    val o57Progress = rememberCloudProgress(8_200, "old57")
+    val o60Progress = rememberCloudProgress(4_900, "old60")
+    val o60bProgress = rememberCloudProgress(10_300, "old60b")
 
     // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§36) ──────────────
     val p = dolly.value

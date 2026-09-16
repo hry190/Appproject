@@ -38,6 +38,7 @@ import com.jueqiao.jianghu.ui.components.CloudMotion
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.components.HoushanMistVariant
+import com.jueqiao.jianghu.ui.components.rememberCloudProgress
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 // 文件级常量 TWO_PI 已移到 ui/components/FocusCloudBand.kt 和 AnimatedCloudImage.kt
@@ -97,99 +98,30 @@ fun Houshan3Screen(
     // 拆招心法下方三朵云动画 (§6)— 用 Ellipse 58/60/62 三张素材
     // 资源:58/60 复用现有 img_houshan1_cloud_58/60(同一张图,fit 版本 — 见 09-15 §4);
     // 62 是新导入:D:\图\Ellipse 62.png → drawable-nodpi/img_houshan3_cloud_62.png
-    // 三朵共用 1 个 rememberInfiniteTransition,各 animateFloat 取**互质周期** 9/10/11s(§20)
-    //   §20:用户从 §19 的"4 秒跑完屏宽"改为"约 5 秒跑完屏宽"(嫌 §19 有点快)
-    //        周期 = 2 × 5s = 10s(半周期 = 单程);取 9/10/11s → 单程 4.5/5/5.5s,都是"大概 5 秒"
-    //        (9/10/11 两两互质:gcd(9,10)=gcd(9,11)=gcd(10,11)=1)
-    val cloudTransition = rememberInfiniteTransition(label = "h3Clouds")
-    val c58Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 7_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud58",
-    )
-    val c60Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud60",
-    )
-    val c62Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud62",
-    )
-    val c57Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud57",
-    )
+    // §21j 已把"0→1 线性回绕进度"抽成共享 helper `rememberCloudProgress`;
+    // 每朵云各自持有一个独立周期的进度,再用 phase 错开(不再共用 1 个 rememberInfiniteTransition)。
+    // §21k 用户反馈"最顶部的云速度太快了" → #1 ACI58 周期 7s → 10.7s;
+    // §21l 用户复反馈"速度还是快了,速度调成一半" → 再减半 → **21.4s**
+    //   (114.3 → 74.8 → **37.4 dp/s**;现在它是全页最慢,最快的是 #5 ACI62 的 88.9)
+    // 当前六个周期(上→下):21.4 / 11 / 8 / 10 / 9 / 13 s,互不整除
+    val c58Progress = rememberCloudProgress(21_400, "cloud58")
+    val c60Progress = rememberCloudProgress(8_000, "cloud60")
+    val c62Progress = rememberCloudProgress(9_000, "cloud62")
+    val c57Progress = rememberCloudProgress(13_000, "cloud57")
 
     // ── §21f 老云的动画(用户指令"把静态老云的动画也做出来,不考虑间距了")──
     // 后山3 有 5 朵老云(比后山1/2 多一朵 img_shilian3_cloud_old —— 它从 8f5a28c 基线起就是静态的,
     // 本次也一并动画化)。间距约束已放弃;复用 §21c 的 CloudMotion 三模式。
-    // 周期 17/19/23/21/13,与 §21c 的 7/8/9/10/11/13 两两互质。
+    // §21i 用户指令"老云的移动速度要向其他的云朵一致" → 周期按"平均速度对齐"重算:
+    //   目标 = 竖排栈 6 个的平均速度 **75.9 dp/s**(栈内 52~114);
+    //   摆动模式 平均速度 = 4A/T,单向模式 = (屏宽+元素宽)/T。
+    //   结果:old 4.3s→74.4、56 3.7s→75.7、58 9.5s→76.2、57 8.1s→76.3、5 7.9s→78.2 dp/s。
     // 白色脉冲关闭;§23-§26 的 tint 色彩循环仍不恢复(§21b 起已移除)。
-    val oldCloudTransition = rememberInfiniteTransition(label = "h3OldClouds")
-    val oOldProgress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 17_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "oldOld",
-    )
-    val o56Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 19_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old56",
-    )
-    val o58Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 23_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old58",
-    )
-    val o57Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 21_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old57",
-    )
-    val o5Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old5",
-    )
+    val oOldProgress = rememberCloudProgress(4_300, "oldOld")
+    val o56Progress = rememberCloudProgress(3_700, "old56")
+    val o58Progress = rememberCloudProgress(9_500, "old58")
+    val o57Progress = rememberCloudProgress(8_100, "old57")
+    val o5Progress = rememberCloudProgress(7_900, "old5")
 
     Box(
         modifier = Modifier

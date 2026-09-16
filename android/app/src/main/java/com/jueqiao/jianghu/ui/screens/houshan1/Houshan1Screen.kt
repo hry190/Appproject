@@ -37,6 +37,7 @@ import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
 import com.jueqiao.jianghu.ui.components.CloudMotion
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
+import com.jueqiao.jianghu.ui.components.rememberCloudProgress
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
@@ -87,116 +88,41 @@ fun Houshan1Screen(
         label = "pandaDy",
     )
 
-    // ── §21c 6 个动画云元素的进度:每个元素独立周期,互不整除 ──────────────────
-    // 用户指令"一部分走单向+回绕、一部分保持 sin 摆动,用互质周期错开"。
-    // 周期 7/8/9/13(三朵 ACI)+ FCB 的 10/11 → 六个数 lcm = 7×8×9×5×11×13 = 360360s ≈ **4.2 天**,
-    // 远超单次使用时长,看不出规律性同步。
-    // 平均速度校准(让"单向组"和"摆动组"看起来快慢一致):
-    //   单向组 = (393+元素宽)/周期 → ACI58 573/7 = 82 dp/s、ACI60 603/8 = 75、ACI62 573/9 = 64
-    //   摆动组 = 400/半周期     → FCB左下 400/5.5 = 73、FCB中下 400/5 = 80、ACI57 400/6.5 = 62
-    val cloudTransition = rememberInfiniteTransition(label = "h1Clouds")
-    val c58Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 7_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud58",
-    )
-    val c60Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud60",
-    )
-    val c62Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud62",
-    )
-    val c57Progress = cloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "cloud57",
-    )
+    // ── 6 个动画云元素的进度:每个元素独立周期,互不整除 ──────────────────────
+    // 用户指令"一部分走单向+回绕、一部分保持 sin 摆动,用互质周期错开"(§21c)。
+    // §21k 用户反馈"最顶部的云速度太快了" → #1 ACI58 从 7s 改到 10.7s;
+    //   §21l 用户复反馈"速度还是快了,速度调成一半" → 再减半到 **21.4s**(严格 ×2 周期 = ÷2 速度)。
+    //   起点:§21c 的初始分配让它成了全页最快(4×200/7 = **114.3 dp/s**);
+    //   §21h 给它加了冷青 tint 之后它变清楚了,**速度问题才暴露出来**。
+    //   两轮:114.3 →(§21k 10.7s)74.8 →(§21l 21.4s)**37.4 dp/s**。
+    //   ⚠️ 现在它变成**全页最慢**(次慢是 #2 FCB左下 52.1),而最快的仍是 #5 ACI62(88.9,是它的 2.4 倍);
+    //      若之后觉得"和其它云不一致",下一个该调的是 ACI62(9s → 更大周期)。
+    // 当前六个周期(上→下):21.4 / 11 / 8 / 10 / 9 / 13 s
+    //   平均速度(上→下):37.4 / 52.1 / 75.4 / 63.3 / 88.9 / 61.5 dp/s
+    val c58Progress = rememberCloudProgress(21_400, "cloud58")
+    val c60Progress = rememberCloudProgress(8_000, "cloud60")
+    val c62Progress = rememberCloudProgress(9_000, "cloud62")
+    val c57Progress = rememberCloudProgress(13_000, "cloud57")
 
     // ── §21f 6 朵老云的动画(用户指令"把 6 朵静态老云的动画也做出来,不考虑间距了")──
     // §21 曾按用户指令把它们静态化;§21f 撤销该决定,并复用 §21c 的 CloudMotion 三模式
     // (不再用当初那套"朝随机目标点游走"的 rememberCloudFloat —— 那需要每朵 3 个协程,
     //  且方向/速度不可预期;CloudMotion 是确定性的,和另外 6 个动画元素同一种语言)。
     // **间距约束已按用户指令放弃**,故这里不参与"60~90dp 间隔"的排布。
-    // 周期 17/19/23/21/13/11 与 §21c 的 7/8/9/10/11/13 合起来 lcm 极大;6 个数两两互质
-    // (21 = 3×7,与 11/13/17/19/23 都互质)。
+    // §21i 用户指令"老云的移动速度要向其他的云朵一致" → 周期按"平均速度对齐"重算:
+    //   目标 = 竖排栈 6 个的平均速度 **75.9 dp/s**(栈内 52~114);
+    //   摆动模式 平均速度 = 4A/T,单向模式 = (屏宽+元素宽)/T。
+    //   结果:58 4.7s→76.6、61 9.7s→77.1、56 3.7s→75.7、57 8.2s→75.4、60 4.9s→73.5、60b 10.3s→72.6 dp/s
+    //   —— 全部落在 76±5% 内;且 47/97/37/82/49/103(×10ms)两两互质,不会规律性同步。
     // 尺寸最大的两朵(58: 455×259、56: 335×297)用 Oscillate 留在原地,避免大块云飘出屏幕;
     // 扁长的 3 朵(61/57/60b)用单向回绕,与 §21e 的"2 右 1 左"错开 → 老云是 2 右 1 左。
     // 白色脉冲关闭(pulseBase/pulseAmp = 0f):它们是画好的水彩云,不该再叠一层白光。
-    val oldCloudTransition = rememberInfiniteTransition(label = "h1OldClouds")
-    val o58Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 17_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old58",
-    )
-    val o61Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 19_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old61",
-    )
-    val o56Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 23_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old56",
-    )
-    val o57Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 21_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old57",
-    )
-    val o60Progress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old60",
-    )
-    val o60bProgress = oldCloudTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "old60b",
-    )
+    val o58Progress = rememberCloudProgress(4_700, "old58")
+    val o61Progress = rememberCloudProgress(9_700, "old61")
+    val o56Progress = rememberCloudProgress(3_700, "old56")
+    val o57Progress = rememberCloudProgress(8_200, "old57")
+    val o60Progress = rememberCloudProgress(4_900, "old60")
+    val o60bProgress = rememberCloudProgress(10_300, "old60b")
 
     Box(
         modifier = Modifier
