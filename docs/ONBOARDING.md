@@ -298,6 +298,15 @@ img_<页面拼音>_<Figma 节点名>.png
 - ✅ 默认采用"两段式":外层 `Box(fillMaxSize)` 放背景,内层 `Box(fillMaxSize, windowInsetsPadding(navigationBars))` 放内容
 - ✅ 元素位置用 `align(Alignment.X) + offset(x, y)` 表达,不直接算绝对坐标
 - ✅ 改元素 offset/size 时,**同步 inline 注释里的 `// 元素(X=?, Y=?, W=?, H=?)`**
+  - 这条容易漏。**审计脚本**:[scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1)
+    ```powershell
+    ./scripts/audit-comment-drift.ps1              # 只审计(默认、只读):列出"注释 ≠ 代码"的行
+    ./scripts/audit-comment-drift.ps1 -Fix         # 把注释对齐到代码(改前建议先提交,便于 git diff 复核)
+    ./scripts/audit-comment-drift.ps1 -FailOnDrift # 有漂移则返回非 0,给 CI/pre-commit 用
+    ```
+  - ⚠️ `-Fix` 的前提是"**代码值才是对的**"(真机调过的那一方)。如果没人担保谁对,
+    先查 `git log -p --follow <file>` 定性 —— 2026-09-16 §21o 就出现过**代码错、注释对**的反例
+    (坐标被一个无关提交误改),那种情况跑 `-Fix` 会把正确的注释也改错。
 
 ### 5.5 Compose 模式
 
