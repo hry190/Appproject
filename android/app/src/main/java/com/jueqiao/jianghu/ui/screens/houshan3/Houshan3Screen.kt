@@ -139,6 +139,58 @@ fun Houshan3Screen(
         label = "cloud57",
     )
 
+    // ── §21f 老云的动画(用户指令"把静态老云的动画也做出来,不考虑间距了")──
+    // 后山3 有 5 朵老云(比后山1/2 多一朵 img_shilian3_cloud_old —— 它从 8f5a28c 基线起就是静态的,
+    // 本次也一并动画化)。间距约束已放弃;复用 §21c 的 CloudMotion 三模式。
+    // 周期 17/19/23/21/13,与 §21c 的 7/8/9/10/11/13 两两互质。
+    // 白色脉冲关闭;§23-§26 的 tint 色彩循环仍不恢复(§21b 起已移除)。
+    val oldCloudTransition = rememberInfiniteTransition(label = "h3OldClouds")
+    val oOldProgress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 17_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "oldOld",
+    )
+    val o56Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 19_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old56",
+    )
+    val o58Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 23_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old58",
+    )
+    val o57Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 21_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old57",
+    )
+    val o5Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old5",
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -272,60 +324,72 @@ fun Houshan3Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .clickable(onClick = onOpenUnfinished),
         ) {
-            // 旧云朵(8f5a28c 基线,重命名为 _old 避免与 Ellipse 58.png 命名冲突 §35)— 资源已 mv → img_shilian3_cloud_old.png
-            Image(
+            // ══ §21f 5 朵老云(重新动画;间距约束已放弃)══════════════════════════
+            // 位置/尺寸沿用原值;alpha 恢复老动画区间 0.75±0.25;白色脉冲关闭(水彩云不叠白光)。
+            // 风格与后山1/后山2 一致:大云 Oscillate 留在原地,扁长的走单向回绕(2 右 1 左)。
+            // 旧云朵(8f5a28c 基线,重命名为 _old 避免命名冲突 §35)— §21f 起也动画化(Oscillate)
+            AnimatedCloudImage(
                 painter = painterResource(R.drawable.img_shilian3_cloud_old),
-                contentDescription = "云朵",
-                modifier = Modifier
-                    .offset(x = (-46).dp, y = 476.dp)
-                    .size(width = 331.dp, height = 92.dp),
-                contentScale = ContentScale.FillBounds,
+                contentDescription = "旧云朵",
+                xOffset = -46f, yOffset = 476f,
+                widthDp = 331f, heightDp = 92f,
+                progress = oOldProgress, phase = 0.00f,
+                motion = CloudMotion.Oscillate,
+                amplitudeX = 80f, amplitudeY = 10f,
+                baseAlpha = 0.75f, alphaAmp = 0.25f,
+                pulseBase = 0f, pulseAmp = 0f,
             )
 
-            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297)
-            // §21 静态化:去掉 §28 的位置/透明度随机飘动 + 去掉 §23-§26 的 tint 色彩循环(colorFilter 移除,
-            //     恢复 PNG 原色);alpha 固定取原动画区间 0.5~1.0 的中点 0.75
-            Image(
+            // 云朵 56 (X=263, Y=755, W=335, H=297, 最高)— Oscillate 留在原地
+            AnimatedCloudImage(
                 painter = painterResource(R.drawable.img_shilian3_cloud_56),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 263f.dp, y = 755f.dp)
-                    .size(width = 335.dp, height = 297.dp),
-                alpha = 0.75f,
-                contentScale = ContentScale.FillBounds,
+                contentDescription = "云朵56",
+                xOffset = 263f, yOffset = 755f,
+                widthDp = 335f, heightDp = 297f,
+                progress = o56Progress, phase = 0.42f,
+                motion = CloudMotion.Oscillate,
+                amplitudeX = 70f, amplitudeY = 16f,
+                baseAlpha = 0.75f, alphaAmp = 0.25f,
+                pulseBase = 0f, pulseAmp = 0f,
             )
 
-            // 渐变云朵(Ellipse 58.png, X=78, Y=170, W=331, H=92)— §21 静态化(同 Ellipse 56)
-            Image(
+            // 云朵 58 (X=78, Y=170, W=331, H=92, 扁长)— 单向 → 右
+            AnimatedCloudImage(
                 painter = painterResource(R.drawable.img_shilian3_cloud_58),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 78f.dp, y = 170f.dp)
-                    .size(width = 331.dp, height = 92.dp),
-                alpha = 0.75f,
-                contentScale = ContentScale.FillBounds,
+                contentDescription = "云朵58",
+                xOffset = 0f, yOffset = 170f,
+                widthDp = 331f, heightDp = 92f,
+                progress = o58Progress, phase = 0.18f,
+                motion = CloudMotion.DriftWrap,
+                amplitudeX = 0f, amplitudeY = 10f,
+                baseAlpha = 0.75f, alphaAmp = 0.25f,
+                pulseBase = 0f, pulseAmp = 0f,
             )
 
-            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191)— §21 静态化(原色,无 tint)
-            Image(
+            // 云朵 57 (X=-25, Y=500, W=225, H=191)— 单向 → 右
+            AnimatedCloudImage(
                 painter = painterResource(R.drawable.img_shilian3_cloud_57),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = (-25f).dp, y = 500f.dp)
-                    .size(width = 225.dp, height = 191.dp),
-                alpha = 0.75f,
-                contentScale = ContentScale.FillBounds,
+                contentDescription = "云朵57",
+                xOffset = 0f, yOffset = 500f,
+                widthDp = 225f, heightDp = 191f,
+                progress = o57Progress, phase = 0.63f,
+                motion = CloudMotion.DriftWrap,
+                amplitudeX = 0f, amplitudeY = 12f,
+                baseAlpha = 0.75f, alphaAmp = 0.25f,
+                pulseBase = 0f, pulseAmp = 0f,
             )
 
-            // 云朵(Ellipse 5.png, X=187, Y=308, W=225, H=191)— §21 静态化(原色,无 tint)
-            Image(
+            // 云朵 5 (X=187, Y=308, W=225, H=191)— 单向 ← 左
+            AnimatedCloudImage(
                 painter = painterResource(R.drawable.img_shilian3_cloud_5),
-                contentDescription = null,
-                modifier = Modifier
-                    .offset(x = 187f.dp, y = 308f.dp)
-                    .size(width = 225.dp, height = 191.dp),
-                alpha = 0.75f,
-                contentScale = ContentScale.FillBounds,
+                contentDescription = "云朵5",
+                xOffset = 0f, yOffset = 308f,
+                widthDp = 225f, heightDp = 191f,
+                progress = o5Progress, phase = 0.81f,
+                motion = CloudMotion.DriftWrapLeft,
+                amplitudeX = 0f, amplitudeY = 12f,
+                baseAlpha = 0.75f, alphaAmp = 0.25f,
+                pulseBase = 0f, pulseAmp = 0f,
             )
 
             // 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— 在云朵下层

@@ -66,6 +66,10 @@ fun AnimatedCloudImage(
     baseAlpha: Float,
     alphaAmp: Float,
     motion: CloudMotion = CloudMotion.Oscillate,
+    // §21f:白色脉冲高光的基准/幅度。默认值是 §7/§8 定下的 0.20±0.16。
+    // 老云(§21f 重新动画的 6 朵)是画好的水彩云,不需要额外叠白光 → 两者都传 0f 即可完全关闭。
+    pulseBase: Float = 0.20f,
+    pulseAmp: Float = 0.16f,
 ) {
     val screenWidthDp = LocalConfiguration.current.screenWidthDp.toFloat()
     // 09-16 §18 抖动参数:1900 → 3000ms 周期(频率 0.53 → 0.33 Hz);
@@ -115,24 +119,27 @@ fun AnimatedCloudImage(
         )
         // §7 + §8 白色脉冲高光 —— 让云中心"发光/呼吸"
         // 参数:base 0.20,amp 0.16 → range 0.04~0.36,相位 +0.37 与位置/alpha 都错开
-        Box(
-            modifier = Modifier.fillMaxSize().drawWithCache {
-                val r = size.minDimension / 2f
-                val brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White,
-                        Color.White.copy(alpha = 0.4f),
-                        Color.Transparent,
-                    ),
-                    center = Offset(size.width / 2f, size.height / 2f),
-                    radius = r,
-                )
-                onDrawBehind {
-                    val a = (progress.value + phase + 0.37f) * TWO_PI
-                    val pulseAlpha = (0.20f + sin(a) * 0.16f).coerceIn(0f, 1f)
-                    drawRect(brush = brush, alpha = pulseAlpha)
-                }
-            },
-        )
+        // §21f:pulseBase / pulseAmp 都传 0f 时**整块跳过**,老云保持原本的水彩质感(且省一次 drawRect)
+        if (pulseBase > 0f || pulseAmp > 0f) {
+            Box(
+                modifier = Modifier.fillMaxSize().drawWithCache {
+                    val r = size.minDimension / 2f
+                    val brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White,
+                            Color.White.copy(alpha = 0.4f),
+                            Color.Transparent,
+                        ),
+                        center = Offset(size.width / 2f, size.height / 2f),
+                        radius = r,
+                    )
+                    onDrawBehind {
+                        val a = (progress.value + phase + 0.37f) * TWO_PI
+                        val pulseAlpha = (pulseBase + sin(a) * pulseAmp).coerceIn(0f, 1f)
+                        drawRect(brush = brush, alpha = pulseAlpha)
+                    }
+                },
+            )
+        }
     }
 }

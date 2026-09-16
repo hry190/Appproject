@@ -148,6 +148,66 @@ fun Houshan2Screen(
         label = "cloud57",
     )
 
+    // ── §21f 6 朵老云的动画(与后山1/后山3 同一套;用户指令"把 6 朵静态老云的动画也做出来")──
+    // 间距约束已放弃;复用 §21c 的 CloudMotion 三模式(替代当初的 rememberCloudFloat 随机游走)。
+    // 周期 17/19/23/21/13/11,6 个数两两互质,与 §21c 的 7/8/9/10/11/13 也互质。
+    // 白色脉冲关闭(老云是画好的水彩云,不再叠白光)。
+    val oldCloudTransition = rememberInfiniteTransition(label = "h2OldClouds")
+    val o58Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 17_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old58",
+    )
+    val o61Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 19_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old61",
+    )
+    val o56Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 23_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old56",
+    )
+    val o57Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 21_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old57",
+    )
+    val o60Progress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old60",
+    )
+    val o60bProgress = oldCloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 11_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "old60b",
+    )
+
     // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§36) ──────────────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
@@ -299,71 +359,81 @@ fun Houshan2Screen(
                     baseAlpha = 0.50f, alphaAmp = 0.25f,
                 )
 
-                // 云朵 58 (X=-70, Y=320, W=455, H=259)
-                // §21 静态化:用户指令"老云保留为静态图层、去掉动画";alpha 取原动画区间 0.5~1.0 的中点 0.75
-                Image(
+                // ══ §21f 6 朵老云(重新动画;间距约束已放弃)══════════════════════
+                // 位置/尺寸沿用原值(注意 60b 是 **Y=770**,用户真机调过的值,§21 曾被我误改成 760,本次修回);
+                // alpha 恢复老动画区间 0.75±0.25;云 56 按 §7 用户指令恒为 1f。
+                // 仍在景深平面 2 内 → dolly 过渡时随云雾一起缩放淡出,层次不变。
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_58),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = (-70f).dp, y = 320f.dp)
-                        .size(width = 455.dp, height = 259.dp),
-                    alpha = 0.75f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵58",
+                    xOffset = -70f, yOffset = 320f,
+                    widthDp = 455f, heightDp = 259f,
+                    progress = o58Progress, phase = 0.00f,
+                    motion = CloudMotion.Oscillate,
+                    amplitudeX = 90f, amplitudeY = 14f,
+                    baseAlpha = 0.75f, alphaAmp = 0.25f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
 
-                // 云朵 61 (X=-50, Y=304, W=355, H=213)— §21 静态化
-                Image(
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_61),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = (-50f).dp, y = 304f.dp)
-                        .size(width = 355.dp, height = 213.dp),
-                    alpha = 0.75f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵61",
+                    xOffset = 0f, yOffset = 304f,
+                    widthDp = 355f, heightDp = 213f,
+                    progress = o61Progress, phase = 0.18f,
+                    motion = CloudMotion.DriftWrap,
+                    amplitudeX = 0f, amplitudeY = 12f,
+                    baseAlpha = 0.75f, alphaAmp = 0.25f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
 
-                // 云朵 56 (X=196, Y=595, W=335, H=297)— §21 静态化;alpha 保持 1f(§7 用户指令 100% 不透明)
-                Image(
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_56),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = 196f.dp, y = 595f.dp)
-                        .size(width = 335.dp, height = 297.dp),
-                    alpha = 1f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵56",
+                    xOffset = 196f, yOffset = 595f,
+                    widthDp = 335f, heightDp = 297f,
+                    progress = o56Progress, phase = 0.42f,
+                    motion = CloudMotion.Oscillate,
+                    amplitudeX = 70f, amplitudeY = 16f,
+                    baseAlpha = 1f, alphaAmp = 0f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
 
-                // 云朵 57 (X=208, Y=570, W=225, H=191)— §21 静态化
-                Image(
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_57),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = 208f.dp, y = 570f.dp)
-                        .size(width = 225.dp, height = 191.dp),
-                    alpha = 0.75f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵57",
+                    xOffset = 0f, yOffset = 570f,
+                    widthDp = 225f, heightDp = 191f,
+                    progress = o57Progress, phase = 0.63f,
+                    motion = CloudMotion.DriftWrapLeft,
+                    amplitudeX = 0f, amplitudeY = 12f,
+                    baseAlpha = 0.75f, alphaAmp = 0.25f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
 
-                // 云朵 60 (X=-21, Y=570, W=355, H=137)— §21 静态化
-                Image(
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_60),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = (-21f).dp, y = 570f.dp)
-                        .size(width = 355.dp, height = 137.dp),
-                    alpha = 0.75f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵60",
+                    xOffset = -21f, yOffset = 570f,
+                    widthDp = 355f, heightDp = 137f,
+                    progress = o60Progress, phase = 0.27f,
+                    motion = CloudMotion.Oscillate,
+                    amplitudeX = 90f, amplitudeY = 10f,
+                    baseAlpha = 0.75f, alphaAmp = 0.25f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
 
-                // 云朵 60b (X=-21, Y=760, W=355, H=137)— §21 静态化
-                Image(
+                // 云朵 60b — **Y=770**(用户真机调过的值;§21 误改为 760,§21f 修回)
+                AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_60),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .offset(x = (-21f).dp, y = 760f.dp)
-                        .size(width = 355.dp, height = 137.dp),
-                    alpha = 0.75f,
-                    contentScale = ContentScale.FillBounds,
+                    contentDescription = "云朵60b",
+                    xOffset = 0f, yOffset = 770f,
+                    widthDp = 355f, heightDp = 137f,
+                    progress = o60bProgress, phase = 0.81f,
+                    motion = CloudMotion.DriftWrap,
+                    amplitudeX = 0f, amplitudeY = 10f,
+                    baseAlpha = 0.75f, alphaAmp = 0.25f,
+                    pulseBase = 0f, pulseAmp = 0f,
                 )
             }
 
