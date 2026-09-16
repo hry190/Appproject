@@ -1,7 +1,6 @@
 package com.jueqiao.jianghu.ui.screens.houshan3
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -22,40 +21,24 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
+import com.jueqiao.jianghu.ui.components.CloudMotion
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
 import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.components.HoushanMistVariant
 import com.jueqiao.jianghu.ui.theme.YaHei
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.random.Random
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.isActive
 
 // 文件级常量 TWO_PI 已移到 ui/components/FocusCloudBand.kt 和 AnimatedCloudImage.kt
 // 这里不再需要 TWO_PI 声明
@@ -71,7 +54,13 @@ import kotlinx.coroutines.isActive
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
  *   - 标签4 图像(X=105, Y=295, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
- *   - 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)
+ *   - 旧云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)
+ *   - §21 老云全部静态化(用户指令"保留为静态图层、去掉动画"):img_shilian3_cloud_old(本已静态)、
+ *     cloud_56(X=263, Y=755, 335×297)、cloud_58(X=78, Y=170, 331×92)、cloud_57(X=-25, Y=500, 225×191)、
+ *     cloud_5(X=187, Y=308, 225×191)—— 去掉位置/透明度随机飘动 + 去掉 tint 色彩循环,alpha 固定 0.75
+ *   - §21 动画云元素 6 个(竖排,间隔 60~69dp,前 5 个 ×0.75):ACI58 y=8 · FCB左下 y=178.5 · ACI60 y=330.5
+ *     · FCB中下 y=477.5 · ACI62 y=620 · **ACI57 y=754.5(100×90,§21b 实图云 PNG)**
+ *     第 6 个底边 844.5dp,距导航栏上沿 857dp 留 12.5dp
  */
 @Composable
 fun Houshan3Screen(
@@ -80,21 +69,8 @@ fun Houshan3Screen(
 ) {
     BackHandler(enabled = true) { onBack() }
 
-    // Ellipse 56 渐变色循环:Animatable<Float> 在 [0,1] 插值,4s 来回 (§23/24/25/26 修复)
-    // 0 = A9C3C0, 1 = White;在 graphicsLayer 块内合成 Color
-    val tintProgress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            tintProgress.animateTo(1f, animationSpec = tween(durationMillis = 4000, easing = LinearEasing))
-            tintProgress.animateTo(0f, animationSpec = tween(durationMillis = 4000, easing = LinearEasing))
-        }
-    }
-
-    // 2 朵渐变云朵(56/58)位置 + 透明度随机飘动(沿用 §13 rememberCloudFloat 模式)(§28)
-    val (cloud56Dx, cloud56Dy, cloud56Alpha) = rememberCloudFloat()
-    val (cloud58Dx, cloud58Dy, cloud58Alpha) = rememberCloudFloat()
-    val (cloud57Dx, cloud57Dy, cloud57Alpha) = rememberCloudFloat()  // §29 加 Ellipse 57
-    val (cloud5Dx, cloud5Dy, cloud5Alpha) = rememberCloudFloat()  // §33 加 Ellipse 5(实际与 Ellipse 57 同图)
+    // §21:老云(56/58/57/5)已按用户指令"保留为静态图层、去掉动画"静态化,
+    // 故 §23-§26 的 A9C3C0 ↔ 白 tintProgress 循环与 §28 起的 rememberCloudFloat 随机飘动全部移除
 
     // 熊猫上下浮 + 呼吸缩放 (§44,与后山1 §21 同款动画)
     // Scale 0.95~1.05 / 3s + Y ±10 dp / 4s,都用 LinearEasing + RepeatMode.Reverse → 来回无缝
@@ -125,12 +101,12 @@ fun Houshan3Screen(
     //   §20:用户从 §19 的"4 秒跑完屏宽"改为"约 5 秒跑完屏宽"(嫌 §19 有点快)
     //        周期 = 2 × 5s = 10s(半周期 = 单程);取 9/10/11s → 单程 4.5/5/5.5s,都是"大概 5 秒"
     //        (9/10/11 两两互质:gcd(9,10)=gcd(9,11)=gcd(10,11)=1)
-    val cloudTransition = rememberInfiniteTransition(label = "h3CloudBands")
+    val cloudTransition = rememberInfiniteTransition(label = "h3Clouds")
     val c58Progress = cloudTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9_000, easing = LinearEasing),
+            animation = tween(durationMillis = 7_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud58",
@@ -139,7 +115,7 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 10_000, easing = LinearEasing),
+            animation = tween(durationMillis = 8_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud60",
@@ -148,10 +124,19 @@ fun Houshan3Screen(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11_000, easing = LinearEasing),
+            animation = tween(durationMillis = 9_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "cloud62",
+    )
+    val c57Progress = cloudTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cloud57",
     )
 
     Box(
@@ -174,88 +159,107 @@ fun Houshan3Screen(
         // 且整层位于熊猫、标签之下,不会遮挡御剑飞行的视觉焦点
         HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
 
-        // 拆招心法下方聚焦前景飘带 (§43)— 用户反馈该区域"没动画/不够明显"
-        // 比起 HoushanMistLayer 的均匀细雾团,这一个更大、更浓,让"下方有东西在缓慢飘动"一眼可辨;
-        // 位于内容层之下,不会遮挡标签或熊猫
-        // §45:周期 19000 → 11000 ms(1.73× 更快,与 HoushanMistLayer 13/17/19 互质,观感更明显)
-        // §9:透明度大扩:baseAlpha 0.32→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(峰谷差 0.60,6×于原 0.10)
-        // §20:周期 8→10s(单程 5s"跑完屏宽"),amplitudeX 保持 200
-        FocusCloudBand(
-            xOffset = 12f,
-            yOffset = 740f,
-            widthDp = 320f,
-            heightDp = 110f,
-            amplitudeX = 200f,
-            amplitudeY = 42f,
-            baseAlpha = 0.50f,
-            alphaAmp = 0.30f,
-            periodMs = 10_000,
-        )
-
-        // 拆招心法**左下方**聚焦前景飘带 (§44)— 用户反馈"左下方没动画"
-        // x_offset = -30, w = 240 → 覆盖 x=-30..210,圆心 x=90(明显在标签中心 x=172 的左侧)
-        // 标签 x=124..220 在飘带的右端下方,飘带在标签之下层,标签的米色不透明图版遮住右端,
-        // 实际视觉可见的就是"标签左侧"那一段 — 严格满足"左下方"
-        // §45:周期 23000 → 9000 ms(2.56× 更快,与 §43 的 11s 互质)→ 两条飘带节奏不同步,观感更自然
-        // §9:透明度大扩:baseAlpha 0.30→0.50,alphaAmp 0.10→0.30 → range 0.20~0.80(与 §43 同步)
-        // §20:周期 9→11s(单程 5.5s),amplitudeX 保持 200
-        FocusCloudBand(
-            xOffset = -30f,
-            yOffset = 740f,
-            widthDp = 240f,
-            heightDp = 120f,
-            amplitudeX = 200f,
-            amplitudeY = 36f,
-            baseAlpha = 0.50f,
-            alphaAmp = 0.30f,
-            periodMs = 11_000,
-        )
-
-        // 拆招心法下方三朵云(§6)— Ellipse 58/60/62 实图素材,带漂移 + 聚散
-        // 绘制顺序 = 背景 → 大雾层 → 2 朵 focus 飘带 → **3 朵云** → 内容:
-        // 云是**不透明 PNG**,放在 focus 飘带**之前**(之下)→ 飘带不挡云,但云的软边看起来"自带雾气"也合理
-        // 位置三角形:
-        //   58 中心 (60, 770)  — 标签左下,横椭圆
-        //   60 中心 (260, 740) — 标签右下,扁长条
-        //   62 中心 (170, 820) — 标签正下,中等扁长
+        // ══ §21 动画云元素竖排(6 个)════════════════════════════════════════════
+        // 用户指令:云朵素材"每两个间隔随机在 60~90dp",避免素材太密集;定死一组,不做每帧随机。
+        //          最底部(导航栏上方)必须有一个动画素材 → 第 6 个即新增的底部 FocusCloudBand。
+        // 与后山1/后山2 **完全同一套** y 序列、间隔(69/62/66/60/61)、×0.75 尺寸 → 三页效果统一。
+        // 几何:6 个元素铺满 8..844.5dp;可用高度 = 873 − 16(导航栏)= 857dp → 间隔落在 60~90 内。
+        // y 序列(顶边):ACI58 8 · FCB左下 178.5 · ACI60 330.5 · FCB中下 477.5 · ACI62 620 · ACI57 754.5
+        //   第 6 个底边 844.5dp,距导航栏上沿 857dp 留 12.5dp。
+        // amplitudeY 收到 8~10dp(原 42/36dp 会把 60~69dp 的间隔上下吃光);amplitudeX 仍 200dp。
+        // 绘制顺序 = 背景 → 雾层 → 这 6 个 → 内容层(旧云/熊猫/标签),不遮挡任何可点区域。
+        // §21c/§21d 横向模式分配 —— **按"观感可见性"分配**(与后山1/后山2 完全一致):
+        //   三朵 ACI 的 PNG 是 250/255/237 的近白/纯白,浅底上几乎不可见;
+        //   两条 FocusCloudBand 是冷青 #A9C3C0,浅底上对比明显 → 把**看得见的**放进单向组。
+        //   #1 ACI58 摆动(7s) · #2 FCB左下 **单向→右**(11s) · #3 ACI60 **单向→右**(8s)
+        //   #4 FCB中下 **单向←左**(10s) · #5 ACI62 摆动(9s) · #6 ACI57 摆动(13s,底部,永远在屏上)
+        // §21d/§21e:3 个单向 = **2 个向右(FCB左下 + ACI60)+ 1 个向左(FCB中下)**,
+        //   保证两个方向各有一个看得见的元素。
+        // 单向模式忽略 xOffset / amplitudeX,故传 0f。
         AnimatedCloudImage(
             painter = painterResource(R.drawable.img_houshan1_cloud_58),
             contentDescription = "云朵58",
             xOffset = -60f,
-            yOffset = 703f,
-            widthDp = 240f,
-            heightDp = 135f,
+            yOffset = 8f,
+            widthDp = 180f,
+            heightDp = 101.5f,
             progress = c58Progress,
-            phase = 0.13f,
-            amplitudeX = 200f,   // §19:38 → 200(2×200=400dp ≈ 屏宽)
-            amplitudeY = 15f,
+            phase = 0.00f,
+            motion = CloudMotion.Oscillate,
+            amplitudeX = 200f,
+            amplitudeY = 10f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
+        )
+        FocusCloudBand(
+            xOffset = 0f,
+            yOffset = 178.5f,
+            widthDp = 180f,
+            heightDp = 90f,
+            motion = CloudMotion.DriftWrap,
+            amplitudeX = 0f,
+            amplitudeY = 10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.30f,
+            periodMs = 11_000,
         )
         AnimatedCloudImage(
             painter = painterResource(R.drawable.img_houshan1_cloud_60),
             contentDescription = "云朵60",
-            xOffset = 120f,
-            yOffset = 686f,
-            widthDp = 280f,
-            heightDp = 108f,
+            xOffset = 0f,
+            yOffset = 330.5f,
+            widthDp = 210f,
+            heightDp = 81f,
             progress = c60Progress,
-            phase = 0.31f,
-            amplitudeX = 200f,   // §19:45 → 200
+            phase = 0.35f,
+            motion = CloudMotion.DriftWrap,
+            amplitudeX = 0f,
             amplitudeY = 8f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
+        )
+        FocusCloudBand(
+            xOffset = 0f,
+            yOffset = 477.5f,
+            widthDp = 240f,
+            heightDp = 82.5f,
+            motion = CloudMotion.DriftWrapLeft,
+            amplitudeX = 0f,
+            amplitudeY = 10f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.30f,
+            periodMs = 10_000,
         )
         AnimatedCloudImage(
             painter = painterResource(R.drawable.img_houshan3_cloud_62),
             contentDescription = "云朵62",
             xOffset = 50f,
-            yOffset = 771f,
-            widthDp = 240f,
-            heightDp = 98f,
+            yOffset = 620f,
+            widthDp = 180f,
+            heightDp = 73.5f,
             progress = c62Progress,
+            phase = 0.70f,
+            motion = CloudMotion.Oscillate,
+            amplitudeX = 200f,
+            amplitudeY = 8f,
+            baseAlpha = 0.50f,
+            alphaAmp = 0.25f,
+        )
+        // 第 6 个 = 最底部素材(§21b):用户指令从 FocusCloudBand 换成 AnimatedCloudImage(实图云 PNG)。
+        // 底边 844.5dp,距导航栏上沿(857dp)留 12.5dp → 满足"最底部必须有一个动画素材"。
+        // 选 img_houshan1_cloud_57 而非扁长的 cloud_60:cloud_60 实测纯白 (255,255,255),
+        //   叠在近纯白的底部背景上像素差为 0(等于没加);cloud_57 实测 MeanLum 221 / 72% 带色调。
+        AnimatedCloudImage(
+            painter = painterResource(R.drawable.img_houshan1_cloud_57),
+            contentDescription = "云朵57",
+            xOffset = 146f,
+            yOffset = 754.5f,
+            widthDp = 100f,
+            heightDp = 90f,
+            progress = c57Progress,
             phase = 0.71f,
-            amplitudeX = 200f,   // §19:40 → 200
+            motion = CloudMotion.Oscillate,
+            amplitudeX = 200f,
             amplitudeY = 10f,
             baseAlpha = 0.50f,
             alphaAmp = 0.25f,
@@ -278,64 +282,49 @@ fun Houshan3Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297) — tint A9C3C0 ↔ 白色 + 位置 + 透明度随机 (§23/26/28)
-            // 注意:Modifier.graphicsLayer 不支持 colorFilter,改用 Image 自己的 colorFilter 参数
+            // 渐变云朵(Ellipse 56.png, X=263, Y=755, W=335, H=297)
+            // §21 静态化:去掉 §28 的位置/透明度随机飘动 + 去掉 §23-§26 的 tint 色彩循环(colorFilter 移除,
+            //     恢复 PNG 原色);alpha 固定取原动画区间 0.5~1.0 的中点 0.75
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_56),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (263f + cloud56Dx).dp, y = (755f + cloud56Dy).dp)
+                    .offset(x = 263f.dp, y = 755f.dp)
                     .size(width = 335.dp, height = 297.dp),
-                colorFilter = ColorFilter.tint(
-                    Color(
-                        red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
-                        green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
-                        blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
-                    ),
-                    BlendMode.Modulate,
-                ),
-                alpha = cloud56Alpha,
+                alpha = 0.75f,
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 渐变云朵(Ellipse 58.png, X=78, Y=170, W=331, H=92) — 与 Ellipse 56 共用 tintProgress 同步循环 + 各自位置/透明度独立随机 (§27/28)
+            // 渐变云朵(Ellipse 58.png, X=78, Y=170, W=331, H=92)— §21 静态化(同 Ellipse 56)
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_58),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (78f + cloud58Dx).dp, y = (170f + cloud58Dy).dp)
+                    .offset(x = 78f.dp, y = 170f.dp)
                     .size(width = 331.dp, height = 92.dp),
-                colorFilter = ColorFilter.tint(
-                    Color(
-                        red = 0xA9 + ((0xFF - 0xA9) * tintProgress.value).toInt(),
-                        green = 0xC3 + ((0xFF - 0xC3) * tintProgress.value).toInt(),
-                        blue = 0xC0 + ((0xFF - 0xC0) * tintProgress.value).toInt(),
-                    ),
-                    BlendMode.Modulate,
-                ),
-                alpha = cloud58Alpha,
+                alpha = 0.75f,
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191) — 原色显示,仅位置 + 透明度随机 (§29/§30)
+            // 云朵(Ellipse 57.png, X=-25, Y=500, W=225, H=191)— §21 静态化(原色,无 tint)
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_57),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (-25f + cloud57Dx).dp, y = (500f + cloud57Dy).dp)
+                    .offset(x = (-25f).dp, y = 500f.dp)
                     .size(width = 225.dp, height = 191.dp),
-                alpha = cloud57Alpha,
+                alpha = 0.75f,
                 contentScale = ContentScale.FillBounds,
             )
 
-            // 云朵(Ellipse 5.png, X=187, Y=308, W=225, H=191) — 原色显示,位置 + 透明度随机(§33)
+            // 云朵(Ellipse 5.png, X=187, Y=308, W=225, H=191)— §21 静态化(原色,无 tint)
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud_5),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = (187f + cloud5Dx).dp, y = (308f + cloud5Dy).dp)
+                    .offset(x = 187f.dp, y = 308f.dp)
                     .size(width = 225.dp, height = 191.dp),
-                alpha = cloud5Alpha,
+                alpha = 0.75f,
                 contentScale = ContentScale.FillBounds,
             )
 
@@ -484,60 +473,3 @@ fun Houshan3Screen(
     }
 }
 
-/**
- * 云朵随机飘动 helper:3 个独立 LaunchedEffect 协程并行,
- * 每次随机选目标值 + 随机 delay,产生 X/Y/Alpha 三维自然飘动。
- *
- * 复制自 Houshan1Screen.kt §13 — 因为 helper 是 private fun,不能跨文件共享。
- * TODO:后续可抽出到 ui/util/CloudFloat.kt 共享(同 §28 设计考虑)。
- */
-@Composable
-private fun rememberCloudFloat(
-    maxX: Float = 100f,
-    maxY: Float = 15f,
-    alphaMin: Float = 0.5f,
-    alphaMax: Float = 1f,
-    xDuration: IntRange = 1500..3000,
-    xDelay: LongRange = 500L..1500L,
-): Triple<Float, Float, Float> {
-    val x = remember { Animatable(0f) }
-    val y = remember { Animatable(0f) }
-    val alpha = remember { Animatable(1f) }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            x.animateTo(
-                targetValue = Random.nextFloat() * 2f * maxX - maxX,
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(xDuration.first, xDuration.last + 1),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(xDelay.first, xDelay.last + 1))
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            y.animateTo(
-                targetValue = Random.nextFloat() * 2f * maxY - maxY,
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(1000, 2000),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(300, 800))
-        }
-    }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            alpha.animateTo(
-                targetValue = alphaMin + Random.nextFloat() * (alphaMax - alphaMin),
-                animationSpec = tween(
-                    durationMillis = Random.nextInt(1500, 3000),
-                    easing = LinearEasing,
-                ),
-            )
-            delay(Random.nextLong(500, 1200))
-        }
-    }
-    return Triple(x.value, y.value, alpha.value)
-}

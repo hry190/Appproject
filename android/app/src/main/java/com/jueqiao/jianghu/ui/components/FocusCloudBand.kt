@@ -17,6 +17,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
@@ -25,6 +26,28 @@ import kotlin.math.sin
 
 // 文件级常量 —— FocusCloudBand 的 drift/jitter 都用
 private val TWO_PI = (2.0 * PI).toFloat()
+
+/**
+ * 云元素的**横向运动模式**(2026-09-16 §21c/§21d,用户指令)。
+ *
+ * - [Oscillate] —— `x = xOffset + sin(2π·进度) × amplitudeX`,在基准点左右**往复摆动**,
+ *   峰到峰 = 2×amplitudeX(200dp 即一屏宽),半周期 = 单程。
+ * - [DriftWrap] —— **单向 左 → 右**:从屏幕左侧外走到右侧外,出屏后回绕到左侧重新进入。
+ * - [DriftWrapLeft] —— **单向 右 → 左**:从屏幕右侧外走到左侧外,出屏后回绕到右侧重新进入。
+ *   两个单向模式的回绕跨度都是 `屏宽 + 元素宽` → 元素在回绕瞬间**已经完全出屏**,看不到"跳回"。
+ *   **代价**:单向元素约 **20%~38%** 的时间完全不在屏上(元素越宽占比越高)。
+ *   **注意**:单向模式下 `xOffset` 与 `amplitudeX` **都不使用**(横向位置完全由回绕决定)。
+ */
+enum class CloudMotion {
+    /** 左右往复摆动(sin),永远在屏上 */
+    Oscillate,
+
+    /** 单向 左 → 右,出屏后从左侧回绕 */
+    DriftWrap,
+
+    /** 单向 右 → 左,出屏后从右侧回绕(§21d) */
+    DriftWrapLeft,
+}
 
 // 冷青 #A9C3C0:§11 §23-§26 渐变云沿用的高频冷色,
 // 在暖色背景(后山1/2 的试炼图)上"冷暖对立"提高对比度
@@ -36,7 +59,7 @@ private val FocusCloudColor = Color(0xFFA9C3C0)
  * 程序化径向渐变 + canvas 非等比缩放,出图像水墨晕染;**不建 render layer**
  *
  * 4 层独立动画(共享同一个 progress):
- *  - 慢速 sin 漂移(periodMs 控制,典型 9-13s)
+ *  - 慢速横向位移 —— **两种模式见 [CloudMotion]**:Oscillate(sin 往复)/ DriftWrap(单向+回绕,2026-09-16 §21c)
  *  - 高频抖动(jitter 1900ms / ±3 dp X / ±1.5 dp Y,§11-§15 迭代后稳定值)
  *  - 整体 alpha 脉动(baseAlpha ± alphaAmp)
  *  - 缩放呼吸(±12%)
@@ -58,7 +81,9 @@ fun FocusCloudBand(
     baseAlpha: Float,
     alphaAmp: Float,
     periodMs: Int,
+    motion: CloudMotion = CloudMotion.Oscillate,
 ) {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.toFloat()
     val progress by rememberInfiniteTransition(label = "focusCloudBand")
         .animateFloat(
             initialValue = 0f,
@@ -86,8 +111,17 @@ fun FocusCloudBand(
             .offset {
                 val a = progress * TWO_PI
                 val jt = jitter * TWO_PI * 2f  // 2 cycles / 3000ms ≈ 0.33 Hz
+                // §21c/§21d 横向三种模式:Oscillate = sin 往复;DriftWrap = 单向向右;DriftWrapLeft = 单向向左
+                val span = screenWidthDp + widthDp
+                val x = when (motion) {
+                    CloudMotion.Oscillate -> xOffset + sin(a) * amplitudeX
+                    // 左→右:p=0 时整朵在左屏外,p=1 时整朵在右屏外 → 回绕瞬间不可见,无"跳回"痕迹
+                    CloudMotion.DriftWrap -> -widthDp + progress * span
+                    // 右→左:反向线性递减,两端同样都在屏外
+                    CloudMotion.DriftWrapLeft -> screenWidthDp - progress * span
+                }
                 IntOffset(
-                    (xOffset + sin(a) * amplitudeX + sin(jt) * 4.5f).dp.roundToPx(),
+                    (x + sin(jt) * 4.5f).dp.roundToPx(),
                     (yOffset + cos(a) * amplitudeY + cos(jt) * 2.5f).dp.roundToPx(),
                 )
             }

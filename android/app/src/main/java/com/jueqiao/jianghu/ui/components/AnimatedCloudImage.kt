@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
@@ -37,7 +38,7 @@ private val TWO_PI = (2.0 * PI).toFloat()
  * 与 [FocusCloudBand] 的程序化径向渐变不同:本函数用**现成云朵 PNG** 出图
  *
  * 5 层独立动画(共享同一个 progress,phase 偏移避免拍点重合):
- *  - 慢速 sin 漂移(位置 X/Y)
+ *  - 慢速横向位移 —— **两种模式见 [CloudMotion]**:Oscillate(sin 往复)/ DriftWrap(单向+回绕,2026-09-16 §21c)
  *  - 整体 alpha 脉动(baseAlpha ± alphaAmp)
  *  - 缩放呼吸(graphicsLayer 隐含,无)
  *  - **白色脉冲高光**(§7) —— 在 PNG 上叠一层白色径向渐变
@@ -64,7 +65,9 @@ fun AnimatedCloudImage(
     amplitudeY: Float,
     baseAlpha: Float,
     alphaAmp: Float,
+    motion: CloudMotion = CloudMotion.Oscillate,
 ) {
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp.toFloat()
     // 09-16 §18 抖动参数:1900 → 3000ms 周期(频率 0.53 → 0.33 Hz);
     // 振幅 ±3 → ±4.5 dp X / ±1.5 → ±2.5 dp Y(共享 FocusCloudBand 的硬编码)
     val jitter by rememberInfiniteTransition(label = "aciJitter")
@@ -82,8 +85,18 @@ fun AnimatedCloudImage(
             .offset {
                 val a = (progress.value + phase) * TWO_PI
                 val jt = jitter * TWO_PI * 2f + phase * 7f  // 2 cycles / 3000ms × phase 偏移
+                // §21c/§21d 横向三种模式(与 FocusCloudBand 同构)
+                val span = screenWidthDp + widthDp
+                val p = ((progress.value + phase) % 1f + 1f) % 1f
+                val x = when (motion) {
+                    CloudMotion.Oscillate -> xOffset + sin(a) * amplitudeX
+                    // 左→右:p=0 整朵在左屏外,p=1 整朵在右屏外 → 回绕瞬间不可见,无"跳回"痕迹
+                    CloudMotion.DriftWrap -> -widthDp + p * span
+                    // 右→左:反向线性递减,两端同样都在屏外
+                    CloudMotion.DriftWrapLeft -> screenWidthDp - p * span
+                }
                 IntOffset(
-                    (xOffset + sin(a) * amplitudeX + sin(jt) * 4.5f).dp.roundToPx(),
+                    (x + sin(jt) * 4.5f).dp.roundToPx(),
                     (yOffset + cos(a) * amplitudeY + cos(jt) * 2.5f).dp.roundToPx(),
                 )
             }
