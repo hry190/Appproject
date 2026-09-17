@@ -179,7 +179,7 @@ git merge --abort
 
 ---
 
-## Windows bash git 已知 bug(2026-09-09 发现)
+## Windows bash git 已知 bug(2026-09-09 发现,2026-09-17 二次确认)
 
 `git merge --no-ff` 或 `git merge --ff-only` 在 Windows git bash 下会被错误解析为策略名 `theirs`,导致:
 
@@ -188,13 +188,20 @@ Could not find merge strategy 'theirs'.
 Available strategies are: octopus ours recursive resolve subtree.
 ```
 
+> 2026-09-17 实际触发场景:把 `zzz`(51 commits 领先) fast-forward 到 `main`,
+> 执行 `git merge zzz --ff-only` 报这个错。**原 bug 描述只说了 `--no-ff`,
+> 今天证实 `--ff-only` 同样命中**(因为 git 把 `--ff-only` 也当成 `--strategy=theirs` 解析)。
+> 修复:必须显式指定 `--strategy=recursive`,见下方示例。
+
 **修复**:必须显式指定 `--strategy=recursive`:
 ```bash
-# ❌ 报错
+# ❌ 报错 Could not find merge strategy 'theirs'
 git merge zzz --no-ff
+git merge zzz --ff-only        # 同样报错(2026-09-17 二次确认)
 
-# ✅ 成功
+# ✅ 成功(两种 flag 都加 --strategy=recursive)
 git merge zzz --no-ff --strategy=recursive
+git merge zzz --ff-only --strategy=recursive
 ```
 
 `git reset --hard main`(fast-forward 替代方案)不受这个 bug 影响。
