@@ -42,17 +42,45 @@ import com.jueqiao.jianghu.ui.components.rememberCloudProgress
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 后山1 页 — 滚轮1 → 点击"后山"按钮跳转目标。
+ * 后山1 页(修炼 → 后山地图首页)。
+ *
+ * ══════════════════════════════════════════════════════════════════════════
+ * 【点击行为 · 当前】(读代码前先看这段,下面各处注释都指向这里)
+ *
+ *   | 点击位置                    | 实际结果              |
+ *   |----------------------------|----------------------|
+ *   | 屏幕任意位置(空白/云/熊猫)| → 跳转**后山2**       |
+ *   | **4 个标签**(含"识机真决")| → 跳转**后山2**       |
+ *   | 气泡"御剑穿行..."           | → 跳转**后山2**       |
+ *   | 左上角返回按钮              | → 回修炼页            |
+ *
+ *   ⚠️ 后山1 的标签是**活区**(点击会跳后山2),而后山2 / 后山3 的标签是**死区**
+ *      (`.clickable {}` 消费事件、不跳转)。**这是用户有意选择的差异,不是缺陷**,
+ *      别为了"统一"把后山1 的标签也改成死区(§27 用户选项 A)。
+ * ══════════════════════════════════════════════════════════════════════════
+ * 【点击交互演变史】(为什么长这样;三者叠加才等于上表)
+ *
+ *   §22  标签1"识机真决" → 点击跳转**第一卷-1**
+ *   §25  用户:"点击标签识机真决改成无法跳转" → **移除标签1 自身的 clickable**(反转 §22)
+ *   §27  用户:"跳转到后山2 的方式改成点击屏幕任意位置" → **外层 Box 加整屏 clickable**,
+ *        同时把气泡的 clickable 也撤掉(它降级为纯视觉提示)
+ *
+ *   ⇒ 净结果:标签1 **自身**确实没有 clickable(§25 字面成立,"不跳第一卷-1"),
+ *     但整屏 clickable 会**接管**它的区域(§27) → 点击标签1 **实际跳的是后山2**。
+ *   ⇒ 所以"标签1 无 clickable"与"点标签1 会跳后山2"**同时为真**,不矛盾。
+ * ══════════════════════════════════════════════════════════════════════════
  *
  * 布局:
  *   - 全屏背景图(后山页背景.png)
  *   - 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)
  *   - 熊猫图像(image 75.png,X=184, Y=621, W=210, H=192)
  *   - 标签1 图像(X=-13, Y=570, W=106, H=188)+ 文字"识机真决"(父 Box 内 X=46, Y=54, W=14, H=80)+ 文字"炼"(父 Box 内 X=48, Y=27, W=12, H=16)
+ *     点击行为见顶部【点击行为】表 —— 自身无 clickable,由整屏接管(§25 + §27)
  *   - 标签2 图像(X=168, Y=345, W=74, H=131)+ 文字"拆招心法"(父 Box 内 X=32, Y=34, W=14, H=80)+ 文字"炼"(父 Box 内 X=32, Y=17, W=12, H=16)
- *   - 标签3 图像(X=113, Y=322, W=50, H=88)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14)
+ *   - 标签3 图像(X=113, Y=322, W=50, H=88)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60)+ 文字"炼"(父 Box 内 X=23, Y=14, W=10, H=14)
  *   - 标签4 图像(X=151, Y=248, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14)
  *   - 气泡 Rectangle156.png(X=136, Y=508, W=177, H=107)+ 文字"御剑穿行..."
+ *     **仅视觉提示,无 clickable**(§27)—— 点击职责已上移到整屏
  *
  * §21 动画云元素(6 个,竖排,间隔 60~69dp,前 5 个 ×0.75 缩放):
  *   ACI58 y=8 · FCB左下 y=178.5 · ACI60 y=330.5 · FCB中下 y=477.5 · ACI62 y=620 · ACI57 y=754.5(100×90)
@@ -64,7 +92,14 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 fun Houshan1Screen(
     onBack: () -> Unit = {},
     onOpenHoushan2: () -> Unit = {},
-    onOpenVolume1: () -> Unit = {},  // 识机真决标签跳转第一卷-1 (§22)
+    // 注:这里以前有 onOpenVolume1(§22 加的"标签1 → 第一卷-1"),§25 已按用户指令移除。
+    //     现在点击标签1 由**整屏 clickable** 接管 → 跳后山2(详见文件顶部【点击行为】表)。
+    //     若以后要恢复"标签1 → 第一卷-1",需改 3 处:
+    //       ① 本签名加回 `onOpenVolume1: () -> Unit = {}`
+    //       ② 标签1 的 Box modifier 加回 `.clickable(onClick = onOpenVolume1)`
+    //       ③ JianghuNavHost 的 composable(Routes.Shilian) 里传回
+    //          `onOpenVolume1 = { navController.navigate(Routes.Volume1) }`
+    //     ⚠️ 只做 ② 是无效的:整屏 clickable 仍会接管,表现仍是跳后山2。
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -128,7 +163,12 @@ fun Houshan1Screen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            // §27:整屏 clickable —— 点任意位置跳后山2(取代 §22 起"只有气泡可点"的方式)。
+            //   唯一会**消费事件**的子元素是左上角返回按钮 → 点它不会误触发跳转;
+            //   4 个标签 / 气泡 / 熊猫 / 云都没有 clickable → 点击一律冒泡到这里。
+            //   完整行为表 + 演变史见文件顶部【点击行为】/【点击交互演变史】。
+            .clickable { onOpenHoushan2() },
     ) {
         // 全屏背景图(后山页背景.png)
         Image(
@@ -344,12 +384,15 @@ fun Houshan1Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "标签1" 图像(未标题-1-恢复的-恢复的 4.png,X=-13, Y=570, W=106, H=188) — 点击跳转第一卷-1 (§22)
+            // "标签1" 图像(未标题-1-恢复的-恢复的 4.png,X=-13, Y=570, W=106, H=188)
+            // §25:自身**无 clickable**(用户指令"改成无法跳转",反转 §22 的"跳第一卷-1")。
+            //      但 §27 起整屏 clickable 接管本区域 → **点击它实际跳后山2**。
+            //      (与同页标签2/3/4 行为一致 —— 4 个标签都是"无 clickable + 被整屏接管")
+            //      完整说明见文件顶部【点击行为】表。
             Box(
                 modifier = Modifier
                     .offset(x = -13.dp, y = 570.dp)
-                    .size(width = 106.dp, height = 188.dp)
-                    .clickable(onClick = onOpenVolume1),
+                    .size(width = 106.dp, height = 188.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -430,13 +473,13 @@ fun Houshan1Screen(
                         .offset(x = 20.5.dp, y = 25.dp)
                         .size(width = 12.dp, height = 60.dp),
                 )
-                // "炼" 文字(父 Box 内 X=22, Y=12, W=10, H=14, 字号 4, 颜色 #385816, YaHei)— 相对位置与标签1 一致
+                // "炼" 文字(父 Box 内 X=23, Y=14, W=10, H=14, 字号 6, 颜色 #385816, YaHei)— §24b 用户调整(原 X=22, Y=12, 字号 4;后山 2 同步改字号 4→6)
                 Text(
                     text = "炼",
                     color = Color(0xFF385816),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 4.sp),
+                    style = TextStyle(fontFamily = YaHei, fontSize = 6.sp),
                     modifier = Modifier
-                        .offset(x = 22.dp, y = 12.dp)
+                        .offset(x = 23.dp, y = 14.dp)
                         .size(width = 10.dp, height = 14.dp),
                 )
             }
@@ -473,12 +516,13 @@ fun Houshan1Screen(
                 )
             }
 
-            // Rectangle156.png 气泡(X=136, Y=508, W=177, H=107)— 点击跳转到后山2 页
+            // Rectangle156.png 气泡(X=136, Y=508, W=177, H=107)
+            // §27:clickable 已移除 —— **仅视觉提示**("这里可以进入"),不再承担点击职责。
+            //      (§22 起它曾是**唯一**可点区;§27 把点击职责上移到整屏后,它与标签同等对待)
             Box(
                 modifier = Modifier
                     .offset(x = 136.dp, y = 508.dp)
-                    .size(width = 177.dp, height = 107.dp)
-                    .clickable(onClick = onOpenHoushan2),
+                    .size(width = 177.dp, height = 107.dp),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_rect156),

@@ -90,6 +90,7 @@ import com.jueqiao.jianghu.ui.screens.gunlun7.Gunlun7Screen
 import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
 import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
 import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
+import com.jueqiao.jianghu.ui.screens.houshan4.Houshan4Screen            // §24 新增
 import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
 import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
 import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
@@ -553,7 +554,9 @@ fun JianghuNavHost(
             Houshan1Screen(
                 onBack = { navController.popBackStack() },
                 onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
-                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
+                // §25:用户指令"点击标签识机真决改成无法跳转" → 不再传 onOpenVolume1
+                //   (反转 §22 的 `onOpenVolume1 = { navigate(Routes.Volume1) }`)。
+                //   后山2 的同名标签仍保留跳转,未受影响。
             )
         }
         // 后山2 → 后山3:沉浸式纵深推进(§36)。缩放由 Houshan2Screen 内部按景深分层完成,
@@ -574,6 +577,12 @@ fun JianghuNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
                 onOpenVolume1 = { navController.navigate(Routes.Volume1) },
+                // §28:拆招心法标签 → 第二卷-1
+                onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },
+                // §29:万象谱标签 → 第三卷-1
+                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
+                // §30:寻径迷踪步标签 → 第四卷-1
+                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
             )
         }
         composable(
@@ -588,6 +597,16 @@ fun JianghuNavHost(
                     animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
                 )
             },
+            // §24:反转 §21o —— 后山 3 现在 dolly 到后山 4,而非未完待续;
+            // 淡出与后山 2 → 后山 3 同款:稍长以覆盖 dolly 后半程,与 §24 Houshan3 内部推进在 DOLLY_HANDOFF_MS 处交接
+            exitTransition = {
+                if (targetState.destination.route == Routes.Shilian4) {
+                    fadeOut(animationSpec = tween(durationMillis = 520, easing = LinearEasing))
+                } else {
+                    // 其他去向(返回后山2 等)保持轻淡出,不引入硬切
+                    fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+                }
+            },
             // 显式覆盖:不设则 popEnterTransition 会默认继承上面的 enterTransition,
             // 导致从"未完待续"返回时也播一次推进动画
             popEnterTransition = {
@@ -596,7 +615,36 @@ fun JianghuNavHost(
         ) {
             Houshan3Screen(
                 onBack = { navController.popBackStack() },
-                onOpenUnfinished = { navController.navigate(Routes.Unfinished) },
+                // §24:反转 §21o —— 不再跳转未完待续页,改为跳转新建的后山 4 页
+                onOpenHoushan4 = { navController.navigate(Routes.Shilian4) },
+            )
+        }
+        // §24:后山 4 页 —— 复用后山 2 素材,整屏 noop,标签 4 个 callback 占位(目标待配)
+        composable(
+            route = Routes.Shilian4,
+            // §24 镜头减速停稳(同 Shilian3 enterTransition,与后山 3 dolly 末态衔接):
+            // 由轻微放大回落到 1.00,灭点与后山 3 推进焦点一致
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan4Screen(
+                onBack = { navController.popBackStack() },
+                // §24:4 个标签跳转目标用户尚未配置,默认 noop;
+                // 配置好后,把 {} 改成 { navController.navigate(Routes.XXX) } 即可,不必碰 Houshan4Screen.kt
+                onOpenTag1 = {},   // 万象谱
+                onOpenTag2 = {},   // 寻径迷踪步
+                onOpenTag3 = {},   // 百炼识物诀
+                onOpenTag4 = {},   // 分门辨类掌
             )
         }
         composable(Routes.Unfinished) {

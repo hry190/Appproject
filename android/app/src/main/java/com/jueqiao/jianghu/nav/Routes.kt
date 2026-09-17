@@ -17,6 +17,7 @@ object Routes {
     const val Shilian   = "shilian"
     const val Shilian2  = "shilian2"
     const val Shilian3  = "shilian3"
+    const val Shilian4  = "shilian4"          // §24 新增,后山 4 页(用户新建;复用后山 2 素材)
     const val Unfinished = "unfinished"
     const val PendingUnlock = "pending-unlock"
     const val Gunlun1  = "gunlun1"
