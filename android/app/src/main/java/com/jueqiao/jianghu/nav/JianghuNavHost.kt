@@ -91,6 +91,7 @@ import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
 import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
 import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
 import com.jueqiao.jianghu.ui.screens.houshan4.Houshan4Screen            // §24 新增
+import com.jueqiao.jianghu.ui.screens.houshan5.Houshan5Screen            // §33 新增
 import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
 import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
 import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
@@ -623,11 +624,49 @@ fun JianghuNavHost(
                 onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
             )
         }
-        // §24:后山 4 页 —— 复用后山 2 素材,整屏 noop,标签 4 个 callback 占位(目标待配)
+        // §24:后山 4 页 —— 复用后山 2 素材;§33 起从"终点页"变成"过场页"(dolly 到后山5)
         composable(
             route = Routes.Shilian4,
-            // §24 镜头减速停稳(同 Shilian3 enterTransition,与后山 3 dolly 末态衔接):
-            // 由轻微放大回落到 1.00,灭点与后山 3 推进焦点一致
+            // §24 镜头减速停稳(同 Shilian3 enterTransition,与后山 3 dolly 末态衔接)
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            // §33:后山 4 现在 dolly 到后山 5,淡出与后山 2→3 / 后山 3→4 同款
+            // (稍长以覆盖 dolly 后半程,与 Houshan4 内部推进在 DOLLY_HANDOFF_MS 处交接)
+            exitTransition = {
+                if (targetState.destination.route == Routes.Shilian5) {
+                    fadeOut(animationSpec = tween(durationMillis = 520, easing = LinearEasing))
+                } else {
+                    // 其他去向(返回后山3、4 个标签→各卷)保持轻淡出,不引入硬切
+                    fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+                }
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan4Screen(
+                onBack = { navController.popBackStack() },
+                // §33:点击标签以外任意位置 → dolly 推进到后山5
+                onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },
+                // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
+                //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
+                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
+                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
+                onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
+            )
+        }
+        // §33:后山 5 页 —— 复用后山 3 的素材/动画,当前是**终点页**(整屏 noop)
+        composable(
+            route = Routes.Shilian5,
+            // 镜头减速停稳(与后山 4 内部 dolly 末态衔接)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -641,14 +680,13 @@ fun JianghuNavHost(
                 fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
             },
         ) {
-            Houshan4Screen(
+            Houshan5Screen(
                 onBack = { navController.popBackStack() },
-                // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
-                //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
-                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
-                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
-                onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
-                onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
+                // §33:3 个标签的跳转目标**尚未配置**(用户只说"复用后山3 的素材和动画"),
+                //   默认全 noop。若日后要接,参照后山3 §31 的映射:
+                //   onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) }  // 拆招心法
+                //   onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) }  // 万象谱
+                //   onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) }  // 寻径迷踪步
             )
         }
         composable(Routes.Unfinished) {
