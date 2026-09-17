@@ -3,6 +3,11 @@ package com.jueqiao.jianghu.ui.screens.houshan2
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -85,9 +90,11 @@ private const val FOCAL_Y = 0.48f
  *   - 标签4 图像 (X=151, Y=248, W=30, H=53.5) + 文字"寻径迷踪步" + 文字"炼"
  *   - 左上角返回按钮 (Return.png, X=30, Y=60, W=18, H=18)
  *
- * 删除元素:
- *   - 熊猫 (img_shilian_panda) — 用户指令 §18
- *   - Rectangle156.png 气泡 + 文字"御剑穿行云雾群山..." — 用户指令 §18
+ * 删除元素(§18,部分保留):
+ *   - Rectangle156.png 气泡 + 文字"御剑穿行云雾群山..." — §18 决定,不复制(后山 2 是过场页,不应有信息气泡)
+ *
+ * 2026-09-17 §X 反转 §18:重新加回熊猫 (img_shilian_panda),沿用 §21 的"上下浮 ±10/4s + 呼吸缩放 0.95~1.05/3s"动画。
+ * 放在景深平面 3(与 4 个标签同层),推进时与标签同速缩放 ×1.34 + 一起淡出(详见函数体内 pandaTransition 处注释)。
  */
 @Composable
 fun Houshan2Screen(
@@ -103,7 +110,11 @@ fun Houshan2Screen(
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
     BackHandler(enabled = !isTransitioning) { onBack() }
 
-    // 熊猫已按 §18 去掉;§21 起 6 朵老云也去掉动画,改为静态图层
+    // 2026-09-17 §X:按用户指令反转 §18,重新加回熊猫 (img_shilian_panda),沿用 §21 的
+    // "上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s" 动画参数;放在景深平面 3(与 4 个标签同层),
+    // 推进时与标签同速缩放 ×1.34 + 一起淡出,语义上"前景角色随镜头前移后退出画面"。
+    // Rectangle156 气泡仍不复制 —— §18 决定保留,理由:后山 2 是过场页,不应有信息气泡。
+    // §21 起 6 朵老云本想去动画,§21f 按用户指令"不考虑间距了"又重新加回动画。
 
     // ── 6 个动画云元素的进度:每个元素独立周期(与后山1/后山3 完全同一套)────
     // §21k 用户反馈"最顶部的云速度太快了" → #1 ACI58 周期 7s → 10.7s;
@@ -128,6 +139,29 @@ fun Houshan2Screen(
     val o57Progress = rememberCloudProgress(8_200, "old57")
     val o60Progress = rememberCloudProgress(4_900, "old60")
     val o60bProgress = rememberCloudProgress(10_300, "old60b")
+
+    // ── §X 熊猫动画(沿用后山1 §21:Scale 0.95~1.05 / 3s, Y ±10 dp / 4s, RepeatMode.Reverse)──
+    // 后山2 是过场页(整屏点击 dolly-in → 后山3),用户要求保留熊猫,放在景深平面 3(与4 个标签同层)
+    // —— 推进时与标签同速缩放 (×1.34) + 同速淡出,语义上"前景角色随镜头前移后退出画面",最自然
+    val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
+    val pandaScale by pandaTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaScale",
+    )
+    val pandaDy by pandaTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pandaDy",
+    )
 
     // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§36) ──────────────
     val p = dolly.value
@@ -374,6 +408,22 @@ fun Houshan2Screen(
                         alpha = labelFade
                     },
             ) {
+                // 熊猫图像 (img_shilian_panda, X=184, Y=621, W=210, H=192) — 上下浮 ±10 / 4s + 呼吸缩放 0.95~1.05 / 3s (§21,§X 复制到后山2)
+                // 放在景深平面 3 内 4 个标签之前 → 推进时与标签同速缩放 ×1.34 + 一起淡出
+                // (后山1 没有 dolly,所以原版没这层行为;后山2 是过场,推进中熊猫自然前移+退场,层次与标签一致)
+                Image(
+                    painter = painterResource(R.drawable.img_shilian_panda),
+                    contentDescription = "熊猫",
+                    modifier = Modifier
+                        .offset(x = 184.dp, y = (621f + pandaDy).dp)
+                        .size(width = 210.dp, height = 192.dp)
+                        .graphicsLayer(
+                            scaleX = pandaScale,
+                            scaleY = pandaScale,
+                        ),
+                    contentScale = ContentScale.FillBounds,
+                )
+
                 // "标签1" 图像 (未标题-1-恢复的-恢复的 4.png, X=-13, Y=570, W=106, H=188) — 点击跳转第一卷-1 (§22)
                 Box(
                     modifier = Modifier
