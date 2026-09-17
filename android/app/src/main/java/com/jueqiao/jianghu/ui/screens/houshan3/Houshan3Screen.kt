@@ -12,7 +12,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -86,8 +85,17 @@ private const val FOCAL_Y = 0.48f
  *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)
  *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— **上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s (§44)**
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
+ *     §31:**可点击 → 跳转第二卷-1**(`onOpenVolume2Part1`);§31 前是死区(仅消费事件)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
+ *     §31:**可点击 → 跳转第三卷-1**(`onOpenVolume3Part1`);§31 前是死区
  *   - 标签4 图像(X=105, Y=295, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
+ *     §31:**可点击 → 跳转第四卷-1**(`onOpenVolume4Part1`);§31 前是死区
+ *
+ * ✅ §31 起后山3 的 **3 个标签全部可点击**,目标按"文字 → 卷"映射(与后山2 §28~§30 同一张映射表):
+ *    拆招心法 → 第二卷-1 · 万象谱 → 第三卷-1 · 寻径迷踪步 → 第四卷-1
+ *    → 本文件已无"消费型空 clickable",3 个标签写法完全统一:
+ *      `.clickable(enabled = !isTransitioning, onClick = onOpenXXX)`
+ *    → 整屏空白点击仍是 dolly-in 推进到后山4(标签会消费事件,不会误触发 dolly)
  *   - §21 动画云元素 **5 个**(竖排,间隔 60~69dp,×0.75):ACI58 y=8 · FCB左下 y=178.5 · ACI60 y=330.5
  *     · FCB中下 y=477.5 · ACI62 y=620
  *     §21n 用户指令删掉了原本的第 6 个(A CI57,y=754.5)—— 后山1/2 仍保留,故三页不再完全一致。
@@ -98,6 +106,10 @@ fun Houshan3Screen(
     onBack: () -> Unit = {},
     // §24:反转 §21o —— 后山 3 不再跳转未完待续页,改为 dolly-in 推进到新建的后山 4 页
     onOpenHoushan4: () -> Unit = {},
+    // §31:3 个标签改为可点击跳转 —— 目标按"文字 → 卷"映射,与后山2 §28~§30 完全一致
+    onOpenVolume2Part1: () -> Unit = {},  // 拆招心法 → 第二卷-1
+    onOpenVolume3Part1: () -> Unit = {},  // 万象谱   → 第三卷-1
+    onOpenVolume4Part1: () -> Unit = {},  // 寻径迷踪步 → 第四卷-1
 ) {
     val scope = rememberCoroutineScope()
     var isTransitioning by remember { mutableStateOf(false) }
@@ -196,7 +208,8 @@ fun Houshan3Screen(
             )
         }
 
-        // 内容层(避开系统导航条)— 3 个标签 Box 自带消费事件 clickable (§20),点击标签不会冒泡触发 dolly
+        // 内容层(避开系统导航条)— 3 个标签 Box 自带 clickable 消费事件(§31 起改为真实跳转),
+        // 点击标签不会冒泡触发整屏 dolly
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -398,15 +411,12 @@ fun Houshan3Screen(
                 )
 
                 // "标签3" 图像(未标题-1-恢复的-恢复的 4.png,X=43, Y=390, W=51, H=91)
+                // §31:从"死区"改为真实跳转 —— 万象谱 → 第三卷-1,clickable 写法与后山2 标签3 一致
                 Box(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
                         .size(width = 51.dp, height = 91.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
-                        ),
+                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume3Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -435,15 +445,12 @@ fun Houshan3Screen(
                 }
 
                 // "标签4" 图像(未标题-1-恢复的-恢复的 4.png,X=105, Y=295, W=30, H=53.5)
+                // §31:从"死区"改为真实跳转 —— 寻径迷踪步 → 第四卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
-                        ),
+                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume4Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -472,15 +479,12 @@ fun Houshan3Screen(
                 }
 
                 // "标签2" 图像(未标题-1-恢复的-恢复的 4.png,X=124, Y=521, W=96, H=170)
+                // §31:从"死区"改为真实跳转 —— 拆招心法 → 第二卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
                         .size(width = 96.dp, height = 170.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {},  // 消费事件,阻止冒泡到整屏 clickable (§20)
-                        ),
+                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume2Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),

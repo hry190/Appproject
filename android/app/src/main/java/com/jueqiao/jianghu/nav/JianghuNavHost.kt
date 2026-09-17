@@ -617,6 +617,10 @@ fun JianghuNavHost(
                 onBack = { navController.popBackStack() },
                 // §24:反转 §21o —— 不再跳转未完待续页,改为跳转新建的后山 4 页
                 onOpenHoushan4 = { navController.navigate(Routes.Shilian4) },
+                // §31:3 个标签 → 按"文字 → 卷"映射(与后山2 §28~§30 同一张表)
+                onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },  // 拆招心法
+                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
+                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
             )
         }
         // §24:后山 4 页 —— 复用后山 2 素材,整屏 noop,标签 4 个 callback 占位(目标待配)
@@ -639,12 +643,12 @@ fun JianghuNavHost(
         ) {
             Houshan4Screen(
                 onBack = { navController.popBackStack() },
-                // §24:4 个标签跳转目标用户尚未配置,默认 noop;
-                // 配置好后,把 {} 改成 { navController.navigate(Routes.XXX) } 即可,不必碰 Houshan4Screen.kt
-                onOpenTag1 = {},   // 万象谱
-                onOpenTag2 = {},   // 寻径迷踪步
-                onOpenTag3 = {},   // 百炼识物诀
-                onOpenTag4 = {},   // 分门辨类掌
+                // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
+                //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
+                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
+                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
+                onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
             )
         }
         composable(Routes.Unfinished) {

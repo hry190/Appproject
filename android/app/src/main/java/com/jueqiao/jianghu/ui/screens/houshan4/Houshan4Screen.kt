@@ -63,35 +63,45 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *     但 onClick 是空函数,给用户"点击不响应"的终点语义
  *   - **去掉 Rectangle156 气泡**:后山 2 是过场页也没复制气泡,后山 4 同样不加
  *
- * §24 标签可点击 + 4 个跳转 callback 占位:
- *   - 用户指令"标签可以点击,但还没有设置好可以跳转的页面"
- *   - 4 个标签(Box)都用 .clickable + 命名 onClick 回调
- *   - 4 个 onOpenTagN callback 都是默认空函数 {},跳转目标用户在 NavHost 里补
- *   - 一旦加好目标,在 composable(Routes.Shilian4) 里把对应 callback 改成 navigate(...) 即可,
- *     **不必再改本文件**
- *   - 4 个标签的 clickable 都带 indication(无 indication = 无视觉反馈,避免与无跳转目的冲突),
- *     实际上由于没有可去的页面,点击响应是"按下可见 ripple + 不跳转"
+ * §24 标签可点击 → §32 已配置跳转目标:
+ *   - §24 用户指令"标签可以点击,但还没有设置好可以跳转的页面" → 4 个 callback 用占位名
+ *     `onOpenTagN` 且默认空函数,只等 NavHost 填目标
+ *   - §32 用户给出全部目标 → **参数名改为语义名**(`onOpenVolume3Part1` 等),
+ *     与后山2(§28~§30)/ 后山3(§31)命名一致,一眼看出"哪个标签去哪个卷"
+ *   - 4 个标签都是 `.clickable(enabled = true, onClick = onOpenXXX)`;因为后山4 是终点页
+ *     (无 dolly 过渡),所以**没有** `!isTransitioning` 门槛(与后山2/3 不同)
+ *
+ * ✅ §32 起后山 4 的 **4 个标签全部可点击**,目标映射(注意与后山2/3 的文字→卷表**不同**):
+ *    万象谱 → 第三卷-1 · 寻径迷踪步 → 第四卷-1 · 百炼识物诀 → 第五卷-1 · 分门辨类掌 → 第六卷-1
+ *    ⚠️ 后山4 的标签文字是 §24 改过的(识机真决→万象谱 等),所以映射表**不能照抄后山2**:
+ *       "万象谱"在后山2 是第三卷,在后山4 也是第三卷(巧合一致);
+ *       但"分门辨类掌"是后山4 独有的文字,对应第六卷。
  *
  * 布局(与后山 2 一致):
  *   - 全屏背景图(img_shilian_bg.png)
  *   - 6 朵 ACI 动画云(58/60/62 + 2 FocusCloudBand + 57)
  *   - 6 朵老云(58/61/56/57/60/60b)
  *   - 标签1 图像(X=-13, Y=570, W=106, H=210 §24b)+ 文字"万象谱"(原后山2"识机真决",§24 改名)+ 文字"炼"
+ *     §32:点击 → **第三卷-1**(`onOpenVolume3Part1`)
  *   - 标签2 图像(X=168, Y=345, W=74, H=150 §24b)+ 文字"寻径迷踪步"(原后山2"拆招心法",§24 改名)+ 文字"炼"
+ *     §32:点击 → **第四卷-1**(`onOpenVolume4Part1`)
  *   - 标签3 图像(X=113, Y=322, W=50, H=105 §24b)+ 文字"百炼识物诀"(原后山2"万象谱",§24 改名)+ 文字"炼"
+ *     §32:点击 → **第五卷-1**(`onOpenVolume5Part1`)
  *   - 标签4 图像(X=151, Y=248, W=30, H=70 §24b)+ 文字"分门辨类掌"(原后山2"寻径迷踪步",§24 改名)+ 文字"炼"
+ *     §32:点击 → **第六卷-1**(`onOpenVolume6Part1`)
  *   - 熊猫图像(X=184, Y=621, W=210, H=192)
  *   - 返回按钮(X=30, Y=60, W=18, H=18)
  */
 @Composable
 fun Houshan4Screen(
     onBack: () -> Unit = {},
-    // §24:4 个标签的跳转目标用户尚未配置,默认都是 noop;
-    // 配置好后,在 NavHost 的 composable(Routes.Shilian4) 里给对应 callback 传 navigate(...)
-    onOpenTag1: () -> Unit = {},   // 万象谱 — TODO 用户配置跳转目标
-    onOpenTag2: () -> Unit = {},   // 寻径迷踪步 — TODO 用户配置跳转目标
-    onOpenTag3: () -> Unit = {},   // 百炼识物诀 — TODO 用户配置跳转目标
-    onOpenTag4: () -> Unit = {},   // 分门辨类掌 — TODO 用户配置跳转目标
+    // §32:4 个标签的跳转目标已配置 —— 参数名从 §24 的占位 `onOpenTagN` 改为**语义名**,
+    //   与后山2(§28~§30)/ 后山3(§31)的命名一致,一眼能看出"哪个标签去哪个卷"。
+    //   代价:动了本文件(§24 曾说"不必再改本文件"),但语义名比"标签1/2/3/4"更抗漂移。
+    onOpenVolume3Part1: () -> Unit = {},  // 标签1 万象谱     → 第三卷-1
+    onOpenVolume4Part1: () -> Unit = {},  // 标签2 寻径迷踪步 → 第四卷-1
+    onOpenVolume5Part1: () -> Unit = {},  // 标签3 百炼识物诀 → 第五卷-1
+    onOpenVolume6Part1: () -> Unit = {},  // 标签4 分门辨类掌 → 第六卷-1
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -307,7 +317,7 @@ fun Houshan4Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "标签1" 图像(万象谱,X=-13, Y=570, W=106, H=210 §24b)— §24 clickable,跳转目标用户尚未配置
+            // "标签1" 图像(万象谱,X=-13, Y=570, W=106, H=210 §24b)— §32:点击 → **第三卷-1**
             Box(
                 modifier = Modifier
                     .offset(x = -13.dp, y = 570.dp)
@@ -315,7 +325,7 @@ fun Houshan4Screen(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onOpenTag1,
+                        onClick = onOpenVolume3Part1,
                     ),
             ) {
                 Image(
@@ -342,7 +352,7 @@ fun Houshan4Screen(
                 )
             }
 
-            // "标签2" 图像(寻径迷踪步,X=168, Y=345, W=74, H=150 §24b) — §24 clickable
+            // "标签2" 图像(寻径迷踪步,X=168, Y=345, W=74, H=150 §24b) — §32:点击 → **第四卷-1**
             Box(
                 modifier = Modifier
                     .offset(x = 168.dp, y = 345.dp)
@@ -350,7 +360,7 @@ fun Houshan4Screen(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onOpenTag2,
+                        onClick = onOpenVolume4Part1,
                     ),
             ) {
                 Image(
@@ -377,7 +387,7 @@ fun Houshan4Screen(
                 )
             }
 
-            // "标签3" 图像(百炼识物诀,X=113, Y=322, W=50, H=105 §24b) — §24 clickable
+            // "标签3" 图像(百炼识物诀,X=113, Y=322, W=50, H=105 §24b) — §32:点击 → **第五卷-1**
             Box(
                 modifier = Modifier
                     .offset(x = 113.dp, y = 322.dp)
@@ -385,7 +395,7 @@ fun Houshan4Screen(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onOpenTag3,
+                        onClick = onOpenVolume5Part1,
                     ),
             ) {
                 Image(
@@ -412,7 +422,7 @@ fun Houshan4Screen(
                 )
             }
 
-            // "标签4" 图像(分门辨类掌,X=151, Y=248, W=30, H=70 §24b) — §24 clickable
+            // "标签4" 图像(分门辨类掌,X=151, Y=248, W=30, H=70 §24b) — §32:点击 → **第六卷-1**
             Box(
                 modifier = Modifier
                     .offset(x = 151.dp, y = 248.dp)
@@ -420,7 +430,7 @@ fun Houshan4Screen(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onOpenTag4,
+                        onClick = onOpenVolume6Part1,
                     ),
             ) {
                 Image(
