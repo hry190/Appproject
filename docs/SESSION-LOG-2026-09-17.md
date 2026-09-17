@@ -23,7 +23,7 @@
 
 ## 🎯 今日 TL;DR(09-17)
 
-**一句话**:上午把后山 1 的熊猫动画复制到后山 2(反转 §18)并修了 `adb reverse` 的坑;下午**新建后山 4 页 + 给后山 3 加 dolly 推进动画**;晚上查清了一个**误导性极强的现象** —— "为什么还是要登录"其实是**网络断**,token 一直都在。
+**一句话**:上午把后山 1 的熊猫动画复制到后山 2(反转 §18)并修了 `adb reverse` 的坑;下午**新建后山 4 页 + 给后山 3 加 dolly 推进**;晚上查清"为什么还是要登录"其实是**网络断**(token 一直都在),**新建后山 5 页 + 后山 4 补 dolly**,最后修了 Docker Desktop 的 **compose 插件缺失 + 8010 端口保留冲突**。
 
 ### 做了什么
 
@@ -42,6 +42,7 @@
 | **§31** | **后山 3 三个标签配置跳转目标** | 拆招心法→卷2 / 万象谱→卷3 / 寻径迷踪步→卷4;沿用后山2 的"文字→卷"映射表 |
 | **§32** | **后山 4 四个标签配置跳转目标** | 万象谱→卷3 / 寻径迷踪步→卷4 / 百炼识物诀→卷5 / 分门辨类掌→卷6;占位名 `onOpenTagN` 改语义名 → **后山 1/2/3/4 标签配置全部完工** |
 | **§33** | **新建后山 5 页 + 后山 4 补 dolly** | 后山5 复用后山3 素材/动画(终点页);后山4 从"终点"改造成"过场"(dolly → 后山5)→ **推进链变成 1→2→3→4→5** |
+| **§34** | **Docker Desktop:compose 插件缺失 + 8010 端口保留冲突** | `cliPluginsExtraDirs` 持久修复;8010 靠重启脱离保留段;顺带修真 `adb reverse` |
 
 ### 只读这三条也够
 
@@ -1279,6 +1280,266 @@ NavHost 里也写了"若日后要接,参照后山3 §31 的映射"的三行注�
 - **给"未配置"预留语义名 + NavHost 注释,比留 TODO 更有效**(新)—— 后山5 的 3 个 callback 虽是 noop,但参数名已是 `onOpenVolume3Part1` 等,且 NavHost 里写好了"要接就照后山3 §31 的映射"三行示例。**下次接的时候是"改 3 行"而不是"先搞清该叫什么名"**
 - **"最后一个终点页"的判断应该显式写进注释**(新)—— 后山5 的 KDoc 里写明"当前是终点页",并注明"若日后接后山6,这里改成 `startDollyIn()` 并补三景深平面"。**让未来的自己知道"这里不是永久 noop"**
 - **四段推进链的机制统一,是今天导航工作的真正收口**(新)—— 后山1→2 用直接跳转(无 dolly),后山2→3 / 3→4 / 4→5 用同款 dolly。**在日志里画出完整链条图**,比分散在 4 个文件里更容易看出"哪段用什么机制"
+
+---
+
+## §34 Docker Desktop:compose 插件缺失 + 8010 端口保留冲突(2026-09-17 深夜)— 不是代码改动
+
+> 本节是**环境类踩坑**,与 §23(adb reverse)/ §26(登录)同性质。
+> 涉及 3 个独立问题 + 1 个工具坑,全部有实测证据。
+
+### 问题 1:`docker compose` 子命令不存在 → Docker Desktop 报 "unknown flag: --project-name"
+
+**用户报错**(Docker Desktop UI):
+
+```
+Cannot start Docker Compose application. Reason: compose [start] exit status 125.
+unknown flag: --project-name
+Usage: docker [OPTIONS] COMMAND [ARG...]
+```
+
+**诊断链**:
+
+| 检查 | 结果 |
+|---|---|
+| `docker --version` | `29.7.2` ✅ CLI 在 |
+| **`docker compose version`** | ❌ **`unknown command: docker compose`** |
+| `docker-compose --version` | `v5.4.0` ✅ 独立版在 |
+| `docker info` → Plugins | ❌ **只有引擎的 Volume/Network/Log,没有 compose** |
+| `~/.docker/cli-plugins/` | ❌ **空目录** |
+
+**根因**:
+
+```
+Docker Desktop 的正常行为:在 ~/.docker/cli-plugins/ 建【符号链接】指向 resources\cli-plugins\*
+        ↓
+Windows 建符号链接【需要开发者模式或管理员权限】
+        ↓
+链接创建失败 → 目录留空
+        ↓
+docker CLI 找不到 docker-compose.exe 这个插件 → `docker compose` 不是合法子命令
+        ↓
+Docker Desktop 调 `docker compose ... --project-name X ... start` 时,
+参数落到 docker 顶层解析 → "unknown flag: --project-name",exit 125
+```
+
+> **报错信息误导性极强**:看着像"compose 参数写错了",实际是"compose 插件压根没装"。
+> 判据见 §34 沉淀 —— **看 Usage 行是谁打印的**。
+
+**❌ 第一次修复尝试(失败)**:
+
+```powershell
+# 把安装目录里的 docker-compose.exe 复制到用户插件目录
+Copy-Item "...\DockerDesktop\resources\bin\docker-compose.exe" `
+          "$env:USERPROFILE\.docker\cli-plugins\docker-compose.exe"
+```
+
+当场有效(`docker compose version` 通过、`docker info` 列出 compose)——
+**但用户重启机器后失效**:文件被删除,目录又空了。
+
+**验证**(重启后):
+
+| 检查 | 结果 |
+|---|---|
+| `~/.docker/cli-plugins/docker-compose.exe` | ❌ **文件不在了** |
+| `~/.docker/cli-plugins` 目录 | ❌ 空 |
+| `docker compose version` | ❌ `unknown command` |
+
+→ **结论:该目录被 Docker Desktop 管理/清理,复制进去不是持久修法。**
+
+**✅ 持久修复(采用)**:
+
+发现 Docker Desktop **自己的插件目录里全套插件都在**:
+
+```
+C:\Users\28784\AppData\Local\Programs\DockerDesktop\resources\cli-plugins\
+    docker-compose.exe   (50 MB)
+    docker-buildx.exe · docker-ai.exe · docker-debug.exe · docker-scout.exe
+    docker-mcp.exe · docker-model.exe · docker-pass.exe · docker-desktop.exe ...
+```
+
+**改 `~/.docker/config.json`,加 `cliPluginsExtraDirs` 指向它**:
+
+```json
+{
+  "auths": {},
+  "cliPluginsExtraDirs": [
+    "C:/Users/28784/AppData/Local/Programs/DockerDesktop/resources/cli-plugins"
+  ],
+  "credsStore": "desktop",
+  "currentContext": "desktop-linux",
+  "plugins": { ... },
+  "features": { "hooks": "true" }
+}
+```
+
+**验证**:
+
+| 检查 | 结果 |
+|---|---|
+| `docker compose version` | ✅ `Docker Compose version v5.4.0` |
+| `docker info` → Plugins | ✅ `compose: ... Path: ...\resources\cli-plugins\docker-compose.exe` |
+
+**为什么这次持久**:
+- 插件**直接从 Docker Desktop 自己的安装目录加载**(它不会删自己的文件)
+- **不再往会被清空的 `~/.docker/cli-plugins` 复制**
+- `config.json` 是持久文件
+
+**⚠️ 踩坑过程中的工具坑:PowerShell 写 JSON 会带 BOM**
+
+第一次用 `Set-Content -Encoding utf8` 写 config.json → **docker 报**:
+
+```
+WARNING: Error parsing config file (C:\Users\28784\.docker\config.json):
+invalid character 'ï' looking for beginning of value
+docker: unknown command: docker compose
+```
+
+`ï` = BOM(`EF BB BF`)被当 latin1 解读。**Go 的 JSON 解析器不接受 BOM** → 整个 config 失效 → compose 又不见了。
+
+**正确写法**(无 BOM):
+
+```powershell
+[System.IO.File]::WriteAllText($path, $json, (New-Object System.Text.UTF8Encoding($false)))
+```
+
+**验证方法**:读前 3 字节,应为 `7B 0D 0A`(`{`+CRLF),**不是** `EF BB BF`。
+
+**备份**:`~/.docker/config.json.bak-20260917-222524`
+
+---
+
+### 问题 2:8010 被 Windows 保留端口占用 → `bind: WSAEACCES`
+
+问题 1 修好后,同一操作的报错**推进到更后一步**:
+
+```
+Error response from daemon: ports are not available: exposing port TCP 0.0.0.0:8010 -> 127.0.0.1:0:
+listen tcp 0.0.0.0:8010: bind: An attempt was made to access a socket
+in a way forbidden by its access permissions.
+```
+
+> ⚠️ **注意这不是"端口被占用"** —— 被占用的报错是 `Only one usage of each socket address...`。
+> `WSAEACCES`(Windows 10013)= **端口在系统的"排除端口范围"里**。
+
+**诊断**:
+
+```powershell
+netsh int ipv4 show excludedportrange protocol=tcp
+```
+
+```
+Start Port    End Port
+    1623        1722
+    7456        7555
+    ...
+    7956        8055      ← 8010 在这里!
+    8056        8155
+   50000       50059   *
+```
+
+**8010 落在 `7956-8055`**(Hyper-V/WSL 预留的动态端口段)→ 任何进程 `bind(8010)` 都失败。
+
+**与 Docker 无关的证据**(直接 bind 测试,不经过 Docker):
+
+| 端口 | 可绑? |
+|---|---|
+| 8000 / **8010** / 8050(都在 7956-8055)| ❌ 全部 `WSAEACCES` |
+| 8200 / 18010(不在任何范围)| ✅ 可绑 |
+
+**🔬 决定性实验:两类"排除"的行为完全不同**
+
+列表里 `50000-50059` 带 `*`(=`Administered port exclusions`),而 `7956-8055` 不带。实测:
+
+| 类别 | 示例 | 可绑? |
+|---|---|---|
+| **管理员排除**(带 `*`)| 50000 / 50001 / 50059 | ✅ **全都能绑!** |
+| **Hyper-V 预留**(不带 `*`)| 8000 / 8010 / 8050 | ❌ 全不可绑 |
+
+→ **「管理员排除」只禁止系统自动分配,应用仍可显式绑定;「Hyper-V 预留」是真占用。**
+→ 所以正解是:**把 8010 登记成"管理员排除",Hyper-V 就不会再抢,而 Docker 仍能绑。**
+
+**备选(改端口)为什么不用**:
+
+8010 在本仓库有 **103 处引用**(`infra/docker-compose.yml` / `android/local.properties` / `build.gradle.kts` / `services/api/app/core/config.py` / `storage.py` / `DEV-SETUP.md` / `ONBOARDING.md` / 一堆 SESSION-LOG)。
+改端口会让文档与实现大面积脱节。**所以优先保住 8010。**
+
+(不过有个巧办法:compose 改 8200 + `adb reverse tcp:8010 tcp:8200` → **App 不用改**。留档备用。)
+
+**✅ 实际结果:重启机器后自动解决**
+
+用户重启后重新查:
+
+| | 重启前 | 重启后 |
+|---|---|---|
+| 保留范围 | 1623-1722, **7456-8155**, 50000-50059 | 1516-1615, 12438-13342, 50000-50059 |
+| **8010** | ❌ 不可绑 | ✅ **可以绑定** |
+
+Windows 每次启动**重新随机分配**保留范围 —— 这次 8010 恰好被放出来了。
+
+**⚠️ 会复发** —— 某次重启后可能又被圈进去。**届时的管理员修法**(方案有效性已由上面的实验证明,但**本次未实际执行**,因为重启已解决):
+
+```powershell
+net stop winnat
+netsh int ipv4 add excludedportrange protocol=tcp startport=8010 numberofports=1 store=persistent
+net start winnat
+```
+
+---
+
+### 问题 3:`adb reverse` 被重启清空(§23 老坑复发)
+
+重启后 `adb reverse --list` 为空 → 补:
+
+```powershell
+adb reverse tcp:8010 tcp:8010      # → UsbFfs tcp:8010 tcp:8010
+```
+
+**验证**:`adb shell curl http://127.0.0.1:8010/docs` → **200** ✓
+
+→ **§23 的"重启/USB 抖动会清空 reverse"在 §34 再次应验**,今天是**第二次**踩。§23 里列的 4 个候选根治方案仍未落地。
+
+---
+
+### 最终状态(全部验证通过)
+
+| 项 | 状态 |
+|---|---|
+| `docker compose` | ✅ v5.4.0(**持久修复**)|
+| compose 栈 | ✅ **6 容器全起**,`api` healthy |
+| API 8010 | ✅ `http://127.0.0.1:8010/docs` → **200**;登录接口实测成功(`138****8000`)|
+| `adb reverse` | ✅ `UsbFfs tcp:8010 tcp:8010`;设备侧 curl → **200** |
+| 端口保留冲突 | ✅ 重启后消失(**需留意复发**)|
+
+**容器明细**:
+
+| 容器 | 状态 | 端口 |
+|---|---|---|
+| `jianghu-dev-api-1` | Up (healthy) | **0.0.0.0:8010→8000** |
+| `jianghu-dev-worker-1` | Up | 8000/tcp |
+| `jianghu-dev-postgres-1` | Up (healthy) | 55432→5432 |
+| `jianghu-dev-minio-1` | Up (healthy) | 19000/19001 |
+| `jianghu-dev-redis-1` | Up (healthy) | 16379→6379 |
+| `jianghu-dev-clamav-1` | Up | 3310 / 7357 |
+
+### git 状态(§34)
+
+- **无代码改动** —— 全部是环境诊断与配置修复
+- 改动的**非仓库文件**:`~/.docker/config.json`(加 `cliPluginsExtraDirs`)
+
+### 沉淀(§34)
+
+- **看报错里的 Usage 行判断"是谁在报错"**(新)—— `unknown flag: --project-name` 配 `Usage: docker [OPTIONS] COMMAND` 时,**打印者不是 compose 而是 docker 顶层 CLI** → 说明 **compose 插件根本没加载**,而不是"参数位置写错了"。**如果只看 flag 名去调参数顺序,会白折腾一整天**
+- **"复制到系统目录"修法要先确认该目录的归属权**(新)—— 我第一版把 `docker-compose.exe` 复制进 `~/.docker/cli-plugins`,当场有效、**重启即失效**(该目录由 Docker Desktop 管理并清理)。**判据:这个目录是"应用程序管理的"还是"用户的"?** 前者不要往里塞东西,应该**改配置让它去别处找**
+- **同一个报错修好后会"推进"到下一个错误,别以为是没修好**(新)—— 修好 compose 插件后,报错从 `exit 125 unknown flag` 变成 `exit 1 ports are not available`。**错误变化 = 修复生效的证据**,要继续往后排
+- **`WSAEACCES` ≠ 端口被占用**(新)—— Windows 上 bind 失败有两种截然不同的原因:
+  - `Only one usage of each socket address` = **真被占用**
+  - `An attempt was made to access a socket in a way forbidden by its access permissions` = **落在系统保留端口范围**
+  后者用 `netsh int ipv4 show excludedportrange protocol=tcp` 查,**与 Docker 无关**
+- **"管理员排除"和"Hyper-V 预留"必须区分**(新)—— 列表里带 `*` 的是管理员排除(**可绑定**),不带的是 Hyper-V 预留(**不可绑定**)。**实测数据见上表**。所以"把端口加进排除列表"这个听起来自相矛盾的操作,**实际是有效修法**
+- **PowerShell 写 JSON 给外部程序读,必须显式去 BOM**(新)—— `Set-Content -Encoding utf8` 在 pwsh 下**仍可能带 BOM**;Go 的 JSON 解析器报 `invalid character 'ï'` 就是 BOM 被当 latin1。**正确写法**:`[System.IO.File]::WriteAllText($p, $s, (New-Object System.Text.UTF8Encoding($false)))`,并**读前 3 字节自检**
+- **"重启一下试试"在这类问题上真的是有效手段**(新)—— 端口保留范围**每次启动随机重排**,重启让 8010 脱离了保留段。**但要知道它是"碰运气"而非"根治"** —— 所以本节仍给出管理员修法备用
+- **100+ 处引用的端口不要为了绕一个环境问题而改**(新)—— 改端口的"文档漂移成本"远高于"用管理员权限修系统配置"。**先量化影响面再决定改哪边**;同时留了"改 compose + 改 adb reverse、App 不动"这种巧办法作为退路
 
 ---
 
