@@ -2,6 +2,16 @@
 
 > 当天开发会话记录。从"什么都没配置好"到"app 登录测试成功"的完整过程。
 
+> ⚠️ **后续变更注记(2026-09-16)**:本文件提到的 `infra/adb-reverse.ps1` **已删除**。
+> 它靠 `adb devices` 的输出找 `cupid` 型号,而该命令**不带 `-l` 时不含型号**
+> → 永远匹配不到、每次都走 else 分支,**静默失效**(退出码仍为 0),实际从未成功过。
+> **端口转发请直接用**(多设备时必须带 `-s`,否则报 `more than one device/emulator`):
+> ```powershell
+> adb -s <serial> reverse tcp:8010 tcp:8010
+> adb -s <serial> reverse --list     # 应显示 UsbFfs tcp:8010 tcp:8010
+> ```
+> 详见 `SESSION-LOG-2026-09-16.md` §21s。正文按当天原样保留,未改写。
+
 ---
 
 ## 快速重启指南(关机后再开,做这 5 步)

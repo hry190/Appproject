@@ -172,10 +172,15 @@ adb devices
 #  应显示: 21908b7a    device
 
 # 4. 端口转发 — 每次插拔/重启都重设
+#    注意:接了两台(或多台)设备时**必须带 -s**,否则 adb 直接报 "more than one device/emulator"
 adb -s 21908b7a reverse tcp:8010 tcp:8010
-adb -  应  回: 8010
+#  应回: 8010
 adb -s 21908b7a reverse --list
 #  应显示: UsbFfs tcp:8010 tcp:8010
+
+# 5. 验证转发真的通(从**设备侧**发请求,别只看列表)
+adb -s 21908b7a shell "curl -s -o /dev/null -w '%{http_code}' --max-time 6 http://127.0.0.1:8010/docs"
+#  应回: 200 ;对照:换个没转发的端口应回 000
 ```
 
 ### 3.5 后端启动

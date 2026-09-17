@@ -54,7 +54,10 @@
 - [scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1) — 审计注释里的几何值(X/Y/W/H)与代码是否一致;
   默认只读,`-Fix` 对齐,`-FailOnDrift` 供 CI。判据见 `ONBOARDING.md` §5.4
 - [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
-- [infra/adb-reverse.ps1](../infra/adb-reverse.ps1) — 真机端口转发(每次插拔/重启都要重设)
+- 端口转发没有脚本,直接敲(**多设备时必须带 `-s`**):
+  `adb -s <serial> reverse tcp:8010 tcp:8010`
+  (原本的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它靠 `adb devices` 找 `cupid` 型号,
+  而该命令不带 `-l` 时不含型号 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)
 
 ---
 
