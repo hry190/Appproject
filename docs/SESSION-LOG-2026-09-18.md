@@ -999,6 +999,85 @@ for ($i=0; $i -lt $content.Count; $i++) {
 重设时每处只需改两行:Screen 的 `onClick = actions.onOpenVolumeXPart1` + NavHost 的
 `onOpenVolumeXPart1 = { navController.navigate(Routes.VolumeXPart1) }`(Actions 字段已在,无需新增)。
 
+---
+
+## §13 断开后山 2~9 的页面间导航(整屏跳转 + 返回)(2026-09-18 深夜)— A 模式不 commit
+
+**用户指令**:"现在取消所有页面的跳转到下一个页面的方式,返回键也是,我要重新设置一下页面之间的跳转的方式"。
+
+### 范围与方式确认
+
+| 问题 | 用户回答 |
+|---|---|
+| 范围 | **后山2~9**(不含后山1)|
+| 返回键处理 | **保留返回键本身,只断开导航目标** |
+
+### 要断开的三个导航点(每页)
+
+| # | 原代码 | 改为 |
+|---|---|---|
+| 1 | `BackHandler(enabled = X) { actions.onBack() }` | `BackHandler(enabled = X) { }` —— **保留拦截,动作置空** |
+| 2 | `.clickable { startDollyIn() }`(整屏)| 死区(`interactionSource` + `indication = null` + `onClick = {}`);**dolly 代码保留为模板** |
+| 3 | `.clickable(..., onClick = actions.onBack)`(返回按钮)| `.clickable(..., onClick = {})` |
+
+**共 23 处**(后山2~8 各 3 处 + 后山9 的 2 处 —— 后山9 整屏本来就是 noop)+ NavHost **15 处**
+(`onBack` 8 + `onOpenHoushanX` 7)。
+
+> ⚠️ **已向用户说明的副作用**:"保留返回键 + 断开导航目标"= `BackHandler` **仍然拦截系统返回键**
+> 但动作置空 → **按返回键没有任何反应,也无法退回系统桌面**(只能杀 app)。
+> 若日后想保留"能退出 app"的能力,应把 `BackHandler` 整行去掉(让系统返回键走默认行为)。
+
+### ⚠️ 踩坑:缺 import 导致编译失败
+
+后山2/3 的整屏原本是 `.clickable { startDollyIn() }`(不需要 `interactionSource`),
+改成**死区**写法后用到 `MutableInteractionSource`,但这两个文件**没有该 import**:
+```
+e: Houshan2Screen.kt:219:48 Unresolved reference 'MutableInteractionSource'.
+e: Houshan3Screen.kt:197:48 Unresolved reference 'MutableInteractionSource'.
+```
+→ 补上 `import androidx.compose.foundation.interaction.MutableInteractionSource`(后山4~9 已有)。
+
+### 验证
+
+| 检查 | 结果 |
+|---|---|
+| Screen 后山2~9 的 3 个导航点 | 23 处全部断开 ✓ |
+| NavHost `onBack = {}` | 8 处 ✓ |
+| NavHost `onOpenHoushanX = {}` | 7 处 ✓ |
+| **后山1 是否被误改** | **保留原样**(L570/L571 未动)✓ |
+| L832 之后(Unfinished/Learning 等)是否误改 | **0** ✓ |
+| `compileDebugKotlin` | BUILD SUCCESSFUL |
+| `audit-comment-drift` | 0 漂移 |
+
+### 沉淀(§13)
+
+- **用户选了"断开导航目标",就等于接受了"返回键被吞"**(新)—— 我的选项描述写的是
+  "返回键本身仍可触发(只是不做导航)",**没讲清"系统返回键会被 BackHandler 吞掉 → 无法退 app"**。
+  → **反思**:给用户选项时,要把**后果**写清楚(尤其"失去退出能力"这种),不能只描述机制。
+  → 已在执行时**补充说明**并给出改法(去掉 BackHandler)。
+- **"死区"写法会引入新依赖**(新)—— 从 `.clickable { action() }` 改成
+  `.clickable(interactionSource = ..., indication = null, onClick = {})` 后,需要
+  `MutableInteractionSource` 的 import。**批量改写语法形式时,要连带检查 import**(本次 2 个文件漏了)。
+- **"断开导航"要同时处理三层,漏一层就等于没断**(新,重要)—— 页面跳转不是一个点,而是:
+  ① 系统返回键(`BackHandler`)② 整屏点击(页面→下一页)③ 返回按钮(→上一页)。
+  **只改 ① ② 而漏 ③(或反过来),导航仍有一条路通着**。本次按"每页 3 个点 × 8 页 + NavHost 15 处"
+  做**清单式核对**,并用脚本在改后逐页验证三个点的状态。
+- **改完导航后要专门验证"范围外的页面有没有被误伤"**(沿革 §12,新)—— 本次两处边界:
+  **后山1**(用户明确排除)和 **L832 之后的 Unfinished/Learning 等页面**(它们的 `onBack` 不能动)。
+  两次都做了"边界外误改 = 0"的验证。
+
+### 当前状态(重设前)
+
+**后山2~9 的全部页面间导航已断开**:
+- 整屏点击 → 不跳页(dolly 代码保留为模板,未被调用)
+- 返回按钮 / 系统返回键 → 不跳转
+- 标签点击 → 自 §12 起也是死区
+
+→ **后山2~9 现在是"孤岛页面"**(进去后所有导航都无反应,只能杀 app 退出),**等用户重设页面间跳转方式**。
+重设时每页改 3 处(Screen 的 BackHandler/整屏/返回按钮)+ NavHost 的 `onBack`/`onOpenHoushanX` 两处
+(Actions 字段与 dolly 代码都还在,无需重建)。
+
+
 
 
 

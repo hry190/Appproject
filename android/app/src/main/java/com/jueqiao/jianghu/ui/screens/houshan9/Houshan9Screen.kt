@@ -76,7 +76,7 @@ data class Houshan9Actions(
 )
 
 /**
- * 后山9 页 — 后山8 页 dolly 推进而来;点击"返回"按钮回到后山8;整屏点击 noop(**当前是终点页**)。
+ * 后山9 页 — 原为"后山8 页 dolly 推进而来;点击返回按钮回到后山8;整屏点击 noop(终点页)";⚠️ **2026-09-18 §13 起返回的导航已断开**(待重设)。
  *
  * 2026-09-18 §11 新建:用户指令"创建后山9页面...后山9复用后山7页面的素材和动画";
  *                    2026-09-18 §11 同步把 3 个标签文案按"文字→卷"映射改名。
@@ -99,7 +99,7 @@ data class Houshan9Actions(
  *   |--------------------------|-------------------------------|
  *   | 3 个标签                  | → ❌ **已取消**(2026-09-18 §12,待重设)|
  *   | 其余任意位置(空白/云/熊猫)| → ❌ noop(当前是终点页)        |
- *   | 左上角返回按钮            | → 后山8                       |
+ *   | 左上角返回按钮 / 系统返回键 | → ❌ **已取消**(2026-09-18 §13,待重设)|
  *
  * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 下列跳转**已全部取消**;
  *    标签现在是**死区**(`.clickable(..., onClick = {})` 仅消费点击事件,不跳转)。**取消前的映射留档如下(供重设参考)**:
@@ -136,8 +136,8 @@ fun Houshan9Screen(
     // 0 → 1 的推进进度;三个景深平面共用同一个进度值,保证同步
     val dolly = remember { Animatable(0f) }
 
-    // 2026-09-18 §11:后山9 是终点页 → 返回键始终启用(无过渡期)
-    BackHandler(enabled = true) { actions.onBack() }
+    // 2026-09-18 §13:导航已断开 → BackHandler 保留拦截但动作置空(按返回键不跳转)
+    BackHandler(enabled = true) { }   // 2026-09-18 §13 断开导航(待重设)
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -204,7 +204,7 @@ fun Houshan9Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // 2026-09-18 §11:后山9 当前是终点页 → 整屏 clickable = noop(与后山7 在 §9 的同款做法)。
+            // 2026-09-18 §13:整屏 clickable = noop(原 §11 起就是终点页);导航已断开,待重设。
             //   若日后要接后山10,这里改成 `.clickable { startDollyIn() }`。
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -518,7 +518,7 @@ fun Houshan9Screen(
                     .align(Alignment.TopStart)
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
-                    .clickable(onClick = actions.onBack),
+                    .clickable(onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -97,7 +98,7 @@ private const val FOCAL_Y = 0.48f
  *      本文件的 `onClick` + `JianghuNavHost` 的回调两处)。
  *    → **取消前的映射(留档,供重设参考)**:拆招心法 → 卷2 · 万象谱 → 卷3 · 寻径迷踪步 → 卷4
  *    → 3 个标签写法统一为:`.clickable(enabled = !isTransitioning, onClick = {})`
- *    → 整屏空白点击仍是 dolly-in 推进到后山4(标签会消费事件,不会误触发 dolly)
+ *    → ⚠️ 2026-09-18 §13:整屏空白点击的 dolly 导航**已断开**(原为推进到后山4)
  *   - §21 动画云元素 **5 个**(竖排,间隔 60~69dp,×0.75):ACI58 y=8 · FCB左下 y=178.5 · ACI60 y=330.5
  *     · FCB中下 y=477.5 · ACI62 y=620
  *     §21n 用户指令删掉了原本的第 6 个(A CI57,y=754.5)—— 后山1/2 仍保留,故三页不再完全一致。
@@ -125,7 +126,7 @@ fun Houshan3Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面 (§24,与后山2 §36 同款)
-    BackHandler(enabled = !isTransitioning) { actions.onBack() }
+    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
 
     // 熊猫上下浮 + 呼吸缩放 (§44,与后山1 §21 同款动画)
     // Scale 0.95~1.05 / 3s + Y ±10 dp / 4s,都用 LinearEasing + RepeatMode.Reverse → 来回无缝
@@ -171,7 +172,7 @@ fun Houshan3Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // 整屏点击:启动纵深推进,并在半程把控制权交给导航(后山4 交叉淡入)
+    // 2026-09-18 §13:整屏点击的导航已断开(dolly 代码保留为模板,未被调用)。原动作 = 推进到半程后交给导航 → 后山4
     val startDollyIn: () -> Unit = {
         if (!isTransitioning) {
             isTransitioning = true
@@ -192,8 +193,12 @@ fun Houshan3Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // §24:整屏 clickable 触发 dolly-in(取代原来直接 onOpenHoushan4)
-            .clickable { startDollyIn() },
+            // §24 曾把整屏 clickable 改为触发 dolly-in;⚠️ 2026-09-18 §13 起导航已断开(改死区)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),   // 2026-09-18 §13 断开导航(待重设)
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
         // 单独一层 fillMaxSize 包裹,使其自身边界 = 屏幕,transformOrigin 才能
@@ -529,7 +534,7 @@ fun Houshan3Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
+                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

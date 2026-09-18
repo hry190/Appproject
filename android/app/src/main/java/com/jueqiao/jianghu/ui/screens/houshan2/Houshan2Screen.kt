@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +64,7 @@ private const val FOCAL_X = 0.5f
 private const val FOCAL_Y = 0.48f
 
 /**
- * 后山2 页 — 后山1 页 → 点击整屏纵深推进过渡到后山3 页。
+ * 后山2 页 — 原为"后山1 页 → 点击整屏纵深推进过渡到后山3 页";⚠️ **2026-09-18 §13 起整屏点击与返回的导航均已断开**(待重设)。
  *
  * 2026-09-15 §18 重写:基于 Houshan1Screen.kt 复制,保留全部 6 朵云动画 + 4 个标签 +
  * 返回按钮,去掉熊猫 (img_shilian_panda) 和 Rectangle156 气泡及文字。
@@ -129,7 +130,7 @@ fun Houshan2Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { actions.onBack() }
+    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
 
     // 2026-09-17 §22:按用户指令反转 §18,重新加回熊猫 (img_shilian_panda),沿用 §21 的
     // "上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s" 动画参数;放在景深平面 3(与 4 个标签同层),
@@ -162,7 +163,7 @@ fun Houshan2Screen(
     val o60bProgress = rememberCloudProgress(10_300, "old60b")
 
     // ── §22 熊猫动画(沿用后山1 §21:Scale 0.95~1.05 / 3s, Y ±10 dp / 4s, RepeatMode.Reverse)──
-    // 后山2 是过场页(整屏点击 dolly-in → 后山3),用户要求保留熊猫,放在景深平面 3(与4 个标签同层)
+    // 后山2 是过场页(整屏点击 dolly-in → 后山3;§13 起导航已断开),用户要求保留熊猫,放在景深平面 3(与4 个标签同层)
     // —— 推进时与标签同速缩放 (×1.34) + 同速淡出,语义上"前景角色随镜头前移后退出画面",最自然
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
     val pandaScale by pandaTransition.animateFloat(
@@ -194,7 +195,7 @@ fun Houshan2Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // 整屏点击:启动纵深推进,并在半程把控制权交给导航(后山3 交叉淡入)
+    // 2026-09-18 §13:整屏点击的导航已断开(dolly 代码保留为模板,未被调用)。原动作 = 推进到半程后交给导航 → 后山3
     val startDollyIn: () -> Unit = {
         if (!isTransitioning) {
             isTransitioning = true
@@ -215,7 +216,11 @@ fun Houshan2Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .clickable { startDollyIn() },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),   // 2026-09-18 §13 断开导航(待重设)
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
         // 单独一层 fillMaxSize 包裹,使其自身边界 = 屏幕,transformOrigin 才能
@@ -581,7 +586,7 @@ fun Houshan2Screen(
                 }
             }
 
-            // 左上角返回按钮 (Return.png, X=30, Y=60, W=18, H=18)— 点击回到后山1 页
+            // 左上角返回按钮 (Return.png, X=30, Y=60, W=18, H=18)— ⚠️ 2026-09-18 §13 起导航已断开(原为回到后山1 页)
             // 只淡出不缩放:UI chrome 不参与景深,否则会随山体放大而"跳动"
             Box(
                 modifier = Modifier
@@ -589,7 +594,7 @@ fun Houshan2Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
+                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

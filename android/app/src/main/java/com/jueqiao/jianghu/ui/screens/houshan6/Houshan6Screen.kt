@@ -64,7 +64,7 @@ private const val FOCAL_Y = 0.48f
 
 /**
  * 后山6 页 — 后山5 页 dolly 推进而来;点击"返回"按钮回到后山5;
- * **点击标签以外任意位置 → dolly 推进到后山7**(2026-09-18 §9)。
+ * **整屏点击 / 返回键的导航已断开**(2026-09-18 §13,待重设)—— 原为"点击标签以外任意位置 → dolly 推进到后山7"。
  *
  * 2026-09-18 §4 新建:用户指令"后山6复用后山4页面的素材和动画"。
  * 2026-09-18 §9 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
@@ -86,9 +86,9 @@ private const val FOCAL_Y = 0.48f
  *   | 点击位置                  | 结果                          |
  *   |--------------------------|-------------------------------|
  *   | 4 个标签                  | → ❌ **已取消**(2026-09-18 §12,待重设)|
- *   | 其余任意位置(空白/云/熊猫)| → **dolly-in 推进 → 后山7**   |
- *   | 左上角返回按钮            | → 后山5                       |
- *   | (dolly 进行中)点任何标签   | ❌ 无效(`enabled = false`)    |
+ *   | 其余任意位置(空白/云/熊猫)| → ❌ **已取消**(2026-09-18 §13,待重设)|
+ *   | 左上角返回按钮 / 系统返回键 | → ❌ **已取消**(2026-09-18 §13,待重设)|
+ *   | (dolly 进行中)点任何位置   | —(导航已断开,dolly 不会被触发)|
  *
  * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 下列跳转**已全部取消**;
  *    标签现在是**死区**(`.clickable(..., onClick = {})` 仅消费点击事件,不跳转)。**取消前的映射留档如下(供重设参考)**:
@@ -126,7 +126,7 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan6Actions(
     val onBack: () -> Unit = {},
-    // 2026-09-18 §9:点击标签以外任意位置 → dolly 推进到后山7
+    // 2026-09-18 §13:整屏点击的导航已断开(dolly 代码保留为模板,未被调用);原为 → dolly 推进到后山7
     val onOpenHoushan7: () -> Unit = {},
     val onOpenVolume5Part1: () -> Unit = {},  // 百炼识物诀 → 第五卷-1
     val onOpenVolume6Part1: () -> Unit = {},  // 分门辨类掌 → 第六卷-1
@@ -147,7 +147,7 @@ fun Houshan6Screen(
     val dolly = remember { Animatable(0f) }
 
     // 2026-09-18 §9:过渡期间禁用返回手势,避免动画途中被中断而露出半程画面(同 §4 后山5)
-    BackHandler(enabled = !isTransitioning) { actions.onBack() }
+    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
 
     // 熊猫上下浮 + 呼吸缩放(沿用 §22 后山 2 / §21 后山 1 / 2026-09-18 §4 后山6 的同款动画参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -216,7 +216,11 @@ fun Houshan6Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             // 2026-09-18 §9:整屏 clickable 触发 dolly-in(取代 §4~§8 的 noop 终点语义)
-            .clickable { startDollyIn() },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),   // 2026-09-18 §13 断开导航(待重设)
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
         Box(
@@ -565,7 +569,7 @@ fun Houshan6Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
+                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
