@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.houshan8
+package com.jueqiao.jianghu.ui.screens.houshan10
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -49,10 +49,12 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ── 后山8 → 后山9 沉浸式纵深推进(dolly-in)参数 (2026-09-18 §11,沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §4 / 后山6 §9 / 后山7 §10 的同款参数)──
-// 总时长落在 0.8~1.2s 区间;ease-in-out 用 FastOutSlowInEasing(标准缓入缓出)。
+// ── 后山10 → 后山11 沉浸式纵深推进(dolly-in)参数 (2026-09-19 §3 **已启用**)──
+// 触发点:点击本页「正心守道录」标签(用户指令:"点击任意页面的'正心守道录'标签")。
+// 参数沿用后山2 §2026-09-16.36 首创,经后山3 §24 / 后山4 §33 / 后山5 §4 / 后山6 §9 /
+//   后山7 §10 / 后山8 §11 / 后山9 §2 演进的同款。
 private const val DOLLY_DURATION_MS = 1050
-// 半程交给导航:此时山体已推进 3/4,由后山9 交叉淡入接棒,取代硬切
+// 半程交给导航:此时山体已推进 3/4,由下一页交叉淡入接棒,取代硬切
 private const val DOLLY_HANDOFF_MS = 560L
 // 三个景深平面各自的推进幅度 —— 近景推得多、远景推得少,差值即"纵深"
 private const val DOLLY_BG_SCALE = 0.34f      // 主山峰/近景山体 1.00 → 1.34
@@ -63,90 +65,78 @@ private const val FOCAL_X = 0.5f
 private const val FOCAL_Y = 0.48f
 
 /**
- * 后山8 页 — 后山7 页 dolly 推进而来;点击"返回"按钮回到后山7;
- * **整屏点击 / 返回键的导航已断开**(2026-09-18 §13,待重设)—— 原为"点击标签以外任意位置 → dolly 推进到后山9"。
+ * 后山10 页 — 后山9 页 dolly 推进而来;点击"返回"按钮回到后山9;整屏点击 noop;
+ * 「正心守道录」标签触发 dolly 推进到后山11(2026-09-19 §3),「听言解意篇」标签跳卷9。
  *
- * 2026-09-18 §10 新建:用户指令"后山8复用后山6页面的素材和动画"。
- * 2026-09-18 §11 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
- *                    (参数沿革详见本文件顶部的 2026-09-18 §11 注释行),
- *                    整屏点击改为 startDollyIn(),标签加回 isTransitioning 门槛。
+ * 2026-09-19 §2 新建:用户指令"创建后山10页面...后山10复用后山8页面的素材和动画" +
+ *   "把标签'千层观心镜'改成'听言解意篇'、把'赏罚驭灵诀'改成'正心守道录'、
+ *    删掉原有的'听言解意篇'标签和'正心守道录'标签" + "应用 Y 最大标签跳对应卷规则"。
  *
  * ══════════════════════════════════════════════════════════════════════════
- * 【2026-09-18 §11 交互变更】从"终点页"变成"过场页"
+ * 【与后山8 的关系】**素材 / 动画 100% 复用,但标签从 4 个减到 2 个**
  *
- *   2026-09-18 §10 期间:后山8 是**终点页** —— 整屏 clickable = noop,无 dolly,
- *                标签 clickable 不需要 `enabled = !isTransitioning` 门槛。
- *   2026-09-18 §11 起:用户要求"点击标签以外的位置跳转到后山9" + "山峰拉近动画要出现"
- *           → 后山8 补上 **dolly-in 三景深平面**(与后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 2026-09-18 §4 / 后山6 §9 / 后山7 §10 同款),
- *             整屏 clickable 改为 `startDollyIn()`,标签加回 `enabled = !isTransitioning`。
+ *   复用(与后山8 一致):
+ *     - 全屏背景图 img_shilian_bg.png
+ *     - 云雾层 HoushanMistLayer()(默认变体,**不**用 Houshan3 变体 —— 与后山8 同)
+ *     - 6 朵 ACI 动画云(58 / FCB左下 / 60 / FCB中下 / 62 / 57)+ 6 朵老云(58 / 61 / 56 / 57 / 60 / 60b)
+ *     - 熊猫 img_shilian_panda,X=184 Y=621 W=210 H=192(同款动画)
+ *
+ *   改造(与后山8 不同)—— **标签 4 → 2**:
+ *     | 位置 | 后山8 原文本 | 后山10 新文本 | Y | 说明 |
+ *     |---|---|---|---|---|
+ *     | 标签1(X=-13)| 千层观心镜 | **听言解意篇** | **570** | 改名;**成为本页 Y 最大** |
+ *     | 标签2(X=168)| 赏罚驭灵诀 | **正心守道录** | 345 | 改名 |
+ *     | ~~标签3(X=113)~~ | ~~听言解意篇~~ | **已删除** | — | 用户指令删除 |
+ *     | ~~标签4(X=151)~~ | ~~正心守道录~~ | **已删除** | — | 用户指令删除 |
+ *
+ *     - ❌ 整屏点击是**死区**(noop)—— 触发点是标签,不是整屏
+ *     - ✅ dolly 已启用(2026-09-19 §3):点「正心守道录」→ dolly 推进到后山11
  * ══════════════════════════════════════════════════════════════════════════
- * 【点击行为 · 当前(2026-09-19 §3)】
+ * 【点击行为 · 当前】
  *
  *   | 点击位置                  | 结果                          |
  *   |--------------------------|-------------------------------|
- *   | 标签1 千层观心镜(Y=570)   | → **第七卷-1**(本页 Y 最大,§14 恢复)|
- *   | 标签2 赏罚驭灵诀(Y=345)   | → 后山9(直接 navigate,无动画)|
- *   | 标签3 听言解意篇(Y=322)   | → 后山10(直接 navigate,无动画)|
- *   | 标签4 正心守道录(Y=248)   | → **dolly 推进 → 后山11**(2026-09-19 §3)|
- *   | 其余任意位置(空白/云/熊猫)| → ❌ **已取消**(2026-09-18 §13)|
- *   | 左上角返回按钮 / 系统返回键 | → 后山7                       |
- *   | (dolly 进行中)点任何位置   | ❌ 无效(标签带 `enabled = !isTransitioning` 门检)|
- *
- * 📌 沿革:2026-09-18 §12 用户曾指令"取消所有标签的跳转";§14 仅恢复 **Y 最大标签**(千层观心镜 → 卷7);
- *    §15 起按用户新规则接线"非 Y 最大标签 → 该文本为 Y 最大标签的页面"(赏罚驭灵诀→后山9、
- *    听言解意篇→后山10);2026-09-19 §3 后山11 创建后,**正心守道录改为 dolly 推进 → 后山11**。
- *    至此 4 个标签全部有明确去向,**不再有死区**。
- *    文本→卷 映射(§32):千层观心镜→卷7 · 赏罚驭灵诀→卷8 · 听言解意篇→卷9 · 正心守道录→卷10
+ *   | 标签1 **听言解意篇**(Y=570)| → **第九卷-1**(本页 Y 最大,按 §15 规则)|
+ *   | 标签2 正心守道录(Y=345)   | → **dolly 推进 → 后山11**(2026-09-19 §3 改动,原为死区)|
+ *   | 其余任意位置(空白/云/熊猫)| → ❌ noop(整屏点击取消)|
+ *   | 左上角返回按钮 / 系统返回键 | → 后山9                       |
  * ══════════════════════════════════════════════════════════════════════════
+ * 【本页在导航体系里的角色】—— 2026-09-19 §2 起,§3 修订
  *
- * 复用(与后山 6 同款素材):
- *   - 全屏背景图 img_shilian_bg.png
- *   - 云雾层 HoushanMistLayer()(默认变体,**不**用 Houshan3 变体 —— 与后山6 同)
- *   - 6 朵 ACI 动画云(58 / FCB左下 / 60 / FCB中下 / 62 / 57)+ 6 朵老云(58 / 61 / 56 / 57 / 60 / 60b)
- *   - 熊猫 img_shilian_panda,X=184 Y=621 W=210 H=192(§22 同款动画)
- *   - 4 个标签    千层观心镜 / 赏罚驭灵诀 / 听言解意篇 / 正心守道录(2026-09-18 §10 文案重命名)
+ *   后山10 是 **「听言解意篇」的 Y 最大页面**(全链最大):
+ *     - 听言解意篇:后山8=322 < 后山9=390 < **后山10=570** ✓ → 本页标签跳卷9
+ *   后山10 **曾是**「正心守道录」的 Y 最大页面;2026-09-19 §3 后山11 创建后让位:
+ *     - 正心守道录:后山8=248 < 后山9=295 < 后山10=345 < **后山11=521**
+ *   → 因此本页的「正心守道录」不再跳卷,而是 **dolly 推进 → 后山11**(用户 §3 指令)。
+ *   → 2026-09-18 §15 里用户说的"我还没有创建这几个文本标签在 Y 值最大的页面,先不要跳转,
+ *     **之后提醒我**" —— 到 §3 为止,「听言解意篇」(后山10)与「正心守道录」(后山11)
+ *     两个 Y 最大页面均已创建,相关死区全部接完。
  *
- * 布局(与后山6 一致,后者复用后山4 的坐标 §24b):
+ * 布局(坐标与后山8 的标签1/2 完全一致):
  *   - 全屏背景图(img_shilian_bg.png)
  *   - 6 朵 ACI 动画云 + 6 朵老云
  *   - 熊猫图像(X=184, Y=621, W=210, H=192)
- *   - 标签1 千层观心镜(X=-13,  Y=570, W=106, H=210 §24b)—— 字号 14sp,行间距 16sp,5×16=80dp = 容器 80dp
- *   - 标签2 赏罚驭灵诀(X=168, Y=345, W=74,  H=150 §24b)—— 字号 12sp,行间距 15sp,5×15=75dp < 容器 80dp ✓
- *   - 标签3 听言解意篇(X=113, Y=322, W=50,  H=105 §24b)—— 字号 10sp,行间距 10sp,5×10=50dp < 容器 60dp ✓
- *   - 标签4 正心守道录(X=151, Y=248, W=30,  H=70  §24b)—— 字号 4sp,行间距 6sp,5×6=30dp < 容器 60dp ✓
+ *   - 标签1 听言解意篇(X=-13,  Y=570, W=106, H=210 §24b)—— 字号 14sp,行间距 16sp,5×16=80dp = 容器 80dp
+ *   - 标签2 正心守道录(X=168, Y=345, W=74,  H=150 §24b)—— 字号 12sp,行间距 15sp,5×15=75dp < 容器 80dp ✓
  *   - 返回按钮(X=30, Y=60, W=18, H=18)
  */
 /**
- * 后山8 页的所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
- *
- * 为什么用 data class 而不是 5 个独立 lambda 参数:
- *   §3 实测:多 lambda 签名的 composable,slot table 在某种条件下把第 1 个 slot 记成 null
- *           而非 `Composer.Empty`,被 Compose 当成"有效值"复用 → clickable.onClick = null →
- *           invoke() 时 NPE 闪退。
- *   方向 B(包成 data class):参数从"5 个 lambda"变成"1 个非 lambda",slot 结构根本不同,
- *                           bug 触发条件消失,理论上根治。
- *   字段命名沿用 §32 的"文字→卷"语义 —— 不绑定标签文案,文案再改只动 NavHost 一处。
+ * 后山10 页的所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
+ * (2026-09-18 §5 真机验证根因:多 lambda 签名 → 1 个 data class,bug 触发条件消失)
  */
-data class Houshan8Actions(
+data class Houshan10Actions(
     val onBack: () -> Unit = {},
-    // ── 2026-09-18 §15 新规则:点击"非本页 Y 最大"的标签 → 跳到"该文本为 Y 最大标签"的那个页面 ──
-    val onOpenHoushan9: () -> Unit = {},   // 赏罚驭灵诀 → 后山9(赏罚驭灵诀在后山9 是 Y 最大标签)
-    // ── 2026-09-19 §2:后山10 创建后,听言解意篇终于有了"Y 最大页面" ──
-    val onOpenHoushan10: () -> Unit = {},  // 听言解意篇 → 后山10(该文本在后山10 是 Y 最大)
-    // ── 2026-09-19 §3:后山11 创建后,「正心守道录」的 Y 最大页从后山10 移到后山11 ──
-    //   用户指令:"点击任意页面的'正心守道录'标签" → 触发 dolly 推进到后山11
-    val onOpenHoushan11: () -> Unit = {},  // 正心守道录 → 后山11(dolly 推进;该文本在后山11 是 Y 最大 Y=521)
-    // ── 卷跳转:仅"本页 Y 最大标签"使用(当前实际只用到 onOpenVolume7Part1)──
-    val onOpenVolume7Part1: () -> Unit = {},   // 千层观心镜(本页 Y 最大,Y=570)→ 第七卷-1
-    // ⚠️ 以下 3 个为**预留字段**:这三个文本的 Y 最大页分别在后山9/10/11,由对应 onOpenHoushanN 接管
-    val onOpenVolume8Part1: () -> Unit = {},   // 预留(赏罚驭灵诀的 Y 最大页是后山9)
-    val onOpenVolume9Part1: () -> Unit = {},   // 预留(听言解意篇的 Y 最大页是后山10)
-    val onOpenVolume10Part1: () -> Unit = {},  // 预留(正心守道录的 Y 最大页是后山11)
+    // ── 2026-09-19 §3:后山11 创建 —— 「正心守道录」不再是死区,改为 dolly 推进到后山11 ──
+    //   用户指令:"点击任意页面的'正心守道录'标签"(§3 澄清回答)
+    val onOpenHoushan11: () -> Unit = {},   // 正心守道录(本页 Y=345,非 Y 最大)→ dolly 推进到后山11
+    // ── 卷跳转:按 §15 规则,仅"本页 Y 最大标签"跳卷 ──
+    val onOpenVolume9Part1: () -> Unit = {},   // 听言解意篇(本页 Y 最大,Y=570)→ 第九卷-1
+    //    注:后山10 只有 2 个标签(原后山8 的标签3/4 已按用户指令删除)
 )
 
 @Composable
-fun Houshan8Screen(
-    actions: Houshan8Actions = Houshan8Actions(),
+fun Houshan10Screen(
+    actions: Houshan10Actions = Houshan10Actions(),
 ) {
     // §3 + 2026-09-18 §4:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
     // (旧版的 if (xxx == null) ({}) else xxx 5 行兜底已删)
@@ -204,9 +194,9 @@ fun Houshan8Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // 纵深推进:启动动画,并在半程把控制权交给导航(下一页交叉淡入)。
-    //   2026-09-19 §3:从"无参、硬编码跳后山9"改为**接收跳转目标**的参数化形式 ——
-    //   本页「正心守道录」要带 dolly 进后山11,目标与其它标签不同,故把目标作为入参。
+    // 纵深推进:启动动画,并在半程把控制权交给导航(后山11 交叉淡入)。
+    //   2026-09-19 §3:从"未启用的模板"改为**启用** —— 本页「正心守道录」标签点击即触发;
+    //   同时改为接收跳转目标的参数化形式(本页听言解意篇仍是直接跳卷9,不走 dolly)。
     val startDollyIn: (() -> Unit) -> Unit = { onComplete ->
         if (!isTransitioning) {
             isTransitioning = true
@@ -218,7 +208,7 @@ fun Houshan8Screen(
             }
             scope.launch {
                 delay(DOLLY_HANDOFF_MS)
-                onComplete()
+                onComplete()   // 2026-09-19 §3:dolly 半程后推进到后山11
             }
         }
     }
@@ -428,7 +418,7 @@ fun Houshan8Screen(
                 contentScale = ContentScale.FillBounds,
             )
 
-            // "标签1" 图像(千层观心镜,X=-13, Y=570, W=106, H=210 §24b)— 2026-09-18 §11:点击 → **第七卷-1**
+            // "标签1" 图像(听言解意篇,X=-13, Y=570, W=106, H=210 §24b)— 2026-09-19 §2:点击 → **第九卷-1**(本页 Y 最大)
             Box(
                 modifier = Modifier
                     .offset(x = -13.dp, y = 570.dp)
@@ -437,7 +427,7 @@ fun Houshan8Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = actions.onOpenVolume7Part1,   // 2026-09-18 §14 恢复跳转(其余标签仍待设置)
+                        onClick = actions.onOpenVolume9Part1,   // 2026-09-19 §2 本页 Y 最大(听言解意篇)→ 卷9
                     ),
             ) {
                 Image(
@@ -447,7 +437,7 @@ fun Houshan8Screen(
                     contentScale = ContentScale.FillBounds,
                 )
                 Text(
-                    text = "千\n层\n观\n心\n镜",
+                    text = "听\n言\n解\n意\n篇",
                     color = Color.Black,
                     style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 16.sp),
                     modifier = Modifier
@@ -464,7 +454,7 @@ fun Houshan8Screen(
                 )
             }
 
-            // "标签2" 图像(赏罚驭灵诀,X=168, Y=345, W=74, H=150 §24b) — 2026-09-18 §11:点击 → **第八卷-1**
+            // "标签2" 图像(正心守道录,X=168, Y=345, W=74, H=150 §24b) — 2026-09-19 §3:点击 → **dolly 推进到后山11**
             Box(
                 modifier = Modifier
                     .offset(x = 168.dp, y = 345.dp)
@@ -473,7 +463,7 @@ fun Houshan8Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = actions.onOpenHoushan9,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
+                        onClick = { startDollyIn(actions.onOpenHoushan11) },   // 2026-09-19 §3 dolly → 后山11(该文本在后山11 是 Y 最大)
                     ),
             ) {
                 Image(
@@ -483,7 +473,7 @@ fun Houshan8Screen(
                     contentScale = ContentScale.FillBounds,
                 )
                 Text(
-                    text = "赏\n罚\n驭\n灵\n诀",
+                    text = "正\n心\n守\n道\n录",
                     color = Color.Black,
                     style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 15.sp),
                     modifier = Modifier
@@ -500,77 +490,6 @@ fun Houshan8Screen(
                 )
             }
 
-            // "标签3" 图像(听言解意篇,X=113, Y=322, W=50, H=105 §24b) — 2026-09-18 §11:点击 → **第九卷-1**
-            Box(
-                modifier = Modifier
-                    .offset(x = 113.dp, y = 322.dp)
-                    .size(width = 50.dp, height = 105.dp)
-                    .clickable(
-                        enabled = !isTransitioning,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = actions.onOpenHoushan10,   // 2026-09-19 §2 接上 → 后山10(该文本在后山10 是 Y 最大)
-                    ),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签3",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-                Text(
-                    text = "听\n言\n解\n意\n篇",
-                    color = Color.Black,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 10.sp),
-                    modifier = Modifier
-                        .offset(x = 20.5.dp, y = 27.dp)
-                        .size(width = 12.dp, height = 60.dp),
-                )
-                Text(
-                    text = "炼",
-                    color = Color(0xFF385816),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 6.sp),
-                    modifier = Modifier
-                        .offset(x = 23.dp, y = 18.dp)
-                        .size(width = 10.dp, height = 14.dp),
-                )
-            }
-
-            // "标签4" 图像(正心守道录,X=151, Y=248, W=30, H=70 §24b) — 2026-09-19 §3:点击 → **dolly 推进到后山11**
-            Box(
-                modifier = Modifier
-                    .offset(x = 151.dp, y = 248.dp)
-                    .size(width = 30.dp, height = 70.dp)
-                    .clickable(
-                        enabled = !isTransitioning,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { startDollyIn(actions.onOpenHoushan11) },   // 2026-09-19 §3 dolly → 后山11(该文本在后山11 是 Y 最大)
-                    ),
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签4",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
-                )
-                Text(
-                    text = "正\n心\n守\n道\n录",
-                    color = Color.Black,
-                    style = TextStyle(fontFamily = YaHei, fontSize = 4.sp, lineHeight = 6.sp),
-                    modifier = Modifier
-                        .offset(x = 13.5.dp, y = 23.dp)
-                        .size(width = 12.dp, height = 60.dp),
-                )
-                Text(
-                    text = "炼",
-                    color = Color(0xFF385816),
-                    style = TextStyle(fontFamily = YaHei, fontSize = 4.sp),
-                    modifier = Modifier
-                        .offset(x = 13.5.dp, y = 11.dp)
-                        .size(width = 10.dp, height = 14.dp),
-                )
-            }
             }   // 2026-09-18 §11 景深平面 3 结束
 
             // ── UI chrome:左上角返回按钮 ─────────────────────────────────────

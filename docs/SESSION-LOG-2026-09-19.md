@@ -80,12 +80,185 @@
 
 ### 待办
 
-- [ ] 等用户指示今日工作内容
-- [ ] 🔔 **(提醒项)**`听言解意篇` / `正心守道录` 的"Y 最大页面"创建后,接上后山8/9 的 4 个标签
+- [x] 等用户指示今日工作内容 → 已收到:创建后山10(§2)、后山11(§3)
+- [x] 🔔 **(提醒项)**`听言解意篇` / `正心守道录` 的"Y 最大页面"创建后,接上后山8/9 的 4 个标签 → **后山10(§2)/ 后山11(§3)已创建**,相关死区全部接完
 - [ ] (可选)`main` 分支同步(纯 fast-forward)
+- [ ] **待 commit**:§2 + §3 的改动尚未提交
 
 **A 模式**:执行但不 commit,等用户说"commit"
 
 ---
 
 <!-- 以下为今日各段工作记录(§2 起) -->
+
+## §2 创建后山10 页面 + 后山9 升格为过场页 + 后山8 接线
+
+### 用户指令
+
+> 继续创建后山10页面,那种山峰拉近的动画也要在跳转到后山10页面时出现,后山10页面复用后山8页面的素材和动画,在后山10页面,把标签'千层观心镜'的文本改成'听言解意篇',把标签'赏罚驭灵诀'的文本改成'正心守道录',删掉'听言解意篇'标签和'赏罚驭灵诀'标签,并且应用之前说的Y值最大的标签可以跳转到对应的卷-1
+
+### 指令矛盾点与澄清
+
+指令里"把 A 改成 B"和"删掉 B"同时出现,存在两种读法:
+
+| 读法 | 结果 |
+|---|---|
+| 先把标签3/4 改名,再删掉同名标签 | 等于全删,页面无标签 —— 显然不是意图 |
+| **先删掉原标签3/4,再把剩下的标签1/2 改名** | 页面保留 2 个标签,与原页面对应关系延续 |
+
+采用第二种读法,并用 AskUserQuestion 确认了 4 个点:
+
+| # | 问题 | 用户决定 |
+|---|---|---|
+| 1 | 删除哪两个标签 | 删原**标签3(听言解意篇 Y=322)** 和**标签4(正心守道录 Y=248)**,保留 2 个 |
+| 2 | 后山9 → 后山10 的触发方式 | **点击「赏罚驭灵诀」**(非整屏 dolly) |
+| 3 | 后山8/9 那 4 个死区标签 | **接到后山10** |
+| 4 | 后山10 的「正心守道录」 | **保持死区**(不跳转) |
+
+### 最终方案
+
+后山10 的两标签(复用后山8 素材 + dolly 参数):
+
+| 标签 | 原页文本 | 后山10 文本 | Y | 点击行为 |
+|---|---|---|---|---|
+| 标签1 | 千层观心镜 | **听言解意篇** | 570 | → `Volume9Part1` |
+| 标签2 | 赏罚驭灵诀 | **正心守道录** | 345 | **死区** `{}` |
+
+Y 最大值核验(§15 规则 1):
+
+| 文本 | 后山8 | 后山9 | 后山10 | Y 最大页 |
+|---|---|---|---|---|
+| 听言解意篇 | 322 | 390 | **570** | 后山10 ✓ |
+| 正心守道录 | 248 | 295 | **345** | 后山10 ✓ |
+
+→ 🔔 **昨日遗留的提醒项(后山8 §2026-09-18.x 起挂着的「听言解意篇/正心守道录 缺 Y 最大页面」)至此关闭。**
+
+### 改动清单
+
+| 文件 | 改动 |
+|---|---|
+| `nav/Routes.kt` | 新增 `const val Shilian10 = "shilian10"` |
+| `ui/screens/houshan10/Houshan10Screen.kt` | **新建**(512 行):包名 `...screens.houshan10`;`data class Houshan10Actions(onBack, onOpenVolume9Part1)`;删标签3/4;标签1/2 改名;KDoc 重写;dolly 代码保留为模板 |
+| `ui/screens/houshan9/Houshan9Screen.kt` | **终点页 → 过场页**:新增 `onOpenHoushan10` 字段;`BackHandler(enabled = !isTransitioning)`;`startDollyIn` 末尾改调 `actions.onOpenHoushan10()`;3 个标签 `onClick = { startDollyIn() }` 且 `enabled = !isTransitioning`;返回按钮加 `graphicsLayer { alpha = chromeFade }` |
+| `ui/screens/houshan8/Houshan8Screen.kt` | 新增 `onOpenHoushan10` 字段;标签3(听言解意篇)、标签4(正心守道录)由死区改为 `actions.onOpenHoushan10` |
+| `nav/JianghuNavHost.kt` | 新增 2 个 import;后山8/后山9 区块各接 `onOpenHoushan10 = { navController.navigate(Routes.Shilian10) }`;后山9 的 3 个卷回调置 `{}`;新增 `composable(Routes.Shilian10)`(enterTransition 同 Shilian5~9,`scaleIn` + `fadeIn`) |
+
+### ⚠️ 副作用(已向用户披露)
+
+后山9 的「赏罚驭灵诀」Y=521 是**其本页 Y 最大标签** → 按 §15 规则 1 本应跳「卷8」。按用户选定的触发方式,它现在改为触发 dolly → 后山10。
+
+**结果:后山9 不再有「→ 卷8」的入口。**(后山6/7/8 的「赏罚驭灵诀」仅仅是导航到后山9,不直接跳卷8。)
+
+### 踩坑:锚点文本在多个区块重复 → 全局误替换
+
+用 `onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },   // §15 赏罚驭灵诀 → 后山9` 作锚点追加 `onOpenHoushan10` 时,该锚点文本在 **后山6 / 后山7 / 后山8 三个区块**都出现,替换把 3 处全改了:
+
+```
+error: No parameter with name 'onOpenHoushan10' found   (JianghuNavHost.kt:748, :780)
+```
+
+修复:删掉后山6/后山7 里误加的字段,只保留后山8(L808)与后山9(L838)。**复现了本项目的既有教训 —— 锚点替换前必须先确认锚点文本唯一,或用行号范围限定;替换后必须核验"范围外未被改动"。**
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 后山8 四标签 | 千层观心镜→卷7、赏罚驭灵诀→后山9、听言解意篇→后山10、正心守道录→后山10 ✓ |
+| 后山9 三标签 | 全部 `{ startDollyIn() }`;`BackHandler(enabled = !isTransitioning)` L149;`actions.onOpenHoushan10()` L207;返回按钮 `chromeFade` L530 ✓ |
+| 后山10 两标签 | 听言解意篇→`actions.onOpenVolume9Part1`;正心守道录→`{}` ✓ |
+| NavHost | `Shilian10` 路由 + 调用点齐备 ✓ |
+| 构建 / 安装 | `compileDebugKotlin` BUILD SUCCESSFUL;设备 `21908b7a` 安装成功 ✓ |
+
+### 沉淀
+
+1. **指令自相矛盾时先澄清,不要猜**:本例"改名为 X"与"删掉 X"并存,两种读法结果完全不同(留 2 标签 vs 留 0 标签)。用 AskUserQuestion 一次性问清 4 个决策点,比改完再返工便宜得多。
+2. **锚点替换的唯一性是硬约束**:同一段代码块在 NavHost 里会被复制到多个页面区块,文本锚点天然不唯一。规则:行号限定 → 替换 → 核验范围外。
+3. **过场页 vs 终点页的差异要显式改造**:后山9 从"终点页"变"过场页"时,不能只加一个跳转 —— 还要 `BackHandler(enabled = !isTransitioning)` 防止动画期间返回键乱跳,以及返回按钮随 `chromeFade` 淡出与 chrome 层保持一致。
+
+---
+
+## §3 创建后山11 页面 + 三页「正心守道录」接 dolly 推进
+
+### 用户指令
+
+> 继续创建后山11页面，那种山峰拉近的动画也要在跳转到后山11页面时出现，后山11页面复用后山9页面的素材和动画，在后山11页面，把标签”赏罚驭灵诀“的文本改成”正心守道录“，删掉”听言解意篇“标签和页面原有的”正心守道录“标签，并且应用之前说的Y值最大的标签可以跳转到对应的卷-1
+
+### 澄清(AskUserQuestion)
+
+| # | 问题 | 用户决定 |
+|---|---|---|
+| 1 | 后山10 → 后山11 的 dolly 触发点 | **"点击任意页面的'正心守道录'标签"**(自定义回答)|
+| 2 | 后山8(248)/ 后山9(295)的「正心守道录」是否改指后山11 | **改为直指后山11** |
+
+→ 两条合起来 = **后山8 / 后山9 / 后山10 三页的「正心守道录」全部改为 dolly 推进 → 后山11**。
+
+### 最终方案
+
+**后山11(复用后山9 素材/动画,标签 3 → 1)**
+
+| 标签 | 后山9 原文本 | 后山11 新文本 | X | Y | 点击行为 |
+|---|---|---|---|---|---|
+| 标签2 | 赏罚驭灵诀 | **正心守道录** | 124 | **521** | → **第十卷-1** |
+| ~~标签3~~ | ~~听言解意篇~~ | **已删除** | 43 | 390 | 用户指令删除 |
+| ~~标签4~~ | ~~正心守道录~~ | **已删除** | 105 | 295 | 用户指令删除(页面原有的)|
+
+字号沿用原槽位 14sp / 行距 14sp(5×14=70dp < 容器 80dp)—— "赏罚驭灵诀"与"正心守道录"同为 5 字,无需调整。
+
+**Y 最大值核验**
+
+| 文本 | 后山8 | 后山9 | 后山10 | 后山11 | Y 最大页 |
+|---|---|---|---|---|---|
+| 听言解意篇 | 322 | 390 | **570** | — | 后山10(§2 已接)|
+| 正心守道录 | 248 | 295 | 345 | **521** | **后山11**(§3 起)|
+
+→ 「正心守道录」的 Y 最大页从后山10 **让位**给后山11;后山10 的该标签因此不再跳卷,改为 dolly 推进。
+
+### 关键技术点:startDollyIn 参数化
+
+后山9 原来的 `startDollyIn: () -> Unit` **硬编码**调 `actions.onOpenHoushan10()`,无法让同页不同标签去往不同目标。三页统一改为**接收跳转目标**:
+
+```kotlin
+val startDollyIn: (() -> Unit) -> Unit = { onComplete ->
+    if (!isTransitioning) {
+        isTransitioning = true
+        scope.launch { dolly.animateTo(1f, tween(DOLLY_DURATION_MS, FastOutSlowInEasing)) }
+        scope.launch { delay(DOLLY_HANDOFF_MS); onComplete() }
+    }
+}
+```
+
+调用点写作 `startDollyIn(actions.onOpenHoushan11)` —— 这是 lambda **捕获**,不是 composable 的参数传递,**不触发 §3 的 slot 0 null bug**(那个 bug 只在"多个同类型 lambda 直接作 composable 参数"时出现)。
+
+### 改动清单
+
+| 文件 | 改动 |
+|---|---|
+| `nav/Routes.kt` | 新增 `const val Shilian11 = "shilian11"` |
+| `ui/screens/houshan11/Houshan11Screen.kt` | **新建**:复用后山9 全套素材 / 云雾 / dolly 参数;`data class Houshan11Actions(onBack, onOpenVolume10Part1)`;标签 3→1;dolly 代码保留为模板(未启用)|
+| `ui/screens/houshan8/Houshan8Screen.kt` | Actions 加 `onOpenHoushan11`;`startDollyIn` 参数化;标签4(正心守道录)由"直接 navigate 后山10"改为 `{ startDollyIn(actions.onOpenHoushan11) }`;3 个卷字段标注为预留 |
+| `ui/screens/houshan9/Houshan9Screen.kt` | Actions 加 `onOpenHoushan11`;`startDollyIn` 参数化;标签4(正心)→ 后山11,标签2(赏罚)/标签3(听言)显式传 → 后山10 |
+| `ui/screens/houshan10/Houshan10Screen.kt` | Actions 加 `onOpenHoushan11`;`startDollyIn` 参数化并**启用**;标签2 由死区 `{}` 改为 → 后山11 |
+| `nav/JianghuNavHost.kt` | 2 个 import;后山8/9/10 三区块各接 `onOpenHoushan11`;新增 `composable(Routes.Shilian11)`(enterTransition 同 Shilian5~10)|
+
+### ⚠️ 副作用(已向用户披露)
+
+1. **后山10 的「正心守道录」不再是死区** —— 这也推翻了 §2 时"保持死区"的决定(那时后山11 尚未创建,该标签无处可去;现在它有了 Y 最大页)。
+2. **后山8 的「正心守道录」不再跳后山10** —— 改为 dolly → 后山11。
+3. 后山8 有 4 个标签,**只有标签4 走 dolly**,其余 3 个仍是直接 navigate(无动画)。这是刻意的:用户只要求「正心守道录」的跳转带山峰拉近动画。
+
+### 验证
+
+| 项 | 结果 |
+|---|---|
+| 后山8 标签4 | `onClick = { startDollyIn(actions.onOpenHoushan11) }`(L547)✓ |
+| 后山9 三标签 | 听言(L437)/ 赏罚(L502)→ `onOpenHoushan10`;正心(L469)→ `onOpenHoushan11` ✓ |
+| 后山10 两标签 | 听言 → `onOpenVolume9Part1`;正心(L465)→ `startDollyIn(onOpenHoushan11)` ✓ |
+| 后山11 | 仅 1 个标签 `contentDescription = "标签2"`,文本 `正\n心\n守\n道\n录`;无"听言解意篇"残留 ✓ |
+| NavHost | L811 / L842 / L871 三处 `onOpenHoushan11` + L879 `route = Routes.Shilian11` ✓ |
+| 构建 / 安装 | `compileDebugKotlin` + `assembleDebug` BUILD SUCCESSFUL;设备 `21908b7a` Streamed Install **Success** ✓ |
+
+### 沉淀
+
+1. **"让动画能去往不同目标" = 把目标作为参数传入**:原 `startDollyIn` 硬编码单一目标,一旦同页出现"两个标签去往不同页面"就必须参数化。参数化版本同时兼容模板用途(无调用点时保留,如后山11)。
+2. **§15 规则的"Y 最大页"是动态的**:每新建一页,都可能让旧页某文本失去 Y 最大地位。后山11 创建后,后山10 的「正心守道录」立即从"该跳卷"变成"该推进"。**每次加页面都要重算全链 Y 值**,并回头检查旧页的接线是否仍然成立。
+3. **同文件多处相似锚点必须带坐标**:后山9 的标签3 与标签4 的 `.clickable(...)` 行**逐字相同**(连注释也一样),只用该行作锚点会命中两处。加上上一行 `.offset(x = ..., y = ...)` 即可唯一 —— 本次三页的标签替换全部使用带坐标的锚点(延续 §2 踩坑的教训)。

@@ -23,6 +23,8 @@ object Routes {
     const val Shilian7  = "shilian7"          // §39 新增,后山 7 页(用户新建;复用后山 5 素材)
     const val Shilian8  = "shilian8"          // §40 新增,后山 8 页(用户新建;复用后山 6 素材)
     const val Shilian9  = "shilian9"          // §41 新增,后山 9 页(用户新建;复用后山 7 素材)
+    const val Shilian10 = "shilian10"         // 2026-09-19 §2 新增,后山 10 页(用户新建;复用后山 8 素材)
+    const val Shilian11 = "shilian11"         // 2026-09-19 §3 新增,后山 11 页(用户新建;复用后山 9 素材)
     const val Unfinished = "unfinished"
     const val PendingUnlock = "pending-unlock"
     const val Gunlun1  = "gunlun1"
