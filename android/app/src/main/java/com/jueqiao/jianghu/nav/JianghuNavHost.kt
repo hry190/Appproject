@@ -99,6 +99,12 @@ import com.jueqiao.jianghu.ui.screens.houshan5.Houshan5Actions           // §5/
 import com.jueqiao.jianghu.ui.screens.houshan5.Houshan5Screen            // §33 新增
 import com.jueqiao.jianghu.ui.screens.houshan6.Houshan6Actions           // §5/§6 先行重构
 import com.jueqiao.jianghu.ui.screens.houshan6.Houshan6Screen            // §35 新增
+import com.jueqiao.jianghu.ui.screens.houshan7.Houshan7Actions           // §39 新增
+import com.jueqiao.jianghu.ui.screens.houshan7.Houshan7Screen            // §39 新增
+import com.jueqiao.jianghu.ui.screens.houshan8.Houshan8Actions           // §40 新增
+import com.jueqiao.jianghu.ui.screens.houshan8.Houshan8Screen            // §40 新增
+import com.jueqiao.jianghu.ui.screens.houshan9.Houshan9Actions           // §41 新增
+import com.jueqiao.jianghu.ui.screens.houshan9.Houshan9Screen            // §41 新增
 import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
 import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
 import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
@@ -678,7 +684,7 @@ fun JianghuNavHost(
                 ),
             )
         }
-        // §33:后山 5 页 —— 复用后山 3 的素材/动画,当前是**终点页**(整屏 noop)
+        // §33:后山 5 页 —— 复用后山 3 的素材/动画,§35 升级为过场页(整屏触发 dolly 到后山6)
         composable(
             route = Routes.Shilian5,
             // 镜头减速停稳(与后山 4 内部 dolly 末态衔接)
@@ -707,7 +713,7 @@ fun JianghuNavHost(
                 ),
             )
         }
-        // §35:后山 6 页 —— 复用后山 4 的素材/动画,当前是**终点页**(整屏 noop)
+        // §35:后山 6 页 —— 复用后山 4 的素材/动画,§39 升级为过场页(整屏触发 dolly 到后山7)
         composable(
             route = Routes.Shilian6,
             // 镜头减速停稳(与后山 5 内部 dolly 末态衔接,与 Shilian5 同款)
@@ -727,11 +733,99 @@ fun JianghuNavHost(
             Houshan6Screen(
                 actions = Houshan6Actions(
                     onBack = { navController.popBackStack() },
-                    // §35:4 个标签按 §32 的"文字→卷"映射接好(与后山4 一致)
-                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱     → 第三卷-1
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步 → 第四卷-1
+                    // §39:点击标签以外任意位置 → dolly 推进到后山7
+                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },
+                    // §38:4 个标签按 §32 的"文字→卷"映射接好(文案重命名 §35→§38)
                     onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀 → 第五卷-1
                     onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
+                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },  // 千层观心镜 → 第七卷-1
+                    onOpenVolume8Part1 = { navController.navigate(Routes.Volume8Part1) },  // 赏罚驭灵诀 → 第八卷-1
+                ),
+            )
+        }
+        // §39:后山 7 页 —— 复用后山 5 的素材/动画,§40 升级为过场页(整屏触发 dolly 到后山8)
+        composable(
+            route = Routes.Shilian7,
+            // 镜头减速停稳(与后山 6 内部 dolly 末态衔接,与 Shilian5/6 同款)
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan7Screen(
+                actions = Houshan7Actions(
+                    onBack = { navController.popBackStack() },
+                    // §40:点击标签以外任意位置 → dolly 推进到后山8
+                    onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },
+                    // §39:3 个标签按 §38 的"文字→卷"映射接好(分门辨类掌/千层观心镜/赏罚驭灵诀)
+                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
+                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },  // 千层观心镜 → 第七卷-1
+                    onOpenVolume8Part1 = { navController.navigate(Routes.Volume8Part1) },  // 赏罚驭灵诀 → 第八卷-1
+                ),
+            )
+        }
+        // §40:后山 8 页 —— 复用后山 6 的素材/动画,§41 升级为过场页(整屏触发 dolly 到后山9)
+        composable(
+            route = Routes.Shilian8,
+            // 镜头减速停稳(与后山 7 内部 dolly 末态衔接,与 Shilian5/6/7 同款)
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan8Screen(
+                actions = Houshan8Actions(
+                    onBack = { navController.popBackStack() },
+                    // §41:点击标签以外任意位置 → dolly 推进到后山9
+                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },
+                    // §40:4 个标签按 §32 的"文字→卷"映射接好(千层观心镜/赏罚驭灵诀/听言解意篇/正心守道录)
+                    onOpenVolume7Part1  = { navController.navigate(Routes.Volume7Part1)  },  // 千层观心镜 → 第七卷-1
+                    onOpenVolume8Part1  = { navController.navigate(Routes.Volume8Part1)  },  // 赏罚驭灵诀 → 第八卷-1
+                    onOpenVolume9Part1  = { navController.navigate(Routes.Volume9Part1)  },  // 听言解意篇 → 第九卷-1
+                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },  // 正心守道录 → 第十卷-1
+                ),
+            )
+        }
+        // §41:后山 9 页 —— 复用后山 7 的素材/动画,当前是**终点页**(整屏 noop)
+        composable(
+            route = Routes.Shilian9,
+            // 镜头减速停稳(与后山 8 内部 dolly 末态衔接,与 Shilian5~8 同款)
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan9Screen(
+                actions = Houshan9Actions(
+                    onBack = { navController.popBackStack() },
+                    // §41:3 个标签按 §38 的"文字→卷"映射接好(赏罚驭灵诀/听言解意篇/正心守道录)
+                    onOpenVolume8Part1  = { navController.navigate(Routes.Volume8Part1)  },  // 赏罚驭灵诀 → 第八卷-1
+                    onOpenVolume9Part1  = { navController.navigate(Routes.Volume9Part1)  },  // 听言解意篇 → 第九卷-1
+                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },  // 正心守道录 → 第十卷-1
                 ),
             )
         }

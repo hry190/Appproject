@@ -1,4 +1,4 @@
-package com.jueqiao.jianghu.ui.screens.houshan5
+package com.jueqiao.jianghu.ui.screens.houshan9
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -50,10 +50,11 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ── 后山5 → 后山6 沉浸式纵深推进(dolly-in)参数 (§35,沿用后山2 §36 / 后山3 §24 / 后山4 §33 的同款参数)──
-// 总时长落在 0.8~1.2s 区间;ease-in-out 用 FastOutSlowInEasing(标准缓入缓出)。
+// ── 后山9 → 后山10 沉浸式纵深推进(dolly-in)参数 (§41,**当前未启用** —— 后山9 是终点页)──
+// 保留这套常量作为模板:若日后要接后山10,把整屏 clickable 改为 startDollyIn() 即可(同 §39→§40 后山7 的升级路径)。
+// 参数沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §35 / 后山6 §39 / 后山7 §40 的同款。
 private const val DOLLY_DURATION_MS = 1050
-// 半程交给导航:此时山体已推进 3/4,由后山6 交叉淡入接棒,取代硬切
+// 半程交给导航:此时山体已推进 3/4,由后山10 交叉淡入接棒,取代硬切
 private const val DOLLY_HANDOFF_MS = 560L
 // 三个景深平面各自的推进幅度 —— 近景推得多、远景推得少,差值即"纵深"
 private const val DOLLY_BG_SCALE = 0.34f      // 主山峰/近景山体 1.00 → 1.34
@@ -64,78 +65,66 @@ private const val FOCAL_X = 0.5f
 private const val FOCAL_Y = 0.48f
 
 /**
- * 后山5 页的所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
- *
- * 为什么用 data class 而不是 5 个独立 lambda 参数:
- *   §3 实测:多 lambda 签名(`onBack, onA, onB, onC, onD` 都是 `() -> Unit`)的 composable,
- *           slot table 在某种条件下把第 1 个 slot 记成 null 而非 `Composer.Empty`,
- *           被 Compose 当成"有效值"复用 → clickable.onClick = null → invoke() 时 NPE 闪退。
- *   方向 B(包成 data class):参数从"5 个 lambda"变成"1 个非 lambda",slot 结构根本不同,
- *                           bug 触发条件消失,理论上根治。
- *   字段命名沿用 §34 的"目标卷号"语义 —— 不绑定标签文案,文案再改只动 NavHost 一处。
+ * 后山9 页所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
+ * 详见 §5(SESSION-LOG-2026-09-18)真机验证根因:多 lambda 签名 → 1 个 data class,bug 触发条件消失。
  */
-data class Houshan5Actions(
+data class Houshan9Actions(
     val onBack: () -> Unit = {},
-    val onOpenHoushan6: () -> Unit = {},
-    val onOpenVolume4Part1: () -> Unit = {},
-    val onOpenVolume5Part1: () -> Unit = {},
-    val onOpenVolume6Part1: () -> Unit = {},
+    val onOpenVolume8Part1: () -> Unit = {},   // 赏罚驭灵诀 → 第八卷-1
+    val onOpenVolume9Part1: () -> Unit = {},   // 听言解意篇 → 第九卷-1
+    val onOpenVolume10Part1: () -> Unit = {},  // 正心守道录 → 第十卷-1
 )
 
 /**
- * 后山5 页 — 后山4 页 dolly 推进而来;点击"返回"按钮回到后山4;
- * **点击标签以外任意位置 → dolly 推进到后山6**(§35)。
+ * 后山9 页 — 后山8 页 dolly 推进而来;点击"返回"按钮回到后山8;整屏点击 noop(**当前是终点页**)。
  *
- * 2026-09-17 §33 新建:用户指令"创建后山5页面...后山5复用后山3页面的素材和动画"。
- * 2026-09-18 §35 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
- *                    (参数沿革详见本文件顶部的 §35 注释行),
- *                    整屏点击改为 startDollyIn(),标签加回 isTransitioning 门槛。
+ * 2026-09-18 §41 新建:用户指令"创建后山9页面...后山9复用后山7页面的素材和动画";
+ *                    §41 同步把 3 个标签文案按"文字→卷"映射改名。
  *
  * ══════════════════════════════════════════════════════════════════════════
- * 【§35 交互变更】从"终点页"变成"过场页"
+ * 【§41 交互行为】**目前是终点页** —— 复用后山7 同款素材(3 标签版)+ dolly-in 三景深平面代码
+ *                             (保留为模板但**未启用**);3 个标签改名
+ *                             (赏罚驭灵诀/听言解意篇/正心守道录)
  *
- *   §33~§34 期间:后山5 是**终点页** —— 整屏 clickable = noop,无 dolly,
- *                标签 clickable 不需要 `enabled = !isTransitioning` 门槛。
- *   §35 起:用户要求"点击标签以外的位置跳转到后山6" + "山峰拉近动画要出现"
- *           → 后山5 补上 **dolly-in 三景深平面**(与后山2 §36 / 后山3 §24 / 后山4 §33 同款),
- *             整屏 clickable 改为 `startDollyIn()`,标签加回 `enabled = !isTransitioning`。
- *
- *   ⚠️ 这条演进说明**"终点页"是暂时的** —— 每次在后面接新页面,原终点都要"补 dolly +
- *      改整屏 click + 给标签加门槛"三件事。后山3 §24、后山4 §33、后山5 §35 各经历过一次。
+ *   ⚠️ "终点页"是暂时的 —— 若日后要接后山10,需要(同 §39→§40 后山7 的升级路径):
+ *      ① Houshan9Actions 加 `onOpenHoushan10: () -> Unit = {}` 字段
+ *      ② startDollyIn 里 `actions.onOpenHoushan10()` 替代注释里的 noop
+ *      ③ 整屏 clickable 改为 `.clickable { startDollyIn() }`
+ *      ④ 标签 clickable 加 `enabled = !isTransitioning` 门槛
+ *      ⑤ BackHandler 改 `enabled = !isTransitioning` + 返回按钮加 `graphicsLayer { alpha = chromeFade }`
  * ══════════════════════════════════════════════════════════════════════════
  * 【点击行为 · 当前】
  *
  *   | 点击位置                  | 结果                          |
  *   |--------------------------|-------------------------------|
  *   | 3 个标签                  | → 各自对应的卷的第一页(见下表)|
- *   | 其余任意位置(空白/云/熊猫)| → **dolly-in 推进 → 后山6**   |
- *   | 左上角返回按钮            | → 后山4                       |
- *   | (dolly 进行中)点任何标签   | ❌ 无效(`enabled = false`)    |
+ *   | 其余任意位置(空白/云/熊猫)| → ❌ noop(当前是终点页)        |
+ *   | 左上角返回按钮            | → 后山8                       |
  *
- *   3 个标签的跳转目标(§34 接好,沿用 §31 的"文字→卷"映射):
- *     分门辨类掌 → 第六卷-1 · 百炼识物诀 → 第五卷-1 · 寻径迷踪步 → 第四卷-1
- *     ⚠️ 后山5 的标签文字是 §34 改过的,不能照搬后山3 的位置映射 —— 映射锚在"文字"上。
+ *   3 个标签的跳转目标(§41 接好,沿用 §38 的"文字→卷"映射):
+ *     赏罚驭灵诀 → 第八卷-1 · 听言解意篇 → 第九卷-1 · 正心守道录 → 第十卷-1
+ *     ⚠️ 后山9 的标签文字是 §41 改过的,不能照搬后山7 的位置映射 —— 映射锚在"文字"上。
  * ══════════════════════════════════════════════════════════════════════════
  *
- * 复用(与后山 3 同款素材):
+ * 复用(与后山 7 同款素材):
  *   - 全屏背景图 img_shilian2_bg.png
  *   - 云雾层 HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
  *   - 5 朵 ACI 动画云(58 / FCB左下 / 60 / FCB中下 / 62)+ 5 朵老云(old / 56 / 58 / 57 / 5)
  *   - 熊猫 img_shilian2_recovered_8,X=118 Y=405 W=181 H=96
- *   - 3 个标签    分门辨类掌 / 百炼识物诀 / 寻径迷踪步(位置与后山3 完全一致,文案已重命名 §34)
+ *   - 3 个标签    赏罚驭灵诀 / 听言解意篇 / 正心守道录(位置与后山7 完全一致,§41 文案重命名)
  *
- * 布局(与后山3 一致):
+ * 布局(与后山7 一致):
  *   - 全屏背景图(img_shilian2_bg.png)
  *   - 5 朵 ACI 动画云 + 5 朵老云
  *   - 熊猫图像(X=118, Y=405, W=181, H=96)
- *   - 标签3 百炼识物诀(X=43, Y=390, W=51, H=91)—— 字号 10sp,行间距 9sp,5×9=45dp < 容器 60dp ✓
- *   - 标签4 分门辨类掌(X=105, Y=295, W=30, H=53.5)—— 字号 4sp,行间距 6sp,5×6=30dp < 容器 60dp ✓
- *   - 标签2 寻径迷踪步(X=124, Y=521, W=96, H=170)—— 字号 14sp,行间距 14sp,5×14=70dp < 容器 80dp ✓
+ *   - 标签2 赏罚驭灵诀(X=124, Y=521, W=96, H=170)—— 字号 14sp,行间距 14sp,5×14=70dp < 容器 80dp ✓
+ *   - 标签3 听言解意篇(X=43, Y=390, W=51, H=91)—— 字号 10sp,行间距 9sp,5×9=45dp < 容器 60dp ✓
+ *   - 标签4 正心守道录(X=105, Y=295, W=30, H=53.5)—— 字号 4sp,行间距 6sp,5×6=30dp < 容器 60dp ✓
  *   - 返回按钮(X=30, Y=60, W=18, H=18)
  */
 @Composable
-fun Houshan5Screen(
-    actions: Houshan5Actions = Houshan5Actions(),
+fun Houshan9Screen(
+    actions: Houshan9Actions = Houshan9Actions(),
 ) {
     // §3 + §35:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
     // (旧版的 if (xxx == null) ({}) else xxx 5 行兜底已删)
@@ -145,8 +134,8 @@ fun Houshan5Screen(
     // 0 → 1 的推进进度;三个景深平面共用同一个进度值,保证同步
     val dolly = remember { Animatable(0f) }
 
-    // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { actions.onBack() }
+    // §41:后山9 是终点页 → 返回键始终启用(无过渡期)
+    BackHandler(enabled = true) { actions.onBack() }
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -169,19 +158,19 @@ fun Houshan5Screen(
         label = "pandaDy",
     )
 
-    // §21 5 朵 ACI 动画云进度(与后山3 同一套周期)
+    // §21 5 朵 ACI 动画云进度(与直接复用源后山7 同一套周期)
     val c58Progress = rememberCloudProgress(21_400, "cloud58")
     val c60Progress = rememberCloudProgress(8_000, "cloud60")
     val c62Progress = rememberCloudProgress(9_000, "cloud62")
 
-    // §21f 5 朵老云动画进度(与后山3 同一套)
+    // §21f 5 朵老云动画进度(与直接复用源后山7 同一套)
     val oOldProgress = rememberCloudProgress(4_300, "oldOld")
     val o56Progress = rememberCloudProgress(3_700, "old56")
     val o58Progress = rememberCloudProgress(9_500, "old58")
     val o57Progress = rememberCloudProgress(8_100, "old57")
     val o5Progress = rememberCloudProgress(7_900, "old5")
 
-    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§35,沿用 §33 后山 4 的同款) ──────
+    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§41 保留为模板,当前未启用) ──────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
     val cloudScale = 1f + DOLLY_CLOUD_SCALE * p
@@ -191,7 +180,8 @@ fun Houshan5Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // 整屏点击:启动纵深推进,并在半程把控制权交给导航(后山6 交叉淡入)
+    // §41:后山9 当前是终点页,startDollyIn 未接到任何 navigate —— 保留为模板。
+    //   若日后要接后山10,把 `actions.onOpenHoushan10()` 替代注释里的 noop,并改整屏 clickable。
     val startDollyIn: () -> Unit = {
         if (!isTransitioning) {
             isTransitioning = true
@@ -203,7 +193,7 @@ fun Houshan5Screen(
             }
             scope.launch {
                 delay(DOLLY_HANDOFF_MS)
-                actions.onOpenHoushan6()
+                // actions.onOpenHoushan10()  ← §41 终点页:暂不跳转
             }
         }
     }
@@ -212,8 +202,13 @@ fun Houshan5Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // §35:整屏 clickable 触发 dolly-in(取代 §33~§34 的 noop 终点语义)
-            .clickable { startDollyIn() },
+            // §41:后山9 当前是终点页 → 整屏 clickable = noop(与后山7 在 §39 的同款做法)。
+            //   若日后要接后山10,这里改成 `.clickable { startDollyIn() }`。
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
         Box(
@@ -225,7 +220,7 @@ fun Houshan5Screen(
                     transformOrigin = focal
                 },
         ) {
-            // 全屏背景图(试炼转换.png —— 与后山3 同一张)
+            // 全屏背景图(试炼转换.png —— 与直接复用源后山7 同一张;沿革:后山7←后山5←后山3)
             Image(
                 painter = painterResource(R.drawable.img_shilian2_bg),
                 contentDescription = null,
@@ -233,7 +228,8 @@ fun Houshan5Screen(
                 contentScale = ContentScale.Crop,
             )
 
-            // 云雾层(程序化水墨云海,持续循环)— 用 Houshan3 变体(与后山3 同)
+            // 云雾层(程序化水墨云海,持续循环)— 用 HoushanMistVariant.Houshan3 变体(与后山7 同)
+            //   注意:"Houshan3" 是变体枚举名(背景是那张水墨画作),与"复用源是后山几"无关
             HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
         }
 
@@ -256,7 +252,7 @@ fun Houshan5Screen(
                         alpha = cloudFade
                     },
             ) {
-                // ══ §21 动画云元素竖排(5 个,与后山3 完全同一套)════════════════
+                // ══ §21 动画云元素竖排(5 个,与后山7 完全同一套)════════════════
                 // y 序列(顶边):ACI58 8 · FCB左下 178.5 · ACI60 330.5 · FCB中下 477.5 · ACI62 620
                 AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_houshan1_cloud_58),
@@ -329,7 +325,7 @@ fun Houshan5Screen(
                     alphaAmp = 0.25f,
                 )
 
-                // ══ §21f 5 朵老云(与后山3 完全同一套)════════════════════════════
+                // ══ §21f 5 朵老云(与后山7 完全同一套)════════════════════════════
                 AnimatedCloudImage(
                     painter = painterResource(R.drawable.img_shilian3_cloud_old),
                     contentDescription = "旧云朵",
@@ -402,7 +398,7 @@ fun Houshan5Screen(
                         alpha = labelFade
                     },
             ) {
-                // 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— 与后山3 同
+                // 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— 与直接复用源后山7 同
                 Image(
                     painter = painterResource(R.drawable.img_shilian2_recovered_8),
                     contentDescription = "熊猫",
@@ -416,18 +412,12 @@ fun Houshan5Screen(
                     contentScale = ContentScale.FillBounds,
                 )
 
-                // "标签3" 图像(百炼识物诀,X=43, Y=390, W=51, H=91)— §34 已接 → 第五卷-1
-                //   §35:加 `enabled = !isTransitioning` 门槛(后山5 现在有 dolly,防过渡途中误触)
+                // "标签3" 图像(听言解意篇,X=43, Y=390, W=51, H=91)— §41 已接 → 第九卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
                         .size(width = 51.dp, height = 91.dp)
-                        .clickable(
-                            enabled = !isTransitioning,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = actions.onOpenVolume5Part1,
-                        ),
+                        .clickable(onClick = actions.onOpenVolume9Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -436,7 +426,7 @@ fun Houshan5Screen(
                         contentScale = ContentScale.FillBounds,
                     )
                     Text(
-                        text = "百\n炼\n识\n物\n诀",
+                        text = "听\n言\n解\n意\n篇",
                         color = Color.Black,
                         // §34 用户指令:行间距 9sp(略小于字号 10sp,字符紧凑);5×9=45dp,容器 60dp 留 15dp 余量
                         style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 9.sp),
@@ -454,19 +444,12 @@ fun Houshan5Screen(
                     )
                 }
 
-                // "标签4" 图像(分门辨类掌,X=105, Y=295, W=30, H=53.5)— §34 已接 → 第六卷-1
-                //   文案 5→5 字,字号 4sp 不变
-                //   §35:加 `enabled = !isTransitioning` 门槛
+                // "标签4" 图像(正心守道录,X=105, Y=295, W=30, H=53.5)— §41 已接 → 第十卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(
-                            enabled = !isTransitioning,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = actions.onOpenVolume6Part1,
-                        ),
+                        .clickable(onClick = actions.onOpenVolume10Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -475,7 +458,7 @@ fun Houshan5Screen(
                         contentScale = ContentScale.FillBounds,
                     )
                     Text(
-                        text = "分\n门\n辨\n类\n掌",
+                        text = "正\n心\n守\n道\n录",
                         color = Color.Black,
                         // §34 用户指令:行间距 6sp(略大于字号 4sp,适度撑开);5×6=30dp,容器 60dp 留 30dp 余量
                         style = TextStyle(fontFamily = YaHei, fontSize = 4.sp, lineHeight = 6.sp),
@@ -493,18 +476,12 @@ fun Houshan5Screen(
                     )
                 }
 
-                // "标签2" 图像(寻径迷踪步,X=124, Y=521, W=96, H=170)— §34 已接 → 第四卷-1
-                //   §35:加 `enabled = !isTransitioning` 门槛
+                // "标签2" 图像(赏罚驭灵诀,X=124, Y=521, W=96, H=170)— §41 已接 → 第八卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
                         .size(width = 96.dp, height = 170.dp)
-                        .clickable(
-                            enabled = !isTransitioning,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = actions.onOpenVolume4Part1,
-                        ),
+                        .clickable(onClick = actions.onOpenVolume8Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -513,7 +490,7 @@ fun Houshan5Screen(
                         contentScale = ContentScale.FillBounds,
                     )
                     Text(
-                        text = "寻\n径\n迷\n踪\n步",
+                        text = "赏\n罚\n驭\n灵\n诀",
                         color = Color.Black,
                         // §34 用户指令:行间距 14sp(等于字号,字符紧凑);5×14=70dp,容器 80dp 有 10dp 余量
                         style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 14.sp),
@@ -533,14 +510,13 @@ fun Houshan5Screen(
             }
 
             // ── UI chrome:左上角返回按钮 ─────────────────────────────────────
-            // 只淡出不缩放:UI chrome 不参与景深,否则会随山体放大而"跳动"
+            // §41:后山9 是终点页 → 无 dolly,按钮不需淡出(去掉了 chromeFade)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
-                    .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
+                    .clickable(onClick = actions.onBack),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
