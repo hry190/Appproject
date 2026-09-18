@@ -78,12 +78,16 @@
 | 返回键 / 返回按钮 | → 上一页 |
 | 整屏点击 | 后山2~9 **已取消**;后山1 **→ 后山2**(09-18 §16)|
 
+> 📌 上表是 **今日开工(§1)快照**,记录的是开工那一刻的状态。当日后续变化见:
+> §2(创建后山10)、§3(创建后山11 + 三页「正心守道录」接 dolly)、§4(main 同步 + 修仓库配置)。
+> 收工现状:**后山 2~11;标签死区已全部清零**(上表"死区"一行的两处在 §2/§3 接完)。
+
 ### 待办
 
 - [x] 等用户指示今日工作内容 → 已收到:创建后山10(§2)、后山11(§3)
 - [x] 🔔 **(提醒项)**`听言解意篇` / `正心守道录` 的"Y 最大页面"创建后,接上后山8/9 的 4 个标签 → **后山10(§2)/ 后山11(§3)已创建**,相关死区全部接完
-- [ ] (可选)`main` 分支同步(纯 fast-forward)
-- [ ] **待 commit**:§2 + §3 的改动尚未提交
+- [x] `main` 分支同步 → **已完成**(§4):4 个 ref 全部到 `97b55ff`;顺带修复 `.git/config` 的非法 `pull.twohead`
+- [x] §2 + §3 的改动已提交并推送(`97b55ff`)
 
 **A 模式**:执行但不 commit,等用户说"commit"
 
@@ -262,3 +266,89 @@ val startDollyIn: (() -> Unit) -> Unit = { onComplete ->
 1. **"让动画能去往不同目标" = 把目标作为参数传入**:原 `startDollyIn` 硬编码单一目标,一旦同页出现"两个标签去往不同页面"就必须参数化。参数化版本同时兼容模板用途(无调用点时保留,如后山11)。
 2. **§15 规则的"Y 最大页"是动态的**:每新建一页,都可能让旧页某文本失去 Y 最大地位。后山11 创建后,后山10 的「正心守道录」立即从"该跳卷"变成"该推进"。**每次加页面都要重算全链 Y 值**,并回头检查旧页的接线是否仍然成立。
 3. **同文件多处相似锚点必须带坐标**:后山9 的标签3 与标签4 的 `.clickable(...)` 行**逐字相同**(连注释也一样),只用该行作锚点会命中两处。加上上一行 `.offset(x = ..., y = ...)` 即可唯一 —— 本次三页的标签替换全部使用带坐标的锚点(延续 §2 踩坑的教训)。
+
+---
+
+## §4 main 分支同步 + 修复仓库非法配置
+
+### 用户指令
+
+> 同步到main
+
+### 结果
+
+| Ref | Commit |
+|---|---|
+| `local main` | `97b55ff` |
+| `origin/main` | `97b55ff` |
+| `local zzz` | `97b55ff` |
+| `origin/zzz` | `97b55ff` |
+
+推送结果:`9a30078..97b55ff  zzz -> main`(fast-forward)✓ 当前仍停在 `zzz` 分支,工作树干净。
+
+### ⚠️ 踩坑 1:`origin/zzz` ref 歧义导致差点误判
+
+最初用简写判断,得到**"双向分歧、不可快进"**的错误结论:
+
+```
+git rev-list --left-right --count origin/main...origin/zzz   →  21   1
+git merge-base --is-ancestor origin/main origin/zzz          →  exit 1
+stderr: warning: refname 'origin/zzz' is ambiguous.
+```
+
+改用**完整 refname** 后结论完全反转:
+
+```
+git rev-list --left-right --count refs/remotes/origin/main...refs/remotes/origin/zzz  →  0   21
+git merge-base --is-ancestor refs/remotes/origin/main refs/remotes/origin/zzz         →  exit 0 ✓
+```
+
+→ **教训:脚本里判断分支关系一律用 `refs/remotes/origin/xxx` 全名,不要用简写。** git 自己会打印 ambiguous 警告,但**很容易被忽略**。
+
+### ⚠️ 踩坑 2:`.git/config` 里的非法合并策略(真实 bug)
+
+原计划 `git checkout main && git merge --ff-only zzz` —— **失败**:
+
+```
+Could not find merge strategy 'theirs'.
+Available strategies are: octopus ours recursive resolve subtree
+```
+
+根因在 `.git/config`:
+
+```ini
+[pull]
+	twohead = theirs     ← 非法:该键要的是**策略名**(ort / recursive / resolve / subtree / octopus),
+	                       而 theirs 是 `-X theirs` 的**选项值**
+[merge]
+	ff = false
+```
+
+Git 2.55 会让 `git merge` 读取 `pull.twohead` 作为默认策略 → **每次 merge 都直接报错终止**。
+
+→ **这很可能就是 main 长期无法同步的真正原因**:不是"忘了合并",而是合并命令**根本跑不起来**。
+
+**绕行方案**(完全不需要 merge):
+
+```
+git push origin zzz:main                                          # 远程 main 快进
+git fetch origin
+git branch -f main refs/remotes/origin/main                       # 本地 main 跟进
+```
+
+**修复**(用户选择"删掉 pull.twohead"):
+
+```
+git config --unset pull.twohead
+```
+
+验证:`git merge --ff-only zzz` → `Already up to date.`,**exit=0** ✓ merge 功能恢复正常。
+
+> **遗留**:`merge.ff = false` 保持未改。它本身合法,但效果是"merge 默认总是创建合并提交,即使可以快进"。
+> 若日后希望 `git merge` 能直接快进 main,需另行改为 `true`,或在命令里显式加 `--ff-only`。
+
+### 沉淀
+
+1. **判断分支关系用全名 refname**:简写 `origin/zzz` 存在歧义风险,会**静默给出错误结论** —— 本次险些因此放弃一次完全安全的快进。
+2. **多工具一致 ≠ 结论正确**:`--left-right --count` 与 `is-ancestor` 双双指向"分歧",但换成全名后两者同时反转,说明错误来自 **ref 解析**,而非仓库状态。当多个证据共享同一个错误输入时,它们的一致没有说服力。
+3. **`.git/config` 也会藏 bug,且报错信息会误导**:它不随仓库分发,容易在换机器/换工具后被写入非法值;而 `Could not find merge strategy` 指向的是"策略",不是配置键。排查时应先跑 **`git config --list --show-origin`** 看全量配置。
