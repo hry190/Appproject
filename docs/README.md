@@ -32,6 +32,9 @@
 | [SESSION-LOG-2026-09-14.md](./SESSION-LOG-2026-09-14.md) | 2026-09-14 后山1「识机真决」回调 Houshan2→Vol-1(应用 / 撤回 / 重新应用) | 2026-09-14 |
 | [SESSION-LOG-2026-09-15.md](./SESSION-LOG-2026-09-15.md) | 2026-09-15 后山1/2/3 云雾缭绕 + 后山2→3 dolly-in + 后山3 云朵系列 + adb reverse 重设 | 2026-09-15 |
 | [SESSION-LOG-2026-09-16.md](./SESSION-LOG-2026-09-16.md) | 2026-09-16 后山三页云素材重排(60~90dp 间隔 / 单向+摆动双模式 / 老云动画 / tint 分带)+ Volume3Part7 坐标修复 + 48 处注释对齐 + 审计脚本 | 2026-09-16 |
+| [SESSION-LOG-2026-09-17.md](./SESSION-LOG-2026-09-17.md) | 2026-09-17 后山4 新建 + 后山3/4 补 dolly-in + 后山2/3/4 标签跳转配置 + Docker compose 插件修复(§22~§34) | 2026-09-17 |
+| [SESSION-LOG-2026-09-18.md](./SESSION-LOG-2026-09-18.md) | 2026-09-18 **Compose slot bug 根治**(§3~§5)+ 后山6~9 四个新页 + 后山1~9 导航体系重构 + `setup-reverse.ps1`(§1~§16,**顶部有 TL;DR**)| 2026-09-18 |
+| [SESSION-LOG-2026-09-19.md](./SESSION-LOG-2026-09-19.md) | 2026-09-19(进行中)| 2026-09-19 |
 | [MERGE-WORKFLOW.md](./MERGE-WORKFLOW.md) | 分支合并 SOP —— 严格 4 步(侦察 → 评估 → 建议 → 合并),合并任何分支前必读 | - |
 | [acceptance-20260909.md](./acceptance-20260909.md) | 创作与大会双账号阶段验收记录 | 2026-09-09 |
 | [backend-delivery-checklist.md](./backend-delivery-checklist.md) | 后端交付检查清单(以工作区源码为准) | 2026-09-09 |
@@ -42,8 +45,8 @@
 | [IMAGE-COORDINATE-VERIFICATION.md](./IMAGE-COORDINATE-VERIFICATION.md) | 图片坐标验证方法 — PNG 像素校验 + AskUserQuestion 二步决策 + KDoc 真机调整留痕 | 2026-09-11 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 
-> 📌 **最新一天是 `SESSION-LOG-2026-09-16.md`,有 3000+ 行** —— 只想快速了解状态的话,
-> 直接读它顶部的 **「🎯 今日 TL;DR」** 一节(约 40 行),不必从头读。
+> 📌 **最新一天是 `SESSION-LOG-2026-09-19.md`**;内容最厚的是 `09-16`(3000+ 行)与 `09-18`(1434 行)。
+> **只想快速了解状态的话,直接读最新日志顶部的「🎯 今日 TL;DR」一节**(约 40~80 行),不必从头读。
 
 **项目根目录的文档**(不属于 docs/ 但常参考):
 - [DEV-SETUP.md](../DEV-SETUP.md) — dev 环境完整配置流程
@@ -53,11 +56,20 @@
 **工具脚本**(不是文档,但排查时常用):
 - [scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1) — 审计注释里的几何值(X/Y/W/H)与代码是否一致;
   默认只读,`-Fix` 对齐,`-FailOnDrift` 供 CI。判据见 `ONBOARDING.md` §5.4
+  > ⚠️ 它**只覆盖几何值**;"0 漂移 ≠ 注释没问题" —— 段号引用、复用源指向、状态描述这类**叙事性注释查不到**
+- [scripts/setup-reverse.ps1](../scripts/setup-reverse.ps1) — **重建 `adb reverse` 端口转发**(2026-09-18 §2 新建)
+  ```powershell
+  ./scripts/setup-reverse.ps1 -Serial 21908b7a   # 多设备时必须显式指定 -Serial
+  ./scripts/setup-reverse.ps1 -Quiet             # 静默(仅出错时输出);已设就跳过(约 60ms)
+  ```
+  失败必返非零退出码(防"静默失效");建完必验证。
+  (更早的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它硬编码 SDK 路径 + 靠机型名找设备 + 失败时仍返回 0)
 - [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
-- 端口转发没有脚本,直接敲(**多设备时必须带 `-s`**):
-  `adb -s <serial> reverse tcp:8010 tcp:8010`
-  (原本的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它靠 `adb devices` 找 `cupid` 型号,
-  而该命令不带 `-l` 时不含型号 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)
+
+> 📌 **`adb reverse` 在 2026-09-18 之前没有脚本**(旧 `infra/adb-reverse.ps1` 靠 `adb devices` 找 `cupid` 机型,
+> 而该命令不带 `-l` 时不含机型 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)。
+> **现在请用 `scripts/setup-reverse.ps1`**(见上);手动等价命令(多设备时必须带 `-s`):
+> `adb -s <serial> reverse tcp:8010 tcp:8010`
 
 ---
 
