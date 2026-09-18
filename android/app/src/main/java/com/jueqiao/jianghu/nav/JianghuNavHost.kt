@@ -87,11 +87,18 @@ import com.jueqiao.jianghu.ui.screens.gunlun4.Gunlun4Screen
 import com.jueqiao.jianghu.ui.screens.gunlun5.Gunlun5Screen
 import com.jueqiao.jianghu.ui.screens.gunlun6.Gunlun6Screen
 import com.jueqiao.jianghu.ui.screens.gunlun7.Gunlun7Screen
+import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Actions           // §7 全量迁移,data class 防 §3 slot bug
 import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
+import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Actions           // §7 全量迁移
 import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
+import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Actions           // §7 全量迁移
 import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
+import com.jueqiao.jianghu.ui.screens.houshan4.Houshan4Actions           // §7 全量迁移
 import com.jueqiao.jianghu.ui.screens.houshan4.Houshan4Screen            // §24 新增
+import com.jueqiao.jianghu.ui.screens.houshan5.Houshan5Actions           // §5/§6 先行重构,data class 防 §3 slot bug
 import com.jueqiao.jianghu.ui.screens.houshan5.Houshan5Screen            // §33 新增
+import com.jueqiao.jianghu.ui.screens.houshan6.Houshan6Actions           // §5/§6 先行重构
+import com.jueqiao.jianghu.ui.screens.houshan6.Houshan6Screen            // §35 新增
 import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
 import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
 import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
@@ -553,11 +560,13 @@ fun JianghuNavHost(
         }
         composable(Routes.Shilian) {
             Houshan1Screen(
-                onBack = { navController.popBackStack() },
-                onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
-                // §25:用户指令"点击标签识机真决改成无法跳转" → 不再传 onOpenVolume1
-                //   (反转 §22 的 `onOpenVolume1 = { navigate(Routes.Volume1) }`)。
-                //   后山2 的同名标签仍保留跳转,未受影响。
+                actions = Houshan1Actions(
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
+                    // §25:用户指令"点击标签识机真决改成无法跳转" → 不再传 onOpenVolume1
+                    //   (反转 §22 的 `onOpenVolume1 = { navigate(Routes.Volume1) }`)。
+                    //   后山2 的同名标签仍保留跳转,未受影响。
+                ),
             )
         }
         // 后山2 → 后山3:沉浸式纵深推进(§36)。缩放由 Houshan2Screen 内部按景深分层完成,
@@ -575,15 +584,17 @@ fun JianghuNavHost(
             },
         ) {
             Houshan2Screen(
-                onBack = { navController.popBackStack() },
-                onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
-                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
-                // §28:拆招心法标签 → 第二卷-1
-                onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },
-                // §29:万象谱标签 → 第三卷-1
-                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
-                // §30:寻径迷踪步标签 → 第四卷-1
-                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
+                actions = Houshan2Actions(
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
+                    onOpenVolume1 = { navController.navigate(Routes.Volume1) },
+                    // §28:拆招心法标签 → 第二卷-1
+                    onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },
+                    // §29:万象谱标签 → 第三卷-1
+                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
+                    // §30:寻径迷踪步标签 → 第四卷-1
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
+                ),
             )
         }
         composable(
@@ -615,13 +626,15 @@ fun JianghuNavHost(
             },
         ) {
             Houshan3Screen(
-                onBack = { navController.popBackStack() },
-                // §24:反转 §21o —— 不再跳转未完待续页,改为跳转新建的后山 4 页
-                onOpenHoushan4 = { navController.navigate(Routes.Shilian4) },
-                // §31:3 个标签 → 按"文字 → 卷"映射(与后山2 §28~§30 同一张表)
-                onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },  // 拆招心法
-                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
-                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                actions = Houshan3Actions(
+                    onBack = { navController.popBackStack() },
+                    // §24:反转 §21o —— 不再跳转未完待续页,改为跳转新建的后山 4 页
+                    onOpenHoushan4 = { navController.navigate(Routes.Shilian4) },
+                    // §31:3 个标签 → 按"文字 → 卷"映射(与后山2 §28~§30 同一张表)
+                    onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },  // 拆招心法
+                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                ),
             )
         }
         // §24:后山 4 页 —— 复用后山 2 素材;§33 起从"终点页"变成"过场页"(dolly 到后山5)
@@ -652,15 +665,17 @@ fun JianghuNavHost(
             },
         ) {
             Houshan4Screen(
-                onBack = { navController.popBackStack() },
-                // §33:点击标签以外任意位置 → dolly 推进到后山5
-                onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },
-                // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
-                //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
-                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
-                onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
-                onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
-                onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
+                actions = Houshan4Actions(
+                    onBack = { navController.popBackStack() },
+                    // §33:点击标签以外任意位置 → dolly 推进到后山5
+                    onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },
+                    // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
+                    //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
+                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
+                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
+                ),
             )
         }
         // §33:后山 5 页 —— 复用后山 3 的素材/动画,当前是**终点页**(整屏 noop)
@@ -681,12 +696,43 @@ fun JianghuNavHost(
             },
         ) {
             Houshan5Screen(
-                onBack = { navController.popBackStack() },
-                // §33:3 个标签的跳转目标**尚未配置**(用户只说"复用后山3 的素材和动画"),
-                //   默认全 noop。若日后要接,参照后山3 §31 的映射:
-                //   onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) }  // 拆招心法
-                //   onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) }  // 万象谱
-                //   onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) }  // 寻径迷踪步
+                actions = Houshan5Actions(
+                    onBack = { navController.popBackStack() },
+                    // §35:点击标签以外任意位置 → dolly 推进到后山6
+                    onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },
+                    // §34:3 个标签按"文字→卷"映射接好 —— 详见 Houshan5Screen 顶 KDoc
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步 → 第四卷-1
+                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀 → 第五卷-1
+                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
+                ),
+            )
+        }
+        // §35:后山 6 页 —— 复用后山 4 的素材/动画,当前是**终点页**(整屏 noop)
+        composable(
+            route = Routes.Shilian6,
+            // 镜头减速停稳(与后山 5 内部 dolly 末态衔接,与 Shilian5 同款)
+            enterTransition = {
+                scaleIn(
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                    initialScale = 1.10f,
+                    transformOrigin = TransformOrigin(0.5f, 0.48f),
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 640, delayMillis = 120, easing = LinearEasing),
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing))
+            },
+        ) {
+            Houshan6Screen(
+                actions = Houshan6Actions(
+                    onBack = { navController.popBackStack() },
+                    // §35:4 个标签按 §32 的"文字→卷"映射接好(与后山4 一致)
+                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱     → 第三卷-1
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步 → 第四卷-1
+                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀 → 第五卷-1
+                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
+                ),
             )
         }
         composable(Routes.Unfinished) {
