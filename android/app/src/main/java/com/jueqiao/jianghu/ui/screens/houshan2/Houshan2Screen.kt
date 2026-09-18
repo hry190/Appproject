@@ -94,6 +94,8 @@ private const val FOCAL_Y = 0.48f
  *     ⚠️ **2026-09-18 §12 取消跳转** —— 原为滚动到第四卷-1(`onOpenVolume4Part1`),现为死区
  *
  * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 后山2 的 4 个标签跳转**已全部取消**。
+ * ✅ **2026-09-18 §14 部分恢复** —— 仅 **Y 值最大的标签**(页面上最下方那个)恢复跳转到"其文本对应的卷的第一页";
+ *    其余标签**仍为死区**,等用户继续设置。
  *    → 标签现在是**死区**:`.clickable(..., onClick = {})` 仅消费点击事件(防止冒泡触发 dolly),**不跳转**。
  *    → `Houshan2Actions` 的 4 个 `onOpenVolume*` 字段**保留**(等用户给新映射表后重设;届时只需恢复
  *      本文件的 `onClick` + `JianghuNavHost` 的回调两处)。
@@ -455,7 +457,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = -13.dp, y = 570.dp)
                         .size(width = 106.dp, height = 188.dp)
-                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume1)   /* 2026-09-18 §14 恢复跳转(其余标签仍待设置) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
