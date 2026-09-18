@@ -115,8 +115,12 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan2Actions(
     val onBack: () -> Unit = {},
-    val onOpenHoushan3: () -> Unit = {},
-    val onOpenVolume1: () -> Unit = {},         // 识机真决 → 第一卷-1 (§22)
+    // ── 2026-09-18 §15 新规则:点击"非本页 Y 最大"的标签 → 跳到"该文本为 Y 最大标签"的那个页面 ──
+    val onOpenHoushan3: () -> Unit = {},   // 拆招心法   → 后山3(拆招心法在后山3 是 Y 最大标签)
+    val onOpenHoushan4: () -> Unit = {},   // 万象谱     → 后山4(万象谱在后山4 是 Y 最大标签)
+    val onOpenHoushan5: () -> Unit = {},   // 寻径迷踪步 → 后山5(寻径迷踪步在后山5 是 Y 最大标签)
+    // ── 卷跳转:仅"本页 Y 最大标签"使用;其余卷字段暂未使用(保留备用)──
+    val onOpenVolume1: () -> Unit = {},         // 识机真决(本页 Y 最大,Y=570)→ 第一卷-1
     val onOpenVolume2Part1: () -> Unit = {},    // 拆招心法 → 第二卷-1 (§28)
     val onOpenVolume3Part1: () -> Unit = {},    // 万象谱     → 第三卷-1 (§29)
     val onOpenVolume4Part1: () -> Unit = {},    // 寻径迷踪步 → 第四卷-1 (§30)
@@ -132,7 +136,7 @@ fun Houshan2Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }   // 2026-09-18 §15 恢复:返回上一页
 
     // 2026-09-17 §22:按用户指令反转 §18,重新加回熊猫 (img_shilian_panda),沿用 §21 的
     // "上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s" 动画参数;放在景深平面 3(与 4 个标签同层),
@@ -493,7 +497,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 168.dp, y = 345.dp)
                         .size(width = 74.dp, height = 131.dp)
-                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenHoushan3)   /* 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面 */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -526,7 +530,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 113.dp, y = 322.dp)
                         .size(width = 50.dp, height = 88.dp)
-                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenHoushan4)   /* 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面 */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -561,7 +565,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 151.dp, y = 248.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenHoushan5)   /* 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面 */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -596,7 +600,7 @@ fun Houshan2Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack)   /* 2026-09-18 §15 恢复:返回上一页 */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

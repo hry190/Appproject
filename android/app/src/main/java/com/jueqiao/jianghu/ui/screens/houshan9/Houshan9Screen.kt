@@ -70,7 +70,10 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan9Actions(
     val onBack: () -> Unit = {},
-    val onOpenVolume8Part1: () -> Unit = {},   // 赏罚驭灵诀 → 第八卷-1
+    // ── 2026-09-18 §15:后山9 是 3 标签页的最后一页,没有"跳页"字段(它的两个非 Y 最大标签无目标)──
+    val onOpenVolume8Part1: () -> Unit = {},   // 赏罚驭灵诀(本页 Y 最大,Y=521)→ 第八卷-1
+    // ⚠️ 听言解意篇 / 正心守道录 **暂无目标** —— 用户尚未创建"它们 Y 最大"的页面(§15 用户原话)
+    //    → 这两个标签保持死区,等用户创建后提醒他
     val onOpenVolume9Part1: () -> Unit = {},   // 听言解意篇 → 第九卷-1
     val onOpenVolume10Part1: () -> Unit = {},  // 正心守道录 → 第十卷-1
 )
@@ -139,7 +142,7 @@ fun Houshan9Screen(
     val dolly = remember { Animatable(0f) }
 
     // 2026-09-18 §13:导航已断开 → BackHandler 保留拦截但动作置空(按返回键不跳转)
-    BackHandler(enabled = true) { }   // 2026-09-18 §13 断开导航(待重设)
+    BackHandler(enabled = true) { actions.onBack() }   // 2026-09-18 §15 恢复:返回上一页
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -520,7 +523,7 @@ fun Houshan9Screen(
                     .align(Alignment.TopStart)
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
-                    .clickable(onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
+                    .clickable(onClick = actions.onBack)   /* 2026-09-18 §15 恢复:返回上一页 */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

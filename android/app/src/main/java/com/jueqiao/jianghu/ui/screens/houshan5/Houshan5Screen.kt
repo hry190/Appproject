@@ -76,8 +76,11 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan5Actions(
     val onBack: () -> Unit = {},
-    val onOpenHoushan6: () -> Unit = {},
-    val onOpenVolume4Part1: () -> Unit = {},
+    // ── 2026-09-18 §15 新规则:点击"非本页 Y 最大"的标签 → 跳到"该文本为 Y 最大标签"的那个页面 ──
+    val onOpenHoushan6: () -> Unit = {},   // 百炼识物诀 → 后山6(百炼识物诀在后山6 是 Y 最大标签)
+    val onOpenHoushan7: () -> Unit = {},   // 分门辨类掌 → 后山7(分门辨类掌在后山7 是 Y 最大标签)
+    // ── 卷跳转:仅"本页 Y 最大标签"使用 ──
+    val onOpenVolume4Part1: () -> Unit = {},  // 寻径迷踪步(本页 Y 最大,Y=521)→ 第四卷-1
     val onOpenVolume5Part1: () -> Unit = {},
     val onOpenVolume6Part1: () -> Unit = {},
 )
@@ -150,7 +153,7 @@ fun Houshan5Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }   // 2026-09-18 §15 恢复:返回上一页
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -434,7 +437,7 @@ fun Houshan5Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                            onClick = actions.onOpenHoushan6,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                         ),
                 ) {
                     Image(
@@ -473,7 +476,7 @@ fun Houshan5Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                            onClick = actions.onOpenHoushan7,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                         ),
                 ) {
                     Image(
@@ -548,7 +551,7 @@ fun Houshan5Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack)   /* 2026-09-18 §15 恢复:返回上一页 */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

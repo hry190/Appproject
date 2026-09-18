@@ -127,9 +127,12 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan8Actions(
     val onBack: () -> Unit = {},
-    // 2026-09-18 §13:整屏点击的导航已断开(dolly 代码保留为模板,未被调用);原为 → dolly 推进到后山9
-    val onOpenHoushan9: () -> Unit = {},
-    val onOpenVolume7Part1: () -> Unit = {},   // 千层观心镜 → 第七卷-1
+    // ── 2026-09-18 §15 新规则:点击"非本页 Y 最大"的标签 → 跳到"该文本为 Y 最大标签"的那个页面 ──
+    val onOpenHoushan9: () -> Unit = {},   // 赏罚驭灵诀 → 后山9(赏罚驭灵诀在后山9 是 Y 最大标签)
+    //   ⚠️ 听言解意篇 / 正心守道录 **暂无目标** —— 用户尚未创建"它们 Y 最大"的页面(2026-09-18 §15 用户原话),
+    //      这两个标签保持死区,等用户创建后提醒他
+    // ── 卷跳转:仅"本页 Y 最大标签"使用 ──
+    val onOpenVolume7Part1: () -> Unit = {},   // 千层观心镜(本页 Y 最大,Y=570)→ 第七卷-1
     val onOpenVolume8Part1: () -> Unit = {},   // 赏罚驭灵诀 → 第八卷-1
     val onOpenVolume9Part1: () -> Unit = {},   // 听言解意篇 → 第九卷-1
     val onOpenVolume10Part1: () -> Unit = {},  // 正心守道录 → 第十卷-1
@@ -148,7 +151,7 @@ fun Houshan8Screen(
     val dolly = remember { Animatable(0f) }
 
     // 2026-09-18 §11:过渡期间禁用返回手势,避免动画途中被中断而露出半程画面(同 §4 后山5)
-    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }   // 2026-09-18 §15 恢复:返回上一页
 
     // 熊猫上下浮 + 呼吸缩放(与后山1 §21 / 后山2 §22 同款参数;2026-09-18 §4 后山6 沿用)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -462,7 +465,7 @@ fun Houshan8Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                        onClick = actions.onOpenHoushan9,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                     ),
             ) {
                 Image(
@@ -570,7 +573,7 @@ fun Houshan8Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack)   /* 2026-09-18 §15 恢复:返回上一页 */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

@@ -128,9 +128,12 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan6Actions(
     val onBack: () -> Unit = {},
-    // 2026-09-18 §13:整屏点击的导航已断开(dolly 代码保留为模板,未被调用);原为 → dolly 推进到后山7
-    val onOpenHoushan7: () -> Unit = {},
-    val onOpenVolume5Part1: () -> Unit = {},  // 百炼识物诀 → 第五卷-1
+    // ── 2026-09-18 §15 新规则:点击"非本页 Y 最大"的标签 → 跳到"该文本为 Y 最大标签"的那个页面 ──
+    val onOpenHoushan7: () -> Unit = {},   // 分门辨类掌 → 后山7(分门辨类掌在后山7 是 Y 最大标签)
+    val onOpenHoushan8: () -> Unit = {},   // 千层观心镜 → 后山8(千层观心镜在后山8 是 Y 最大标签)
+    val onOpenHoushan9: () -> Unit = {},   // 赏罚驭灵诀 → 后山9(赏罚驭灵诀在后山9 是 Y 最大标签)
+    // ── 卷跳转:仅"本页 Y 最大标签"使用 ──
+    val onOpenVolume5Part1: () -> Unit = {},  // 百炼识物诀(本页 Y 最大,Y=570)→ 第五卷-1
     val onOpenVolume6Part1: () -> Unit = {},  // 分门辨类掌 → 第六卷-1
     val onOpenVolume7Part1: () -> Unit = {},  // 千层观心镜 → 第七卷-1
     val onOpenVolume8Part1: () -> Unit = {},  // 赏罚驭灵诀 → 第八卷-1
@@ -149,7 +152,7 @@ fun Houshan6Screen(
     val dolly = remember { Animatable(0f) }
 
     // 2026-09-18 §9:过渡期间禁用返回手势,避免动画途中被中断而露出半程画面(同 §4 后山5)
-    BackHandler(enabled = !isTransitioning) { }   // 2026-09-18 §13 断开导航(待重设)
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }   // 2026-09-18 §15 恢复:返回上一页
 
     // 熊猫上下浮 + 呼吸缩放(沿用 §22 后山 2 / §21 后山 1 / 2026-09-18 §4 后山6 的同款动画参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -463,7 +466,7 @@ fun Houshan6Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                        onClick = actions.onOpenHoushan7,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                     ),
             ) {
                 Image(
@@ -499,7 +502,7 @@ fun Houshan6Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                        onClick = actions.onOpenHoushan8,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                     ),
             ) {
                 Image(
@@ -535,7 +538,7 @@ fun Houshan6Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
+                        onClick = actions.onOpenHoushan9,   // 2026-09-18 §15 跳到"该文本为 Y 最大标签"的页面
                     ),
             ) {
                 Image(
@@ -571,7 +574,7 @@ fun Houshan6Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §13 断开导航(待重设) */,
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack)   /* 2026-09-18 §15 恢复:返回上一页 */,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

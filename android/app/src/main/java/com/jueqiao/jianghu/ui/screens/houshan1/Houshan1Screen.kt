@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -179,7 +180,11 @@ fun Houshan1Screen(
             //   唯一会**消费事件**的子元素是左上角返回按钮 → 点它不会误触发跳转;
             //   4 个标签 / 气泡 / 熊猫 / 云都没有 clickable → 点击一律冒泡到这里。
             //   完整行为表 + 演变史见文件顶部【点击行为】/【点击交互演变史】。
-            .clickable { actions.onOpenHoushan2() },
+            .clickable(   // 2026-09-18 §15 取消整屏点击(用户指令"取消各个页面的整屏点击");原为 → 后山2
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            ),
     ) {
         // 全屏背景图(后山页背景.png)
         Image(
