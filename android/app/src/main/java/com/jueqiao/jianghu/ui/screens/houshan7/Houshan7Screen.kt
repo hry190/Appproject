@@ -99,11 +99,13 @@ data class Houshan7Actions(
  *
  *   | 点击位置                  | 结果                          |
  *   |--------------------------|-------------------------------|
- *   | 3 个标签                  | → 各自对应的卷的第一页(见下表)|
+ *   | 3 个标签                  | → ❌ **已取消**(2026-09-18 §12,待重设)|
  *   | 其余任意位置(空白/云/熊猫)| → **dolly-in 推进 → 后山8**   |
  *   | 左上角返回按钮            | → 后山6                       |
  *   | (dolly 进行中)点任何标签   | ❌ 无效(`enabled = false`)    |
  *
+ * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 下列跳转**已全部取消**;
+ *    标签现在是**死区**(`.clickable(..., onClick = {})` 仅消费点击事件,不跳转)。**取消前的映射留档如下(供重设参考)**:
  *   3 个标签的跳转目标(2026-09-18 §9 接好,沿用 §8 的"文字→卷"映射):
  *     分门辨类掌 → 第六卷-1 · 千层观心镜 → 第七卷-1 · 赏罚驭灵诀 → 第八卷-1
  *     ⚠️ 后山7 的标签文字是 2026-09-18 §9 改过的,不能照搬后山5 的位置映射 —— 映射锚在"文字"上。
@@ -418,7 +420,7 @@ fun Houshan7Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = actions.onOpenVolume7Part1,
+                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
                     ),
                 ) {
                     Image(
@@ -455,7 +457,7 @@ fun Houshan7Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = actions.onOpenVolume8Part1,
+                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
                     ),
                 ) {
                     Image(
@@ -492,7 +494,7 @@ fun Houshan7Screen(
                         enabled = !isTransitioning,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = actions.onOpenVolume6Part1,
+                        onClick = {},   // 2026-09-18 §12 取消跳转(待重设)
                     ),
                 ) {
                     Image(

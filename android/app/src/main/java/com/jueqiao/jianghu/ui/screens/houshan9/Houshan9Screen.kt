@@ -97,10 +97,12 @@ data class Houshan9Actions(
  *
  *   | 点击位置                  | 结果                          |
  *   |--------------------------|-------------------------------|
- *   | 3 个标签                  | → 各自对应的卷的第一页(见下表)|
+ *   | 3 个标签                  | → ❌ **已取消**(2026-09-18 §12,待重设)|
  *   | 其余任意位置(空白/云/熊猫)| → ❌ noop(当前是终点页)        |
  *   | 左上角返回按钮            | → 后山8                       |
  *
+ * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 下列跳转**已全部取消**;
+ *    标签现在是**死区**(`.clickable(..., onClick = {})` 仅消费点击事件,不跳转)。**取消前的映射留档如下(供重设参考)**:
  *   3 个标签的跳转目标(2026-09-18 §11 接好,沿用 §8 的"文字→卷"映射):
  *     赏罚驭灵诀 → 第八卷-1 · 听言解意篇 → 第九卷-1 · 正心守道录 → 第十卷-1
  *     ⚠️ 后山9 的标签文字是 2026-09-18 §11 改过的,不能照搬后山7 的位置映射 —— 映射锚在"文字"上。
@@ -417,7 +419,7 @@ fun Houshan9Screen(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
                         .size(width = 51.dp, height = 91.dp)
-                        .clickable(onClick = actions.onOpenVolume9Part1),
+                        .clickable(onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -449,7 +451,7 @@ fun Houshan9Screen(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(onClick = actions.onOpenVolume10Part1),
+                        .clickable(onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -481,7 +483,7 @@ fun Houshan9Screen(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
                         .size(width = 96.dp, height = 170.dp)
-                        .clickable(onClick = actions.onOpenVolume8Part1),
+                        .clickable(onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),

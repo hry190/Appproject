@@ -102,8 +102,11 @@ fun Houshan1Screen(
     actions: Houshan1Actions = Houshan1Actions(),
     // 注:这里以前有 onOpenVolume1(§22 加的"标签1 → 第一卷-1"),§25 已按用户指令移除。
     //     现在点击标签1 由**整屏 clickable** 接管 → 跳后山2(详见文件顶部【点击行为】表)。
+    //     ⚠️ 2026-09-18 §12 用户指令"取消所有标签的跳转,我要重新设置" —— 后山2~9 的标签跳转
+    //        已全部取消(回到死区,等新映射表)。本页标签1 本来就是死区(§25)+ 由整屏接管(§27),
+    //        且它跳的是**后山2(页面)**而非**卷**,不在本次取消范围内,**行为不变**。
     //     若以后要恢复"标签1 → 第一卷-1",需改 3 处:
-    //       ① 本签名加回 `onOpenVolume1: () -> Unit = {}`(在 Houshan1Actions 里)
+    //       ① 在 Houshan1Actions 里加回 `onOpenVolume1: () -> Unit = {}`
     //       ② 标签1 的 Box modifier 加回 `.clickable(onClick = actions.onOpenVolume1)`
     //       ③ JianghuNavHost 的 composable(Routes.Shilian) 里传回
     //          `onOpenVolume1 = { navController.navigate(Routes.Volume1) }`

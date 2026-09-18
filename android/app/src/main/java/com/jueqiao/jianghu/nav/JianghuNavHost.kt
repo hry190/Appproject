@@ -593,13 +593,13 @@ fun JianghuNavHost(
                 actions = Houshan2Actions(
                     onBack = { navController.popBackStack() },
                     onOpenHoushan3 = { navController.navigate(Routes.Shilian3) },
-                    onOpenVolume1 = { navController.navigate(Routes.Volume1) },
+                    onOpenVolume1 = {},   // 2026-09-18 §12 取消跳转(待重设)
                     // §28:拆招心法标签 → 第二卷-1
-                    onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },
+                    onOpenVolume2Part1 = {},   // 2026-09-18 §12 取消跳转(待重设)
                     // §29:万象谱标签 → 第三卷-1
-                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
+                    onOpenVolume3Part1 = {},   // 2026-09-18 §12 取消跳转(待重设)
                     // §30:寻径迷踪步标签 → 第四卷-1
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
+                    onOpenVolume4Part1 = {},   // 2026-09-18 §12 取消跳转(待重设)
                 ),
             )
         }
@@ -637,9 +637,9 @@ fun JianghuNavHost(
                     // §24:反转 §21o —— 不再跳转未完待续页,改为跳转新建的后山 4 页
                     onOpenHoushan4 = { navController.navigate(Routes.Shilian4) },
                     // §31:3 个标签 → 按"文字 → 卷"映射(与后山2 §28~§30 同一张表)
-                    onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },  // 拆招心法
-                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
+                    onOpenVolume2Part1 = {},   // 2026-09-18 §12 取消跳转(原:拆招心法)
+                    onOpenVolume3Part1 = {},   // 2026-09-18 §12 取消跳转(原:万象谱)
+                    onOpenVolume4Part1 = {},   // 2026-09-18 §12 取消跳转(原:寻径迷踪步)
                 ),
             )
         }
@@ -677,10 +677,10 @@ fun JianghuNavHost(
                     onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },
                     // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
                     //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
-                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },  // 万象谱
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步
-                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀
-                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌
+                    onOpenVolume3Part1 = {},   // 2026-09-18 §12 取消跳转(原:万象谱)
+                    onOpenVolume4Part1 = {},   // 2026-09-18 §12 取消跳转(原:寻径迷踪步)
+                    onOpenVolume5Part1 = {},   // 2026-09-18 §12 取消跳转(原:百炼识物诀)
+                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌)
                 ),
             )
         }
@@ -707,9 +707,9 @@ fun JianghuNavHost(
                     // 2026-09-18 §4:点击标签以外任意位置 → dolly 推进到后山6
                     onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },
                     // §34:3 个标签按"文字→卷"映射接好 —— 详见 Houshan5Screen 顶 KDoc
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },  // 寻径迷踪步 → 第四卷-1
-                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀 → 第五卷-1
-                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
+                    onOpenVolume4Part1 = {},   // 2026-09-18 §12 取消跳转(原:寻径迷踪步 → 第四卷-1)
+                    onOpenVolume5Part1 = {},   // 2026-09-18 §12 取消跳转(原:百炼识物诀 → 第五卷-1)
+                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌 → 第六卷-1)
                 ),
             )
         }
@@ -736,10 +736,10 @@ fun JianghuNavHost(
                     // 2026-09-18 §9:点击标签以外任意位置 → dolly 推进到后山7
                     onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },
                     // 2026-09-18 §8:4 个标签按 §32 的"文字→卷"映射接好(文案重命名 §4→§8)
-                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },  // 百炼识物诀 → 第五卷-1
-                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
-                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },  // 千层观心镜 → 第七卷-1
-                    onOpenVolume8Part1 = { navController.navigate(Routes.Volume8Part1) },  // 赏罚驭灵诀 → 第八卷-1
+                    onOpenVolume5Part1 = {},   // 2026-09-18 §12 取消跳转(原:百炼识物诀 → 第五卷-1)
+                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌 → 第六卷-1)
+                    onOpenVolume7Part1 = {},   // 2026-09-18 §12 取消跳转(原:千层观心镜 → 第七卷-1)
+                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
                 ),
             )
         }
@@ -766,9 +766,9 @@ fun JianghuNavHost(
                     // 2026-09-18 §10:点击标签以外任意位置 → dolly 推进到后山8
                     onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },
                     // 2026-09-18 §9:3 个标签按 §8 的"文字→卷"映射接好(分门辨类掌/千层观心镜/赏罚驭灵诀)
-                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },  // 分门辨类掌 → 第六卷-1
-                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },  // 千层观心镜 → 第七卷-1
-                    onOpenVolume8Part1 = { navController.navigate(Routes.Volume8Part1) },  // 赏罚驭灵诀 → 第八卷-1
+                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌 → 第六卷-1)
+                    onOpenVolume7Part1 = {},   // 2026-09-18 §12 取消跳转(原:千层观心镜 → 第七卷-1)
+                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
                 ),
             )
         }
@@ -795,10 +795,10 @@ fun JianghuNavHost(
                     // 2026-09-18 §11:点击标签以外任意位置 → dolly 推进到后山9
                     onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },
                     // 2026-09-18 §10:4 个标签按 §32 的"文字→卷"映射接好(千层观心镜/赏罚驭灵诀/听言解意篇/正心守道录)
-                    onOpenVolume7Part1  = { navController.navigate(Routes.Volume7Part1)  },  // 千层观心镜 → 第七卷-1
-                    onOpenVolume8Part1  = { navController.navigate(Routes.Volume8Part1)  },  // 赏罚驭灵诀 → 第八卷-1
-                    onOpenVolume9Part1  = { navController.navigate(Routes.Volume9Part1)  },  // 听言解意篇 → 第九卷-1
-                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },  // 正心守道录 → 第十卷-1
+                    onOpenVolume7Part1 = {},   // 2026-09-18 §12 取消跳转(原:千层观心镜 → 第七卷-1)
+                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
+                    onOpenVolume9Part1 = {},   // 2026-09-18 §12 取消跳转(原:听言解意篇 → 第九卷-1)
+                    onOpenVolume10Part1 = {},   // 2026-09-18 §12 取消跳转(原:正心守道录 → 第十卷-1)
                 ),
             )
         }
@@ -823,9 +823,9 @@ fun JianghuNavHost(
                 actions = Houshan9Actions(
                     onBack = { navController.popBackStack() },
                     // 2026-09-18 §11:3 个标签按 §8 的"文字→卷"映射接好(赏罚驭灵诀/听言解意篇/正心守道录)
-                    onOpenVolume8Part1  = { navController.navigate(Routes.Volume8Part1)  },  // 赏罚驭灵诀 → 第八卷-1
-                    onOpenVolume9Part1  = { navController.navigate(Routes.Volume9Part1)  },  // 听言解意篇 → 第九卷-1
-                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },  // 正心守道录 → 第十卷-1
+                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
+                    onOpenVolume9Part1 = {},   // 2026-09-18 §12 取消跳转(原:听言解意篇 → 第九卷-1)
+                    onOpenVolume10Part1 = {},   // 2026-09-18 §12 取消跳转(原:正心守道录 → 第十卷-1)
                 ),
             )
         }

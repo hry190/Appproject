@@ -85,16 +85,18 @@ private const val FOCAL_Y = 0.48f
  *   - 返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)
  *   - 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— **上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s (§44)**
  *   - 标签2 图像(X=124, Y=521, W=96, H=170)+ 文字"拆招心法"(父 Box 内 X=43, Y=48, W=14, H=80, 字号 14)+ 文字"炼"(父 Box 内 X=43, Y=25, W=12, H=16, 字号 12)
- *     §31:**可点击 → 跳转第二卷-1**(`onOpenVolume2Part1`);§31 前是死区(仅消费事件)
+ *     ⚠️ **2026-09-18 §12 取消跳转** —— 原为滚动到第二卷-1(`onOpenVolume2Part1`),现为死区(仅消费事件)
  *   - 标签3 图像(X=43, Y=390, W=51, H=91)+ 文字"万象谱"(父 Box 内 X=20.5, Y=25, W=12, H=60, 字号 10)+ 文字"炼"(父 Box 内 X=22, Y=12, W=10, H=14, 字号 6)
- *     §31:**可点击 → 跳转第三卷-1**(`onOpenVolume3Part1`);§31 前是死区
+ *     ⚠️ **2026-09-18 §12 取消跳转** —— 原为滚动到第三卷-1(`onOpenVolume3Part1`),现为死区
  *   - 标签4 图像(X=105, Y=295, W=30, H=53.5)+ 文字"寻径迷踪步"(父 Box 内 X=13.5, Y=14, W=12, H=60, 字号 4)+ 文字"炼"(父 Box 内 X=13.5, Y=7, W=10, H=14, 字号 4)
- *     §31:**可点击 → 跳转第四卷-1**(`onOpenVolume4Part1`);§31 前是死区
+ *     ⚠️ **2026-09-18 §12 取消跳转** —— 原为滚动到第四卷-1(`onOpenVolume4Part1`),现为死区
  *
- * ✅ §31 起后山3 的 **3 个标签全部可点击**,目标按"文字 → 卷"映射(与后山2 §28~§30 同一张映射表):
- *    拆招心法 → 第二卷-1 · 万象谱 → 第三卷-1 · 寻径迷踪步 → 第四卷-1
- *    → 本文件已无"消费型空 clickable",3 个标签写法完全统一:
- *      `.clickable(enabled = !isTransitioning, onClick = actions.onOpenVolumeXPart1)`
+ * ⚠️ **2026-09-18 §12 用户指令:"取消所有标签的跳转,我要重新设置"** —— 后山3 的 3 个标签跳转**已全部取消**。
+ *    → 标签现在是**死区**:`.clickable(..., onClick = {})` 仅消费点击事件(防止冒泡触发 dolly),**不跳转**。
+ *    → `Houshan3Actions` 的 3 个 `onOpenVolume*` 字段**保留**(等用户给新映射表后重设;届时只需恢复
+ *      本文件的 `onClick` + `JianghuNavHost` 的回调两处)。
+ *    → **取消前的映射(留档,供重设参考)**:拆招心法 → 卷2 · 万象谱 → 卷3 · 寻径迷踪步 → 卷4
+ *    → 3 个标签写法统一为:`.clickable(enabled = !isTransitioning, onClick = {})`
  *    → 整屏空白点击仍是 dolly-in 推进到后山4(标签会消费事件,不会误触发 dolly)
  *   - §21 动画云元素 **5 个**(竖排,间隔 60~69dp,×0.75):ACI58 y=8 · FCB左下 y=178.5 · ACI60 y=330.5
  *     · FCB中下 y=477.5 · ACI62 y=620
@@ -422,7 +424,7 @@ fun Houshan3Screen(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
                         .size(width = 51.dp, height = 91.dp)
-                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume3Part1),
+                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -456,7 +458,7 @@ fun Houshan3Screen(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume4Part1),
+                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -490,7 +492,7 @@ fun Houshan3Screen(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
                         .size(width = 96.dp, height = 170.dp)
-                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume2Part1),
+                        .clickable(enabled = !isTransitioning, onClick = {})   /* 2026-09-18 §12 取消跳转(待重设) */,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
