@@ -96,7 +96,7 @@ private const val FOCAL_Y = 0.48f
  *    识机真决 → 第一卷-1(§22) · 拆招心法 → 第二卷-1(§28)
  *    万象谱 → 第三卷-1(§29) · 寻径迷踪步 → **第四卷-1(§30)**
  *    → 本文件已无"消费型空 clickable",4 个标签写法完全统一:
- *      `.clickable(enabled = !isTransitioning, onClick = onOpenXXX)`
+ *      `.clickable(enabled = !isTransitioning, onClick = actions.onOpenVolumeXPart1)`
  *   - 左上角返回按钮 (Return.png, X=30, Y=60, W=18, H=18)
  *
  * 删除元素(§18,部分保留):
@@ -105,14 +105,22 @@ private const val FOCAL_Y = 0.48f
  * 2026-09-17 §22 反转 §18:重新加回熊猫 (img_shilian_panda),沿用 §21 的"上下浮 ±10/4s + 呼吸缩放 0.95~1.05/3s"动画。
  * 放在景深平面 3(与 4 个标签同层),推进时与标签同速缩放 ×1.34 + 一起淡出(详见函数体内 pandaTransition 处注释)。
  */
+/**
+ * 后山2 页所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
+ * 详见 §5(SESSION-LOG-2026-09-18)真机验证根因:多 lambda 签名 → 1 个 data class,bug 触发条件消失。
+ */
+data class Houshan2Actions(
+    val onBack: () -> Unit = {},
+    val onOpenHoushan3: () -> Unit = {},
+    val onOpenVolume1: () -> Unit = {},         // 识机真决 → 第一卷-1 (§22)
+    val onOpenVolume2Part1: () -> Unit = {},    // 拆招心法 → 第二卷-1 (§28)
+    val onOpenVolume3Part1: () -> Unit = {},    // 万象谱     → 第三卷-1 (§29)
+    val onOpenVolume4Part1: () -> Unit = {},    // 寻径迷踪步 → 第四卷-1 (§30)
+)
+
 @Composable
 fun Houshan2Screen(
-    onBack: () -> Unit = {},
-    onOpenHoushan3: () -> Unit = {},
-    onOpenVolume1: () -> Unit = {},  // 识机真决标签跳转第一卷-1 (§22)
-    onOpenVolume2Part1: () -> Unit = {},  // §28:拆招心法标签跳转第二卷-1
-    onOpenVolume3Part1: () -> Unit = {},  // §29:万象谱标签跳转第三卷-1
-    onOpenVolume4Part1: () -> Unit = {},  // §30:寻径迷踪步标签跳转第四卷-1
+    actions: Houshan2Actions = Houshan2Actions(),
 ) {
     val scope = rememberCoroutineScope()
     var isTransitioning by remember { mutableStateOf(false) }
@@ -120,7 +128,7 @@ fun Houshan2Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { onBack() }
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }
 
     // 2026-09-17 §22:按用户指令反转 §18,重新加回熊猫 (img_shilian_panda),沿用 §21 的
     // "上下浮 ±10dp / 4s + 呼吸缩放 0.95~1.05 / 3s" 动画参数;放在景深平面 3(与 4 个标签同层),
@@ -197,7 +205,7 @@ fun Houshan2Screen(
             }
             scope.launch {
                 delay(DOLLY_HANDOFF_MS)
-                onOpenHoushan3()
+                actions.onOpenHoushan3()
             }
         }
     }
@@ -441,7 +449,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = -13.dp, y = 570.dp)
                         .size(width = 106.dp, height = 188.dp)
-                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume1),
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -477,7 +485,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 168.dp, y = 345.dp)
                         .size(width = 74.dp, height = 131.dp)
-                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume2Part1),
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume2Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -510,7 +518,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 113.dp, y = 322.dp)
                         .size(width = 50.dp, height = 88.dp)
-                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume3Part1),
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume3Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -545,7 +553,7 @@ fun Houshan2Screen(
                     modifier = Modifier
                         .offset(x = 151.dp, y = 248.dp)
                         .size(width = 30.dp, height = 53.5.dp)
-                        .clickable(enabled = !isTransitioning, onClick = onOpenVolume4Part1),
+                        .clickable(enabled = !isTransitioning, onClick = actions.onOpenVolume4Part1),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_shilian_recovered_4),
@@ -580,7 +588,7 @@ fun Houshan2Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = onBack),
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

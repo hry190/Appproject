@@ -88,20 +88,28 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *   §21b 按用户指令从 FocusCloudBand 改为实图云 PNG(cloud_57,有色调、在近白底上可见)。
  *   6 朵老云(58/61/56/57/60/60b)同 §21 去掉动画,改为静态图层。
  */
+/**
+ * 后山1 页所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
+ * 详见 §5(SESSION-LOG-2026-09-18)真机验证根因:多 lambda 签名 → 1 个 data class,bug 触发条件消失。
+ */
+data class Houshan1Actions(
+    val onBack: () -> Unit = {},
+    val onOpenHoushan2: () -> Unit = {},
+)
+
 @Composable
 fun Houshan1Screen(
-    onBack: () -> Unit = {},
-    onOpenHoushan2: () -> Unit = {},
+    actions: Houshan1Actions = Houshan1Actions(),
     // 注:这里以前有 onOpenVolume1(§22 加的"标签1 → 第一卷-1"),§25 已按用户指令移除。
     //     现在点击标签1 由**整屏 clickable** 接管 → 跳后山2(详见文件顶部【点击行为】表)。
     //     若以后要恢复"标签1 → 第一卷-1",需改 3 处:
-    //       ① 本签名加回 `onOpenVolume1: () -> Unit = {}`
-    //       ② 标签1 的 Box modifier 加回 `.clickable(onClick = onOpenVolume1)`
+    //       ① 本签名加回 `onOpenVolume1: () -> Unit = {}`(在 Houshan1Actions 里)
+    //       ② 标签1 的 Box modifier 加回 `.clickable(onClick = actions.onOpenVolume1)`
     //       ③ JianghuNavHost 的 composable(Routes.Shilian) 里传回
     //          `onOpenVolume1 = { navController.navigate(Routes.Volume1) }`
     //     ⚠️ 只做 ② 是无效的:整屏 clickable 仍会接管,表现仍是跳后山2。
 ) {
-    BackHandler(enabled = true) { onBack() }
+    BackHandler(enabled = true) { actions.onBack() }
 
     // 熊猫上下浮 + 呼吸缩放:Scale 0.95~1.05 / 3s, Y ±10 dp / 4s (§21)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -168,7 +176,7 @@ fun Houshan1Screen(
             //   唯一会**消费事件**的子元素是左上角返回按钮 → 点它不会误触发跳转;
             //   4 个标签 / 气泡 / 熊猫 / 云都没有 clickable → 点击一律冒泡到这里。
             //   完整行为表 + 演变史见文件顶部【点击行为】/【点击交互演变史】。
-            .clickable { onOpenHoushan2() },
+            .clickable { actions.onOpenHoushan2() },
     ) {
         // 全屏背景图(后山页背景.png)
         Image(
@@ -548,7 +556,7 @@ fun Houshan1Screen(
                     .align(Alignment.TopStart)
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
-                    .clickable(onClick = onBack),
+                    .clickable(onClick = actions.onBack),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),

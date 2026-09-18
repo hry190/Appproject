@@ -106,16 +106,22 @@ private const val FOCAL_Y = 0.48f
  *   - 标签3 百炼识物诀 X=113, Y=322, W=50,  H=105(§24b)
  *   - 标签4 分门辨类掌 X=151, Y=248, W=30,  H=70(§24b)
  */
+/**
+ * 后山4 页所有可调用 action —— 用 data class 一次传入,避免 §3 的 slot 0 null bug
+ * 详见 §5(SESSION-LOG-2026-09-18)真机验证根因:多 lambda 签名 → 1 个 data class,bug 触发条件消失。
+ */
+data class Houshan4Actions(
+    val onBack: () -> Unit = {},
+    val onOpenHoushan5: () -> Unit = {},
+    val onOpenVolume3Part1: () -> Unit = {},  // 标签1 万象谱     → 第三卷-1 (§32)
+    val onOpenVolume4Part1: () -> Unit = {},  // 标签2 寻径迷踪步 → 第四卷-1 (§32)
+    val onOpenVolume5Part1: () -> Unit = {},  // 标签3 百炼识物诀 → 第五卷-1 (§32)
+    val onOpenVolume6Part1: () -> Unit = {},  // 标签4 分门辨类掌 → 第六卷-1 (§32)
+)
+
 @Composable
 fun Houshan4Screen(
-    onBack: () -> Unit = {},
-    // §33:点击标签以外任意位置 → dolly 推进到后山5
-    onOpenHoushan5: () -> Unit = {},
-    // §32:4 个标签的跳转目标 —— 参数名是**语义名**(§24 曾用占位 onOpenTagN)
-    onOpenVolume3Part1: () -> Unit = {},  // 标签1 万象谱     → 第三卷-1
-    onOpenVolume4Part1: () -> Unit = {},  // 标签2 寻径迷踪步 → 第四卷-1
-    onOpenVolume5Part1: () -> Unit = {},  // 标签3 百炼识物诀 → 第五卷-1
-    onOpenVolume6Part1: () -> Unit = {},  // 标签4 分门辨类掌 → 第六卷-1
+    actions: Houshan4Actions = Houshan4Actions(),
 ) {
     val scope = rememberCoroutineScope()
     var isTransitioning by remember { mutableStateOf(false) }
@@ -123,7 +129,7 @@ fun Houshan4Screen(
     val dolly = remember { Animatable(0f) }
 
     // 过渡期间禁用返回手势,避免动画途中被中断而露出半程画面
-    BackHandler(enabled = !isTransitioning) { onBack() }
+    BackHandler(enabled = !isTransitioning) { actions.onBack() }
 
     // 熊猫上下浮 + 呼吸缩放(沿用 §22 后山 2 / §21 后山 1 的同款动画参数)
     val pandaTransition = rememberInfiniteTransition(label = "pandaFloat")
@@ -182,7 +188,7 @@ fun Houshan4Screen(
             }
             scope.launch {
                 delay(DOLLY_HANDOFF_MS)
-                onOpenHoushan5()
+                actions.onOpenHoushan5()
             }
         }
     }
@@ -406,7 +412,7 @@ fun Houshan4Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = onOpenVolume3Part1,
+                            onClick = actions.onOpenVolume3Part1,
                         ),
                 ) {
                     Image(
@@ -442,7 +448,7 @@ fun Houshan4Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = onOpenVolume4Part1,
+                            onClick = actions.onOpenVolume4Part1,
                         ),
                 ) {
                     Image(
@@ -478,7 +484,7 @@ fun Houshan4Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = onOpenVolume5Part1,
+                            onClick = actions.onOpenVolume5Part1,
                         ),
                 ) {
                     Image(
@@ -514,7 +520,7 @@ fun Houshan4Screen(
                             enabled = !isTransitioning,
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = onOpenVolume6Part1,
+                            onClick = actions.onOpenVolume6Part1,
                         ),
                 ) {
                     Image(
@@ -550,7 +556,7 @@ fun Houshan4Screen(
                     .offset(x = 30.dp, y = 60.dp)
                     .size(width = 18.dp, height = 18.dp)
                     .graphicsLayer { alpha = chromeFade }
-                    .clickable(enabled = !isTransitioning, onClick = onBack),
+                    .clickable(enabled = !isTransitioning, onClick = actions.onBack),
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
