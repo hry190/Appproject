@@ -313,17 +313,47 @@ img_<页面拼音>_<Figma 节点名>.png
     先查 `git log -p --follow <file>` 定性 —— 2026-09-16 §21o 就出现过**代码错、注释对**的反例
     (坐标被一个无关提交误改),那种情况跑 `-Fix` 会把正确的注释也改错。
 
+- ✅ **引用 SESSION-LOG 的段号时,必须带日期**(写作 `2026-09-17 §24`),**不能只写 `§24`**
+  - **原因**:`SESSION-LOG-YYYY-MM-DD.md` **每天从 §1 重新编号**,段号跨天大量重复:
+    | 段号 | 出现在 |
+    |---|---|
+    | §24 / §33 | 2026-09-15、2026-09-17 |
+    | §38 / §39 / §40 / §41 | 2026-09-15、2026-09-18 |
+    | §36 | 2026-09-15(不是 09-16 —— 09-16 只是**引用**它)|
+
+    → **只写 `§N` 是歧义的**,读者无法判断指哪一天。
+  - **格式**:`YYYY-MM-DD §N`(`2026-09-17 §24`);子段写作 `YYYY-MM-DD §21f`
+  - **同一行内引用同一天的多个段时,只在第一个前面写日期**:`2026-09-18 §4~§8`
+  - **历史教训**(2026-09-18 §11):后山5~9 的注释里曾写 `§35/§38/§39/§40/§41`,
+    这些段号**在日志里查不到**(当天的日志当时只到 §7;我是把 09-17 的段号接着往下编的)。
+    → 全部改成 `2026-09-18 §4/§8/§9/§10/§11`。**新写注释一律带日期,别续编历史段号。**
+  - ⚠️ **`audit-comment-drift.ps1` 查不到这类问题** —— 它只校验几何值 `X/Y/W/H`。
+    **"注释 0 漂移" ≠ "注释没问题"**;段号/复用源/状态描述这类**叙事性注释**只能人工复查。
+
 ### 5.5 Compose 模式
 
-**屏幕骨架**:
+**屏幕骨架**(⚠️ **多回调一律用 `XxxActions` data class 传入,不要写成多个 `() -> Unit` 参数**):
 ```kotlin
+/**
+ * 页面所有可调用 action —— 用 data class 一次传入。
+ *
+ * 为什么不能写成多个独立 lambda 参数:
+ *   2026-09-18 §3 实测 —— 签名里放多个同类型 `() -> Unit` 参数时,Compose 编译器插件的
+ *   slot table 会把第 1 个 lambda 槽位记成 `null`(而非 `Composer.Empty`),被 Compose
+ *   当成"有效值"复用 → `clickable.onClick = null` → 点击时 NPE 闪退。
+ *   包成 1 个 data class 后,参数不再是"多个 lambda",**bug 触发条件消失**(09-18 §5 真机验证)。
+ */
+data class XxxActions(
+    val onBack: () -> Unit = {},
+    val onOpenYyy: () -> Unit = {},
+)
+
 @Composable
 fun XxxScreen(
-    onBack: () -> Unit = {},          // 返回,默认空实现
-    onOpenYyy: () -> Unit = {},        // 跳转回调,默认空实现
+    actions: XxxActions = XxxActions(),
 ) {
-    BackHandler(enabled = true) { onBack() }
-    
+    BackHandler(enabled = true) { actions.onBack() }
+
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Image(                          // 全屏背景
             painter = painterResource(R.drawable.img_xxx_bg),
@@ -332,17 +362,29 @@ fun XxxScreen(
             contentScale = ContentScale.Crop,
         )
         Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
-            // 内容层
+            // 内容层:点击回调写作 actions.onOpenYyy
         }
     }
 }
 ```
 
+**NavHost 侧调用**:
+```kotlin
+XxxScreen(
+    actions = XxxActions(
+        onBack = { navController.popBackStack() },
+        onOpenYyy = { navController.navigate(Routes.Yyy) },
+    ),
+)
+```
+
 **约定**:
-- ✅ 每个屏幕参数都带 `= {}` 默认值(允许暂不接回调)
+- ✅ **多回调页面必须用 `XxxActions` data class**(见上;§3 slot bug 的根治方案)
+- ✅ 每个 action 字段都带 `= {}` 默认值(允许暂不接回调)
 - ✅ 元素坐标 inline 注释里写 `// 元素名(X=?, Y=?, W=?, H=?)`,改 Modifier 后**必须同步**
 - ✅ 图像元素 `contentDescription` 给 TalkBack 有意义文本(`null` 仅装饰图)
 - ✅ 可点击元素 `.clickable(onClick = ...)` 直接附在 Modifier 链上
+- ❌ **不要写 `onA: () -> Unit = {}, onB: () -> Unit = {}, onC: () -> Unit = {}` 这种多 lambda 签名**(§3 闪退根因)
 - ❌ 不要抽公共 Composable(用户明确偏好直接复制)
 - ❌ 不要给"教练辅助"组加 clickable
 

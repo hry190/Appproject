@@ -50,9 +50,9 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ── 后山9 → 后山10 沉浸式纵深推进(dolly-in)参数 (§41,**当前未启用** —— 后山9 是终点页)──
-// 保留这套常量作为模板:若日后要接后山10,把整屏 clickable 改为 startDollyIn() 即可(同 §39→§40 后山7 的升级路径)。
-// 参数沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §35 / 后山6 §39 / 后山7 §40 的同款。
+// ── 后山9 → 后山10 沉浸式纵深推进(dolly-in)参数 (2026-09-18 §11,**当前未启用** —— 后山9 是终点页)──
+// 保留这套常量作为模板:若日后要接后山10,把整屏 clickable 改为 startDollyIn() 即可(同 2026-09-18 §9→§10 后山7 的升级路径)。
+// 参数沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 2026-09-18 §4 / 后山6 §9 / 后山7 §10 的同款。
 private const val DOLLY_DURATION_MS = 1050
 // 半程交给导航:此时山体已推进 3/4,由后山10 交叉淡入接棒,取代硬切
 private const val DOLLY_HANDOFF_MS = 560L
@@ -78,15 +78,15 @@ data class Houshan9Actions(
 /**
  * 后山9 页 — 后山8 页 dolly 推进而来;点击"返回"按钮回到后山8;整屏点击 noop(**当前是终点页**)。
  *
- * 2026-09-18 §41 新建:用户指令"创建后山9页面...后山9复用后山7页面的素材和动画";
- *                    §41 同步把 3 个标签文案按"文字→卷"映射改名。
+ * 2026-09-18 §11 新建:用户指令"创建后山9页面...后山9复用后山7页面的素材和动画";
+ *                    2026-09-18 §11 同步把 3 个标签文案按"文字→卷"映射改名。
  *
  * ══════════════════════════════════════════════════════════════════════════
- * 【§41 交互行为】**目前是终点页** —— 复用后山7 同款素材(3 标签版)+ dolly-in 三景深平面代码
+ * 【2026-09-18 §11 交互行为】**目前是终点页** —— 复用后山7 同款素材(3 标签版)+ dolly-in 三景深平面代码
  *                             (保留为模板但**未启用**);3 个标签改名
  *                             (赏罚驭灵诀/听言解意篇/正心守道录)
  *
- *   ⚠️ "终点页"是暂时的 —— 若日后要接后山10,需要(同 §39→§40 后山7 的升级路径):
+ *   ⚠️ "终点页"是暂时的 —— 若日后要接后山10,需要(同 2026-09-18 §9→§10 后山7 的升级路径):
  *      ① Houshan9Actions 加 `onOpenHoushan10: () -> Unit = {}` 字段
  *      ② startDollyIn 里 `actions.onOpenHoushan10()` 替代注释里的 noop
  *      ③ 整屏 clickable 改为 `.clickable { startDollyIn() }`
@@ -101,9 +101,9 @@ data class Houshan9Actions(
  *   | 其余任意位置(空白/云/熊猫)| → ❌ noop(当前是终点页)        |
  *   | 左上角返回按钮            | → 后山8                       |
  *
- *   3 个标签的跳转目标(§41 接好,沿用 §38 的"文字→卷"映射):
+ *   3 个标签的跳转目标(2026-09-18 §11 接好,沿用 §8 的"文字→卷"映射):
  *     赏罚驭灵诀 → 第八卷-1 · 听言解意篇 → 第九卷-1 · 正心守道录 → 第十卷-1
- *     ⚠️ 后山9 的标签文字是 §41 改过的,不能照搬后山7 的位置映射 —— 映射锚在"文字"上。
+ *     ⚠️ 后山9 的标签文字是 2026-09-18 §11 改过的,不能照搬后山7 的位置映射 —— 映射锚在"文字"上。
  * ══════════════════════════════════════════════════════════════════════════
  *
  * 复用(与后山 7 同款素材):
@@ -111,7 +111,7 @@ data class Houshan9Actions(
  *   - 云雾层 HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
  *   - 5 朵 ACI 动画云(58 / FCB左下 / 60 / FCB中下 / 62)+ 5 朵老云(old / 56 / 58 / 57 / 5)
  *   - 熊猫 img_shilian2_recovered_8,X=118 Y=405 W=181 H=96
- *   - 3 个标签    赏罚驭灵诀 / 听言解意篇 / 正心守道录(位置与后山7 完全一致,§41 文案重命名)
+ *   - 3 个标签    赏罚驭灵诀 / 听言解意篇 / 正心守道录(位置与后山7 完全一致,2026-09-18 §11 文案重命名)
  *
  * 布局(与后山7 一致):
  *   - 全屏背景图(img_shilian2_bg.png)
@@ -126,7 +126,7 @@ data class Houshan9Actions(
 fun Houshan9Screen(
     actions: Houshan9Actions = Houshan9Actions(),
 ) {
-    // §3 + §35:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
+    // §3 + 2026-09-18 §4:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
     // (旧版的 if (xxx == null) ({}) else xxx 5 行兜底已删)
 
     val scope = rememberCoroutineScope()
@@ -134,7 +134,7 @@ fun Houshan9Screen(
     // 0 → 1 的推进进度;三个景深平面共用同一个进度值,保证同步
     val dolly = remember { Animatable(0f) }
 
-    // §41:后山9 是终点页 → 返回键始终启用(无过渡期)
+    // 2026-09-18 §11:后山9 是终点页 → 返回键始终启用(无过渡期)
     BackHandler(enabled = true) { actions.onBack() }
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
@@ -170,7 +170,7 @@ fun Houshan9Screen(
     val o57Progress = rememberCloudProgress(8_100, "old57")
     val o5Progress = rememberCloudProgress(7_900, "old5")
 
-    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§41 保留为模板,当前未启用) ──────
+    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (2026-09-18 §11 保留为模板,当前未启用) ──────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
     val cloudScale = 1f + DOLLY_CLOUD_SCALE * p
@@ -180,7 +180,7 @@ fun Houshan9Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // §41:后山9 当前是终点页,startDollyIn 未接到任何 navigate —— 保留为模板。
+    // 2026-09-18 §11:后山9 当前是终点页,startDollyIn 未接到任何 navigate —— 保留为模板。
     //   若日后要接后山10,把 `actions.onOpenHoushan10()` 替代注释里的 noop,并改整屏 clickable。
     val startDollyIn: () -> Unit = {
         if (!isTransitioning) {
@@ -193,7 +193,7 @@ fun Houshan9Screen(
             }
             scope.launch {
                 delay(DOLLY_HANDOFF_MS)
-                // actions.onOpenHoushan10()  ← §41 终点页:暂不跳转
+                // actions.onOpenHoushan10()  ← 2026-09-18 §11 终点页:暂不跳转
             }
         }
     }
@@ -202,7 +202,7 @@ fun Houshan9Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // §41:后山9 当前是终点页 → 整屏 clickable = noop(与后山7 在 §39 的同款做法)。
+            // 2026-09-18 §11:后山9 当前是终点页 → 整屏 clickable = noop(与后山7 在 §9 的同款做法)。
             //   若日后要接后山10,这里改成 `.clickable { startDollyIn() }`。
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -412,7 +412,7 @@ fun Houshan9Screen(
                     contentScale = ContentScale.FillBounds,
                 )
 
-                // "标签3" 图像(听言解意篇,X=43, Y=390, W=51, H=91)— §41 已接 → 第九卷-1
+                // "标签3" 图像(听言解意篇,X=43, Y=390, W=51, H=91)— 2026-09-18 §11 已接 → 第九卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
@@ -444,7 +444,7 @@ fun Houshan9Screen(
                     )
                 }
 
-                // "标签4" 图像(正心守道录,X=105, Y=295, W=30, H=53.5)— §41 已接 → 第十卷-1
+                // "标签4" 图像(正心守道录,X=105, Y=295, W=30, H=53.5)— 2026-09-18 §11 已接 → 第十卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
@@ -476,7 +476,7 @@ fun Houshan9Screen(
                     )
                 }
 
-                // "标签2" 图像(赏罚驭灵诀,X=124, Y=521, W=96, H=170)— §41 已接 → 第八卷-1
+                // "标签2" 图像(赏罚驭灵诀,X=124, Y=521, W=96, H=170)— 2026-09-18 §11 已接 → 第八卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
@@ -510,7 +510,7 @@ fun Houshan9Screen(
             }
 
             // ── UI chrome:左上角返回按钮 ─────────────────────────────────────
-            // §41:后山9 是终点页 → 无 dolly,按钮不需淡出(去掉了 chromeFade)
+            // 2026-09-18 §11:后山9 是终点页 → 无 dolly,按钮不需淡出(去掉了 chromeFade)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)

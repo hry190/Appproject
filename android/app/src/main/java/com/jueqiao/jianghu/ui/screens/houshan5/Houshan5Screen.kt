@@ -50,7 +50,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ── 后山5 → 后山6 沉浸式纵深推进(dolly-in)参数 (§35,沿用后山2 §36 / 后山3 §24 / 后山4 §33 的同款参数)──
+// ── 后山5 → 后山6 沉浸式纵深推进(dolly-in)参数 (2026-09-18 §4,沿用后山2 §36 / 后山3 §24 / 后山4 §33 的同款参数)──
 // 总时长落在 0.8~1.2s 区间;ease-in-out 用 FastOutSlowInEasing(标准缓入缓出)。
 private const val DOLLY_DURATION_MS = 1050
 // 半程交给导航:此时山体已推进 3/4,由后山6 交叉淡入接棒,取代硬切
@@ -84,24 +84,24 @@ data class Houshan5Actions(
 
 /**
  * 后山5 页 — 后山4 页 dolly 推进而来;点击"返回"按钮回到后山4;
- * **点击标签以外任意位置 → dolly 推进到后山6**(§35)。
+ * **点击标签以外任意位置 → dolly 推进到后山6**(2026-09-18 §4)。
  *
  * 2026-09-17 §33 新建:用户指令"创建后山5页面...后山5复用后山3页面的素材和动画"。
- * 2026-09-18 §35 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
- *                    (参数沿革详见本文件顶部的 §35 注释行),
+ * 2026-09-18 §4 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
+ *                    (参数沿革详见本文件顶部的 2026-09-18 §4 注释行),
  *                    整屏点击改为 startDollyIn(),标签加回 isTransitioning 门槛。
  *
  * ══════════════════════════════════════════════════════════════════════════
- * 【§35 交互变更】从"终点页"变成"过场页"
+ * 【2026-09-18 §4 交互变更】从"终点页"变成"过场页"
  *
  *   §33~§34 期间:后山5 是**终点页** —— 整屏 clickable = noop,无 dolly,
  *                标签 clickable 不需要 `enabled = !isTransitioning` 门槛。
- *   §35 起:用户要求"点击标签以外的位置跳转到后山6" + "山峰拉近动画要出现"
+ *   2026-09-18 §4 起:用户要求"点击标签以外的位置跳转到后山6" + "山峰拉近动画要出现"
  *           → 后山5 补上 **dolly-in 三景深平面**(与后山2 §36 / 后山3 §24 / 后山4 §33 同款),
  *             整屏 clickable 改为 `startDollyIn()`,标签加回 `enabled = !isTransitioning`。
  *
  *   ⚠️ 这条演进说明**"终点页"是暂时的** —— 每次在后面接新页面,原终点都要"补 dolly +
- *      改整屏 click + 给标签加门槛"三件事。后山3 §24、后山4 §33、后山5 §35 各经历过一次。
+ *      改整屏 click + 给标签加门槛"三件事。后山3 §24、后山4 §33、后山5 2026-09-18 §4 各经历过一次。
  * ══════════════════════════════════════════════════════════════════════════
  * 【点击行为 · 当前】
  *
@@ -137,7 +137,7 @@ data class Houshan5Actions(
 fun Houshan5Screen(
     actions: Houshan5Actions = Houshan5Actions(),
 ) {
-    // §3 + §35:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
+    // §3 + 2026-09-18 §4:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
     // (旧版的 if (xxx == null) ({}) else xxx 5 行兜底已删)
 
     val scope = rememberCoroutineScope()
@@ -181,7 +181,7 @@ fun Houshan5Screen(
     val o57Progress = rememberCloudProgress(8_100, "old57")
     val o5Progress = rememberCloudProgress(7_900, "old5")
 
-    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§35,沿用 §33 后山 4 的同款) ──────
+    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (2026-09-18 §4,沿用 §33 后山 4 的同款) ──────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
     val cloudScale = 1f + DOLLY_CLOUD_SCALE * p
@@ -212,7 +212,7 @@ fun Houshan5Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // §35:整屏 clickable 触发 dolly-in(取代 §33~§34 的 noop 终点语义)
+            // 2026-09-18 §4:整屏 clickable 触发 dolly-in(取代 §33~§34 的 noop 终点语义)
             .clickable { startDollyIn() },
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
@@ -417,7 +417,7 @@ fun Houshan5Screen(
                 )
 
                 // "标签3" 图像(百炼识物诀,X=43, Y=390, W=51, H=91)— §34 已接 → 第五卷-1
-                //   §35:加 `enabled = !isTransitioning` 门槛(后山5 现在有 dolly,防过渡途中误触)
+                //   2026-09-18 §4:加 `enabled = !isTransitioning` 门槛(后山5 现在有 dolly,防过渡途中误触)
                 Box(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
@@ -456,7 +456,7 @@ fun Houshan5Screen(
 
                 // "标签4" 图像(分门辨类掌,X=105, Y=295, W=30, H=53.5)— §34 已接 → 第六卷-1
                 //   文案 5→5 字,字号 4sp 不变
-                //   §35:加 `enabled = !isTransitioning` 门槛
+                //   2026-09-18 §4:加 `enabled = !isTransitioning` 门槛
                 Box(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
@@ -494,7 +494,7 @@ fun Houshan5Screen(
                 }
 
                 // "标签2" 图像(寻径迷踪步,X=124, Y=521, W=96, H=170)— §34 已接 → 第四卷-1
-                //   §35:加 `enabled = !isTransitioning` 门槛
+                //   2026-09-18 §4:加 `enabled = !isTransitioning` 门槛
                 Box(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)

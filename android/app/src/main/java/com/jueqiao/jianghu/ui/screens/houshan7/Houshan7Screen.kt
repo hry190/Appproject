@@ -50,7 +50,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ── 后山7 → 后山8 沉浸式纵深推进(dolly-in)参数 (§40,沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §35 / 后山6 §39 的同款参数)──
+// ── 后山7 → 后山8 沉浸式纵深推进(dolly-in)参数 (2026-09-18 §10,沿用后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §4 / 后山6 §9 的同款参数)──
 // 总时长落在 0.8~1.2s 区间;ease-in-out 用 FastOutSlowInEasing(标准缓入缓出)。
 private const val DOLLY_DURATION_MS = 1050
 // 半程交给导航:此时山体已推进 3/4,由后山8 交叉淡入接棒,取代硬切
@@ -69,7 +69,7 @@ private const val FOCAL_Y = 0.48f
  */
 data class Houshan7Actions(
     val onBack: () -> Unit = {},
-    // §40:点击标签以外任意位置 → dolly 推进到后山8
+    // 2026-09-18 §10:点击标签以外任意位置 → dolly 推进到后山8
     val onOpenHoushan8: () -> Unit = {},
     val onOpenVolume6Part1: () -> Unit = {},  // 分门辨类掌 → 第六卷-1
     val onOpenVolume7Part1: () -> Unit = {},  // 千层观心镜 → 第七卷-1
@@ -78,21 +78,21 @@ data class Houshan7Actions(
 
 /**
  * 后山7 页 — 后山6 页 dolly 推进而来;点击"返回"按钮回到后山6;
- * **点击标签以外任意位置 → dolly 推进到后山8**(§40)。
+ * **点击标签以外任意位置 → dolly 推进到后山8**(2026-09-18 §10)。
  *
- * 2026-09-18 §39 新建:用户指令"创建后山7页面...后山7复用后山5页面的素材和动画"。
- * 2026-09-18 §40 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
- *                    (参数沿革详见本文件顶部的 §40 注释行),
+ * 2026-09-18 §9 新建:用户指令"创建后山7页面...后山7复用后山5页面的素材和动画"。
+ * 2026-09-18 §10 升级:从"终点页"变成"过场页" —— 补上 dolly-in 三景深平面
+ *                    (参数沿革详见本文件顶部的 2026-09-18 §10 注释行),
  *                    整屏点击改为 startDollyIn(),标签加回 isTransitioning 门槛,
- *                    3 个标签文案按 §38 的"文字→卷"映射(分门辨类掌/千层观心镜/赏罚驭灵诀)。
+ *                    3 个标签文案按 2026-09-18 §8 的"文字→卷"映射(分门辨类掌/千层观心镜/赏罚驭灵诀)。
  *
  * ══════════════════════════════════════════════════════════════════════════
- * 【§40 交互变更】从"终点页"变成"过场页"
+ * 【2026-09-18 §10 交互变更】从"终点页"变成"过场页"
  *
- *   §39 期间:后山7 是**终点页** —— 整屏 clickable = noop,无 dolly 触发,
+ *   2026-09-18 §9 期间:后山7 是**终点页** —— 整屏 clickable = noop,无 dolly 触发,
  *                标签 clickable 不需要 `enabled = !isTransitioning` 门槛。
- *   §40 起:用户要求"点击标签以外的位置跳转到后山8" + "山峰拉近动画要出现"
- *           → 后山7 补上 **dolly-in 三景深平面**(与后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 §35 / 后山6 §39 同款),
+ *   2026-09-18 §10 起:用户要求"点击标签以外的位置跳转到后山8" + "山峰拉近动画要出现"
+ *           → 后山7 补上 **dolly-in 三景深平面**(与后山2 §36 / 后山3 §24 / 后山4 §33 / 后山5 2026-09-18 §4 / 后山6 §9 同款),
  *             整屏 clickable 改为 `startDollyIn()`,标签加回 `enabled = !isTransitioning`。
  * ══════════════════════════════════════════════════════════════════════════
  * 【点击行为 · 当前】
@@ -104,9 +104,9 @@ data class Houshan7Actions(
  *   | 左上角返回按钮            | → 后山6                       |
  *   | (dolly 进行中)点任何标签   | ❌ 无效(`enabled = false`)    |
  *
- *   3 个标签的跳转目标(§39 接好,沿用 §38 的"文字→卷"映射):
+ *   3 个标签的跳转目标(2026-09-18 §9 接好,沿用 §8 的"文字→卷"映射):
  *     分门辨类掌 → 第六卷-1 · 千层观心镜 → 第七卷-1 · 赏罚驭灵诀 → 第八卷-1
- *     ⚠️ 后山7 的标签文字是 §39 改过的,不能照搬后山5 的位置映射 —— 映射锚在"文字"上。
+ *     ⚠️ 后山7 的标签文字是 2026-09-18 §9 改过的,不能照搬后山5 的位置映射 —— 映射锚在"文字"上。
  * ══════════════════════════════════════════════════════════════════════════
  *
  * 复用(与后山 5 同款素材):
@@ -114,7 +114,7 @@ data class Houshan7Actions(
  *   - 云雾层 HoushanMistLayer(variant = HoushanMistVariant.Houshan3)
  *   - 5 朵 ACI 动画云(58 / FCB左下 / 60 / FCB中下 / 62)+ 5 朵老云(old / 56 / 58 / 57 / 5)
  *   - 熊猫 img_shilian2_recovered_8,X=118 Y=405 W=181 H=96
- *   - 3 个标签    分门辨类掌 / 千层观心镜 / 赏罚驭灵诀(位置与后山5 完全一致,§39 文案已重命名)
+ *   - 3 个标签    分门辨类掌 / 千层观心镜 / 赏罚驭灵诀(位置与后山5 完全一致,2026-09-18 §9 文案已重命名)
  *
  * 布局(与后山5 一致,后者复用后山3 的坐标):
  *   - 全屏背景图(img_shilian2_bg.png)
@@ -129,7 +129,7 @@ data class Houshan7Actions(
 fun Houshan7Screen(
     actions: Houshan7Actions = Houshan7Actions(),
 ) {
-    // §3 + §35:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
+    // §3 + 2026-09-18 §4:用 data class 包成 1 个参数,bug 触发条件(slot 0 = lambda)消失,无需 safeXxx 兜底
     // (旧版的 if (xxx == null) ({}) else xxx 5 行兜底已删)
 
     val scope = rememberCoroutineScope()
@@ -137,7 +137,7 @@ fun Houshan7Screen(
     // 0 → 1 的推进进度;三个景深平面共用同一个进度值,保证同步
     val dolly = remember { Animatable(0f) }
 
-    // §40:过渡期间禁用返回手势,避免动画途中被中断而露出半程画面(同 §35 后山5)
+    // 2026-09-18 §10:过渡期间禁用返回手势,避免动画途中被中断而露出半程画面(同 §4 后山5)
     BackHandler(enabled = !isTransitioning) { actions.onBack() }
 
     // 熊猫上下浮 + 呼吸缩放(与后山1/2/3 同款参数)
@@ -173,7 +173,7 @@ fun Houshan7Screen(
     val o57Progress = rememberCloudProgress(8_100, "old57")
     val o5Progress = rememberCloudProgress(7_900, "old5")
 
-    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (§35,沿用 §33 后山 4 的同款) ──────
+    // ── 由 dolly 进度派生三个景深平面 + UI chrome 的当前值 (2026-09-18 §4,沿用 §33 后山 4 的同款) ──────
     val p = dolly.value
     val bgScale = 1f + DOLLY_BG_SCALE * p
     val cloudScale = 1f + DOLLY_CLOUD_SCALE * p
@@ -183,7 +183,7 @@ fun Houshan7Screen(
     val chromeFade = (1f - p * 1.8f).coerceIn(0f, 1f)
     val focal = TransformOrigin(FOCAL_X, FOCAL_Y)
 
-    // §40:整屏点击:启动纵深推进,并在半程把控制权交给导航(后山8 交叉淡入)
+    // 2026-09-18 §10:整屏点击:启动纵深推进,并在半程把控制权交给导航(后山8 交叉淡入)
     val startDollyIn: () -> Unit = {
         if (!isTransitioning) {
             isTransitioning = true
@@ -204,7 +204,7 @@ fun Houshan7Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // §40:整屏 clickable 触发 dolly-in(取代 §39 的 noop 终点语义)
+            // 2026-09-18 §10:整屏 clickable 触发 dolly-in(取代 §9 的 noop 终点语义)
             .clickable { startDollyIn() },
     ) {
         // ── 景深平面 1:背景山体(推进最多 → "向用户靠近")────────────────────
@@ -409,7 +409,7 @@ fun Houshan7Screen(
                     contentScale = ContentScale.FillBounds,
                 )
 
-                // "标签3" 图像(千层观心镜,X=43, Y=390, W=51, H=91)— §40 已接 → 第七卷-1
+                // "标签3" 图像(千层观心镜,X=43, Y=390, W=51, H=91)— 2026-09-18 §10 已接 → 第七卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 43.dp, y = 390.dp)
@@ -446,7 +446,7 @@ fun Houshan7Screen(
                     )
                 }
 
-                // "标签4" 图像(赏罚驭灵诀,X=105, Y=295, W=30, H=53.5)— §40 已接 → 第八卷-1
+                // "标签4" 图像(赏罚驭灵诀,X=105, Y=295, W=30, H=53.5)— 2026-09-18 §10 已接 → 第八卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 105.dp, y = 295.dp)
@@ -483,7 +483,7 @@ fun Houshan7Screen(
                     )
                 }
 
-                // "标签2" 图像(分门辨类掌,X=124, Y=521, W=96, H=170)— §40 已接 → 第六卷-1
+                // "标签2" 图像(分门辨类掌,X=124, Y=521, W=96, H=170)— 2026-09-18 §10 已接 → 第六卷-1
                 Box(
                     modifier = Modifier
                         .offset(x = 124.dp, y = 521.dp)
