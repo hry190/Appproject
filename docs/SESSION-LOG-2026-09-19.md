@@ -1743,6 +1743,47 @@ private fun DrawScope.drawDamageMarks(hitCount: Int, faintThroughMarks: Boolean 
 
 ---
 
+## §25 回归脚本固化进仓库
+
+> 用户决定:「可以记录下回归脚本」。这些脚本原先只活在 `%TEMP%\cd-test`(临时目录,清了就没了)。
+
+### 落到哪
+
+`scripts/chuangdang-regress/`(15 个脚本 + 一份 README),产物仍写 `%TEMP%\cd-test` —— **脚本入库,产物不入库**。
+
+| 组 | 文件 |
+|---|---|
+| 底座(自动游玩 / 截图) | `drive.py`(adb 封装)· `qa.py`(从 `ChuangdangData.kt` 解析题库与答案)· `play.py`(三题型状态机) |
+| 采集 | `five_stage_run.py`(全程五关,逐帧 png + 同时刻 xml)· `map_shot.py` · `verify_monster.py`(单关连拍) |
+| 校验 | `assets_check.py` · `verify_render.py` · `verify_hits.py` · `clip2.py` · `verify_badges.py` · `verify_marks.py` |
+| 取证 / 溯源 | `crop_evidence.py`(人眼复核裁片)· `resample_forensics.py`(像素差溯源)· `token_check.py`(闯荡令余额) |
+
+### 入库时顺手做的三件事(否则换个环境就跑不起来)
+
+1. **去掉硬编码路径**:`ADB` / 序列号 / 仓库路径 / 题库源文件路径全部改成**按脚本位置推导 + 环境变量可覆盖**
+   (`CD_ADB` / `CD_SERIAL` / `CD_TEST_DIR`)。原先写死的 `C:\Users\28784\...`、`D:\Appproject\...` 换台机器就废。
+2. **报告输出改到产物目录**:几个脚本原本写 `HERE/../xxx.txt`,入库后那会写在 `scripts/` 里污染仓库 → 统一写 `OUT`。
+3. **目录拍平 + `sys.path` 修正**:原来分 `cd-test/`(底座)与 `cd-test/regress/`(回归)两层,合并成一层后
+   `sys.path.insert(0, HERE + "/..")` 这类写法全部改掉。
+
+### 验证:入库后**原地重跑**过
+
+`qa.py`(解析 38 题:点选 32 / 排序 2 / 分类 4)、`assets_check.py`(5/5)、`verify_render.py`、
+`verify_hits.py`(第 4 关 0→353→707→**2341**,与 §24 改后的读数一致)、`verify_badges.py all4`(5/5)
+—— 全部在**新位置**跑通,产物正确落在 `%TEMP%\cd-test`,`git status` 里没有多出任何脏文件
+(`__pycache__` 已被 `.gitignore` 覆盖)。
+
+### 沉淀(§25)
+
+1. **"能跑"与"能交付"差三件事:路径、产物位置、目录结构。** 临时目录里怎么写都行,
+   一旦入库,写死的用户名 / 盘符就是下一个人的第一个 bug。
+2. **脚本入库的门槛是"别人能照 README 复现"**,不是"我这边能跑"。所以 README 写的是
+   **前置条件 + 执行顺序 + 每条判据的来历 + 踩过的坑**,而不是脚本清单。
+3. **产物故意不落仓库**:一次采集 50 帧、几百 MB,进仓库只会让 clone 变慢;
+   真正要留证的图单独挑(如 `crops/` 里的 A/B 并排图)再进文档。
+
+---
+
 ## 📌 收工状态(09-19)
 
 | 项 | 值 |

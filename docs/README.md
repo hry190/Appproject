@@ -66,6 +66,10 @@
   失败必返非零退出码(防"静默失效");建完必验证。
   (更早的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它硬编码 SDK 路径 + 靠机型名找设备 + 失败时仍返回 0)
 - [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
+- [scripts/chuangdang-regress/](../scripts/chuangdang-regress/) — **闯荡江湖真机回归套件**(2026-09-19 §25 固化进仓库)
+  自动过五关 + 逐帧成对采集(png + 同时刻 xml),再做**素材 / 渲染 / 命中 / 布局**四层像素校验。
+  先读该目录的 [README.md](../scripts/chuangdang-regress/README.md):前置条件、执行顺序、每条判据的来历、踩过的坑都在里面。
+  产物全部落在 `%TEMP%\cd-test`,**不落仓库**;`CD_SERIAL` / `CD_ADB` / `CD_TEST_DIR` 可覆盖默认值。
 
 > 📌 **`adb reverse` 在 2026-09-18 之前没有脚本**(旧 `infra/adb-reverse.ps1` 靠 `adb devices` 找 `cupid` 机型,
 > 而该命令不带 `-l` 时不含机型 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)。
