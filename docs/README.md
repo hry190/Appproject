@@ -43,6 +43,7 @@
 | [CODE-AUDIT-2026-09-10.md](./CODE-AUDIT-2026-09-10.md) | v2 代码审计 — 68 个 finding(含 NEW/PERSISTED 标注) | 2026-09-10 |
 | [CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) | v3 代码审计 — Vol-2 doc 批(0 runtime bug,9 HIGH pre-existing)| 2026-09-11 |
 | [IMAGE-COORDINATE-VERIFICATION.md](./IMAGE-COORDINATE-VERIFICATION.md) | 图片坐标验证方法 — PNG 像素校验 + AskUserQuestion 二步决策 + KDoc 真机调整留痕 | 2026-09-11 |
+| [REGRESSION-chuangdang-5stages-20260919.md](./REGRESSION-chuangdang-5stages-20260919.md) | 闯荡江湖五关回归 — 五个新素材 3 层校验(离线体检 / 真机渲染 / 命中效果)+ 全程通关跑测;查出 1 处文档数字错 | 2026-09-19 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 
 > 📌 **最新一天是 `SESSION-LOG-2026-09-19.md`**;内容最厚的是 `09-16`(3000+ 行)与 `09-18`(1434 行)。
