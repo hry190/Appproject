@@ -372,11 +372,18 @@ fun ChuangdangBattleScreen(
                     CdHearts(alive = enemyHearts, tint = Color(0xFF6B5B8A))
                     Spacer(Modifier.height(8.dp))
                     // 命中数驱动「战斗表现」(文档 §5):每打掉一颗心,怪物形象随之变化 ——
-                    // 盾上多一条裂纹 / 声波环多一圈 / 脚下棋格少一块 / 一只纸鹤脱离阵形
+                    // 身上多一道爪痕 / 声波环多一圈 / 脚下棋格少一块 / 一只纸鹤脱离阵形
+                    //
+                    // 2026-09-19 §17:槽位由方形 96dp 改为 **132×96dp**。
+                    //   素材长宽比不一(铜齿门卫 1:1、机关蝠 3:2),方形槽位会让横构图
+                    //   只能按宽适配、显得很矮。给一个略宽的槽位后:
+                    //     · 1:1 素材 → 按高适配,仍是 96×96,**外观不变**
+                    //     · 3:2 素材 → 按宽适配,由 96×64 变成 132×88,**大了一圈**
+                    //   手绘敌人按 min(w,h) 归一化,槽位变宽对它们**没有影响**。
                     CdMonster(
                         glyph = stage.enemyGlyph,
                         hitCount = CD_MAX_HEARTS - enemyHearts,
-                        modifier = Modifier.size(96.dp),
+                        modifier = Modifier.size(width = 132.dp, height = 96.dp),
                     )
                     Text(
                         text = stage.enemyName,

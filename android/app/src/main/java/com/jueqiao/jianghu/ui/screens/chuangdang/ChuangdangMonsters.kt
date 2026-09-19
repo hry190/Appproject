@@ -35,11 +35,24 @@ import com.jueqiao.jianghu.R
  *
  * 五个敌人(策划方案 §5):
  *   盾 = 铜齿门卫 —— **真实素材**(走兽 + 铜齿 + 铜环 + 铜杖)
- *   蝠 = 断目机关蝠(眼部装置破损、只凭回声乱撞)
+ *   蝠 = 断目机关蝠 —— **真实素材**(机关翼 + 铜齿轮 + 铜钥匙)
  *   棋 = 棋冠石将(黑白石阶 + 棋冠)
  *   鹤 = 百声纸鹤(符纸铃铛 + 折纸鹤)
  *   枢 = 百面机枢(悬空核心 + 无数张宣称"绝不会错"的面具)
  */
+
+/**
+ * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠)。
+ *
+ * 再加素材只需在这里补一行 —— 渲染与命中效果都由 [CdMonster] 统一处理,不必再写 if 分支。
+ * 素材一律走 `ContentScale.Fit`,所以**方形与横构图都能用**:槽位由调用方给,
+ * 长宽比不一致时留白而不是拉伸(槽位宽高见调用方,当前战斗页是 132×96dp)。
+ */
+private val CD_MONSTER_ART: Map<String, Int> = mapOf(
+    "盾" to R.drawable.img_chuangdang_tongchimenwei,
+    "蝠" to R.drawable.img_chuangdang_duanmujiguanfu,
+)
+
 @Composable
 fun CdMonster(
     glyph: String,
@@ -47,37 +60,49 @@ fun CdMonster(
      * 已被打掉的心数(0~3)。
      *
      * 用于表现策划方案 §5 每关的「战斗表现」:
-     *   铜齿门卫 —— 每命中一次身上多一道**爪痕**(§16 改用素材后由 [drawDamageMarks] 叠加)
-     *   断目机关蝠 —— 正确流程让**声波沿指定路线反弹**,击中弱点
+     *   铜齿门卫 —— 每命中一次身上多一道**爪痕**(素材版,见 [drawDamageMarks])
+     *   断目机关蝠 —— 每命中一次多一圈**声波环**(素材版,见 [drawSonarRings])
      *   棋冠石将 —— 每识破一个越界判断,脚下的一块错误棋格便**崩落**
      *   百声纸鹤 —— 合理样本让纸鹤恢复判断,**逐只脱离阵形**
      */
     hitCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
-    // ① 铜齿门卫:真实素材 + 伤痕叠加(2026-09-19 §16)
-    //   尺寸完全交给调用方(modifier 里的 size),这里只用 ContentScale.Fit 保住比例 ——
-    //   素材是 1254×1254 正方形,放进方形槽位不会变形;槽位若不是正方形则留白而非拉伸。
-    if (glyph == "盾") {
+    // 有真实素材的敌人:素材 + 一层命中效果叠加
+    //   尺寸完全交给调用方(modifier 里的 size),这里只用 ContentScale.Fit 保住比例。
+    val art = CD_MONSTER_ART[glyph]
+    if (art != null) {
         Box(modifier = modifier) {
             Image(
-                painter = painterResource(R.drawable.img_chuangdang_tongchimenwei),
+                painter = painterResource(art),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
-            Canvas(modifier = Modifier.fillMaxSize()) { drawDamageMarks(hitCount) }
+            Canvas(modifier = Modifier.fillMaxSize()) { drawHitEffect(glyph, hitCount) }
         }
         return
     }
 
     Canvas(modifier = modifier) {
         when (glyph) {
-            "蝠" -> drawBrokenBat(hitCount)
             "棋" -> drawChessGeneral(hitCount)
             "鹤" -> drawPaperCrane(hitCount)
             else -> drawManyFaceCore()
         }
+    }
+}
+
+/**
+ * 有素材的敌人各自的「战斗表现」叠加层(文档 §5)。
+ *
+ * 手绘敌人的表现画在**同一个 Canvas** 里(棋格崩落、纸鹤离阵),因为它们本来就是整体绘制;
+ * 有素材的敌人则只能"素材 + 叠加层",故效果单独成函数。
+ */
+private fun DrawScope.drawHitEffect(glyph: String, hitCount: Int) {
+    when (glyph) {
+        "盾" -> drawDamageMarks(hitCount)   // 每命中一次多一道爪痕
+        "蝠" -> drawSonarRings(hitCount)    // 每命中一次多一圈声波环
     }
 }
 
@@ -142,84 +167,31 @@ private fun DrawScope.drawDamageMarks(hitCount: Int) {
     }
 }
 
-/** ② 断目机关蝠 —— 一只眼完好、一只眼被打叉,翅膀不对称。 */
-private fun DrawScope.drawBrokenBat(hitCount: Int) {
+/**
+ * 「战斗表现」的声波环(2026-09-19 §17)。
+ *
+ * 策划方案 §5 对第 2 关写的是「正确流程让**声波沿指定路线反弹**,击中机关蝠弱点」。
+ * 原 Canvas 版把"弱点"取在自己画的「完好的左眼」上;换成用户提供的真实素材后
+ * **眼位由画师决定,代码不该去猜** —— 故改为以**素材中心为圆心**扩散:
+ * 语义仍是"声波命中它",但不再依赖任何具体五官坐标。
+ *
+ * ⚠️ 与 [drawDamageMarks] 同理:调用方的画布必须与素材对齐(同为 `fillMaxSize`),
+ *    否则圆环会落在偏处。
+ */
+private fun DrawScope.drawSonarRings(hitCount: Int) {
+    if (hitCount <= 0) return
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
-    val bodyR = m * 0.17f
-
-    // 双翼(左翼完整、右翼残破)
-    val leftWing = Path().apply {
-        moveTo(c.x - bodyR * 0.6f, c.y - bodyR * 0.2f)
-        quadraticBezierTo(c.x - m * 0.34f, c.y - m * 0.20f, c.x - m * 0.40f, c.y + m * 0.06f)
-        quadraticBezierTo(c.x - m * 0.30f, c.y + m * 0.02f, c.x - m * 0.26f, c.y + m * 0.13f)
-        quadraticBezierTo(c.x - m * 0.20f, c.y + m * 0.03f, c.x - m * 0.15f, c.y + m * 0.12f)
-        quadraticBezierTo(c.x - m * 0.10f, c.y + m * 0.02f, c.x - bodyR * 0.6f, c.y + bodyR * 0.5f)
-        close()
+    repeat(hitCount) { i ->
+        drawCircle(
+            Danger,
+            radius = m * (0.11f + i * 0.075f),
+            center = c,
+            style = Stroke(width = m * 0.014f),
+        )
     }
-    drawPath(leftWing, InkFaint)
-    drawPath(leftWing, Ink, style = Stroke(width = m * 0.024f))
-
-    val rightWing = Path().apply {
-        moveTo(c.x + bodyR * 0.6f, c.y - bodyR * 0.2f)
-        quadraticBezierTo(c.x + m * 0.30f, c.y - m * 0.16f, c.x + m * 0.38f, c.y + m * 0.12f)
-        quadraticBezierTo(c.x + m * 0.28f, c.y + m * 0.06f, c.x + m * 0.24f, c.y + m * 0.16f)
-        quadraticBezierTo(c.x + m * 0.18f, c.y + m * 0.08f, c.x + bodyR * 0.6f, c.y + bodyR * 0.5f)
-        close()
-    }
-    drawPath(rightWing, InkFaint)
-    drawPath(rightWing, Ink, style = Stroke(width = m * 0.024f))
-
-    // 身体
-    drawCircle(Paper, radius = bodyR, center = c)
-    drawCircle(Ink, radius = bodyR, center = c, style = Stroke(width = m * 0.028f))
-
-    // 尖耳
-    line(Offset(c.x - bodyR * 0.5f, c.y - bodyR * 0.8f), Offset(c.x - bodyR * 0.75f, c.y - bodyR * 1.5f))
-    line(Offset(c.x + bodyR * 0.5f, c.y - bodyR * 0.8f), Offset(c.x + bodyR * 0.75f, c.y - bodyR * 1.5f))
-
-    // 完好的左眼
-    drawCircle(Ink, radius = m * 0.028f, center = Offset(c.x - bodyR * 0.42f, c.y - bodyR * 0.1f))
-    // 「断目」右眼:一个叉,表示眼部装置已损坏
-    val ex = c.x + bodyR * 0.42f
-    val ey = c.y - bodyR * 0.1f
-    val s = m * 0.035f
-    line(Offset(ex - s, ey - s), Offset(ex + s, ey + s), Danger, 0.026f)
-    line(Offset(ex + s, ey - s), Offset(ex - s, ey + s), Danger, 0.026f)
-
-    // 回声波纹(呼应「只凭回声乱撞」)
-    drawArc(
-        Bronze,
-        startAngle = -60f, sweepAngle = 120f, useCenter = false,
-        topLeft = Offset(c.x + m * 0.20f, c.y - m * 0.14f),
-        size = Size(m * 0.18f, m * 0.28f),
-        style = Stroke(width = m * 0.018f),
-    )
-    drawArc(
-        BronzeFaint,
-        startAngle = -60f, sweepAngle = 120f, useCenter = false,
-        topLeft = Offset(c.x + m * 0.26f, c.y - m * 0.22f),
-        size = Size(m * 0.28f, m * 0.44f),
-        style = Stroke(width = m * 0.016f),
-    )
-
-    // 文档 §5 战斗表现:「正确流程让声波沿指定路线反弹,击中机关蝠弱点」
-    //   每命中一次,弱点处多一圈扩散的声波环(弱点取完好的左眼)。
-    if (hitCount > 0) {
-        val weak = Offset(c.x - bodyR * 0.42f, c.y - bodyR * 0.1f)
-        repeat(hitCount) { i ->
-            val rr = m * (0.075f + i * 0.045f)
-            drawArc(
-                Danger,
-                startAngle = 0f, sweepAngle = 360f, useCenter = false,
-                topLeft = Offset(weak.x - rr, weak.y - rr),
-                size = Size(rr * 2f, rr * 2f),
-                style = Stroke(width = m * 0.012f),
-            )
-        }
-        // 命中标记:弱点被点亮的红心
-        drawCircle(Danger, radius = m * 0.018f, center = weak)
-    }
+    // 命中标记:中心一颗点亮的红点
+    drawCircle(Danger, radius = m * 0.022f, center = c)
 }
 
 /** ③ 棋冠石将 —— 石制身躯 + 棋冠,胸前一方棋盘。 */
