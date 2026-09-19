@@ -855,12 +855,96 @@ Row(modifier = Modifier.fillMaxWidth().height(66.dp) ... )   // 整张卡
 
 ---
 
+## §13 同步 main + 侦察时发现的仓库畸形 ref
+
+### 背景
+
+用户指令:「同步到 main」。按 [MERGE-WORKFLOW.md](./MERGE-WORKFLOW.md) 的 **4 步 SOP** 执行 —— 该文档明确要求**不许跳过侦察与评估**。
+
+### Step 1/2 侦察与评估
+
+| 检查 | 结果 |
+|---|---|
+| `git fetch origin` | 无新提交 |
+| `zzz` 领先 `main` | **6 个提交** |
+| 改动范围 | **9 个文件(+789 / −40)** |
+| `git merge-base main zzz` | `25971bd` —— **正好等于 main 的 HEAD** |
+| `git log zzz..main` | **空** → main 是 zzz 的**严格祖先** |
+| 冲突风险 | **低**:纯 fast-forward,不产生合并提交,**物理上不可能冲突** |
+
+改动文件:`JianghuNavHost.kt`、`Routes.kt`、`ChuangdangBattleScreen.kt`、`ChuangdangBossScreen.kt`、`ChuangdangData.kt`、`ChuangdangMapScreen.kt`、`ChuangdangMonsters.kt`、`docs/README.md`、`docs/SESSION-LOG-2026-09-19.md`。
+
+### ⚠️ 侦察中发现:`.git/origin/zzz` 是个畸形 ref,让 `origin/zzz` **全部解析错**
+
+`git rev-parse origin/zzz` 报:
+
+```
+warning: refname 'origin/zzz' is ambiguous.
+b58c714          ← 09-16 的一个旧提交,不是真正的远端跟踪 ref
+```
+
+而 `git rev-parse refs/remotes/origin/zzz` 得到的是 `25971bd`。两者不一致 —— 参考点是错的。
+
+**根因**:`.git/origin/zzz` 是个**畸形 ref 文件**(41 字节,内容就是 `b58c7149188…`)。
+git 的 ref DWIM 规则里 **`$GIT_DIR/<name>` 优先于 `refs/remotes/<name>`** ——
+所以 `.git/origin/zzz` 把 `origin/zzz` 这个短名抢到了那个陈旧提交上,同时对真正的
+`refs/remotes/origin/zzz` 报"歧义"。
+
+这种东西通常是 **`git update-ref origin/zzz <sha>`(漏写 `refs/` 前缀)** 写出来的 ——
+正确写法是 `git update-ref refs/remotes/origin/zzz <sha>`。
+
+**危害**:仓库里**每一处 `origin/zzz` 引用都指向错误提交**,包括 `MERGE-WORKFLOW.md` 自己的命令;
+而且它是**静默的** —— 除了一行 warning,`git log origin/zzz` / `git merge origin/zzz` 都会照常执行,只是对象错了。
+
+**处理**:**改名备份**(不是删除,可逆):
+
+```powershell
+Move-Item .git\origin\zzz .git\origin\zzz.bak-20260919-170941
+```
+
+修复后 `git rev-parse origin/zzz` → `25971bd`,歧义警告消失。
+
+> ⚠️ **未做**:备份文件 `.git/origin/zzz.bak-20260919-170941` 仍留在原地。
+> 它是**故意留的可逆备份**,不是残留 —— 确认无误后可删。
+
+### Step 4 执行
+
+| 步骤 | 结果 |
+|---|---|
+| `git merge zzz --ff-only --strategy=recursive` | **Fast-forward** `25971bd..76c9ee0` |
+| `compileDebugKotlin` | **BUILD SUCCESSFUL** |
+| `testDebugUnitTest` | **BUILD SUCCESSFUL** |
+| 冲突标记 / `.orig` / `git status` | **0 / 0 / clean** |
+| 路由集合(合并前 → 合并后)| Routes.kt **231 → 231**、NavHost **221 → 221**,**零删除** |
+| `git push origin main` | `25971bd..76c9ee0` |
+| `git push origin zzz` | `25971bd..76c9ee0` |
+
+`--strategy=recursive` **不可省** —— 否则会撞上 `MERGE-WORKFLOW.md` 记录的 Windows git bash bug
+(把 `--ff-only` 当成策略名 `theirs` 解析)。
+
+因为 zzz 本身就等于 main,**不需要 SOP 4.6 的 `reset --hard` + 强推**那两步。
+
+唯一的路由变化是 `chuangdang/battle/{stage}` → `chuangdang/battle/{stage}?practice={practice}`,
+即 §10 的免费练习参数,属**预期**变更。
+
+### 沉淀(§13)
+
+1. **`git merge-base --is-ancestor` 决定风险等级。** main 是 zzz 的祖先 ⇒ 纯 fast-forward ⇒ **结构性 0 冲突**。
+   这比"看两边 diff 有没有重叠"更硬 —— 重叠分析是为**真合并**准备的,fast-forward 根本不做 auto-merge。
+2. **`git fetch` 之后要顺手验 `origin/<branch>` 能不能正确解析。** 本次的畸形 ref 只在 `rev-parse` 时才暴露 warning,
+   日常 `git log --oneline` / `git status` **完全看不出来**。**一行 `git rev-parse origin/<branch>` 就能发现。**
+3. **畸形 ref 优先"改名"而不是"删除"。** 41 字节的文件,改名后既可逆、又不影响解析 —— 没必要赌它没用。
+4. **`git branch -vv` 的上游显示格式是线索。** 本次它把上游显示成 `[remotes/origin/zzz: ahead 2]`(带 `remotes/` 前缀),
+   而正常应是 `[origin/zzz]` —— 这个反常显示**早于** `rev-parse` 的警告出现,当时没在意,事后看是同一个根因。
+
+---
+
 ## 📌 收工状态(09-19)
 
 | 项 | 值 |
 |---|---|
-| 本日新增 commit | `6201bff`(§10 之后的收尾改动落地)、`e373d2d`(§12 修复)、`baf4c1c`(§11~§12 日志 + 索引)、本条(已关闭项留档)|
-| 分支 | `zzz`,领先 `origin/zzz` **6 个提交**(**未推送**)|
+| 本日新增 commit | `6201bff`(§10 之后的收尾落地)、`e373d2d`(§12 修复)、`baf4c1c`(§11~§12 日志 + 索引)、`76c9ee0`(关闭项留档)、本条(§13 同步 main)|
+| 分支 | **四个 ref 全部同步**:`main` = `zzz` = `origin/main` = `origin/zzz` = `76c9ee0`(§13)|
 | 工作区 | 干净 |
 | 真机 | `21908b7a`;`font_scale` 已还原 **1.0**;`adb reverse` = `tcp:8010 tcp:8010`,设备侧探活 **200** |
 
@@ -903,4 +987,5 @@ Row(modifier = Modifier.fillMaxWidth().height(66.dp) ... )   // 整张卡
 |---|---|---|
 | 1 | **模拟器未验证** | ⏳ 用户提到有两台模拟器在线,不同渲染环境可能有差异 |
 | 2 | **Boss「通过态」结果面板未截到** | ⏳ 中文字符无法经 adb 输入(§11 踩坑 4);未通过态已验证,两者共用同一段 Compose |
-| 3 | `zzz` 领先 6 个 commit 未推送、`main` 仍落后 | ⏳ 按 `MERGE-WORKFLOW.md` 走 |
+| 3 | **`.git/origin/zzz` 会不会被重新生成?** | ⏳ 本次已改名备份(§13)。**若复发**,说明有工具在写畸形 ref —— 候选是 `codex` 相关工具(`.git/refs/codex/turn-diffs/` 与 `.git/gk` 存在)。**每次 `git fetch` 后顺手跑一次 `git rev-parse origin/zzz` 即可发现** |
+| 4 | 备份文件 `.git/origin/zzz.bak-20260919-170941` 仍留在原地 | ⏳ 故意保留的可逆备份(41 字节),确认无误后可删 |
