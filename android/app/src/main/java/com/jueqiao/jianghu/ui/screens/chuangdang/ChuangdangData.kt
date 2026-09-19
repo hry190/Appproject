@@ -17,13 +17,58 @@ package com.jueqiao.jianghu.ui.screens.chuangdang
 // ── 基础模型 ────────────────────────────────────────────────────────────────
 
 /** 一道题(进攻题与防御题同构)。 */
-data class CdQuestion(
-    val prompt: String,
+/**
+ * 知识交互(文档 §3「知识操作与内容质量」)。
+ *
+ * 文档要求首版覆盖**三种交互**,分别用于识破描述、修复流程和判断适用范围:
+ *   · [CdChoice] —— **观察点选**,第 1 关(识破描述)
+ *   · [CdOrder]  —— **步骤排序**,第 2 关(把感知/推理/行动三个环节排回正确顺序)
+ *   · [CdSort]   —— **任务 / 样本分类**,第 3、4 关(判断适用范围、找缺失条件)
+ *
+ * 文档另写明「拖动操作同时提供点选替代方式」—— 所以三种交互**全部用点选实现**,
+ * 不引入拖拽(既省一套手势,也让自动化验证能按文字点)。
+ */
+sealed interface CdQuestion {
+    val prompt: String
+    /** 结算后展示的关键解释(文档 §3.2:完整解释在回合结束后出现,不先公布答案)。 */
+    val explanation: String
+}
+
+/** **观察点选**:三选一。 */
+data class CdChoice(
+    override val prompt: String,
     val options: List<String>,
     val correctIndex: Int,
-    /** 结算后展示的关键解释(文档 §3.2:完整解释在回合结束后出现,不先公布答案)。 */
-    val explanation: String,
-)
+    override val explanation: String,
+) : CdQuestion
+
+/**
+ * **步骤排序**:把打乱的步骤按正确顺序依次点选。
+ *
+ * [steps] 存的是**正确顺序**;打乱由 UI 负责(见 `CdOrderRow` 的 `remember`),这样数据本身
+ * 始终可读、可核对,不会因为"库里的顺序就是答案"而在改题时看走眼。
+ */
+data class CdOrder(
+    override val prompt: String,
+    val steps: List<String>,
+    override val explanation: String,
+) : CdQuestion
+
+/** 分类里的一条:某条目该归入哪个类别(下标对应 [CdSort.buckets])。 */
+data class CdSortItem(val text: String, val bucket: Int)
+
+/**
+ * **任务 / 样本分类**:把每条归入正确的类别。
+ *
+ * 用"全部归对才算答对"的判定(与文档 §5 第 3 关"将任务归入…"的语义一致);
+ * 结算解释会点出哪一条归错了。
+ */
+data class CdSort(
+    override val prompt: String,
+    val buckets: List<String>,
+    val items: List<CdSortItem>,
+    override val explanation: String,
+) : CdQuestion
 
 /** 一个普通关卡(第 1~4 关)。 */
 data class CdStage(
@@ -84,7 +129,7 @@ val CD_STAGES: List<CdStage> = listOf(
         knowledge = "固定规则与机器学习的区别",
         aftermath = "门卫恢复正常,交出断裂的感知晶片,指向听风桥。",
         attack = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "门卫每次开门都是同一套动作,不随情况变化。这最可能来自?",
                 options = listOf(
                     "从大量开门样本里总结出的规律",
@@ -94,7 +139,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "每次完全一致、不随情况变化,正是「固定规则」的特征;从样本学来的行为会随输入而变。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "下列哪种表现,最能说明一个系统并非单纯执行固定规则?",
                 options = listOf(
                     "每天在同一时刻开门",
@@ -104,7 +149,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "面对没见过的输入还能调整做法,才说明行为来自样本学习,而不是写死的规则。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "门卫把「我一直在做」当成「我什么都懂」。这个推理错在哪?",
                 options = listOf(
                     "它没有给出足够的样本",
@@ -115,7 +160,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 explanation = "重复次数多不等于理解范围广 —— 这正是本关要拆穿的核心误区。",
             ),
             // ── 以下为本知识点的「情境变体」(文档 §3.4:避免练习与正式挑战机械重复同一题)──
-            CdQuestion(
+            CdChoice(
                 prompt = "自动门每天都按同一时刻开合,换一种门型就完全失灵。这说明它?",
                 options = listOf(
                     "学会了开门的普遍规律",
@@ -125,7 +170,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "换成另一种情况就失灵,说明它执行的是写死的规则,而不是学到的规律。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "下列哪一项最能体现「从样本中学习」?",
                 options = listOf(
                     "照着说明书逐步操作",
@@ -135,7 +180,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "见过大量例子之后形成做事方法,才是从样本中学来的。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "门卫说「我从不出错」。要判断这句话是否成立,关键看?",
                 options = listOf(
                     "它开关门的速度有多快",
@@ -147,7 +192,7 @@ val CD_STAGES: List<CdStage> = listOf(
             ),
         ),
         defense = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "预设规则和机器学习,最核心的区别是什么?",
                 options = listOf(
                     "运行速度快慢不同",
@@ -157,7 +202,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "区别在于「规则从哪来」:人写死 vs 从数据中学。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "一台「按下按钮就开门、别的什么都不会」的装置,属于?",
                 options = listOf("固定规则", "机器学习", "两者都不是"),
                 correctIndex = 0,
@@ -175,7 +220,7 @@ val CD_STAGES: List<CdStage> = listOf(
         knowledge = "感知、推理、行动形成闭环,任一环节失效都会影响结果",
         aftermath = "机关蝠恢复方向感,带少侠前往裁断镇中事务的棋将台。",
         attack = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "要定位机关蝠的故障,最合理的检查顺序是?",
                 options = listOf(
                     "直接把整个机关蝠换掉",
@@ -185,7 +230,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "感知 → 推理 → 行动是一条闭环,顺着链路逐段排查才能定位故障点。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "感知、推理、行动三者中任一环节出错,结果都会不对。这说明?",
                 options = listOf(
                     "只要行动正确就没问题",
@@ -195,7 +240,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "闭环意味着没有哪一环可以被跳过 —— 这是本关的核心。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "要区分它是「没听见」还是「听见了但判断错」,最直接的做法是?",
                 options = listOf(
                     "看它最后有没有飞对方向",
@@ -206,7 +251,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 explanation = "只看最终结果无法区分故障环节;要单独观察「感知」这一环的输入。",
             ),
             // ── 情境变体 ──
-            CdQuestion(
+            CdChoice(
                 prompt = "机关蝠撞上了柱子,记录显示它「看到了柱子却没有转向」。故障最可能在?",
                 options = listOf(
                     "感知环节",
@@ -216,7 +261,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "既然「看到了」,感知就正常;没有转向说明是判断出了问题。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "要验证闭环中某一环是否正常,最可靠的做法是?",
                 options = listOf(
                     "只看最终的飞行结果",
@@ -226,7 +271,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "逐环单独观察输入与输出,才能把故障定位到具体环节。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "感知正常、判断正常,但动作没有执行。结果会怎样?",
                 options = listOf(
                     "依然能完成任务",
@@ -236,9 +281,29 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "闭环缺一环,最终结果就不会对 —— 没有哪一步可以被跳过。",
             ),
+            // ── 步骤排序(2026-09-19 §15:文档 §3 的第二种交互,§5 第 2 关「排列三个环节」)──
+            CdOrder(
+                prompt = "机关蝠撞上了柱子。把「定位故障」的三步按正确顺序排好:",
+                steps = listOf(
+                    "先看它的听觉输入记录(感知)",
+                    "再判断它把回声理解成了什么(推理)",
+                    "最后看它实际朝哪个方向飞(行动)",
+                ),
+                explanation = "排查闭环故障要顺着数据流走:先看感知收到了什么,再看怎么判断,最后看行动落了没有。",
+            ),
+            CdOrder(
+                prompt = "要给机关蝠做一次完整检修,按正确顺序排列这几步:",
+                steps = listOf(
+                    "用标准回声测试它的听觉输入端",
+                    "给它一个已知方向的声源,看它判断成什么",
+                    "观察它实际的飞行方向是否与判断一致",
+                ),
+                explanation = "逐环节单独观察输入与输出,才能把故障定位到具体环节;" +
+                    "从最终结果倒推,永远说不清是哪一环坏了。",
+            ),
         ),
         defense = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "机械臂抓杯子失败。下列哪一项属于「感知」环节的问题?",
                 options = listOf(
                     "摄像头没识别出杯子的位置",
@@ -248,7 +313,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 0,
                 explanation = "摄像头识别属于感知;电机属于行动,算角度属于推理。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "一条完整链路上,「推理」环节最接近下面哪件事?",
                 options = listOf("看见目标", "根据看到的信息做判断", "伸手去抓"),
                 correctIndex = 1,
@@ -266,7 +331,7 @@ val CD_STAGES: List<CdStage> = listOf(
         knowledge = "在特定任务上表现优秀,不等于具备通用能力",
         aftermath = "石将承认信息来自传信阁,提醒少侠那里只留了一种口音的训练录音。",
         attack = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "石将棋艺无双,却被派去辨药、修桥、预测天气。问题出在哪?",
                 options = listOf(
                     "它的计算速度不够快",
@@ -276,7 +341,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "越界使用能力,是这个误区最常见的表现形式。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "把一个只在下棋上训练过的系统派去认药草,最可能的结果是?",
                 options = listOf(
                     "表现和下棋时一样出色",
@@ -286,7 +351,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "能力范围由训练任务决定,换个任务不会自动变强。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "要判断一个 AI 能不能胜任新任务,最可靠的做法是?",
                 options = listOf(
                     "看它在原来任务上有多强",
@@ -297,7 +362,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 explanation = "先划清能力边界,再谈能不能接新活。",
             ),
             // ── 情境变体 ──
-            CdQuestion(
+            CdChoice(
                 prompt = "一个系统在测试中表现优异,于是被直接用于医疗诊断。最该先确认什么?",
                 options = listOf(
                     "它的运行速度够不够快",
@@ -307,7 +372,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "先确认新任务落在能力范围内,再谈能不能上。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "「能力边界」这个词强调的是?",
                 options = listOf(
                     "它能做什么、在什么范围内可靠",
@@ -317,7 +382,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 0,
                 explanation = "边界说的是适用范围,不是价钱或寿命。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "把擅长翻译的系统派去写代码,风险在哪里?",
                 options = listOf(
                     "它会拒绝执行任务",
@@ -327,15 +392,39 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "专长不能直接迁移 —— 这正是「棋王越界」要拆穿的误区。",
             ),
+            // ── 任务分类(2026-09-19 §15:文档 §3 的第三种交互,§5 第 3 关「将任务归入…」)──
+            //   三个类别取自文档原文:擅长 / 需要额外能力 / 不能直接下结论。
+            CdSort(
+                prompt = "棋冠石将只会下棋。把下面三件事分别归入正确的类别:",
+                buckets = listOf("擅长", "需要额外能力", "不能直接下结论"),
+                items = listOf(
+                    CdSortItem("复盘一盘围棋的死活题", 0),
+                    CdSortItem("辨认药草并说出它的药性", 1),
+                    CdSortItem("「它棋下得好,所以一定也能预测天气」", 2),
+                ),
+                explanation = "棋力只覆盖棋局:复盘是它擅长的;辨药要另学一套能力;" +
+                    "而从棋力推出天气,是根本推不出来的越界结论。",
+            ),
+            CdSort(
+                prompt = "镇上又送来三件事,继续归类:",
+                buckets = listOf("擅长", "需要额外能力", "不能直接下结论"),
+                items = listOf(
+                    CdSortItem("推演棋局走到第 50 手的形势", 0),
+                    CdSortItem("修好镇口那座断掉的木桥", 1),
+                    CdSortItem("「它赢过所有棋手,所以它的判断从不出错」", 2),
+                ),
+                explanation = "「赢过所有棋手」只能说明它在下棋上强,推不出「判断从不出错」——" +
+                    "把胜负战绩当成全能证明,正是本关要拆穿的误区。",
+            ),
         ),
         defense = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "擅长下棋的系统,一定也能诊断疾病吗?",
                 options = listOf("一定能", "不一定,能力是有适用范围的", "只要算力够就行"),
                 correctIndex = 1,
                 explanation = "专长不等于通用,换领域需要重新评估。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "说一个模型「能力有边界」,意思是?",
                 options = listOf(
                     "它在某些任务上会不可靠",
@@ -357,7 +446,7 @@ val CD_STAGES: List<CdStage> = listOf(
         knowledge = "学习依赖样本,样本的覆盖范围影响识别表现",
         aftermath = "传信恢复后,四份线索指向百面机枢。它收到错误信息,却依旧宣称判断完全可靠。",
         attack = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "纸鹤只听得懂师父一个人的口音。根因最可能是?",
                 options = listOf(
                     "它的铃铛太小了",
@@ -367,7 +456,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "识别范围取决于样本覆盖 —— 没见过的口音自然识别不了。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "要让纸鹤听懂全镇居民,最有效的做法是?",
                 options = listOf(
                     "把它的音量调大",
@@ -377,7 +466,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "扩大样本覆盖范围,才是解决识别盲区的正路。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "一个系统在测试集上表现很好,上线后却频繁出错。最可能的原因是?",
                 options = listOf(
                     "测试集与真实场景的样本分布不一致",
@@ -388,7 +477,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 explanation = "测试集没覆盖真实场景,就会出现「测得好、用起来差」。",
             ),
             // ── 情境变体 ──
-            CdQuestion(
+            CdChoice(
                 prompt = "训练数据全是大晴天拍的,一到阴天识别率就骤降。这属于?",
                 options = listOf(
                     "样本覆盖不足",
@@ -398,7 +487,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 0,
                 explanation = "缺少阴天样本,就是样本覆盖范围出了缺口。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "要让系统适应更多场景,最直接的做法是?",
                 options = listOf(
                     "提高硬件配置",
@@ -408,7 +497,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "缺什么补什么 —— 覆盖不足就该补样本,而不是堆算力。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "识别系统「测试集表现好、上线后出错」最常见的原因是?",
                 options = listOf(
                     "服务器不稳定",
@@ -418,15 +507,38 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "测试集没有代表真实分布,成绩就没有意义。",
             ),
+            // ── 样本分类(2026-09-19 §15:§5 第 4 关「找出缺失条件,判断哪些情形仍可能识别失败」)──
+            CdSort(
+                prompt = "百声纸鹤只听过师父一个人的口音。把下面的情形归入正确的类别:",
+                buckets = listOf("样本已覆盖,能认出来", "样本没覆盖,很可能失败"),
+                items = listOf(
+                    CdSortItem("师父用平时的口音说「帮我找水壶」", 0),
+                    CdSortItem("隔壁镇的老婆婆换一种口音来求助", 1),
+                    CdSortItem("在嘈杂集市里、带口音地喊话", 1),
+                ),
+                explanation = "它只见过一种口音。口音一变就已经在训练范围之外了,再叠上噪声只会更糟 ——" +
+                    "这正是「样本的覆盖范围决定识别表现」。",
+            ),
+            CdSort(
+                prompt = "水壶的照片样本只有晴天白天拍的。继续归类:",
+                buckets = listOf("样本已覆盖,能认出来", "样本没覆盖,很可能失败"),
+                items = listOf(
+                    CdSortItem("晴天白天拍的水壶照片", 0),
+                    CdSortItem("雨夜拍的、只露出半截的水壶", 1),
+                    CdSortItem("从没见过的不锈钢保温杯", 1),
+                ),
+                explanation = "光照条件没覆盖、物品品类没覆盖 —— 这两种都属于「没学过」," +
+                    "认不出来不能怪它,该做的是补样本。",
+            ),
         ),
         defense = listOf(
-            CdQuestion(
+            CdChoice(
                 prompt = "只用男声录音训练的系统,遇到女声容易出错。这属于哪类问题?",
                 options = listOf("样本覆盖不足", "算力不足", "程序写错了"),
                 correctIndex = 0,
                 explanation = "训练样本没覆盖到的人群,就是识别盲区。",
             ),
-            CdQuestion(
+            CdChoice(
                 prompt = "「样本覆盖范围」在这里指的是?",
                 options = listOf(
                     "训练数据里包含了哪些情况",

@@ -102,7 +102,14 @@ fun ChuangdangBattleScreen(
     var attackIdx by remember { mutableIntStateOf(0) }
     var defenseIdx by remember { mutableIntStateOf(0) }
     var phase by remember { mutableStateOf(CdPhase.Attack) }
-    var selected by remember { mutableStateOf<Int?>(null) }
+    /**
+     * 本题是否已作答、以及答得对不对(null = 还没作答)。
+     *
+     * 2026-09-19 §15:原先这里是 `selected: Int?`(选项下标),只够点选题用。
+     * 引入排序 / 分类后,"选了什么"不再是一个下标,故这里只记**判定结果**;
+     * 各交互自己的中间状态由下方 `picked` / `assigned` 持有。
+     */
+    var lastCorrect by remember { mutableStateOf<Boolean?>(null) }
     var pendingDefense by remember { mutableStateOf(false) } // 进攻答错 → 结算后转入防御题
     var blocked by remember { mutableStateOf(false) }
     // 2026-09-19 §6:文档 §3.3 的**保底** —— "一次攻击被格挡后,下一次正确攻击必定命中,
@@ -146,20 +153,46 @@ fun ChuangdangBattleScreen(
     //   原先进攻题的正确答案固定在索引 1、防御题固定在索引 0 —— 玩两关就能摸出套路,
     //   知识判断会退化成"记位置"。这里对每道题洗一次牌;
     //   用 remember(question) 保证同一题在重绘(结算前后)时不会重新打散,否则答案位置会跳。
+    //   仅点选题需要;排序 / 分类题的打散在各自的交互组件里做(见 §15)。
     val (shownOptions, shownCorrectIndex) = remember(question) {
-        val indexed = question.options.mapIndexed { i, text -> i to text }
-        val order = indexed.shuffled()
-        order.map { it.second } to order.indexOfFirst { it.first == question.correctIndex }
+        if (question is CdChoice) {
+            val indexed = question.options.mapIndexed { i, text -> i to text }
+            val order = indexed.shuffled()
+            order.map { it.second } to order.indexOfFirst { it.first == question.correctIndex }
+        } else {
+            emptyList<String>() to -1
+        }
     }
+
+    // ── 排序题(§15):打乱后的展示顺序 + 玩家已点中的次序 ──────────────────
+    val orderSteps = remember(question) {
+        if (question is CdOrder) question.steps.shuffled() else emptyList<String>()
+    }
+    /** 玩家依次点中的步骤在 [orderSteps] 中的下标 —— 这个列表的顺序就是作答顺序。 */
+    var picked by remember(question) { mutableStateOf<List<Int>>(emptyList()) }
+
+    // ── 分类题(§15):每条当前归入的类别(-1 = 还没归) ────────────────────
+    //   注意要显式写 List<Int> —— 两个分支分别是 List<Int> 与 emptyList(),
+    //   不标注的话会被推成 List<Nothing>,委托属性直接编译不过。
+    var assigned by remember(question) {
+        mutableStateOf<List<Int>>(
+            if (question is CdSort) List(question.items.size) { -1 } else emptyList(),
+        )
+    }
+
     // 练习模式的"看提示"(文档 §2:免费练习可查看提示与秘籍)
     var showHint by remember(question) { mutableStateOf(false) }
 
-    /** 作答 + 按 §3.2 的判定顺序结算。 */
-    fun answer(choice: Int) {
-        if (selected != null) return
+    /**
+     * 作答 + 按 §3.2 的判定顺序结算。
+     *
+     * 2026-09-19 §15:入参从"选了第几项"改成"这次答得对不对" —— 三种交互各自判定
+     * (点选比下标、排序比次序、分类逐条比类别),状态机这层不需要知道是哪一种。
+     */
+    fun answer(isCorrect: Boolean) {
+        if (lastCorrect != null) return
         if (phase != CdPhase.Attack && phase != CdPhase.Defense) return
-        selected = choice
-        val isCorrect = choice == shownCorrectIndex
+        lastCorrect = isCorrect
 
         if (phase == CdPhase.Attack) {
             if (isCorrect) {
@@ -221,7 +254,10 @@ fun ChuangdangBattleScreen(
                 actions.onExit()
             }
             CdPhase.Resolved -> {
-                selected = null
+                // 换题前把作答状态清干净(§15:三种交互各有中间状态,都要重置)
+                lastCorrect = null
+                picked = emptyList()
+                assigned = if (question is CdSort) List(question.items.size) { -1 } else emptyList()
                 blocked = false
                 if (pendingDefense) {
                     defenseIdx += 1
@@ -411,7 +447,7 @@ fun ChuangdangBattleScreen(
                             text = headline,
                             color = if (phase == CdPhase.Defeat) BWrong
                             else if (phase == CdPhase.Victory) BCorrect
-                            else if (blocked || selected != shownCorrectIndex) BWrong
+                            else if (blocked || lastCorrect == false) BWrong
                             else BCorrect,
                             style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 15.sp),
                         )
@@ -492,12 +528,79 @@ fun ChuangdangBattleScreen(
                             Spacer(Modifier.height(8.dp))
                         }
                     }
-                    shownOptions.forEachIndexed { i, option ->
-                        CdOptionRow(
-                            text = option,
-                            onClick = { answer(i) },
-                        )
-                        Spacer(Modifier.height(8.dp))
+                    // ── 三种知识交互(文档 §3,2026-09-19 §15)──────────────────
+                    //   点选:直接点即作答;排序:依次点满即作答;分类:逐条归类后按确认。
+                    when (val q = question) {
+                        is CdChoice -> shownOptions.forEachIndexed { i, option ->
+                            CdOptionRow(
+                                text = option,
+                                onClick = { answer(i == shownCorrectIndex) },
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
+
+                        is CdOrder -> {
+                            Text(
+                                text = "按正确顺序依次点选(已选 ${picked.size}/${orderSteps.size})",
+                                color = BInkSoft,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                            orderSteps.forEachIndexed { i, step ->
+                                val at = picked.indexOf(i)
+                                CdOptionRow(
+                                    text = if (at >= 0) "${at + 1}. $step" else step,
+                                    // 已点过的步骤变灰但仍可看;点它不生效(不返工不扣分,因为排序
+                                    // 判定的是"第一次点满的顺序",重来请用下方「重排」)。
+                                    highlight = if (at >= 0) BGold else null,
+                                    onClick = {
+                                        if (at < 0 && picked.size < orderSteps.size) {
+                                            val next = picked + i
+                                            picked = next
+                                            if (next.size == orderSteps.size) {
+                                                // 判定:玩家点出的步骤序列是否等于数据里的正确顺序
+                                                answer(next.map { orderSteps[it] } == q.steps)
+                                            }
+                                        }
+                                    },
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            if (picked.isNotEmpty() && picked.size < orderSteps.size) {
+                                CdTextButton(text = "重排", onClick = { picked = emptyList() })
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+
+                        is CdSort -> {
+                            Text(
+                                text = "把每一条归入正确的类别",
+                                color = BInkSoft,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                            q.items.forEachIndexed { i, item ->
+                                CdSortRow(
+                                    text = item.text,
+                                    buckets = q.buckets,
+                                    chosen = assigned.getOrElse(i) { -1 },
+                                    onPick = { b ->
+                                        assigned = assigned.toMutableList().also { it[i] = b }
+                                    },
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            val allAssigned = assigned.isNotEmpty() && assigned.all { it >= 0 }
+                            CdPrimaryButton(
+                                text = if (allAssigned) "确认归类" else "还有 ${assigned.count { it < 0 }} 条未归类",
+                                enabled = allAssigned,
+                                onClick = {
+                                    val ok = q.items.indices.all { assigned[it] == q.items[it].bucket }
+                                    answer(ok)
+                                },
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
                     }
                 }
             }
@@ -691,14 +794,23 @@ private fun CdHearts(alive: Int, tint: Color) {
  * 最小高度由 [CD_OPTION_MIN_HEIGHT] 统一控制(五关共用,当前 55dp)。
  */
 @Composable
-private fun CdOptionRow(text: String, onClick: () -> Unit) {
+private fun CdOptionRow(
+    text: String,
+    onClick: () -> Unit,
+    /** 非 null 时给整行加底色(排序题用来标"已选中的第 N 步",2026-09-19 §15)。 */
+    highlight: Color? = null,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = CD_OPTION_MIN_HEIGHT)
             .clip(RoundedCornerShape(12.dp))
-            .background(BCardBg)
-            .border(1.dp, Color(0x332E2A24), RoundedCornerShape(12.dp))
+            .background(if (highlight != null) Color(0x22B8894A) else BCardBg)
+            .border(
+                if (highlight != null) 1.5.dp else 1.dp,
+                highlight ?: Color(0x332E2A24),
+                RoundedCornerShape(12.dp),
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -715,18 +827,97 @@ private fun CdOptionRow(text: String, onClick: () -> Unit) {
     }
 }
 
-/** 主按钮。 */
+/**
+ * **分类题的一行**(2026-09-19 §15,文档 §3 的第三种交互):
+ * 左边是要归类的条目,右边一排类别小按钮;当前选中项高亮。
+ */
 @Composable
-private fun CdPrimaryButton(text: String, onClick: () -> Unit) {
+private fun CdSortRow(
+    text: String,
+    buckets: List<String>,
+    chosen: Int,
+    onPick: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = CD_OPTION_MIN_HEIGHT)
+            .clip(RoundedCornerShape(12.dp))
+            .background(BCardBg)
+            .border(1.dp, Color(0x332E2A24), RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+    ) {
+        Text(
+            text = text,
+            color = BInk,
+            style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 20.sp),
+        )
+        Spacer(Modifier.height(8.dp))
+        Row {
+            buckets.forEachIndexed { b, name ->
+                val on = b == chosen
+                Box(
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (on) BGold else Color(0x142E2A24))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onPick(b) },
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = name,
+                        color = if (on) Color.White else BInkSoft,
+                        style = TextStyle(
+                            fontFamily = YaHei,
+                            fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 11.sp,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 次级文字按钮(排序题的「重排」用)。 */
+@Composable
+private fun CdTextButton(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(11.dp))
+            .border(1.dp, BGold, RoundedCornerShape(11.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            )
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = text,
+            color = BGold,
+            style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 12.sp),
+        )
+    }
+}
+
+/** 主按钮。[enabled] 为 false 时置灰且不可点(分类题未归完时用)。 */
+@Composable
+private fun CdPrimaryButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(BGold)
+            .background(if (enabled) BGold else Color(0x55888888))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
+                enabled = enabled,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.Center,
