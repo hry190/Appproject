@@ -42,18 +42,21 @@ import com.jueqiao.jianghu.R
  */
 
 /**
- * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠、§18 棋冠石将、§20 百声纸鹤)。
+ * 已有**真实素材**的敌人:**五个已全部换成素材**(§16 铜齿门卫、§17 断目机关蝠、§18 棋冠石将、
+ * §20 百声纸鹤、§22 百面机枢)。手绘分支保留 —— 它是未知字形的兜底,也是这些素材的来处。
  *
  * 再加素材只需在这里补一行 —— 渲染与命中效果都由 [CdMonster] 统一处理,不必再写 if 分支。
  * 素材一律走 `ContentScale.Fit`,所以**方形 / 横构图 / 竖构图都能用**:槽位由调用方给,
- * 长宽比不一致时居中留白而不是拉伸(当前战斗页槽位 132×96dp):
- *   1:1 → 96×96 · 3:2 → 132×88 · 3:4 → 72×96
+ * 长宽比不一致时居中留白而不是拉伸:
+ *   战斗页槽位 132×96dp → 1:1 出 96×96 · 3:2 出 132×88 · 0.774:1 出 74×96 · 0.941:1 出 90×96
+ *   Boss 页槽位 64dp 方形 → 0.941:1 出 60×64
  */
 private val CD_MONSTER_ART: Map<String, Int> = mapOf(
     "盾" to R.drawable.img_chuangdang_tongchimenwei,
     "蝠" to R.drawable.img_chuangdang_duanmujiguanfu,
     "棋" to R.drawable.img_chuangdang_qiguanshixiang,
     "鹤" to R.drawable.img_chuangdang_baishengzhihe,
+    "枢" to R.drawable.img_chuangdang_baimianjishu,
 )
 
 @Composable
