@@ -660,6 +660,7 @@ chore(<scope>): <description>
 | 现象 | 命令 |
 | |---|
 | 手机没反应(USB 刚插) | `adb -s 21908b7a reverse tcp:8010 tcp:8010` |
+| `git` 报 `refname 'origin/zzz' is ambiguous` | `git rev-parse origin/zzz` —— 正常只输出一个 sha;若输出**陈旧提交**,说明 `.git/origin/` 下有畸形 ref(详见 [SESSION-LOG-2026-09-19 §13](./SESSION-LOG-2026-09-19.md))|
 | 后端容器挂了 | `cd D:\Appproject\infra; .\start-dev.ps1` |
 | Gradle 报 25.0.3 | `export JAVA_HOME=C:/Users/28784/.jdks/jbr-21.0.11` |
 | Android Studio 索引错乱 | File → Invalidate Caches → Restart |

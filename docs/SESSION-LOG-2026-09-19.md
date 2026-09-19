@@ -904,8 +904,13 @@ Move-Item .git\origin\zzz .git\origin\zzz.bak-20260919-170941
 
 修复后 `git rev-parse origin/zzz` → `25971bd`,歧义警告消失。
 
-> ⚠️ **未做**:备份文件 `.git/origin/zzz.bak-20260919-170941` 仍留在原地。
-> 它是**故意留的可逆备份**,不是残留 —— 确认无误后可删。
+> ✅ **已清理**(同日):确认修复生效后,备份与目录一并删除 ——
+> `Remove-Item .git\origin\zzz.bak-20260919-170941` + `Remove-Item .git\origin`(空目录)。
+> 删除**不丢信息**:其内容 `b58c714…` 已逐字留在本节,且该提交对象仍在仓库里(`git cat-file -t b58c714` → `commit`)。
+> 删后 `git rev-parse origin/zzz` 正常,**`.git/` 顶层非标准条目只剩 GitKraken 的 `gk/`**(未动)。
+>
+> 📌 **防复发**:`ONBOARDING.md` §12.4 急救命令已加一行 ——
+> `git` 报 `refname 'origin/zzz' is ambiguous` 时,跑 `git rev-parse origin/zzz` 确认是否被畸形 ref 劫持。
 
 ### Step 4 执行
 
@@ -987,5 +992,4 @@ Move-Item .git\origin\zzz .git\origin\zzz.bak-20260919-170941
 |---|---|---|
 | 1 | **模拟器未验证** | ⏳ 用户提到有两台模拟器在线,不同渲染环境可能有差异 |
 | 2 | **Boss「通过态」结果面板未截到** | ⏳ 中文字符无法经 adb 输入(§11 踩坑 4);未通过态已验证,两者共用同一段 Compose |
-| 3 | **`.git/origin/zzz` 会不会被重新生成?** | ⏳ 本次已改名备份(§13)。**若复发**,说明有工具在写畸形 ref —— 候选是 `codex` 相关工具(`.git/refs/codex/turn-diffs/` 与 `.git/gk` 存在)。**每次 `git fetch` 后顺手跑一次 `git rev-parse origin/zzz` 即可发现** |
-| 4 | 备份文件 `.git/origin/zzz.bak-20260919-170941` 仍留在原地 | ⏳ 故意保留的可逆备份(41 字节),确认无误后可删 |
+| 3 | **`.git/origin/zzz` 会不会被重新生成?** | ⏳ 本次已修复并清理(§13)。**若复发**,说明有工具在写畸形 ref —— 候选是 GitKraken(`.git/gk/config` 存在)或 `codex` 工具(`.git/refs/codex/turn-diffs/` 存在),**两者都未证实**。已把 `git rev-parse origin/zzz` 加进 `ONBOARDING.md` §12.4,每次 `git fetch` 后顺手跑一次即可发现 |
