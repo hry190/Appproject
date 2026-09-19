@@ -42,15 +42,17 @@ import com.jueqiao.jianghu.R
  */
 
 /**
- * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠)。
+ * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠、§18 棋冠石将)。
  *
  * 再加素材只需在这里补一行 —— 渲染与命中效果都由 [CdMonster] 统一处理,不必再写 if 分支。
- * 素材一律走 `ContentScale.Fit`,所以**方形与横构图都能用**:槽位由调用方给,
- * 长宽比不一致时留白而不是拉伸(槽位宽高见调用方,当前战斗页是 132×96dp)。
+ * 素材一律走 `ContentScale.Fit`,所以**方形 / 横构图 / 竖构图都能用**:槽位由调用方给,
+ * 长宽比不一致时居中留白而不是拉伸(当前战斗页槽位 132×96dp):
+ *   1:1 → 96×96 · 3:2 → 132×88 · 3:4 → 72×96
  */
 private val CD_MONSTER_ART: Map<String, Int> = mapOf(
     "盾" to R.drawable.img_chuangdang_tongchimenwei,
     "蝠" to R.drawable.img_chuangdang_duanmujiguanfu,
+    "棋" to R.drawable.img_chuangdang_qiguanshixiang,
 )
 
 @Composable
@@ -103,6 +105,7 @@ private fun DrawScope.drawHitEffect(glyph: String, hitCount: Int) {
     when (glyph) {
         "盾" -> drawDamageMarks(hitCount)   // 每命中一次多一道爪痕
         "蝠" -> drawSonarRings(hitCount)    // 每命中一次多一圈声波环
+        "棋" -> drawCollapsingPlatform(hitCount)  // 每命中一次脚下石台崩掉一块
     }
 }
 
@@ -114,6 +117,14 @@ private val Bronze = Color(0xFFB8894A)
 private val BronzeFaint = Color(0x55B8894A)
 private val Paper = Color(0xFFF2E8D5)
 private val Danger = Color(0xFF9B3B2E)
+
+/**
+ * 半透明的"受损"红(2026-09-19 §18)。
+ *
+ * 素材版敌人的命中叠加层用这个:96dp 的显示尺寸下,纯 [Danger] 会显得像贴上去的色块,
+ * 降一点不透明度才读得出"损伤"而不是"装饰"。
+ */
+private val DamageFaint = Color(0xB39B3B2E)
 
 /** 归一化:把 0~1 的比例坐标换算成画布坐标(以较短边为基准,居中)。 */
 private fun DrawScope.px(fx: Float, fy: Float): Offset {
@@ -192,6 +203,60 @@ private fun DrawScope.drawSonarRings(hitCount: Int) {
     }
     // 命中标记:中心一颗点亮的红点
     drawCircle(Danger, radius = m * 0.022f, center = c)
+}
+
+/**
+ * 「战斗表现」:脚下石台崩落(2026-09-19 §18)。
+ *
+ * 策划方案 §5 对第 3 关写的是「每识破一个越界判断,石将脚下的一块错误棋格便**崩落**」。
+ * 与 §16/§17 不同,这次**可以照原意画** —— 因为素材里石像正站在一座**阶梯石台**上,
+ * "脚下有台"是画里真实存在的;只是把"棋格"落成"石台的一块"。
+ *
+ * ⚠️ **必须按素材实际占位定位,不能按槽位。** 素材是 3:4 竖构图,`Fit` 进 132×96 的槽位后
+ *    只占中间 72×96(左右各留 30dp)。若按槽位归一化,效果会横向偏出素材、落在空白处。
+ *    石台在素材高度的 **62%~84%**、宽度的 **17%~84%**(实测自这张素材)。
+ */
+private fun DrawScope.drawCollapsingPlatform(hitCount: Int) {
+    if (hitCount <= 0) return
+
+    // 3:4 素材在 132×96 槽位里:高度铺满,宽度 = 高度 × 0.75,水平居中
+    val artH = size.height
+    val artW = artH * 0.75f
+    val artX = (size.width - artW) / 2f
+
+    // 石台在素材里的位置(实测自这张素材:高 62%~85%、宽 18%~86%)
+    val plateTop = artH * 0.62f
+    val plateBottom = artH * 0.85f
+    val plateL = artX + artW * 0.18f
+    val plateR = artX + artW * 0.86f
+    val plateW = plateR - plateL
+
+    repeat(hitCount) { i ->
+        // 沿台沿**自左向右**依次崩掉一块(越早崩的越靠左),铺开到整个台面
+        val cx = plateL + plateW * (0.14f + 0.26f * i)
+        val halfW = plateW * 0.05f
+        val depth = plateTop + (plateBottom - plateTop) * 0.6f
+
+        // 崩口:一个**实心**向下的楔形。
+        //   首版画的是两条收拢的线 + 悬空方框 → 真机放大后读成"一根红棍子";
+        //   第二版楔形又太大太实,像两个红锥子盖住了石像的脚 —— 故收小并降低不透明度,
+        //   让它在 96dp 的显示尺寸下"看得见但不抢戏"。
+        val notch = Path().apply {
+            moveTo(cx - halfW, plateTop)
+            lineTo(cx + halfW, plateTop)
+            lineTo(cx + halfW * 0.15f, depth)
+            close()
+        }
+        drawPath(notch, DamageFaint)
+
+        // 坠落的小碎块:越早崩的掉得越低
+        val fy = depth + artH * 0.008f + i * artH * 0.026f
+        drawRect(
+            DamageFaint,
+            topLeft = Offset(cx - halfW * 0.45f, fy),
+            size = Size(halfW * 0.9f, artH * 0.018f),
+        )
+    }
 }
 
 /** ③ 棋冠石将 —— 石制身躯 + 棋冠,胸前一方棋盘。 */
