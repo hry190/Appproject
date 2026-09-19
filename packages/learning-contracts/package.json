@@ -2,7 +2,8 @@
   "name": "@jiqiao-jianghu/learning-contracts",
   "private": true,
   "version": "1.0.0",
-  "description": "修炼页后端 API contracts and fetch client",
+  "description": "[已废弃 2026-09-19] 原 React Native 端修炼页的 API 契约与 fetch 客户端;RN 前端已移除,本包已无任何引用",
+  "deprecated": "React Native / Expo 前端已从仓库移除,当前客户端为 Android(Compose)。契约请以 services/api/docs/api/openapi.json 为准。",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

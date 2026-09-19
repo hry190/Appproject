@@ -1,3 +1,14 @@
+# ⚠️ 已废弃(DEPRECATED) 2026-09-19
+# ---------------------------------------------------------------------------
+# 本脚本属于【已移除的 React Native / Expo 前端】:它用 Playwright 打开
+# http://localhost:8081 —— 那是 Metro bundler 的端口,只有 RN 开发服务器会监听。
+# 当前项目只有 Android(Compose)客户端,本脚本已无法运行,仅作历史留档。
+#
+# 现在要给 Android 界面截图,请改用 adb,例如:
+#   adb -s <serial> shell screencap -p /sdcard/s.png
+#   adb -s <serial> pull /sdcard/s.png .
+# ---------------------------------------------------------------------------
+
 """Capture two screenshots of login page: default and after switching tabs."""
 from playwright.sync_api import sync_playwright
 
