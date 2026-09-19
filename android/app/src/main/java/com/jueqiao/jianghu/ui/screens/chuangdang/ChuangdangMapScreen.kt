@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
+import kotlinx.coroutines.delay
 
 /**
  * 2026-09-19 §6 闯荡江湖 · 地图页 —— 【雾隐机关镇】
@@ -124,6 +126,17 @@ fun ChuangdangMapScreen(
     // 2026-09-19 §6:秘籍副本选择面板(留下选择其他书本的入口)
     var showPicker by remember { mutableStateOf(false) }
     var pickerTip by remember { mutableStateOf<String?>(null) }
+
+    // 2026-09-19 §6 追加:闯荡令的"下次恢复说明"(文档 §2 要求地图展示余额 + 下次恢复)。
+    //   进入页面先按北京时间自然日结算一次(§6.2 的自然恢复),之后每 30 秒刷新倒计时。
+    var restoreText by remember { mutableStateOf(ChuangdangStore.nextRestoreText()) }
+    LaunchedEffect(Unit) {
+        ChuangdangStore.settleDailyRestore()
+        while (true) {
+            restoreText = ChuangdangStore.nextRestoreText()
+            delay(30_000L)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 背景:复用后山系列的水墨山水图
@@ -207,21 +220,26 @@ fun ChuangdangMapScreen(
                 val done = if (isBoss) bossCleared else node.index in cleared
                 val unlocked = ChuangdangStore.isUnlocked(node.index)
                 val isCurrent = node.index == current && !done
+                // 2026-09-19 §6:本次出发已进入过、但尚未通关的关卡 → 显示"继续"
+                val resumable = !done && ChuangdangStore.startedStage == node.index
 
                 CdNodeCard(
                     node = node,
                     done = done,
                     unlocked = unlocked,
                     isCurrent = isCurrent,
+                    resumable = resumable,
                     isBoss = isBoss,
                     onClick = {
                         when {
                             done -> {
                                 // 已通关:重玩,不计入新的出发(不额外扣令)
+                                ChuangdangStore.markStageEntered(node.index)
                                 actions.onEnterStage(node.index)
                             }
                             unlocked -> {
                                 if (ChuangdangStore.beginRun()) {
+                                    ChuangdangStore.markStageEntered(node.index)
                                     actions.onEnterStage(node.index)
                                 } else {
                                     tip = "闯荡令不足:每次正式出发需要 1 枚"
@@ -249,7 +267,7 @@ fun ChuangdangMapScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 14.dp),
+                    .padding(bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // 闯荡令余额
@@ -292,6 +310,7 @@ fun ChuangdangMapScreen(
                             enabled = canStart,
                             onClick = {
                                 if (ChuangdangStore.beginRun()) {
+                                    ChuangdangStore.markStageEntered(ChuangdangStore.currentStage)
                                     actions.onEnterStage(ChuangdangStore.currentStage)
                                 } else {
                                     tip = "闯荡令不足:每次正式出发需要 1 枚"
@@ -308,6 +327,14 @@ fun ChuangdangMapScreen(
                     )
                 }
             }
+
+            // 2026-09-19 §6:除了余额,还要标注"下次恢复说明"(文档 §2)
+            Text(
+                text = restoreText,
+                color = CdInkSoft,
+                style = TextStyle(fontFamily = YaHei, fontSize = 10.sp),
+                modifier = Modifier.padding(top = 6.dp, bottom = 12.dp),
+            )
         }
 
         // ── 秘籍副本选择面板(2026-09-19 §6)──────────────────────────────
@@ -417,11 +444,13 @@ private fun CdNodeCard(
     done: Boolean,
     unlocked: Boolean,
     isCurrent: Boolean,
+    /** 本次出发已进入过但尚未通关(2026-09-19 §6:显示"继续")。 */
+    resumable: Boolean,
     isBoss: Boolean,
     onClick: () -> Unit,
 ) {
     val edge = when {
-        isCurrent -> CdActive
+        isCurrent || resumable -> CdActive
         done -> CdDone
         else -> CdCardEdge
     }
@@ -431,7 +460,7 @@ private fun CdNodeCard(
             .height(66.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(CdCardBg)
-            .border(if (isCurrent || done) 1.5.dp else 1.dp, edge, RoundedCornerShape(12.dp))
+            .border(if (isCurrent || resumable || done) 1.5.dp else 1.dp, edge, RoundedCornerShape(12.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -487,6 +516,8 @@ private fun CdNodeCard(
         // 状态标签
         val (label, labelColor) = when {
             done -> "已通关" to CdDone
+            // 2026-09-19 §6:已进入过但未通关 → "继续"
+            resumable -> "继续" to CdActive
             isCurrent -> "可挑战" to CdActive
             else -> "未解锁" to CdLocked
         }

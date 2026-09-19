@@ -91,15 +91,19 @@ fun ChuangdangBattleScreen(
     var selected by remember { mutableStateOf<Int?>(null) }
     var pendingDefense by remember { mutableStateOf(false) } // 进攻答错 → 结算后转入防御题
     var blocked by remember { mutableStateOf(false) }
+    // 2026-09-19 §6:文档 §3.3 的**保底** —— "一次攻击被格挡后,下一次正确攻击必定命中,
+    //   即使期间出现答错回合"。故该标志只在"兑现命中"时清除,答错/防御作答都不影响它。
+    var pendingGuaranteedHit by remember { mutableStateOf(false) }
     var headline by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
 
-    // 撤退视为结束本次出发(文档 §6.4:主动撤退,闯荡令不返还)
-    val retreat: () -> Unit = {
-        if (phase != CdPhase.Victory && phase != CdPhase.Defeat) ChuangdangStore.endRun()
-        actions.onExit()
-    }
-    BackHandler { retreat() }
+    // 2026-09-19 §6:中途返回时弹确认框(文档 §6.4"主动撤退:弹窗说明后果,确认后结束本次出发")。
+    //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
+    //   · 暂离 → 保留出发与关卡进度,该关显示「继续」,稍后进入不重复扣令
+    //   注意:胜负已分时不弹框 —— 胜利/战败走 advance() 直接退出(那里已处理 clearStage / endRun)。
+    var showRetreatDialog by remember { mutableStateOf(false) }
+    val requestExit: () -> Unit = { showRetreatDialog = true }
+    BackHandler { requestExit() }
 
     val question = when (phase) {
         CdPhase.Defense -> stage.defense[defenseIdx % stage.defense.size]
@@ -115,11 +119,25 @@ fun ChuangdangBattleScreen(
 
         if (phase == CdPhase.Attack) {
             if (isCorrect) {
-                // ② 进攻答对 → 掷格挡(§3.3)
+                // ② 进攻答对 → 结算伤害(文档 §3.3)
                 correctCount += 1
-                blocked = Random.nextFloat() < cdBlockRate(correctCount)
-                if (!blocked) enemyHearts -= 1
-                headline = if (blocked) "被格挡了" else "命中!-1 心"
+                if (pendingGuaranteedHit) {
+                    // 保底兑现:上一次被格挡过 → 这一次必定命中(不受中途答错影响)
+                    pendingGuaranteedHit = false
+                    blocked = false
+                    enemyHearts -= 1
+                    headline = "识破一式 · 必定命中!-1 心"
+                } else {
+                    blocked = Random.nextFloat() < cdBlockRate(correctCount)
+                    if (blocked) {
+                        // 记下这笔:下一次正确攻击必定命中(文档 §3.3 的保底)
+                        pendingGuaranteedHit = true
+                        headline = "被格挡了 · 已看穿破绽"
+                    } else {
+                        enemyHearts -= 1
+                        headline = "命中!-1 心"
+                    }
+                }
                 detail = question.explanation
                 pendingDefense = false
                 phase = if (enemyHearts <= 0) CdPhase.Victory else CdPhase.Resolved
@@ -198,7 +216,7 @@ fun ChuangdangBattleScreen(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = retreat,
+                            onClick = requestExit,
                         ),
                 ) {
                     Image(
@@ -222,7 +240,7 @@ fun ChuangdangBattleScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
+                    .height(172.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -254,20 +272,12 @@ fun ChuangdangBattleScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CdHearts(alive = enemyHearts, tint = Color(0xFF6B5B8A))
                     Spacer(Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x33B8894A))
-                            .border(1.5.dp, BGold, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stage.enemyGlyph,
-                            color = BInk,
-                            style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 30.sp),
-                        )
-                    }
+                    // 2026-09-19 §6:敌人形象改为 Canvas 手绘(见 ChuangdangMonsters.kt),
+                    //   取代原先的圆形文字徽记。
+                    CdMonster(
+                        glyph = stage.enemyGlyph,
+                        modifier = Modifier.size(96.dp),
+                    )
                     Text(
                         text = stage.enemyName,
                         color = BInkSoft,
@@ -377,6 +387,105 @@ fun ChuangdangBattleScreen(
             }
 
             Spacer(Modifier.weight(1f))
+        }
+
+        // ── 撤退确认框(2026-09-19 §6,对应文档 §6.4 的"弹窗说明后果")──────────
+        if (showRetreatDialog) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        // 点遮罩 = 取消,继续留在战斗中
+                        onClick = { showRetreatDialog = false },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.86f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        // 吃掉面板内部的点击,避免穿透到遮罩把弹框关掉
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { },
+                        )
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "要离开本次出发吗?",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 17.sp),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "撤退:结束本次出发,已消耗的闯荡令不返还 —— 本关将回到「可挑战」。",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "暂离:保留出发与关卡进度,本关显示「继续」,稍后可从地图继续,不重复扣令。",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        // 撤退 —— 有代价:结束出发,该关回到"可挑战"
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(BWrong)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        showRetreatDialog = false
+                                        ChuangdangStore.endRun()
+                                        actions.onExit()
+                                    },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "撤退",
+                                color = Color.White,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                        Spacer(Modifier.size(10.dp))
+                        // 暂离 —— 保留进度:不结束出发,该关显示"继续"
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(BGold)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        showRetreatDialog = false
+                                        actions.onExit()
+                                    },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "暂离",
+                                color = Color.White,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -118,20 +118,11 @@ fun ChuangdangBossScreen(
 
             // ── 标题 + Boss ─────────────────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(Color(0x33B8894A))
-                        .border(1.5.dp, BossGold, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = CD_BOSS_GLYPH,
-                        color = BossInk,
-                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 24.sp),
-                    )
-                }
+                // 2026-09-19 §6:与战斗页共用 Canvas 手绘的敌人形象(见 ChuangdangMonsters.kt)
+                CdMonster(
+                    glyph = CD_BOSS_GLYPH,
+                    modifier = Modifier.size(64.dp),
+                )
                 Spacer(Modifier.size(12.dp))
                 Column {
                     Text(
