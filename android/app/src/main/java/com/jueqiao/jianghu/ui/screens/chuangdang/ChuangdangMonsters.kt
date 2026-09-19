@@ -42,7 +42,7 @@ import com.jueqiao.jianghu.R
  */
 
 /**
- * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠、§18 棋冠石将)。
+ * 已有**真实素材**的敌人:字形 → drawable 资源(§16 铜齿门卫、§17 断目机关蝠、§18 棋冠石将、§20 百声纸鹤)。
  *
  * 再加素材只需在这里补一行 —— 渲染与命中效果都由 [CdMonster] 统一处理,不必再写 if 分支。
  * 素材一律走 `ContentScale.Fit`,所以**方形 / 横构图 / 竖构图都能用**:槽位由调用方给,
@@ -53,6 +53,7 @@ private val CD_MONSTER_ART: Map<String, Int> = mapOf(
     "盾" to R.drawable.img_chuangdang_tongchimenwei,
     "蝠" to R.drawable.img_chuangdang_duanmujiguanfu,
     "棋" to R.drawable.img_chuangdang_qiguanshixiang,
+    "鹤" to R.drawable.img_chuangdang_baishengzhihe,
 )
 
 @Composable
@@ -106,6 +107,11 @@ private fun DrawScope.drawHitEffect(glyph: String, hitCount: Int) {
         "盾" -> drawDamageMarks(hitCount)   // 每命中一次多一道爪痕
         "蝠" -> drawSonarRings(hitCount)    // 每命中一次多一圈声波环
         "棋" -> drawCollapsingPlatform(hitCount)  // 每命中一次脚下石台崩掉一块
+        // 2026-09-19 §20:鹤复用通用受损标记。
+        //   §5 对第 4 关写的是「逐只脱离阵形」—— 那需要**多只纸鹤**的画面,
+        //   而用户给的素材只有**一只**纸鹤,"阵形"根本不存在。
+        //   按 §16/§17 的既有做法:**不假装画没有的东西**,退回通用受损标记。
+        "鹤" -> drawDamageMarks(hitCount)
     }
 }
 
