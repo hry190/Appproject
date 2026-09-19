@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -112,6 +113,23 @@ private val CdDone = Color(0xFF3F6B3A)
 private val CdActive = Color(0xFF8A5A2B)
 private val CdLocked = Color(0x552E2A24)
 private val CdGold = Color(0xFFB8894A)
+
+/**
+ * 地图上单个关卡卡片的**最小高度** —— 六个节点(四关 + 终局 + 未解锁态)共用这一处。
+ *
+ * 2026-09-19 §10 修复:原先这里是 `.height(66.dp)` **固定高度**。
+ * 66dp 是按**单行**副标题定的 —— 第 1 关的副标题只有一行,内容合计 110px,
+ * 正好等于 40dp 徽记的 110px,上下各留 31px,看起来没问题。
+ * 但第 2/3/4 关的副标题会折成两行,内容涨到 154px,上下余量只剩 **9px**;
+ * 系统字体一放大就越过卡片下缘被 `clip` 裁掉 —— 实测 font_scale 1.15 时下留白 −1px、
+ * 1.3 时 −5px(副标题第二行被切掉一截)。
+ *
+ * 改为 `heightIn(min = ...)` 后:单行仍渲染 66dp(外观零变化),两行时卡片自己长高。
+ * 注意这只是**下限**,内容变多时卡片会自动增高(见 [CdNodeCard])。
+ *
+ * 同类修复见 ChuangdangBattleScreen 的 CD_OPTION_MIN_HEIGHT(选项框 50dp → 自适应)。
+ */
+private val CD_NODE_MIN_HEIGHT = 66.dp
 
 @Composable
 fun ChuangdangMapScreen(
@@ -493,7 +511,7 @@ private fun CdNodeCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(66.dp)
+            .heightIn(min = CD_NODE_MIN_HEIGHT)
             .clip(RoundedCornerShape(12.dp))
             .background(CdCardBg)
             .border(if (isCurrent || resumable || done) 1.5.dp else 1.dp, edge, RoundedCornerShape(12.dp))
