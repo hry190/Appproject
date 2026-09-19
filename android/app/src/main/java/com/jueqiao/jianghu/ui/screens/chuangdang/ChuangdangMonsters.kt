@@ -31,14 +31,27 @@ import androidx.compose.ui.graphics.drawscope.rotate
  *   枢 = 百面机枢(悬空核心 + 无数张宣称"绝不会错"的面具)
  */
 @Composable
-fun CdMonster(glyph: String, modifier: Modifier = Modifier) {
+fun CdMonster(
+    glyph: String,
+    /**
+     * 已被打掉的心数(0~3)。
+     *
+     * 用于表现策划方案 §5 每关的「战斗表现」:
+     *   铜齿门卫 —— 答对便指出规则漏洞,长盾刻字**逐步开裂**
+     *   断目机关蝠 —— 正确流程让**声波沿指定路线反弹**,击中弱点
+     *   棋冠石将 —— 每识破一个越界判断,脚下的一块错误棋格便**崩落**
+     *   百声纸鹤 —— 合理样本让纸鹤恢复判断,**逐只脱离阵形**
+     */
+    hitCount: Int = 0,
+    modifier: Modifier = Modifier,
+) {
     Canvas(modifier = modifier) {
         when (glyph) {
-            "蝠" -> drawBrokenBat()
-            "棋" -> drawChessGeneral()
-            "鹤" -> drawPaperCrane()
+            "蝠" -> drawBrokenBat(hitCount)
+            "棋" -> drawChessGeneral(hitCount)
+            "鹤" -> drawPaperCrane(hitCount)
             "枢" -> drawManyFaceCore()
-            else -> drawGateGuard()
+            else -> drawGateGuard(hitCount)
         }
     }
 }
@@ -70,7 +83,7 @@ private fun DrawScope.line(a: Offset, b: Offset, color: Color = Ink, w: Float = 
     drawLine(color, a, b, strokeWidth = w * size.minDimension)
 
 /** ① 铜齿门卫 —— 齿轮外圈 + 铜盾,盾上刻着固定规则的横纹。 */
-private fun DrawScope.drawGateGuard() {
+private fun DrawScope.drawGateGuard(hitCount: Int) {
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
     val r = m * 0.30f
@@ -114,10 +127,27 @@ private fun DrawScope.drawGateGuard() {
     // 门卫的「眼」:两个孔,表示它只会照做
     drawCircle(Ink, radius = m * 0.030f, center = Offset(c.x - r * 0.16f, c.y - r * 0.52f))
     drawCircle(Ink, radius = m * 0.030f, center = Offset(c.x + r * 0.16f, c.y - r * 0.52f))
+
+    // 文档 §5 战斗表现:「答对便指出规则漏洞,长盾刻字逐步开裂」
+    //   每打掉一颗心,盾上多一条折线裂纹(左右交替,避免看起来是同一道)。
+    repeat(hitCount) { i ->
+        val dir = if (i % 2 == 0) -1f else 1f
+        val y0 = c.y - r * 0.34f + i * r * 0.28f
+        val a = Offset(c.x + dir * r * 0.40f, y0)
+        val b = Offset(c.x + dir * r * 0.08f, y0 + r * 0.15f)
+        val d = Offset(c.x + dir * r * 0.26f, y0 + r * 0.34f)
+        line(a, b, Danger, 0.028f)
+        line(b, d, Danger, 0.028f)
+    }
+    // 三心打完 → 盾牌整体贯穿开裂
+    if (hitCount >= CD_MAX_HEARTS) {
+        line(Offset(c.x - r * 0.40f, c.y - r * 0.50f), Offset(c.x + r * 0.26f, c.y + r * 0.70f), Danger, 0.032f)
+        line(Offset(c.x + r * 0.40f, c.y - r * 0.38f), Offset(c.x - r * 0.24f, c.y + r * 0.70f), Danger, 0.032f)
+    }
 }
 
 /** ② 断目机关蝠 —— 一只眼完好、一只眼被打叉,翅膀不对称。 */
-private fun DrawScope.drawBrokenBat() {
+private fun DrawScope.drawBrokenBat(hitCount: Int) {
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
     val bodyR = m * 0.17f
@@ -176,10 +206,28 @@ private fun DrawScope.drawBrokenBat() {
         size = Size(m * 0.28f, m * 0.44f),
         style = Stroke(width = m * 0.016f),
     )
+
+    // 文档 §5 战斗表现:「正确流程让声波沿指定路线反弹,击中机关蝠弱点」
+    //   每命中一次,弱点处多一圈扩散的声波环(弱点取完好的左眼)。
+    if (hitCount > 0) {
+        val weak = Offset(c.x - bodyR * 0.42f, c.y - bodyR * 0.1f)
+        repeat(hitCount) { i ->
+            val rr = m * (0.075f + i * 0.045f)
+            drawArc(
+                Danger,
+                startAngle = 0f, sweepAngle = 360f, useCenter = false,
+                topLeft = Offset(weak.x - rr, weak.y - rr),
+                size = Size(rr * 2f, rr * 2f),
+                style = Stroke(width = m * 0.012f),
+            )
+        }
+        // 命中标记:弱点被点亮的红心
+        drawCircle(Danger, radius = m * 0.018f, center = weak)
+    }
 }
 
 /** ③ 棋冠石将 —— 石制身躯 + 棋冠,胸前一方棋盘。 */
-private fun DrawScope.drawChessGeneral() {
+private fun DrawScope.drawChessGeneral(hitCount: Int) {
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
     val bodyTop = c.y - m * 0.10f
@@ -236,10 +284,29 @@ private fun DrawScope.drawChessGeneral() {
     // 眼:两点冷光
     drawCircle(Ink, radius = m * 0.022f, center = Offset(c.x - m * 0.075f, bodyTop + m * 0.055f))
     drawCircle(Ink, radius = m * 0.022f, center = Offset(c.x + m * 0.075f, bodyTop + m * 0.055f))
+
+    // 文档 §5 战斗表现:「每识破一个越界判断,石将脚下的一块错误棋格便崩落」
+    //   脚下铺 3×3 石台,按命中数从左到右逐块挖空(不画的即"已崩落")。
+    val plateY = bodyTop + bodyH + m * 0.03f
+    val ps = m * 0.072f
+    for (row in 0..2) {
+        for (col in 0..2) {
+            if (row * 3 + col < hitCount) continue
+            val px0 = c.x + (col - 1.5f) * ps
+            val py0 = plateY + row * ps * 0.42f
+            drawRect(Paper, topLeft = Offset(px0, py0), size = Size(ps * 0.9f, ps * 0.36f))
+            drawRect(
+                InkMid,
+                topLeft = Offset(px0, py0),
+                size = Size(ps * 0.9f, ps * 0.36f),
+                style = Stroke(width = m * 0.010f),
+            )
+        }
+    }
 }
 
 /** ④ 百声纸鹤 —— 折纸质感的鹤,旁边挂一排声音铃铛。 */
-private fun DrawScope.drawPaperCrane() {
+private fun DrawScope.drawPaperCrane(hitCount: Int) {
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
 
@@ -291,6 +358,26 @@ private fun DrawScope.drawPaperCrane() {
         drawCircle(Bronze, radius = m * bellR[i], center = p)
         drawCircle(Ink, radius = m * bellR[i], center = p, style = Stroke(width = m * 0.016f))
         line(Offset(p.x, p.y - m * 0.05f), Offset(p.x, p.y - m * bellR[i]), InkMid, 0.014f)
+    }
+
+    // 文档 §5 战斗表现:「合理样本让纸鹤恢复判断,逐只脱离阵形」
+    //   右侧原本是三只编队的小鹤;每答对一次,最靠前的一只脱离阵形、飞到右上角变淡。
+    for (i in 0..2) {
+        val left = i >= hitCount                       // 仍在阵形里
+        val fx = c.x + m * (if (left) 0.30f + i * 0.055f else 0.52f + i * 0.07f)
+        val fy = c.y + m * (if (left) -0.02f - i * 0.05f else -0.22f - i * 0.09f)
+        val s = m * (if (left) 0.050f else 0.028f)
+        val body = Path().apply {
+            moveTo(fx, fy)
+            lineTo(fx + s, fy + s * 0.60f)
+            lineTo(fx + s * 0.10f, fy + s)
+            close()
+        }
+        if (left) drawPath(body, InkFaint)
+        drawPath(body, if (left) InkMid else BronzeFaint, style = Stroke(width = m * 0.010f))
+        // 翼线:脱离的那几只翅膀张开得更大
+        val wingUp = if (left) s * 0.55f else s * 1.10f
+        line(Offset(fx, fy), Offset(fx + s * 0.35f, fy - wingUp), if (left) InkMid else Bronze, 0.010f)
     }
 }
 

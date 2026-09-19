@@ -218,7 +218,8 @@ fun ChuangdangBossScreen(
                 cursorBrush = SolidColor(BossGold),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
+                    // 2026-09-19 §10:按用户要求整体 +5dp(180 → 185),与第 1~4 关的选项框调整保持一致
+                    .height(185.dp),
                 decorationBox = { inner ->
                     Box(
                         modifier = Modifier

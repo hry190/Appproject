@@ -95,7 +95,7 @@ val CD_STAGES: List<CdStage> = listOf(
                 explanation = "每次完全一致、不随情况变化,正是「固定规则」的特征;从样本学来的行为会随输入而变。",
             ),
             CdQuestion(
-                prompt = "下列哪种表现,最能说明一个系统**不是**单纯执行固定规则?",
+                prompt = "下列哪种表现,最能说明一个系统并非单纯执行固定规则?",
                 options = listOf(
                     "每天在同一时刻开门",
                     "遇到没见过的门锁会先试探、再调整做法",
@@ -113,6 +113,37 @@ val CD_STAGES: List<CdStage> = listOf(
                 ),
                 correctIndex = 1,
                 explanation = "重复次数多不等于理解范围广 —— 这正是本关要拆穿的核心误区。",
+            ),
+            // ── 以下为本知识点的「情境变体」(文档 §3.4:避免练习与正式挑战机械重复同一题)──
+            CdQuestion(
+                prompt = "自动门每天都按同一时刻开合,换一种门型就完全失灵。这说明它?",
+                options = listOf(
+                    "学会了开门的普遍规律",
+                    "只按预设规则动作,没有适应能力",
+                    "收集的样本还不够多",
+                ),
+                correctIndex = 1,
+                explanation = "换成另一种情况就失灵,说明它执行的是写死的规则,而不是学到的规律。",
+            ),
+            CdQuestion(
+                prompt = "下列哪一项最能体现「从样本中学习」?",
+                options = listOf(
+                    "照着说明书逐步操作",
+                    "看过许多次别人怎么做之后,自己也会做了",
+                    "背下了一串固定密码",
+                ),
+                correctIndex = 1,
+                explanation = "见过大量例子之后形成做事方法,才是从样本中学来的。",
+            ),
+            CdQuestion(
+                prompt = "门卫说「我从不出错」。要判断这句话是否成立,关键看?",
+                options = listOf(
+                    "它开关门的速度有多快",
+                    "它是否只处理过预先设定好的情况",
+                    "它的齿轮一共有多少个",
+                ),
+                correctIndex = 1,
+                explanation = "只在预设范围内活动,当然不会「出错」—— 但那不是能力,是范围窄。",
             ),
         ),
         defense = listOf(
@@ -174,6 +205,37 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "只看最终结果无法区分故障环节;要单独观察「感知」这一环的输入。",
             ),
+            // ── 情境变体 ──
+            CdQuestion(
+                prompt = "机关蝠撞上了柱子,记录显示它「看到了柱子却没有转向」。故障最可能在?",
+                options = listOf(
+                    "感知环节",
+                    "推理环节(判断)",
+                    "行动环节",
+                ),
+                correctIndex = 1,
+                explanation = "既然「看到了」,感知就正常;没有转向说明是判断出了问题。",
+            ),
+            CdQuestion(
+                prompt = "要验证闭环中某一环是否正常,最可靠的做法是?",
+                options = listOf(
+                    "只看最终的飞行结果",
+                    "单独检查这一环的输入与输出",
+                    "换一只全新的机关蝠",
+                ),
+                correctIndex = 1,
+                explanation = "逐环单独观察输入与输出,才能把故障定位到具体环节。",
+            ),
+            CdQuestion(
+                prompt = "感知正常、判断正常,但动作没有执行。结果会怎样?",
+                options = listOf(
+                    "依然能完成任务",
+                    "结果依旧是错的",
+                    "系统会自动修复",
+                ),
+                correctIndex = 1,
+                explanation = "闭环缺一环,最终结果就不会对 —— 没有哪一步可以被跳过。",
+            ),
         ),
         defense = listOf(
             CdQuestion(
@@ -234,6 +296,37 @@ val CD_STAGES: List<CdStage> = listOf(
                 correctIndex = 1,
                 explanation = "先划清能力边界,再谈能不能接新活。",
             ),
+            // ── 情境变体 ──
+            CdQuestion(
+                prompt = "一个系统在测试中表现优异,于是被直接用于医疗诊断。最该先确认什么?",
+                options = listOf(
+                    "它的运行速度够不够快",
+                    "它的训练范围是否覆盖诊断场景",
+                    "它的界面是否好看",
+                ),
+                correctIndex = 1,
+                explanation = "先确认新任务落在能力范围内,再谈能不能上。",
+            ),
+            CdQuestion(
+                prompt = "「能力边界」这个词强调的是?",
+                options = listOf(
+                    "它能做什么、在什么范围内可靠",
+                    "它的价格上限",
+                    "它的使用寿命",
+                ),
+                correctIndex = 0,
+                explanation = "边界说的是适用范围,不是价钱或寿命。",
+            ),
+            CdQuestion(
+                prompt = "把擅长翻译的系统派去写代码,风险在哪里?",
+                options = listOf(
+                    "它会拒绝执行任务",
+                    "翻译与编程是两种不同能力,不能直接迁移",
+                    "它需要先联网才能工作",
+                ),
+                correctIndex = 1,
+                explanation = "专长不能直接迁移 —— 这正是「棋王越界」要拆穿的误区。",
+            ),
         ),
         defense = listOf(
             CdQuestion(
@@ -293,6 +386,37 @@ val CD_STAGES: List<CdStage> = listOf(
                 ),
                 correctIndex = 0,
                 explanation = "测试集没覆盖真实场景,就会出现「测得好、用起来差」。",
+            ),
+            // ── 情境变体 ──
+            CdQuestion(
+                prompt = "训练数据全是大晴天拍的,一到阴天识别率就骤降。这属于?",
+                options = listOf(
+                    "样本覆盖不足",
+                    "算力不够",
+                    "程序有 bug",
+                ),
+                correctIndex = 0,
+                explanation = "缺少阴天样本,就是样本覆盖范围出了缺口。",
+            ),
+            CdQuestion(
+                prompt = "要让系统适应更多场景,最直接的做法是?",
+                options = listOf(
+                    "提高硬件配置",
+                    "补充更多场景的样本",
+                    "把训练时间延长一倍",
+                ),
+                correctIndex = 1,
+                explanation = "缺什么补什么 —— 覆盖不足就该补样本,而不是堆算力。",
+            ),
+            CdQuestion(
+                prompt = "识别系统「测试集表现好、上线后出错」最常见的原因是?",
+                options = listOf(
+                    "服务器不稳定",
+                    "测试数据与真实场景的分布不一致",
+                    "用户使用方式不对",
+                ),
+                correctIndex = 1,
+                explanation = "测试集没有代表真实分布,成绩就没有意义。",
             ),
         ),
         defense = listOf(

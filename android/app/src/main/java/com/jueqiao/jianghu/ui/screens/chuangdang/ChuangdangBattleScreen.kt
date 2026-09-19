@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -74,6 +75,14 @@ private val BGold = Color(0xFFB8894A)
 private val BCorrect = Color(0xFF3F6B3A)
 private val BWrong = Color(0xFF9B3B2E)
 
+/**
+ * 选项文本框的**最小高度** —— 五个关卡共用这一处。
+ *
+ * 想整体调高/调矮,只改这个数字即可(2026-09-19 用户要求:在 50dp 基础上 +5dp → 55dp)。
+ * 注意:这只是**下限**,文字换行变多时卡片会自动长高(见 [CdOptionRow])。
+ */
+private val CD_OPTION_MIN_HEIGHT = 55.dp
+
 @Composable
 fun ChuangdangBattleScreen(
     stageIndex: Int,
@@ -113,9 +122,14 @@ fun ChuangdangBattleScreen(
     }
     BackHandler { requestExit() }
 
+    // 文档 §3.4:每关准备同知识点的情境变体,避免练习和正式挑战机械重复同一题。
+    //   进入关卡时把题库洗一次,本场按洗后的顺序取题 —— 重玩时题目与顺序都可能不同。
+    val attackDeck = remember(stage.index) { stage.attack.shuffled() }
+    val defenseDeck = remember(stage.index) { stage.defense.shuffled() }
+
     val question = when (phase) {
-        CdPhase.Defense -> stage.defense[defenseIdx % stage.defense.size]
-        else -> stage.attack[attackIdx % stage.attack.size]
+        CdPhase.Defense -> defenseDeck[defenseIdx % defenseDeck.size]
+        else -> attackDeck[attackIdx % attackDeck.size]
     }
 
     // 2026-09-19 §6:选项顺序打散。
@@ -293,10 +307,11 @@ fun ChuangdangBattleScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CdHearts(alive = enemyHearts, tint = Color(0xFF6B5B8A))
                     Spacer(Modifier.height(8.dp))
-                    // 2026-09-19 §6:敌人形象改为 Canvas 手绘(见 ChuangdangMonsters.kt),
-                    //   取代原先的圆形文字徽记。
+                    // 命中数驱动「战斗表现」(文档 §5):每打掉一颗心,怪物形象随之变化 ——
+                    // 盾上多一条裂纹 / 声波环多一圈 / 脚下棋格少一块 / 一只纸鹤脱离阵形
                     CdMonster(
                         glyph = stage.enemyGlyph,
+                        hitCount = CD_MAX_HEARTS - enemyHearts,
                         modifier = Modifier.size(96.dp),
                     )
                     Text(
@@ -318,7 +333,9 @@ fun ChuangdangBattleScreen(
                     .background(BCardBg)
                     .padding(14.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // 2026-09-19 §10 修复:原来标题与「知识点」挤在一行 —— 知识点文字较长时
+                //   会被压到边缘甚至裁掉。改为让知识点占满剩余宽度并允许换行,信息不丢。
+                Row(verticalAlignment = Alignment.Top) {
                     Text(
                         text = when (phase) {
                             CdPhase.Defense -> "防御作答"
@@ -334,11 +351,12 @@ fun ChuangdangBattleScreen(
                         },
                         style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 12.sp),
                     )
-                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.size(8.dp))
                     Text(
                         text = "知识点:${stage.knowledge}",
                         color = BInkSoft,
-                        style = TextStyle(fontFamily = YaHei, fontSize = 10.sp),
+                        style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 15.sp),
+                        modifier = Modifier.weight(1f),
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -577,13 +595,21 @@ private fun CdHearts(alive: Int, tint: Color) {
     }
 }
 
-/** 选项行。 */
+/**
+ * 选项行。
+ *
+ * 2026-09-19 §10 修复:原先是 `.height(50.dp)` 固定高度 —— 选项文字较长换行到 3 行时
+ * (13sp × 1.45 × 3 ≈ 57dp)会被 `clip` 裁掉,看起来像"文字被遮挡"。
+ * 改为 `heightIn(min = ...)` 让高度随内容增长,并补上垂直内边距与显式行高。
+ *
+ * 最小高度由 [CD_OPTION_MIN_HEIGHT] 统一控制(五关共用,当前 55dp)。
+ */
 @Composable
 private fun CdOptionRow(text: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .heightIn(min = CD_OPTION_MIN_HEIGHT)
             .clip(RoundedCornerShape(12.dp))
             .background(BCardBg)
             .border(1.dp, Color(0x332E2A24), RoundedCornerShape(12.dp))
@@ -592,13 +618,13 @@ private fun CdOptionRow(text: String, onClick: () -> Unit) {
                 indication = null,
                 onClick = onClick,
             )
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 14.dp, vertical = 11.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
             text = text,
             color = BInk,
-            style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
+            style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 20.sp),
         )
     }
 }
