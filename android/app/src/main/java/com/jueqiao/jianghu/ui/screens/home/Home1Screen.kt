@@ -53,6 +53,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -82,6 +84,8 @@ private enum class PrimaryHomeAction {
     Xiulian,
     Dahui,
     Zaowu,
+    // 2026-09-19 §5:第五个主入口「闯荡江湖」(与其它四个共用同一套入场动效)
+    Chuangdang,
 }
 
 private class PrimaryActionEntrance(initialValue: Float) {
@@ -114,10 +118,14 @@ private val DecorButtonGoldOutlineOffsets = listOf(
 
 /**
  * 首页1 — 点击首页后跳转的次页。
- * 布局：背景竹林 + 熊猫 + 4 个装饰横幅按钮(行囊/修炼/大会/作品)。
- * 位置/尺寸(代码 L161-195,dp):
- *   行囊(119,610,55,90)、修炼(83,234,55,90)、
- *   大会(156,351,55,90)、作品(300,350,55,90)。
+ * 布局：背景竹林 + 熊猫 + 5 个装饰横幅按钮(行囊/修炼/大会/作品创作/闯荡江湖)。
+ * 位置/尺寸(dp):
+ *   行囊(119,610,55,90)、修炼(83,234,55,90)、大会(156,351,55,90)、
+ *   作品创作(300,350,55,90)、闯荡江湖(286,227,55,90 —— 2026-09-19 §5 新增)。
+ * 文字样式:五个入口**字重与颜色一致** —— 均取 DecorButton 默认的
+ *   SemiBold 与暖白(#F4E6CF,悬停/按下变亮到 #FFF7DC,颜色随交互动画)。
+ *   前四个用默认字号 13sp;闯荡江湖按用户指令用 14sp,并把行高显式压到 18.82sp,
+ *   以与「作品创作」的字符间距保持一致(见其调用处的 §5 注释)。
  */
 @Composable
 fun Home1Screen(
@@ -125,6 +133,8 @@ fun Home1Screen(
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
+    // 2026-09-19 §5:第五个主入口「闯荡江湖」的跳转回调(目标页面待定,故默认空)
+    onOpenChuangdang: () -> Unit = {},
     dahuiEnabled: Boolean = true,
     onOpenSettings: () -> Unit = {},
     onOpenChallenge: () -> Unit = {},
@@ -222,6 +232,7 @@ fun Home1Screen(
     val xiulianEntrance = primaryActionEntrances[PrimaryHomeAction.Xiulian.ordinal]
     val dahuiEntrance = primaryActionEntrances[PrimaryHomeAction.Dahui.ordinal]
     val zaowuEntrance = primaryActionEntrances[PrimaryHomeAction.Zaowu.ordinal]
+    val chuangdangEntrance = primaryActionEntrances[PrimaryHomeAction.Chuangdang.ordinal]
 
     EdgeToEdgeScreen(
         background = {
@@ -320,6 +331,32 @@ fun Home1Screen(
             entranceEnabled = zaowuEntrance.isInteractive(),
             onClick = onOpenZaowu,
         )
+
+        // 闯荡江湖 (未标题-151.png → img_home1_btn5.png)— 2026-09-19 §5 第五个主入口
+        //   用户指令:图像放 X286 Y227;尺寸与其它四个入口一致(55×90);文字"闯荡江湖"字号 14。
+        //   字重与颜色:按后续指令"与其它四个入口统一" —— **两者都不再覆盖**,
+        //         沿用 DecorButton 默认值,与另外四个入口同源,不会再出现偏差。
+        //         · 字重 SemiBold —— 家族只注册 400/500/700,按 Compose 的 FontMatcher 规则
+        //           SemiBold(600) 会命中 700 Bold;五个入口都走这一条,故彼此一致。
+        //         · 颜色暖白 #F4E6CF —— 悬停/按下变亮到 #FFF7DC,与另外四个同样有交互反馈。
+        DecorButton(
+            imageRes = R.drawable.img_home1_btn5,
+            text = "闯荡江湖",
+            x = 286.dp, y = 227.dp,
+            width = 55.dp, height = 90.dp,
+            entranceAlpha = chuangdangEntrance.alpha.value,
+            entranceTranslationY = chuangdangEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = chuangdangEntrance.isInteractive(),
+            textSize = 14.sp,
+            // 2026-09-19 §5:行高对齐「作品创作」——
+            //   Noto Sans SC 的 hhea 度量:unitsPerEm=1000 / asc=1160 / desc=-288 / gap=0,
+            //   行高系数 1.448(三个字重文件的度量完全相同);「作品创作」13sp × 1.448 = 18.82sp。
+            //   这里把 14sp 的「闯荡江湖」行高显式压到同一值,两处字符间距即完全一致。
+            //   (中途一度手改为 17.sp 试调 —— 那时逐字渲染下 lineHeight 不生效,看不出差异;
+            //    现渲染方式已修好,该值真正起作用,故回到对齐值 18.82sp。)
+            textLineHeight = 18.82.sp,
+            onClick = onOpenChuangdang,
+        )
     }
 
     // 修为弹窗由顶部“修为”入口触发。
@@ -370,6 +407,15 @@ fun DecorButton(
     entranceAlpha: Float = 1f,
     entranceTranslationY: Float = 0f,
     entranceEnabled: Boolean = true,
+    // 2026-09-19 §5:文字样式的可选覆盖项。默认值即原有四个入口的既有样式
+    //   (13sp / SemiBold / 暖白,且颜色随交互状态动画),因此对其它复用本组件的页面无影响。
+    //   (曾有一个 textColorOverride 用于「闯荡江湖」的纯白;2026-09-19 §5 后续指令要求
+    //    五个入口颜色统一后已删除 —— 颜色一律走 textColor 的交互动画,不再支持覆盖。)
+    textSize: TextUnit = 13.sp,
+    textWeight: FontWeight = FontWeight.SemiBold,
+    // 2026-09-19 §5:行高的可选覆盖项。null = 沿用字体度量决定的默认行高
+    //   (Noto Sans SC 为 1.448 × 字号,故 13sp → 18.82sp、14sp → 20.27sp)。
+    textLineHeight: TextUnit? = null,
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -546,31 +592,52 @@ fun DecorButton(
             )
 
             // 上层竖排文字(向左偏移 4dp)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .offset(x = (-4).dp)
-                    .padding(vertical = 6.dp),
-            ) {
-                text.forEach { ch ->
-                    Text(
-                        text = ch.toString(),
-                        color = textColor,
-                        style = TextStyle(
-                            fontFamily = YaHei,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                            shadow = Shadow(
-                                color = if (isActive) {
-                                    Color(0xFF405126)
-                                } else {
-                                    Color(0xCC141E14)
-                                },
-                                blurRadius = if (isActive) 6f else 8f,
+            val characterShadow = Shadow(
+                color = if (isActive) Color(0xFF405126) else Color(0xCC141E14),
+                blurRadius = if (isActive) 6f else 8f,
+            )
+            if (textLineHeight != null) {
+                // 2026-09-19 §5:指定行高时改走「单 Text + 硬换行」。
+                //   原因:下面那种"每字一个 Text"的写法里,每个 Text 都是**单行**文本,
+                //   Compose 对单行文本的 lineHeight 处理不可靠(真机实测调了没有变化);
+                //   而多行文本的 lineHeight 是确定生效的 —— 项目内后山标签
+                //   `Text("听\n言\n解\n意\n篇", lineHeight = 9.sp)` 即为此做法,且能压到小于字号。
+                Text(
+                    text = text.toCharArray().joinToString("\n"),
+                    color = textColor,
+                    style = TextStyle(
+                        fontFamily = YaHei,
+                        fontWeight = textWeight,
+                        fontSize = textSize,
+                        lineHeight = textLineHeight,
+                        shadow = characterShadow,
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .offset(x = (-4).dp)
+                        .padding(vertical = 6.dp),
+                )
+            } else {
+                // 原实现:四个既有入口都走这里,渲染与改动前完全一致
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .offset(x = (-4).dp)
+                        .padding(vertical = 6.dp),
+                ) {
+                    text.forEach { ch ->
+                        Text(
+                            text = ch.toString(),
+                            color = textColor,
+                            style = TextStyle(
+                                fontFamily = YaHei,
+                                fontWeight = textWeight,
+                                fontSize = textSize,
+                                shadow = characterShadow,
                             ),
-                        ),
-                    )
+                        )
+                    }
                 }
             }
         }

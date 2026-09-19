@@ -2,7 +2,11 @@ package com.jueqiao.jianghu.nav
 
 /**
  * Route constants for Navigation Compose.
- * Mirrors the React Native expo-router route names.
+ *
+ * 命名沿革:本项目早期是 React Native / Expo(expo-router)应用,本文件的路由常量名沿用了
+ * 当时的命名,以便对照历史。⚠️ **RN 前端已移除**,当前客户端只有 Android(Compose)——
+ * 因此"Mirrors the React Native expo-router route names"只描述**命名来源**,
+ * 不存在"两边需要保持同步"的关系。
  */
 object Routes {
     const val Splash    = "splash"
@@ -244,4 +248,10 @@ object Routes {
     const val CreationEditorProjectPattern = "creation/editor/{projectId}"
     fun creationEditorProject(projectId: String): String = "creation/editor/$projectId"
     const val Chuangzuodangan = "chuangzuodangan"
+
+    // ── 2026-09-19 §6 闯荡江湖(雾隐机关镇五关;纯 Android 端实现,暂不接后端)──────
+    const val Chuangdang = "chuangdang"                                    // 地图页(五节点 + 闯荡令)
+    const val ChuangdangBattlePattern = "chuangdang/battle/{stage}"        // 第 1~4 关的三心攻防
+    fun chuangdangBattle(stage: Int): String = "chuangdang/battle/$stage"
+    const val ChuangdangBoss = "chuangdang/boss"                           // 第五关 Boss(制作 + 评审)
 }

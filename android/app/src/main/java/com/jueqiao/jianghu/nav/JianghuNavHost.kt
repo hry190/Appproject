@@ -273,6 +273,13 @@ import com.jueqiao.jianghu.ui.screens.volume3part7.Volume3Part7Screen
 import com.jueqiao.jianghu.ui.screens.volume3part8.Volume3Part8Screen
 import com.jueqiao.jianghu.ui.screens.volume3part9.Volume3Part9Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
+import com.jueqiao.jianghu.ui.screens.chuangdang.CD_BOSS_INDEX
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangBattleActions
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangBattleScreen
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangBossActions
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangBossScreen
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangMapActions
+import com.jueqiao.jianghu.ui.screens.chuangdang.ChuangdangMapScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideo.YanwuchangVideoScreen
@@ -540,8 +547,48 @@ fun JianghuNavHost(
                     )
                 },
                 onOpenDahui     = { navController.navigate(Routes.Dahui) },
+                // 2026-09-19 §6:第五个主入口「闯荡江湖」→ 雾隐机关镇地图页
+                onOpenChuangdang = { navController.navigate(Routes.Chuangdang) },
                 dahuiEnabled = conferenceState.conferenceEnabled != false,
                 hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+            )
+        }
+
+        // 2026-09-19 §6:闯荡江湖 —— 雾隐机关镇地图(五节点 + 闯荡令 + 出发)
+        composable(Routes.Chuangdang) {
+            ChuangdangMapScreen(
+                actions = ChuangdangMapActions(
+                    onBack = { navController.popBackStack() },
+                    // 第 5 关走 Boss 页(制作 + 评审),其余走三心攻防战斗
+                    onEnterStage = { stage ->
+                        if (stage >= CD_BOSS_INDEX) {
+                            navController.navigate(Routes.ChuangdangBoss)
+                        } else {
+                            navController.navigate(Routes.chuangdangBattle(stage))
+                        }
+                    },
+                ),
+            )
+        }
+        // 2026-09-19 §6:闯荡江湖 —— 第 1~4 关的三心攻防(关卡号作为路由参数)
+        composable(
+            route = Routes.ChuangdangBattlePattern,
+            arguments = listOf(navArgument("stage") { type = NavType.IntType }),
+        ) { backStackEntry ->
+            val stage = backStackEntry.arguments?.getInt("stage") ?: 1
+            ChuangdangBattleScreen(
+                stageIndex = stage,
+                actions = ChuangdangBattleActions(
+                    onExit = { navController.popBackStack() },
+                ),
+            )
+        }
+        // 2026-09-19 §6:闯荡江湖 —— 第五关 Boss(制作任务 + 本地规则评审)
+        composable(Routes.ChuangdangBoss) {
+            ChuangdangBossScreen(
+                actions = ChuangdangBossActions(
+                    onBack = { navController.popBackStack() },
+                ),
             )
         }
 
