@@ -567,17 +567,30 @@ fun JianghuNavHost(
                             navController.navigate(Routes.chuangdangBattle(stage))
                         }
                     },
+                    // 免费练习(文档 §2:不消耗闯荡令、可看提示、不解锁正式节点)
+                    onPracticeStage = { stage ->
+                        navController.navigate(Routes.chuangdangBattle(stage, practice = true))
+                    },
                 ),
             )
         }
-        // 2026-09-19 §6:闯荡江湖 —— 第 1~4 关的三心攻防(关卡号作为路由参数)
+        // 2026-09-19 §6:闯荡江湖 —— 第 1~4 关的三心攻防(关卡号 + 是否练习模式走路由参数)
         composable(
             route = Routes.ChuangdangBattlePattern,
-            arguments = listOf(navArgument("stage") { type = NavType.IntType }),
+            arguments = listOf(
+                navArgument("stage") { type = NavType.IntType },
+                // 免费练习(文档 §2:不消耗闯荡令、可看提示、不解锁正式节点)
+                navArgument("practice") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
         ) { backStackEntry ->
             val stage = backStackEntry.arguments?.getInt("stage") ?: 1
+            val practice = backStackEntry.arguments?.getBoolean("practice") ?: false
             ChuangdangBattleScreen(
                 stageIndex = stage,
+                practiceMode = practice,
                 actions = ChuangdangBattleActions(
                     onExit = { navController.popBackStack() },
                 ),

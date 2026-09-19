@@ -36,6 +36,8 @@ data class CdStage(
     val enemyGlyph: String,
     /** 场景描述(关前剧情,文档 §5)。 */
     val scene: String,
+    /** 战后剧情(文档 §5 每关都写了「战后剧情:」一句)—— 通关时展示,把线索衔接到下一关。 */
+    val aftermath: String,
     /** 核心知识点。 */
     val knowledge: String,
     val attack: List<CdQuestion>,
@@ -80,6 +82,7 @@ val CD_STAGES: List<CdStage> = listOf(
         scene = "烟雾笼罩镇口,巨大齿轮驱动城门,铜色盾牌刻满固定规则。" +
             "它宣称「我每日都能自动开门,自然已经学会了世间万事!」——但行动记录显示,它每次都是同一套动作。",
         knowledge = "固定规则与机器学习的区别",
+        aftermath = "门卫恢复正常,交出断裂的感知晶片,指向听风桥。",
         attack = listOf(
             CdQuestion(
                 prompt = "门卫每次开门都是同一套动作,不随情况变化。这最可能来自?",
@@ -139,6 +142,7 @@ val CD_STAGES: List<CdStage> = listOf(
         scene = "桥下回声交叠,桥上散落损坏的感知镜片。" +
             "机关蝠明明听到了求救,却朝相反方向冲去 —— 要查清它是听、是判断、还是行动时出了问题。",
         knowledge = "感知、推理、行动形成闭环,任一环节失效都会影响结果",
+        aftermath = "机关蝠恢复方向感,带少侠前往裁断镇中事务的棋将台。",
         attack = listOf(
             CdQuestion(
                 prompt = "要定位机关蝠的故障,最合理的检查顺序是?",
@@ -198,6 +202,7 @@ val CD_STAGES: List<CdStage> = listOf(
         scene = "黑白石阶围绕巨型棋盘,石将头戴棋冠。" +
             "它把下棋的胜绩当成全能证明,镇中人因此把辨药、修桥、预测天气都交给了它。",
         knowledge = "在特定任务上表现优秀,不等于具备通用能力",
+        aftermath = "石将承认信息来自传信阁,提醒少侠那里只留了一种口音的训练录音。",
         attack = listOf(
             CdQuestion(
                 prompt = "石将棋艺无双,却被派去辨药、修桥、预测天气。问题出在哪?",
@@ -257,6 +262,7 @@ val CD_STAGES: List<CdStage> = listOf(
         scene = "符纸和声音铃铛悬挂在传信阁,纸鹤盘旋成阵。" +
             "它看似能辨百声,实际只听懂师父的一种口音 —— 不同居民的求助被当作杂音。",
         knowledge = "学习依赖样本,样本的覆盖范围影响识别表现",
+        aftermath = "传信恢复后,四份线索指向百面机枢。它收到错误信息,却依旧宣称判断完全可靠。",
         attack = listOf(
             CdQuestion(
                 prompt = "纸鹤只听得懂师父一个人的口音。根因最可能是?",

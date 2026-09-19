@@ -70,6 +70,8 @@ data class ChuangdangMapActions(
     val onBack: () -> Unit = {},
     /** 进入某一关:1~4 为普通关,5 为 Boss 关。 */
     val onEnterStage: (Int) -> Unit = {},
+    /** 免费练习同一关(文档 §2:不消耗闯荡令、可看提示、不解锁正式节点)。 */
+    val onPracticeStage: (Int) -> Unit = {},
 )
 
 /** 地图上的一个节点(普通关 1~4 与 Boss 关 5 统一描述)。 */
@@ -191,6 +193,17 @@ fun ChuangdangMapScreen(
                         style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
                         modifier = Modifier.padding(top = 2.dp),
                     )
+                    // 2026-09-19 §6:通关印记与配饰(文档 §7 的简版展示)
+                    Text(
+                        text = if (bossCleared) {
+                            "通关印记 ${cleared.size}/4 · 已获「识机通关印」「识机铜铃」"
+                        } else {
+                            "通关印记 ${cleared.size}/4"
+                        },
+                        color = if (bossCleared) CdActive else CdInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                        modifier = Modifier.padding(top = 3.dp),
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -297,6 +310,29 @@ fun ChuangdangMapScreen(
 
                 Spacer(Modifier.weight(1f))
 
+                // 免费练习(文档 §2 + §9 的【先去练习】):不消耗闯荡令、可看提示、不解锁正式节点
+                Box(
+                    modifier = Modifier
+                        .height(42.dp)
+                        .clip(RoundedCornerShape(21.dp))
+                        .border(1.dp, CdGold, RoundedCornerShape(21.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { actions.onPracticeStage(current) },
+                        )
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "免费练习",
+                        color = CdActive,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                    )
+                }
+
+                Spacer(Modifier.size(8.dp))
+
                 // 出发按钮
                 val canStart = tokens > 0
                 Box(
@@ -317,7 +353,7 @@ fun ChuangdangMapScreen(
                                 }
                             },
                         )
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 14.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

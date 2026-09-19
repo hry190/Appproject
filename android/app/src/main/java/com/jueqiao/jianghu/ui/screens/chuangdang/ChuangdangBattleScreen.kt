@@ -77,6 +77,11 @@ private val BWrong = Color(0xFF9B3B2E)
 @Composable
 fun ChuangdangBattleScreen(
     stageIndex: Int,
+    /**
+     * 免费练习模式(文档 §2):**不消耗闯荡令、可看提示、通关不解锁正式节点**。
+     * 由地图页的「免费练习」入口传入 true。
+     */
+    practiceMode: Boolean = false,
     actions: ChuangdangBattleActions = ChuangdangBattleActions(),
 ) {
     val stage = CD_STAGES.firstOrNull { it.index == stageIndex } ?: CD_STAGES.first()
@@ -101,8 +106,11 @@ fun ChuangdangBattleScreen(
     //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
     //   · 暂离 → 保留出发与关卡进度,该关显示「继续」,稍后进入不重复扣令
     //   注意:胜负已分时不弹框 —— 胜利/战败走 advance() 直接退出(那里已处理 clearStage / endRun)。
+    //   练习模式没有"出发"可撤退(不消耗闯荡令),直接退出。
     var showRetreatDialog by remember { mutableStateOf(false) }
-    val requestExit: () -> Unit = { showRetreatDialog = true }
+    val requestExit: () -> Unit = {
+        if (practiceMode) actions.onExit() else showRetreatDialog = true
+    }
     BackHandler { requestExit() }
 
     val question = when (phase) {
@@ -110,12 +118,24 @@ fun ChuangdangBattleScreen(
         else -> stage.attack[attackIdx % stage.attack.size]
     }
 
+    // 2026-09-19 §6:选项顺序打散。
+    //   原先进攻题的正确答案固定在索引 1、防御题固定在索引 0 —— 玩两关就能摸出套路,
+    //   知识判断会退化成"记位置"。这里对每道题洗一次牌;
+    //   用 remember(question) 保证同一题在重绘(结算前后)时不会重新打散,否则答案位置会跳。
+    val (shownOptions, shownCorrectIndex) = remember(question) {
+        val indexed = question.options.mapIndexed { i, text -> i to text }
+        val order = indexed.shuffled()
+        order.map { it.second } to order.indexOfFirst { it.first == question.correctIndex }
+    }
+    // 练习模式的"看提示"(文档 §2:免费练习可查看提示与秘籍)
+    var showHint by remember(question) { mutableStateOf(false) }
+
     /** 作答 + 按 §3.2 的判定顺序结算。 */
     fun answer(choice: Int) {
         if (selected != null) return
         if (phase != CdPhase.Attack && phase != CdPhase.Defense) return
         selected = choice
-        val isCorrect = choice == question.correctIndex
+        val isCorrect = choice == shownCorrectIndex
 
         if (phase == CdPhase.Attack) {
             if (isCorrect) {
@@ -167,12 +187,13 @@ fun ChuangdangBattleScreen(
     fun advance() {
         when (phase) {
             CdPhase.Victory -> {
-                // 通关:记录进度;是否结束出发由地图/Boss 关决定(四关全通后还要打 Boss)
-                ChuangdangStore.clearStage(stage.index)
+                // 练习模式不解锁正式节点(文档 §2:"不解锁正式通关节点")
+                if (!practiceMode) ChuangdangStore.clearStage(stage.index)
                 actions.onExit()
             }
             CdPhase.Defeat -> {
-                ChuangdangStore.endRun()
+                // 练习模式本来就没有开始出发,故不结束别人的出发状态
+                if (!practiceMode) ChuangdangStore.endRun()
                 actions.onExit()
             }
             CdPhase.Resolved -> {
@@ -344,7 +365,7 @@ fun ChuangdangBattleScreen(
                             text = headline,
                             color = if (phase == CdPhase.Defeat) BWrong
                             else if (phase == CdPhase.Victory) BCorrect
-                            else if (blocked || selected != question.correctIndex) BWrong
+                            else if (blocked || selected != shownCorrectIndex) BWrong
                             else BCorrect,
                             style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 15.sp),
                         )
@@ -354,15 +375,34 @@ fun ChuangdangBattleScreen(
                             color = BInk,
                             style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
                         )
-                        if (phase == CdPhase.Victory || phase == CdPhase.Defeat) {
+                        if (phase == CdPhase.Victory) {
+                            // 战后剧情(文档 §5 每关都有一句,用于衔接下一关)
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                text = if (phase == CdPhase.Victory)
-                                    "获得「${stage.title}」通关印记,回到地图继续下一关。"
+                                text = stage.aftermath,
+                                color = BInk,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = if (practiceMode)
+                                    "练习模式:本关不解锁正式节点,也不发放首通奖励。"
                                 else
-                                    "本次出发结束。已通关的节点与印记保留,可补修后重新出发。",
+                                    "获得「${stage.title}」通关印记,回到地图继续下一关。",
                                 color = BInkSoft,
                                 style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                            )
+                        } else if (phase == CdPhase.Defeat) {
+                            // 战败结算文案对齐文档 §9「普通关失败」
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = if (practiceMode)
+                                    "练习模式不消耗闯荡令,可以直接再来一次。"
+                                else
+                                    "此战惜败,本次出发已结束。本次已消耗的闯荡令不再额外扣除;" +
+                                        "已通关的节点与已获得的奖励均保留,可先补修再重新出发。",
+                                color = BInkSoft,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
                             )
                         }
                         Spacer(Modifier.height(12.dp))
@@ -376,7 +416,37 @@ fun ChuangdangBattleScreen(
                     }
                 }
                 else -> {
-                    question.options.forEachIndexed { i, option ->
+                    // 练习模式的「看提示」(文档 §2:免费练习可查看提示与秘籍)
+                    if (practiceMode) {
+                        if (showHint) {
+                            Text(
+                                text = "提示:本关考的是「${stage.knowledge}」。",
+                                color = BGold,
+                                style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0x22B8894A))
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = { showHint = true },
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                            ) {
+                                Text(
+                                    text = "看提示",
+                                    color = BGold,
+                                    style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+                    shownOptions.forEachIndexed { i, option ->
                         CdOptionRow(
                             text = option,
                             onClick = { answer(i) },

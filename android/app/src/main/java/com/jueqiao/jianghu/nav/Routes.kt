@@ -251,7 +251,9 @@ object Routes {
 
     // ── 2026-09-19 §6 闯荡江湖(雾隐机关镇五关;纯 Android 端实现,暂不接后端)──────
     const val Chuangdang = "chuangdang"                                    // 地图页(五节点 + 闯荡令)
-    const val ChuangdangBattlePattern = "chuangdang/battle/{stage}"        // 第 1~4 关的三心攻防
-    fun chuangdangBattle(stage: Int): String = "chuangdang/battle/$stage"
+    // 第 1~4 关的三心攻防。practice=true 即「免费练习」(文档 §2:不消耗闯荡令、不解锁正式节点)
+    const val ChuangdangBattlePattern = "chuangdang/battle/{stage}?practice={practice}"
+    fun chuangdangBattle(stage: Int, practice: Boolean = false): String =
+        "chuangdang/battle/$stage?practice=$practice"
     const val ChuangdangBoss = "chuangdang/boss"                           // 第五关 Boss(制作 + 评审)
 }
