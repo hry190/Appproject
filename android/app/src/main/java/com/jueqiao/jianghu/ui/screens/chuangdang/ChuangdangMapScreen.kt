@@ -285,6 +285,27 @@ fun ChuangdangMapScreen(
 
             Spacer(Modifier.weight(1f))
 
+            // 2026-09-19 §14:对齐文档 §9「出发前明确代价」——
+            //   原文要求出发前把「消耗几枚 / 能从当前关继续推进 / 什么情况下结束 / 什么会保留」
+            //   讲清楚;此前底部只有一排按钮,用户看不出代价是什么。
+            //   runActive 时说明改为"继续推进不额外扣令",避免误以为每次进关都要再花一枚。
+            Text(
+                text = if (ChuangdangStore.runActive) {
+                    "继续推进不额外扣令 · 可从第 $current 关一路打到 Boss"
+                } else {
+                    "本次出发消耗 1 枚 · 可从第 $current 关连续推进至 Boss"
+                },
+                color = CdActive,
+                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                modifier = Modifier.padding(bottom = 2.dp),
+            )
+            Text(
+                text = "失败或主动撤退即结束本次出发;前置通关记录与已获得奖励保留",
+                color = CdInkSoft,
+                style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 15.sp),
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
+
             // ── 底部:闯荡令 + 出发 ──────────────────────────────────────
             tip?.let {
                 Text(

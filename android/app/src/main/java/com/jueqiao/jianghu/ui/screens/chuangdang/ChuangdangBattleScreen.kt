@@ -117,10 +117,20 @@ fun ChuangdangBattleScreen(
     //   注意:胜负已分时不弹框 —— 胜利/战败走 advance() 直接退出(那里已处理 clearStage / endRun)。
     //   练习模式没有"出发"可撤退(不消耗闯荡令),直接退出。
     var showRetreatDialog by remember { mutableStateOf(false) }
+
+    // 2026-09-19 §14:关前剧情(文档 §2「从当前未通关节点出发,阅读简短剧情并进入战斗」+
+    //   §5 每关的「场景」文案)。数据一直在 CdStage.scene 里,只是此前没有任何 UI 读它。
+    //   文档 §2 另要求「已读剧情可跳过」:故**首次**进入才拦在战斗前面,之后重进直接开打,
+    //   但仍可从顶部栏「重看剧情」把面板调回来。
+    var showIntro by remember { mutableStateOf(!ChuangdangStore.hasReadScene(stage.index)) }
+
     val requestExit: () -> Unit = {
         if (practiceMode) actions.onExit() else showRetreatDialog = true
     }
-    BackHandler { requestExit() }
+    // 返回键先关剧情浮层;从浮层退出不算"已读",下次进来仍会展示。
+    BackHandler {
+        if (showIntro) showIntro = false else requestExit()
+    }
 
     // 文档 §3.4:每关准备同知识点的情境变体,避免练习和正式挑战机械重复同一题。
     //   进入关卡时把题库洗一次,本场按洗后的顺序取题 —— 重玩时题目与顺序都可能不同。
@@ -244,7 +254,10 @@ fun ChuangdangBattleScreen(
             Spacer(Modifier.height(8.dp))
 
             // ── 顶部栏 ──────────────────────────────────────────────────
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Box(
                     modifier = Modifier
                         .size(18.dp)
@@ -266,6 +279,21 @@ fun ChuangdangBattleScreen(
                     text = "第 ${stage.index} 关 · ${stage.title}",
                     color = BInk,
                     style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 17.sp),
+                )
+                Spacer(Modifier.weight(1f))
+                // 2026-09-19 §14:已读剧情的关不再拦在前面,但留一个"重看"入口(文档 §2「已读剧情可跳过」)
+                Text(
+                    text = "重看剧情",
+                    color = BGold,
+                    style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(11.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { showIntro = true },
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
             }
 
@@ -572,6 +600,64 @@ fun ChuangdangBattleScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+
+        // ── 关前剧情(2026-09-19 §14,文档 §2/§5)────────────────────────
+        //   首次进入某关时拦在战斗前面;已读过的关不再自动弹出(见 showIntro 的初始化),
+        //   但顶部栏「重看剧情」可随时调回来。点面板外不关闭 —— 剧情需要显式确认。
+        if (showIntro) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.88f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "第 ${stage.index} 关 · ${stage.title}",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 17.sp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "敌对:${stage.enemyName}",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = stage.scene,
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 21.sp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "本关知识点:${stage.knowledge}",
+                        color = BGold,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    CdPrimaryButton(
+                        text = if (practiceMode) "开始练习" else "进入战斗",
+                        onClick = {
+                            // 标记已读:之后重进本关不再拦路(文档 §2「已读剧情可跳过」)
+                            ChuangdangStore.markSceneRead(stage.index)
+                            showIntro = false
+                        },
+                    )
                 }
             }
         }

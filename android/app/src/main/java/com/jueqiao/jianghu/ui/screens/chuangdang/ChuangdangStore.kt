@@ -57,6 +57,23 @@ object ChuangdangStore {
         startedStage = stage
     }
 
+    /**
+     * **已读过关前剧情**的关卡序号(文档 §2:「已读剧情可跳过」)。
+     *
+     * 只影响剧情页是否还拦在前面,不参与任何判定 —— 首次进入某关时展示 [CdStage.scene],
+     * 之后重进不再挡路(但仍可从战斗页顶部「重看剧情」把面板调回来)。
+     */
+    var readScenes by mutableStateOf(emptySet<Int>())
+        private set
+
+    /** 标记某关的关前剧情已读。 */
+    fun markSceneRead(stage: Int) {
+        readScenes = readScenes + stage
+    }
+
+    /** 该关关前剧情是否已读过(读过则不再自动展示)。 */
+    fun hasReadScene(stage: Int): Boolean = stage in readScenes
+
     /** 最近一次 Boss 评审结果(用于地图页展示与重看)。 */
     var lastBossResult by mutableStateOf<CdBossResult?>(null)
 
@@ -155,5 +172,6 @@ object ChuangdangStore {
         lastBossResult = null
         lastRestoreDay = beijingDayKey()
         startedStage = null
+        readScenes = emptySet()
     }
 }

@@ -75,6 +75,8 @@ fun ChuangdangBossScreen(
     var draft by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<CdBossResult?>(null) }
     var submittedText by remember { mutableStateOf("") }
+    /** 闯荡令不足等提示(2026-09-19 §14:未通过后重提要消耗新的令)。 */
+    var tip by remember { mutableStateOf<String?>(null) }
 
     BackHandler { actions.onBack() }
 
@@ -200,6 +202,16 @@ fun ChuangdangBossScreen(
                     color = BossFail,
                     style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 16.sp),
                 )
+                Spacer(Modifier.height(8.dp))
+                // 2026-09-19 §14:文档 §4.1 要求任务卡提前公开「允许的辅助工具」,
+                //   §2 也写明"Boss 是应用型任务,可以查阅秘籍、使用允许的工坊工具。
+                //   允许的辅助范围在任务卡上说明,个人决策与解释单独评分"。
+                Text(
+                    text = "允许的辅助工具:可查阅《识机真诀》秘籍,可复用你在工坊的素材与作品保存。" +
+                        "但「我为什么这样设计」必须自己写 —— 个人解释单独评分,占 20 分。",
+                    color = BossInkSoft,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 16.sp),
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -256,11 +268,25 @@ fun ChuangdangBossScreen(
                         indication = null,
                         enabled = draft.isNotBlank(),
                         onClick = {
-                            val r = cdScoreBoss(draft)
-                            result = r
-                            submittedText = draft
-                            ChuangdangStore.lastBossResult = r
-                            if (r.passed) ChuangdangStore.clearBoss()
+                            // 2026-09-19 §14 修掉一个规则漏洞(文档 §4.2 + §6.1):
+                            //   原实现只在 passed 时 clearBoss(),**未通过什么都不做** ——
+                            //   于是可以无限免费重提,§6「出发需权衡」的闯荡令成本被整个绕过去。
+                            //   文档:「正式评审未通过会结束本次出发资格,下次重新挑战需要新的闯荡令;
+                            //        作品、草稿、任务和反馈保留。用户可以**先免费修改作品**,
+                            //        再决定何时开始新一轮正式评审。」
+                            //   故:改稿免费,但**再次提交**属于新的正式挑战,要再消耗 1 枚。
+                            //   首次提交时出发仍在进行(runActive),不额外扣令。
+                            val needNewRun = !ChuangdangStore.runActive && !ChuangdangStore.bossCleared
+                            if (needNewRun && !ChuangdangStore.beginRun()) {
+                                tip = "闯荡令不足:开始新一轮正式评审需要 1 枚"
+                            } else {
+                                tip = null
+                                val r = cdScoreBoss(draft)
+                                result = r
+                                submittedText = draft
+                                ChuangdangStore.lastBossResult = r
+                                if (r.passed) ChuangdangStore.clearBoss() else ChuangdangStore.endRun()
+                            }
                         },
                     ),
                 contentAlignment = Alignment.Center,
@@ -269,6 +295,16 @@ fun ChuangdangBossScreen(
                     text = "提交评审",
                     color = Color.White,
                     style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                )
+            }
+
+            // 未通过后再次提交需要新的闯荡令;余额不足时在这里说清(2026-09-19 §14)
+            tip?.let {
+                Text(
+                    text = it,
+                    color = BossFail,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
 
@@ -387,10 +423,13 @@ fun ChuangdangBossScreen(
                             )
                         }
                     } else {
+                        // 2026-09-19 §14:对齐文档 §9「Boss 评审未通过」的整块文案 ——
+                        //   本次出发已结束 / 草稿和评分已保存 / 修改免费 / 下次正式挑战需一枚令。
                         Text(
-                            text = "草稿与评分已保存,修改免费 —— 改完再提交一次即可。",
+                            text = "本次出发已结束,草稿和评分已保存。修改免费,改多久都不消耗闯荡令;" +
+                                "但再次「提交评审」属于一轮新的正式挑战,需要 1 枚。(现有 ${ChuangdangStore.tokens} 枚)",
                             color = BossInkSoft,
-                            style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
+                            style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
                         )
                         Spacer(Modifier.height(10.dp))
                         Box(
@@ -403,7 +442,7 @@ fun ChuangdangBossScreen(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
-                                        // 继续修改:把上次提交的内容放回输入框,直接改
+                                        // 继续修改:把上次提交的内容放回输入框,直接改(免费)
                                         draft = submittedText
                                         result = null
                                     },
