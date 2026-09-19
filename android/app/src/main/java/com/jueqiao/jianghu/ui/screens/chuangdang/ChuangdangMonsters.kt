@@ -225,16 +225,20 @@ private fun DrawScope.drawSonarRings(hitCount: Int) {
 private fun DrawScope.drawCollapsingPlatform(hitCount: Int) {
     if (hitCount <= 0) return
 
-    // 3:4 素材在 132×96 槽位里:高度铺满,宽度 = 高度 × 0.75,水平居中
+    // 素材是 0.774:1 的竖构图(§21 裁掉水印后实测)—— `Fit` 进 132×96 槽位时
+    //   高度铺满、宽度 = 高度 × 0.774、水平居中。
     val artH = size.height
-    val artW = artH * 0.75f
+    val artW = artH * 0.774f
     val artX = (size.width - artW) / 2f
 
-    // 石台在素材里的位置(实测自这张素材:高 62%~85%、宽 18%~86%)
-    val plateTop = artH * 0.62f
-    val plateBottom = artH * 0.85f
-    val plateL = artX + artW * 0.18f
-    val plateR = artX + artW * 0.86f
+    // 石台位置是**实测值**,不是眼估:逐行看不透明宽度 —— 腿只有 560 宽,
+    //   到 y = 0.661H 处跳到 1100+,那就是石台顶边;最宽处 x 占 0.09~0.91。
+    //   ⚠️ 素材被裁过(§21 去水印),旧的百分比(0.62/0.85、0.18/0.86)已**不成立** ——
+    //      改素材后必须重量一次,否则效果会落在石像身上而不是石台上。
+    val plateTop = artH * 0.661f
+    val plateBottom = artH * 0.910f
+    val plateL = artX + artW * 0.09f
+    val plateR = artX + artW * 0.91f
     val plateW = plateR - plateL
 
     repeat(hitCount) { i ->
