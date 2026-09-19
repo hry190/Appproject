@@ -541,7 +541,13 @@ private fun CdNodeCard(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(horizontal = 12.dp),
+            // 2026-09-19 §19 修复:原先只有水平内边距,**没有垂直内边距**。
+            //   两行副标题的卡片内容是 154px,而最小高度 66dp = 181.5px —— 撑到"刚好等于内容高度",
+            //   上下 padding 实际变成 0:文字版面框距卡片下缘仅 **9px(3.3dp)**、墨迹仅 15px(5.5dp),
+            //   而单行副标题的卡片有 37px(13.8dp)。字没被切,但**挤到看起来像被裁**(用户报障)。
+            //   补 10dp 垂直内边距后:单行卡片仍由 heightIn(min) 保持 66dp(外观不变),
+            //   两行卡片则长到 ~76dp,上下各留出 10dp。
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // 序号 / 敌人徽记
