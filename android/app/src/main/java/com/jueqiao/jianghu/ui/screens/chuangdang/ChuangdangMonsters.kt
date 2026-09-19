@@ -1,6 +1,9 @@
 package com.jueqiao.jianghu.ui.screens.chuangdang
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -11,20 +14,27 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.jueqiao.jianghu.R
 
 /**
  * 2026-09-19 §6 闯荡江湖 —— 五个敌人的形象
  *
- * 用 **Compose Canvas 手绘矢量**表达(不引入外部素材):
- *   · 项目是水墨江湖风格,现成怪物素材很难找到风格匹配且授权干净的;
- *   · 矢量绘制没有版权与体积负担,还能随状态做简单动画(如齿轮转动、蝠翼扇动)。
+ * **铜齿门卫已改用真实素材**(2026-09-19 §16,用户提供的 `D:\图\铜齿门卫.png`,
+ * 落在 `res/drawable-nodpi/img_chuangdang_tongchimenwei.png`);其余四个仍是
+ * **Compose Canvas 手绘矢量**。
  *
- * 设计原则:**以线描为主、淡墨为辅**,与界面里其他水墨元素一致;
+ * 当初全用手绘的理由(§6)是"现成怪物素材很难找到**风格匹配且授权干净**的" ——
+ * 用户自己提供了风格匹配、版权自有的图,这条理由对第 1 关不再成立;
+ * 其余四个没有素材,继续手绘(零素材依赖、体积可忽略、可随状态做简单动画)。
+ *
+ * 手绘部分的设计原则:**以线描为主、淡墨为辅**,与界面里其他水墨元素一致;
  * 每个敌人用一个可辨识的轮廓,而不是写实插画 —— 尺寸完全由调用方决定,内部按
  * `min(width, height)` 归一化,所以在任意大小下比例一致。
  *
  * 五个敌人(策划方案 §5):
- *   盾 = 铜齿门卫(齿轮城门 + 刻满固定规则的铜盾)
+ *   盾 = 铜齿门卫 —— **真实素材**(走兽 + 铜齿 + 铜环 + 铜杖)
  *   蝠 = 断目机关蝠(眼部装置破损、只凭回声乱撞)
  *   棋 = 棋冠石将(黑白石阶 + 棋冠)
  *   鹤 = 百声纸鹤(符纸铃铛 + 折纸鹤)
@@ -37,7 +47,7 @@ fun CdMonster(
      * 已被打掉的心数(0~3)。
      *
      * 用于表现策划方案 §5 每关的「战斗表现」:
-     *   铜齿门卫 —— 答对便指出规则漏洞,长盾刻字**逐步开裂**
+     *   铜齿门卫 —— 每命中一次身上多一道**爪痕**(§16 改用素材后由 [drawDamageMarks] 叠加)
      *   断目机关蝠 —— 正确流程让**声波沿指定路线反弹**,击中弱点
      *   棋冠石将 —— 每识破一个越界判断,脚下的一块错误棋格便**崩落**
      *   百声纸鹤 —— 合理样本让纸鹤恢复判断,**逐只脱离阵形**
@@ -45,13 +55,28 @@ fun CdMonster(
     hitCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
+    // ① 铜齿门卫:真实素材 + 伤痕叠加(2026-09-19 §16)
+    //   尺寸完全交给调用方(modifier 里的 size),这里只用 ContentScale.Fit 保住比例 ——
+    //   素材是 1254×1254 正方形,放进方形槽位不会变形;槽位若不是正方形则留白而非拉伸。
+    if (glyph == "盾") {
+        Box(modifier = modifier) {
+            Image(
+                painter = painterResource(R.drawable.img_chuangdang_tongchimenwei),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+            )
+            Canvas(modifier = Modifier.fillMaxSize()) { drawDamageMarks(hitCount) }
+        }
+        return
+    }
+
     Canvas(modifier = modifier) {
         when (glyph) {
             "蝠" -> drawBrokenBat(hitCount)
             "棋" -> drawChessGeneral(hitCount)
             "鹤" -> drawPaperCrane(hitCount)
-            "枢" -> drawManyFaceCore()
-            else -> drawGateGuard(hitCount)
+            else -> drawManyFaceCore()
         }
     }
 }
@@ -82,67 +107,38 @@ private fun DrawScope.px(fx: Float, fy: Float): Offset {
 private fun DrawScope.line(a: Offset, b: Offset, color: Color = Ink, w: Float = 0.035f) =
     drawLine(color, a, b, strokeWidth = w * size.minDimension)
 
-/** ① 铜齿门卫 —— 齿轮外圈 + 铜盾,盾上刻着固定规则的横纹。 */
-private fun DrawScope.drawGateGuard(hitCount: Int) {
+/**
+ * 「战斗表现」的通用伤痕(2026-09-19 §16)。
+ *
+ * 原 Canvas 版的铜齿门卫是「齿轮外圈 + 铜盾」,策划方案 §5 对应的文案是
+ * "长盾刻字逐步开裂";换成用户提供的真实素材后形象变成一只走兽,**盾不存在了** ——
+ * 所以这里不再假装在画盾,改为**通用爪痕**:每打掉一颗心多一道折线
+ * (左右交替,避免看着像同一道),打满三心再追加两道贯穿痕。
+ *
+ * 保留的是行为本身(**形象随命中数变化**),不是某一种具体画法。
+ *
+ * ⚠️ 调用方的画布必须**与素材对齐**(见 [CdMonster] 里同为 `fillMaxSize` 的方形槽位):
+ *    本函数按 `size.minDimension` 归一化,画布偏了伤痕就会落在空处。
+ */
+private fun DrawScope.drawDamageMarks(hitCount: Int) {
+    if (hitCount <= 0) return
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
     val r = m * 0.30f
 
-    // 齿轮外圈
-    drawCircle(BronzeFaint, radius = r, center = c)
-    drawCircle(Bronze, radius = r, center = c, style = Stroke(width = m * 0.028f))
-    repeat(12) { i ->
-        rotate(degrees = i * 30f, pivot = c) {
-            drawLine(
-                Bronze,
-                Offset(c.x, c.y - r),
-                Offset(c.x, c.y - r * 1.24f),
-                strokeWidth = m * 0.045f,
-            )
-        }
-    }
-
-    // 铜盾(竖长的上圆下方轮廓)
-    val shield = Path().apply {
-        val top = c.y - r * 0.62f
-        val bottom = c.y + r * 0.72f
-        val halfW = r * 0.42f
-        moveTo(c.x - halfW, top + r * 0.20f)
-        quadraticBezierTo(c.x, top - r * 0.22f, c.x + halfW, top + r * 0.20f)
-        lineTo(c.x + halfW, c.y + r * 0.18f)
-        quadraticBezierTo(c.x + halfW * 0.9f, bottom, c.x, bottom + r * 0.10f)
-        quadraticBezierTo(c.x - halfW * 0.9f, bottom, c.x - halfW, c.y + r * 0.18f)
-        close()
-    }
-    drawPath(shield, Paper)
-    drawPath(shield, Ink, style = Stroke(width = m * 0.026f))
-
-    // 盾上刻痕(「刻满固定规则」的横纹)
-    val lines = 4
-    repeat(lines) { i ->
-        val y = c.y - r * 0.32f + i * r * 0.26f
-        drawLine(InkMid, Offset(c.x - r * 0.26f, y), Offset(c.x + r * 0.26f, y), strokeWidth = m * 0.014f)
-    }
-
-    // 门卫的「眼」:两个孔,表示它只会照做
-    drawCircle(Ink, radius = m * 0.030f, center = Offset(c.x - r * 0.16f, c.y - r * 0.52f))
-    drawCircle(Ink, radius = m * 0.030f, center = Offset(c.x + r * 0.16f, c.y - r * 0.52f))
-
-    // 文档 §5 战斗表现:「答对便指出规则漏洞,长盾刻字逐步开裂」
-    //   每打掉一颗心,盾上多一条折线裂纹(左右交替,避免看起来是同一道)。
     repeat(hitCount) { i ->
         val dir = if (i % 2 == 0) -1f else 1f
         val y0 = c.y - r * 0.34f + i * r * 0.28f
-        val a = Offset(c.x + dir * r * 0.40f, y0)
-        val b = Offset(c.x + dir * r * 0.08f, y0 + r * 0.15f)
-        val d = Offset(c.x + dir * r * 0.26f, y0 + r * 0.34f)
-        line(a, b, Danger, 0.028f)
-        line(b, d, Danger, 0.028f)
+        val a = Offset(c.x + dir * r * 0.42f, y0)
+        val b = Offset(c.x + dir * r * 0.06f, y0 + r * 0.16f)
+        val d = Offset(c.x + dir * r * 0.28f, y0 + r * 0.36f)
+        line(a, b, Danger, 0.026f)
+        line(b, d, Danger, 0.026f)
     }
-    // 三心打完 → 盾牌整体贯穿开裂
+    // 三心打完 → 两道贯穿痕
     if (hitCount >= CD_MAX_HEARTS) {
-        line(Offset(c.x - r * 0.40f, c.y - r * 0.50f), Offset(c.x + r * 0.26f, c.y + r * 0.70f), Danger, 0.032f)
-        line(Offset(c.x + r * 0.40f, c.y - r * 0.38f), Offset(c.x - r * 0.24f, c.y + r * 0.70f), Danger, 0.032f)
+        line(Offset(c.x - r * 0.42f, c.y - r * 0.52f), Offset(c.x + r * 0.28f, c.y + r * 0.72f), Danger, 0.032f)
+        line(Offset(c.x + r * 0.42f, c.y - r * 0.40f), Offset(c.x - r * 0.26f, c.y + r * 0.72f), Danger, 0.032f)
     }
 }
 
