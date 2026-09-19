@@ -123,7 +123,10 @@ private fun DrawScope.drawHitEffect(glyph: String, hitCount: Int) {
         //   §5 对第 4 关写的是「逐只脱离阵形」—— 那需要**多只纸鹤**的画面,
         //   而用户给的素材只有**一只**纸鹤,"阵形"根本不存在。
         //   按 §16/§17 的既有做法:**不假装画没有的东西**,退回通用受损标记。
-        "鹤" -> drawDamageMarks(hitCount)
+        // 2026-09-19 §24:满三心那两道贯穿痕改用半透明 —— 纸鹤身上颜色浅,
+        //   不透明的粗红杠压上去像"贴了两条胶带"(用户看过真机后定的)。盾是深色走兽,
+        //   同样的线不刺眼,故**只对鹤改成半透明**,不动盾那一路。
+        "鹤" -> drawDamageMarks(hitCount, faintThroughMarks = true)
     }
 }
 
@@ -173,8 +176,12 @@ private fun DrawScope.line(a: Offset, b: Offset, color: Color = Ink, w: Float = 
  *
  * ⚠️ 调用方的画布必须**与素材对齐**(见 [CdMonster] 里同为 `fillMaxSize` 的方形槽位):
  *    本函数按 `size.minDimension` 归一化,画布偏了伤痕就会落在空处。
+ *
+ * @param faintThroughMarks 满三心追加的两道贯穿痕是否改用半透明 [DamageFaint]。
+ *   2026-09-19 §24:纸鹤身体是**浅色的**,不透明粗红杠压上去像"贴了两条胶带";
+ *   盾是深色走兽,同样的线不刺眼 —— 所以这档只在鹤那一路打开。
  */
-private fun DrawScope.drawDamageMarks(hitCount: Int) {
+private fun DrawScope.drawDamageMarks(hitCount: Int, faintThroughMarks: Boolean = false) {
     if (hitCount <= 0) return
     val m = size.minDimension
     val c = Offset(size.width / 2f, size.height / 2f)
@@ -191,8 +198,9 @@ private fun DrawScope.drawDamageMarks(hitCount: Int) {
     }
     // 三心打完 → 两道贯穿痕
     if (hitCount >= CD_MAX_HEARTS) {
-        line(Offset(c.x - r * 0.42f, c.y - r * 0.52f), Offset(c.x + r * 0.28f, c.y + r * 0.72f), Danger, 0.032f)
-        line(Offset(c.x + r * 0.42f, c.y - r * 0.40f), Offset(c.x - r * 0.26f, c.y + r * 0.72f), Danger, 0.032f)
+        val tone = if (faintThroughMarks) DamageFaint else Danger
+        line(Offset(c.x - r * 0.42f, c.y - r * 0.52f), Offset(c.x + r * 0.28f, c.y + r * 0.72f), tone, 0.032f)
+        line(Offset(c.x + r * 0.42f, c.y - r * 0.40f), Offset(c.x - r * 0.26f, c.y + r * 0.72f), tone, 0.032f)
     }
 }
 
