@@ -59,6 +59,15 @@ private val CD_MONSTER_ART: Map<String, Int> = mapOf(
     "枢" to R.drawable.img_chuangdang_baimianjishu,
 )
 
+/**
+ * 字形 → 真实素材资源;**没有素材时返回 null**,调用方走文字 / 手绘兜底。
+ *
+ * 2026-09-19 §23 开的这个口子:地图页的圆形关卡徽记原先画的是字形文字
+ * (§16 当时留着它的理由是"只换一个会和其余四个不一致"),五个敌人都有素材后这条理由不成立,
+ * 徽记也改用素材。**素材表仍然只此一份**,加素材依旧只改上面那一行。
+ */
+fun cdMonsterArtRes(glyph: String): Int? = CD_MONSTER_ART[glyph]
+
 @Composable
 fun CdMonster(
     glyph: String,

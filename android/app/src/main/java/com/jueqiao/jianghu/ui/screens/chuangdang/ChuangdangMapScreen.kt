@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -56,7 +57,8 @@ import kotlinx.coroutines.delay
  *   §6.1 一次正式出发 —— 支付一枚闯荡令,从当前未通关节点开始,可连续推进到 Boss
  *
  * 用户指令:"先把页面做出来,先不接后端" —— 进度读 [ChuangdangStore](进程内状态),
- * 素材复用后山系列的水墨背景,敌人形象用文字徽记占位(不引入新图)。
+ * 素材复用后山系列的水墨背景,**敌人徽记用真实素材图**(2026-09-19 §23;
+ * 在那之前是文字字形占位,详情见 [CdNodeCard])。
  *
  * 点击行为:
  *   | 点击位置            | 结果 |
@@ -551,6 +553,10 @@ private fun CdNodeCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // 序号 / 敌人徽记
+        // 2026-09-19 §23:徽记从「字形文字(盾/蝠/棋/鹤/枢)」改成**敌人素材图**。
+        //   §16 当初不换的理由是"只换一个会和其余四个不一致" —— 五个敌人都已有素材,这条不成立了。
+        //   素材表在 ChuangdangMonsters.kt,**这里只查表**,加素材不需要动本文件。
+        val art = cdMonsterArtRes(node.glyph)
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -565,15 +571,34 @@ private fun CdNodeCard(
                 .border(1.dp, edge, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = node.glyph,
-                color = when {
-                    !unlocked -> CdLocked
-                    isBoss -> CdGold
-                    else -> CdInk
-                },
-                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 18.sp),
-            )
+            if (art != null) {
+                // 为什么要内缩 5dp:40dp 圆的**内接正方形只有 28.3dp**,而素材是**整幅画布**参与 Fit
+                //   (铜齿门卫的法杖顶端、机关蝠的翼尖都贴着画布边)——
+                //   不留内缩,圆就会把主体边角切掉。留边后四种比例都落在圆内(实测)。
+                Image(
+                    painter = painterResource(art),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(5.dp)
+                        // 未解锁仍要读得出"还没到" —— 原先是把字形文字调灰,素材版改为压暗。
+                        //   0.35 太淡:纸鹤/石将本身是浅色的,压到 0.35 在浅底圆里几乎看不见(真机看过),
+                        //   0.5 才既"退到后面"又"看得出是哪只"。
+                        .alpha(if (unlocked) 1f else 0.5f),
+                )
+            } else {
+                // 未覆盖的字形(将来新增敌人时)退回文字兜底
+                Text(
+                    text = node.glyph,
+                    color = when {
+                        !unlocked -> CdLocked
+                        isBoss -> CdGold
+                        else -> CdInk
+                    },
+                    style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                )
+            }
         }
 
         Spacer(Modifier.size(12.dp))
