@@ -501,16 +501,38 @@ class XxxViewModelFactory(private val repo: XxxRepository) : ViewModelProvider.F
 
 ## 8. Git 工作流
 
-### 8.1 当前流程(2026-09-10 起简化)
+### 8.1 当前流程
 
-**直接在 main 上工作**(zzz 分支已于 2026-09-10 删除):
+**在 `zzz` 上工作;要同步到 `main` 时,按 [MERGE-WORKFLOW.md](./MERGE-WORKFLOW.md) 的 4 步 SOP 走。**
+
 ```bash
-git checkout main
-# 改代码、add、commit、push
+git checkout zzz
+# 改代码、add、commit
 git add <files>
 git commit -m "<conventional-commit-style message>"
-git push origin main
+git push origin zzz
 ```
+
+> ⚠️ **本节此前写的是「直接在 main 上工作(zzz 分支已于 2026-09-10 删除)」—— 与事实相反,已于 2026-09-19 更正。**
+> 实测 `zzz` 的 reflog 首条是 `2026-09-10 13:59:07 branch: Created from HEAD`:它是**那天被创建**的,不是被删除,
+> 此后 147 条 reflog 一直用到今天。[SESSION-LOG-2026-09-10.md](./SESSION-LOG-2026-09-10.md) 也写着
+> "每次开始新功能前先 `git checkout zzz`" —— 和原句正好相反。
+
+**同步 main**:
+
+| 情形 | 做法 |
+|---|---|
+| `main` 是 `zzz` 的祖先 | 纯 **fast-forward**:`git merge zzz --ff-only --strategy=recursive`(结构性 0 冲突)|
+| `main` 有自己的提交 | **真合并**:`git merge zzz --no-commit --no-ff --strategy=recursive`,合并后必须验编译 + 单测 |
+
+历史上 main 多数是靠**合并提交**推进的(`8230c70 merge zzz → main: ...` 等,共 83 个),
+所以两条路都可能遇上 —— **先跑 `git merge-base --is-ancestor main zzz` 判定**。
+
+⚠️ **Windows git bash 的坑**:`--no-ff` / `--ff-only` 会被误解析成策略名 `theirs` 而报
+`Could not find merge strategy 'theirs'` —— **必须显式加 `--strategy=recursive`**(见 MERGE-WORKFLOW.md)。
+`git reset --hard` 不受此 bug 影响。
+
+同步完成后保持**四个 ref 一致**:`main` = `zzz` = `origin/main` = `origin/zzz`。
 
 ### 8.2 Commit message 格式
 
