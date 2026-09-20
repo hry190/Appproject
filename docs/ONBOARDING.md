@@ -122,7 +122,7 @@ D:\Appproject\
 ├── ENVIRONMENT.md              # 项目根的 ENV 文件
 ├── scripts/                    # ⚠ 本地工具脚本(审计 / adb 转发 / 真机回归 / 截图),**不在 git 里**
 │                                #   判据与用法写在本文 §3.4/§5.4 与 docs/CHUANGDANG-REGRESSION-PLAYBOOK.md
-└── D:\图\                      # ⚠ 设计稿源文件,**不在 git 里**,本地目录;来源对照见 docs/DESIGN-SOURCES.md
+└── D:\图\                      # ❌ **已于 2026-09-20 删除** —— 原设计稿目录;"哪张图 → 哪个资源"见 docs/DESIGN-SOURCES.md
 ```
 
 ---
@@ -673,7 +673,7 @@ chore(<scope>): <description>
 
 | 用途 | 路径 |
 | |---|
-| 设计稿源 | `D:\图\`(本地,**不在 git**;**计划可能被删除**)—— 删除后靠 [DESIGN-SOURCES.md](DESIGN-SOURCES.md) 查"哪张设计稿 → 哪个资源" |
+| 设计稿源 | `D:\图\` —— ⚠️ **已于 2026-09-20 删除**(原 410 个文件 / 364.3 MB);"哪张设计稿 → 哪个资源"见 [DESIGN-SOURCES.md](DESIGN-SOURCES.md)(§1 对照 + §3 完整去向记录含 sha256)|
 | APK 输出 | `android/app/build/outputs/apk/debug/app-debug.apk` |
 | Gradle 用户缓存 | `C:\Users\28784\.gradle\caches` |
 
