@@ -1928,7 +1928,7 @@ private fun DrawScope.drawDamageMarks(hitCount: Int, faintThroughMarks: Boolean 
 | 产出 | 位置 |
 |---|---|
 | 五关回归报告(一次完整跑测 + 三层校验 + 1 处文档缺陷) | [REGRESSION-chuangdang-5stages-20260919.md](./REGRESSION-chuangdang-5stages-20260919.md) |
-| 真机回归套件(自动过五关 + 像素判据,含 README 与踩坑清单) | [../scripts/chuangdang-regress/](../scripts/chuangdang-regress/) |
+| 真机回归套件(自动过五关 + 像素判据,含 README 与踩坑清单) | ⚠️ **该路径已于 2026-09-20 出库**(`scripts/` 整体不入库) → 判据见 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md);[详见 09-20 §6](./SESSION-LOG-2026-09-20.md)|
 | 五个敌人素材(已去水印 / 已转透明底) | `android/app/src/main/res/drawable-nodpi/img_chuangdang_*.png` |
 | 五关数据与规则(题库 38 题 / 五维评分) | `.../ui/screens/chuangdang/ChuangdangData.kt` · `ChuangdangBossScreen.kt` |
 | 敌人形象(素材表 + 命中叠加层) | `.../ui/screens/chuangdang/ChuangdangMonsters.kt` |
