@@ -1,6 +1,10 @@
 package com.jueqiao.jianghu.ui.screens.chuangdang
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +49,16 @@ import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.random.Random
+
+/**
+ * 交手时放哪一种一次性动画(2026-09-20 §8)。
+ *
+ * 设计约束(用户定的口径 + 项目既有教训):
+ *   · **一次性**,不循环 —— 循环动画会让 `uiautomator dump` 等不到 idle,而"每帧配 dump"是像素回归的地基;
+ *   · **不整屏震** —— 文字区域是这个项目最脆的地方(§10/§12/§19 三次修的都是文字),震屏会一起晃到它;
+ *   · **不改交互节奏** —— 动画在结算面板底下播,不加"等动画放完才能点继续"的门。
+ */
+private enum class CdFx { None, Lunge, Block, TakeHit }
 
 /**
  * 2026-09-19 §6 闯荡江湖 · 战斗页(第 1~4 关的三心攻防)
@@ -117,6 +133,54 @@ fun ChuangdangBattleScreen(
     var pendingGuaranteedHit by remember { mutableStateOf(false) }
     var headline by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
+
+    // ── 2026-09-20 §8:交手动画(出手 / 格挡 / 受击)────────────────────────────
+    //   为什么用"种类 + 计数器"两个状态:同一种动画连续触发时(连打两下都是 Lunge),
+    //   只改种类不会让 LaunchedEffect 重跑 —— 必须让 tick 变。
+    var fxKind by remember { mutableStateOf(CdFx.None) }
+    var fxTick by remember { mutableIntStateOf(0) }
+    /** 0→1→0 的一次性冲量;所有位移/缩放都由它按种类换算,这样一个 Animatable 够用。 */
+    val fx = remember { Animatable(0f) }
+    // ⚠️ 这里**不要**自己去读 `Settings.Global.ANIMATOR_DURATION_SCALE` 再乘一遍时长:
+    //   Compose 的 `WindowRecomposer` 已经把系统这个倍率注入 `MotionDurationScale`,
+    //   所有 tween 都会被框架自动缩放(源码:`WindowRecomposer_androidKt` 里读的正是
+    //   `animator_duration_scale`)。手动再乘一次就是**乘两遍**。
+    //   实测(§8):系统倍率 =10、代码里也 ×10 时,一条 120+170ms 的动作在真机上放了 **29 秒**
+    //   (= 2.9s × 10),取证时被误判成"熊猫一直在漂"。所以这里只写本来的时长:
+    //   · 系统倍率 = 1(默认)→ 就是下面写的毫秒数;
+    //   · 系统倍率 = 0(开发者选项关掉动画)→ 框架把动画时长归一为 0,动作直接不播(符合无障碍预期)。
+    LaunchedEffect(fxTick) {
+        if (fxTick == 0) return@LaunchedEffect
+        val (outMs, backMs) = when (fxKind) {
+            CdFx.Lunge -> 160 to 140      // 出手:冲出去快、收回来略慢
+            CdFx.Block -> 110 to 110      // 格挡:短促一顿
+            CdFx.TakeHit -> 120 to 170    // 受击:被打退得快、晃回来更慢
+            CdFx.None -> return@LaunchedEffect
+        }
+        fx.snapTo(0f)
+        fx.animateTo(1f, tween(outMs, easing = FastOutSlowInEasing))
+        fx.animateTo(0f, tween(backMs, easing = LinearOutSlowInEasing))
+    }
+    // 位移/缩放映射:一次性动画只碰 offset / scale,**不动尺寸、不动文字、不整屏震**。
+    val pandaFxDp = when (fxKind) {
+        CdFx.Lunge -> 14f * fx.value
+        CdFx.Block -> 4f * fx.value
+        CdFx.TakeHit -> -10f * fx.value
+        CdFx.None -> 0f
+    }
+    val monsterFxDp = if (fxKind == CdFx.Lunge) -8f * fx.value else 0f
+    val pandaScaleX = when (fxKind) {
+        CdFx.Lunge -> 1f + 0.06f * fx.value
+        CdFx.Block -> 1f + 0.02f * fx.value
+        CdFx.TakeHit -> 1f + 0.02f * fx.value
+        CdFx.None -> 1f
+    }
+    val pandaScaleY = if (fxKind == CdFx.TakeHit) 1f - 0.04f * fx.value else pandaScaleX
+    // ⚠️ 只在"动画进行中"才挂 graphicsLayer。
+    //   实测:常挂着这一层,静止时也会让熊猫边缘出现 1px 级抖动(两帧静止截图的差异 7.9k px,
+    //   而同屏怪物是 **0** px)—— 那会让"素材渲染正确"这条既有结论变成"看起来对"。
+    //   条件挂载后,静息态的绘制与加动画之前**逐像素一致**。
+    val fxActive = fx.value > 0f
 
     // 2026-09-19 §6:中途返回时弹确认框(文档 §6.4"主动撤退:弹窗说明后果,确认后结束本次出发")。
     //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
@@ -194,6 +258,14 @@ fun ChuangdangBattleScreen(
         if (phase != CdPhase.Attack && phase != CdPhase.Defense) return
         lastCorrect = isCorrect
 
+        // 2026-09-20 §8:顺手决定这一拍放哪种动画(用户口径:
+        //   进攻命中 → 出手;防御答对 → 挡一下;**防御答错 → 熊猫受击**;
+        //   进攻答错只是"转入防御题",本身不出手,故不放动画。)
+        fun cue(kind: CdFx) {
+            fxKind = kind
+            fxTick += 1
+        }
+
         if (phase == CdPhase.Attack) {
             if (isCorrect) {
                 // ② 进攻答对 → 结算伤害(文档 §3.3)
@@ -215,6 +287,8 @@ fun ChuangdangBattleScreen(
                         headline = "命中!-1 心"
                     }
                 }
+                // 被格挡时不放"出手+受击"(那会谎报战果),只给熊猫一个极小的前顶示意
+                cue(if (blocked) CdFx.Block else CdFx.Lunge)
                 detail = question.explanation
                 pendingDefense = false
                 phase = if (enemyHearts <= 0) CdPhase.Victory else CdPhase.Resolved
@@ -229,10 +303,12 @@ fun ChuangdangBattleScreen(
             // ④ 防御作答
             if (isCorrect) {
                 headline = "挡下了!"
+                cue(CdFx.Block)
                 detail = question.explanation
             } else {
                 playerHearts -= 1
                 headline = "防御失败,-1 心"
+                cue(CdFx.TakeHit)   // 这一幕挨打的是熊猫(玩家掉心)
                 detail = question.explanation
             }
             pendingDefense = false
@@ -360,7 +436,18 @@ fun ChuangdangBattleScreen(
                     Image(
                         painter = painterResource(R.drawable.img_chuangdang_xiongmaoshaoxia),
                         contentDescription = "熊猫少侠",
-                        modifier = Modifier.size(width = 52.dp, height = 96.dp),
+                        // 2026-09-20 §8:出手 / 格挡 / 受击的位移与缩放都走 graphicsLayer ——
+                        //   它**只影响绘制,不影响布局**(槽位 52×96dp 不变),所以不会把旁边的心/文字挤动。
+                        //   且**只在动画期间挂载**(见 fxActive 的注释):静息态逐像素与加动画前一致。
+                        modifier = Modifier
+                            .size(width = 52.dp, height = 96.dp)
+                            .then(
+                                if (fxActive) Modifier.graphicsLayer {
+                                    translationX = pandaFxDp.dp.toPx()
+                                    scaleX = pandaScaleX
+                                    scaleY = pandaScaleY
+                                } else Modifier,
+                            ),
                         contentScale = ContentScale.Fit,
                     )
                     Text(
@@ -393,7 +480,15 @@ fun ChuangdangBattleScreen(
                     CdMonster(
                         glyph = stage.enemyGlyph,
                         hitCount = CD_MAX_HEARTS - enemyHearts,
-                        modifier = Modifier.size(width = 132.dp, height = 96.dp),
+                        // 2026-09-20 §8:挨打时向后一顿(只挪绘制,不挪布局;命中叠加层跟着一起动)
+                        //   同样**只在动画期间挂载** graphicsLayer,静息态不受影响。
+                        modifier = Modifier
+                            .size(width = 132.dp, height = 96.dp)
+                            .then(
+                                if (fxActive) Modifier.graphicsLayer {
+                                    translationX = monsterFxDp.dp.toPx()
+                                } else Modifier,
+                            ),
                     )
                     Text(
                         text = stage.enemyName,
