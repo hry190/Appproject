@@ -209,5 +209,5 @@ cd-test\
 |---|---|
 | [REGRESSION-chuangdang-5stages-20260919.md](REGRESSION-chuangdang-5stages-20260919.md) | 一次完整五关回归的**结果**(三层校验 15 项、1 处文档缺陷) |
 | [SESSION-LOG-2026-09-19.md](SESSION-LOG-2026-09-19.md) §11/§23~§26 | 判据的来历:检测器重建、徽记、贯穿痕、通过态 |
-| [SESSION-LOG-2026-09-20.md](SESSION-LOG-2026-09-20.md) | 本文档的由来(脚本撤出 git 的决定) |
+| [SESSION-LOG-2026-09-20.md](SESSION-LOG-2026-09-20.md) | 本文档的由来(脚本撤出 git 的决定)+ §3.1 判据的来历(§8 交手动画、§9 怪物扑击) |
 | [DESIGN-SOURCES.md](DESIGN-SOURCES.md) | 设计稿来源对照(与本文无关,但同属"来源可查"这一类工程纪律) |
