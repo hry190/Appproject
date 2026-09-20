@@ -204,5 +204,27 @@ if in_repo:
         A("- " + " · ".join("`%s`" % x for x in sorted(in_repo)[i:i + 6]))
     A("")
 
+# ③ 已删除记录(git 里留档,脚本重建时不会被抹掉)
+DELETED_LOG = os.path.join(REPO, "docs", "design-sources-deleted.txt")
+if os.path.exists(DELETED_LOG):
+    rows = [ln.rstrip("\n").split("\t") for ln in open(DELETED_LOG, encoding="utf-8")
+            if ln.strip() and not ln.startswith("文件\t")]
+    if rows:
+        A("## ③ 已从设计稿目录删除的文件(%d 个)" % len(rows))
+        A("")
+        A("> 判据:它们的**内容逐字节存在于 `res/`**,且那份副本是 **git 跟踪**的文件 ——")
+        A("> 所以删除是**可逆**的(随时能从仓库复制回来),删的只是「设计稿目录里的那一份」。")
+        A("> 记录本身留在这里,是为了以后有人问「这张图当初是不是有原图」时能查到。")
+        A("> 数据源:[`docs/design-sources-deleted.txt`](./design-sources-deleted.txt)(删除时由脚本追加,一张一行)。")
+        A("")
+        A("| 设计稿文件名 | 体积 | 仓库内副本 |")
+        A("|---|---|---|")
+        for r in rows:
+            name = r[0]
+            size = ("%.2f MB" % (int(r[1]) / 1048576.0)) if len(r) > 1 and r[1].isdigit() else "-"
+            peer = r[2] if len(r) > 2 else "-"
+            A("| `%s` | %s | `%s` |" % (name, size, peer))
+        A("")
+
 open(OUT, "w", encoding="utf-8").write("\n".join(lines) + "\n")
 print("\n已写入 %s(%d 行)" % (OUT, len(lines)))

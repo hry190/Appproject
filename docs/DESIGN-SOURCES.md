@@ -14,13 +14,13 @@
 
 | 项 | 值 |
 |---|---|
-| 导出时间 | 2026-09-20 10:58 |
+| 导出时间 | 2026-09-20 11:06 |
 | 代码注释里的引用行 | **579** 行 |
-| 设计稿源目录 | `D:\图` —— **410 个文件 / 364.3 MB** |
+| 设计稿源目录 | `D:\图` —— **312 个文件 / 332.2 MB** |
 | 被代码引用到的设计稿 | **295** 个 |
 | 其中同行已写项目内资源名 | 295 个 |
-| 目录里**内容已在仓库**(逐字节一致)| **392** / 410 个 |
-| 注释里**查不到出处**的目录文件 | **115** 个 → 其中 98 个内容已在仓库、**17 个真正找不到对应**
+| 目录里**内容已在仓库**(逐字节一致)| **294** / 312 个 |
+| 注释里**查不到出处**的目录文件 | **17** 个 → 其中 0 个内容已在仓库、**17 个真正找不到对应**
 
 ## ① 代码引用过的设计稿 → 项目内资源
 
@@ -348,27 +348,110 @@
 - `Group 213.png` —— 0.00 MB
 - `Vector.png` —— 0.00 MB
 
-## ②-b 注释查不到出处,但**内容已在仓库里**(98 个,删除无影响)
+## ③ 已从设计稿目录删除的文件(98 个)
 
-> 这些文件在注释里查不到,但按**内容**比对,仓库 `res/` 里有一份逐字节相同的副本 —— 可以放心删。
-> (反例提醒:五个敌人素材在 `res/` 里叫 `img_chuangdang_*`,注释里查不到 `铜齿门卫.png` 这种写法,
->  只按注释判断会误报成「未引用」。)
+> 判据:它们的**内容逐字节存在于 `res/`**,且那份副本是 **git 跟踪**的文件 ——
+> 所以删除是**可逆**的(随时能从仓库复制回来),删的只是「设计稿目录里的那一份」。
+> 记录本身留在这里,是为了以后有人问「这张图当初是不是有原图」时能查到。
 
-- `86.png` · `Android Compact - 109.png` · `Android Compact - 124.png` · `Ellipse 5.png` · `Ellipse 56.png` · `Ellipse 58.png`
-- `Ellipse 60.png` · `Ellipse 61.png` · `Ellipse 62.png` · `Group 165.png` · `Group 212.png` · `Group 23.png`
-- `Group 253.png` · `Group 280.png` · `Group 709.png` · `Group280.png` · `Rectangle 16.png` · `Rectangle 18.png`
-- `Rectangle 186.png` · `Rectangle 220.png` · `Rectangle 221.png` · `Rectangle 227.png` · `Rectangle 228.png` · `Rectangle 231.png`
-- `Rectangle 245.png` · `Rectangle 25.png` · `Rectangle 251.png` · `Rectangle 6.png` · `Rectangle156.png` · `Rectangle16.png`
-- `Return (返回).png` · `Return(返回).png` · `Vector 579.png` · `Vector 611.png` · `image 134.png` · `image 217.png`
-- `image 307.png` · `image 38.png` · `image 430.png` · `image 431.png` · `image 52.png` · `image 540.png`
-- `image 59.png` · `image 61.png` · `image 62.png` · `image 75.png` · `创作.png` · `加载 1.png`
-- `待解锁.png` · `断目机关蝠.png` · `未标题-1 41.png` · `未标题-1 50.png` · `未标题-1 51.png` · `未标题-1 72.png`
-- `未标题-1-恢复的 5.png` · `未标题-1-恢复的 8.png` · `未标题-1-恢复的-恢复的 4.png` · `未标题-150.png` · `未标题-151.png` · `未标题-2 2.png`
-- `未标题-2 23.png` · `未标题-2 24.png` · `未标题-2 26.png` · `未标题-2 28.png` · `未标题-2 30.png` · `未标题-2 31.png`
-- `未标题-2 32.png` · `未标题-2 33.png` · `未标题-2 38.png` · `未标题-2 41.png` · `未标题-2 42.png` · `未标题-2 44.png`
-- `未标题-2 46.png` · `未标题-2 47.png` · `未标题-2 50.png` · `未标题-2 56.png` · `未标题-2-恢复的 1.png` · `未标题-2-恢复的 10.png`
-- `未标题-2-恢复的 14.png` · `未标题-2-恢复的 16.png` · `未标题-2-恢复的 17.png` · `未标题-2-恢复的 18.png` · `未标题-2.png` · `未标题-232.png`
-- `未标题-241.png` · `未标题-3.png` · `未标题-4.png` · `未标题-5.png` · `未标题-6.png` · `未标题-7.png`
-- `未标题-8.png` · `未标题-9.png` · `未标题1.png` · `滚轮.png` · `背景.png` · `试炼.png`
-- `试炼转换.png` · `铜齿门卫.png`
+| 设计稿文件名 | 体积 | 仓库内副本 |
+|---|---|---|
+| `86.png` | 0.00 MB | `img_learning4_bubble_86.png` |
+| `Android Compact - 109.png` | 1.65 MB | `img_houshan_bg.png` |
+| `Android Compact - 124.png` | 0.23 MB | `img_unfinished_compact124.png` |
+| `Ellipse 5.png` | 0.76 MB | `img_houshan1_cloud_57.png` |
+| `Ellipse 56.png` | 1.54 MB | `img_houshan1_cloud_56.png` |
+| `Ellipse 58.png` | 0.29 MB | `img_shilian3_cloud_58.png` |
+| `Ellipse 60.png` | 0.09 MB | `img_houshan1_cloud_60.png` |
+| `Ellipse 61.png` | 0.02 MB | `img_houshan1_cloud_61.png` |
+| `Ellipse 62.png` | 0.12 MB | `img_houshan3_cloud_62.png` |
+| `Group 165.png` | 0.01 MB | `group_258.png` |
+| `Group 212.png` | 1.07 MB | `img_shengtu_group212.png` |
+| `Group 23.png` | 0.00 MB | `group_213.png` |
+| `Group 253.png` | 0.00 MB | `img_shengtu_group253.png` |
+| `Group 280.png` | 0.31 MB | `img_home1_group280.png` |
+| `Group 709.png` | 0.01 MB | `img_chuangzuodangan2_group709.png` |
+| `Group280.png` | 0.04 MB | `img_learning_group_280.png` |
+| `Rectangle 16.png` | 0.01 MB | `img_chuangzuodangan3_rect16.png` |
+| `Rectangle 18.png` | 0.00 MB | `img_xiulian_rectangle_18.png` |
+| `Rectangle 186.png` | 0.01 MB | `img_chuangzuodangan_rect186.png` |
+| `Rectangle 220.png` | 0.00 MB | `img_chatresult_rect220.png` |
+| `Rectangle 221.png` | 0.00 MB | `img_chatresult_rect221.png` |
+| `Rectangle 227.png` | 0.00 MB | `img_shengtu_rect227.png` |
+| `Rectangle 228.png` | 0.39 MB | `img_shengtu_rect228.png` |
+| `Rectangle 231.png` | 0.00 MB | `img_shengtu_rect231.png` |
+| `Rectangle 245.png` | 0.32 MB | `img_chuangzuodangan3_rect245.png` |
+| `Rectangle 25.png` | 0.26 MB | `img_chuangzuodangan5_rect25.png` |
+| `Rectangle 251.png` | 0.00 MB | `img_gunlun7_rect251.png` |
+| `Rectangle 6.png` | 0.00 MB | `img_gunlun1_rect86.png` |
+| `Rectangle156.png` | 0.00 MB | `img_shilian_rect156.png` |
+| `Rectangle16.png` | 0.00 MB | `img_gunlun5_rect16.png` |
+| `Return (返回).png` | 0.00 MB | `img_gongfang_return.png` |
+| `Return(返回).png` | 0.00 MB | `img_shilian_return.png` |
+| `Vector 579.png` | 0.01 MB | `img_xiulian_vector_579.png` |
+| `Vector 611.png` | 0.01 MB | `img_picture_vector611.png` |
+| `image 134.png` | 1.50 MB | `img_unfinished_image134.png` |
+| `image 217.png` | 0.19 MB | `img_learning_image_217.png` |
+| `image 307.png` | 0.38 MB | `img_unfinished_image307.png` |
+| `image 38.png` | 0.24 MB | `img_picture_image38.png` |
+| `image 430.png` | 0.96 MB | `img_volume6part12_image_130.png` |
+| `image 431.png` | 0.80 MB | `img_volume6part12_image_7.png` |
+| `image 52.png` | 0.20 MB | `img_chuangzuodangan3_image52.png` |
+| `image 540.png` | 0.28 MB | `img_learning4_image_540.png` |
+| `image 59.png` | 0.07 MB | `img_chuangzuodangan5_image59.png` |
+| `image 61.png` | 0.13 MB | `img_chuangzuodangan3_image61.png` |
+| `image 62.png` | 0.23 MB | `img_chuangzuodangan4_image62.png` |
+| `image 75.png` | 0.16 MB | `img_shilian_panda.png` |
+| `创作.png` | 2.59 MB | `img_shengtu_bg.png` |
+| `加载 1.png` | 0.00 MB | `img_shengtu_loading1.png` |
+| `待解锁.png` | 0.05 MB | `img_pendingunlock_text.png` |
+| `断目机关蝠.png` | 1.52 MB | `img_chuangdang_duanmujiguanfu.png` |
+| `未标题-1 41.png` | 0.08 MB | `img_shengtu_untitled41.png` |
+| `未标题-1 50.png` | 0.01 MB | `img_gunlun1_untitled_1_50.png` |
+| `未标题-1 51.png` | 0.01 MB | `img_dahui_o.png` |
+| `未标题-1 72.png` | 0.28 MB | `img_chuangzuodangan_untitled172.png` |
+| `未标题-1-恢复的 5.png` | 0.52 MB | `img_gunlun1_untitled_1_recovered_5.png` |
+| `未标题-1-恢复的 8.png` | 0.04 MB | `img_shilian2_recovered_8.png` |
+| `未标题-1-恢复的-恢复的 4.png` | 0.03 MB | `img_shilian_recovered_4.png` |
+| `未标题-150.png` | 0.01 MB | `img_gunlun1_untitled_150.png` |
+| `未标题-151.png` | 0.03 MB | `img_home1_btn5.png` |
+| `未标题-2 2.png` | 0.03 MB | `img_gunlun11_untitled_2_2.png` |
+| `未标题-2 23.png` | 0.01 MB | `img_pendingunlock_button.png` |
+| `未标题-2 24.png` | 0.01 MB | `img_gunlun10_untitled_2_24.png` |
+| `未标题-2 26.png` | 0.02 MB | `img_gunlun10_untitled_2_26.png` |
+| `未标题-2 28.png` | 0.02 MB | `img_gunlun10_untitled_2_28.png` |
+| `未标题-2 30.png` | 0.06 MB | `img_gunlun10_untitled_2_30.png` |
+| `未标题-2 31.png` | 0.02 MB | `img_gunlun10_untitled_2_31.png` |
+| `未标题-2 32.png` | 0.03 MB | `img_gunlun10_untitled_2_32.png` |
+| `未标题-2 33.png` | 0.13 MB | `img_gunlun10_untitled_2_33.png` |
+| `未标题-2 38.png` | 0.02 MB | `img_gunlun4_untitled_2_38.png` |
+| `未标题-2 41.png` | 0.05 MB | `img_gunlun8_untitled_2_41.png` |
+| `未标题-2 42.png` | 0.06 MB | `img_gunlun15_untitled_2_42.png` |
+| `未标题-2 44.png` | 0.02 MB | `img_gunlun12_untitled_2_44.png` |
+| `未标题-2 46.png` | 0.02 MB | `img_gunlun11_untitled_2_46.png` |
+| `未标题-2 47.png` | 0.03 MB | `img_gunlun12_untitled_2_47.png` |
+| `未标题-2 50.png` | 0.07 MB | `img_gunlun11_untitled_2_50.png` |
+| `未标题-2 56.png` | 0.08 MB | `img_gunlun13_untitled_2_56.png` |
+| `未标题-2-恢复的 1.png` | 0.49 MB | `img_learning4_untitled_2_recovered_1.png` |
+| `未标题-2-恢复的 10.png` | 0.17 MB | `img_learning_untitled_2_recovered_10.png` |
+| `未标题-2-恢复的 14.png` | 0.02 MB | `img_gunlun11_untitled_2_recovered_14.png` |
+| `未标题-2-恢复的 16.png` | 0.02 MB | `img_gunlun10_untitled_2_recovered_16.png` |
+| `未标题-2-恢复的 17.png` | 0.05 MB | `img_gunlun9_untitled_2_recovered_17.png` |
+| `未标题-2-恢复的 18.png` | 0.02 MB | `img_gunlun12_untitled_2_recovered_18.png` |
+| `未标题-2.png` | 0.01 MB | `img_gunlun2_untitled_2.png` |
+| `未标题-232.png` | 0.02 MB | `img_gunlun10_untitled_232.png` |
+| `未标题-241.png` | 0.12 MB | `img_gunlun11_untitled_241.png` |
+| `未标题-3.png` | 0.01 MB | `img_gunlun2_untitled_3.png` |
+| `未标题-4.png` | 0.01 MB | `img_gunlun2_untitled_4.png` |
+| `未标题-5.png` | 0.01 MB | `img_gunlun2_untitled_5.png` |
+| `未标题-6.png` | 0.01 MB | `img_gunlun2_untitled_6.png` |
+| `未标题-7.png` | 0.01 MB | `img_gunlun2_untitled_7.png` |
+| `未标题-8.png` | 0.01 MB | `img_gunlun2_untitled_8.png` |
+| `未标题-9.png` | 0.02 MB | `img_gunlun2_untitled_9.png` |
+| `未标题1.png` | 0.02 MB | `img_gunlun2_untitled_1.png` |
+| `滚轮.png` | 2.16 MB | `img_gunlun1_bg.png` |
+| `背景.png` | 2.30 MB | `img_auth_bg.png` |
+| `试炼.png` | 3.40 MB | `img_shilian_bg.png` |
+| `试炼转换.png` | 3.29 MB | `img_shilian2_bg.png` |
+| `铜齿门卫.png` | 1.74 MB | `img_chuangdang_tongchimenwei.png` |
 
