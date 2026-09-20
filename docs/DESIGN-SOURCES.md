@@ -16,11 +16,16 @@
 
 | 项 | 值 |
 |---|---|
-| 导出时间 | 2026-09-20 11:34 |
-| 代码注释里的引用行 | **579** 行 |
-| 设计稿源目录 | `D:\图` —— **已于 2026-09-20 删除** |
+| 导出时间 | 2026-09-20 14:32 |
+| 代码注释里的引用行 | **580** 行 |
+| 被代码引用到的设计稿 | **295** 个 |
+| 其中同行已写项目内资源名 | 295 个 |
+| 受管设计稿目录 `D:\图` | ❌ **已于 2026-09-20 删除** |
 | 它曾经有多少 | **410 个文件 / 364.3 MB**(完整去向记录见 ③)|
-| 被代码引用到的设计稿 | **295** 个(注释里都有名字)|
+| 其他来源目录 `D:\Desktop`(临时放图处)| 18 个文件 |
+
+> ⚠️ **同名不同图是存在的**:设计稿名来自导出工具(如 `image 72.png`),不同批次可能撞名 ——
+> 下表的「项目内资源名」列会把同名条目**并列显示**,以「引用处」那一列区分(哪一屏用的是哪张)。
 
 ## ① 代码引用过的设计稿 → 项目内资源
 
@@ -310,7 +315,7 @@
 | `image 64.png` | `img_chuangzuodangan3_image64` | Chuangzuodangan3Screen.kt:51 |
 | `image 7.png` | `img_volume6part12_image_7` | Volume6Part12Screen.kt:48 |
 | `image 70.png` | `img_volume10part1_image_70` | Volume10Part1Screen.kt:49 |
-| `image 72.png` | `img_volume10part3_image_72` | Volume10Part3Screen.kt:49 |
+| `image 72.png` | `img_chuangdang_xiongmaoshaoxia`, `img_volume10part3_image_72` | ChuangdangBattleScreen.kt:351 · Volume10Part3Screen.kt:49 |
 | `image 85.png` | `img_volume10part12_image_85` | Volume10Part12Screen.kt:49 |
 | `image 9.png` | `img_volume10part9_image_9` | Volume10Part9Screen.kt:49 |
 | `image 901.png` | `img_volume5part12_image_901` | Volume5Part12Screen.kt:46 |

@@ -347,10 +347,20 @@ fun ChuangdangBattleScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CdHearts(alive = playerHearts, tint = Color(0xFFB5453A))
                     Spacer(Modifier.height(8.dp))
+                    // 2026-09-20 §7:熊猫少侠改用**用户给的新形象** ——
+                    //   设计稿 image 72.png(来自用户桌面)→ img_chuangdang_xiongmaoshaoxia。
+                    //   ⚠️ 注意同名不同图:卷10-3 的注释里也有一个 `image 72.png`,那是**另一张**
+                    //   (导出工具自动命名,不同批次会撞名);分辨看资源名与所在文件。
+                    //   旧图 img_shilian2_recovered_8 是 362×192(**横构图 1.885**),槽位 104×56dp 与它几乎同比例;
+                    //   新图是 306×584(**竖构图 0.524**,主体占满画布),沿用旧槽位只会按宽适配出 29×56dp 的一条细缝
+                    //   —— 故槽位一起改成竖的:**52×96dp**,按高适配出 50.3×96dp(与右侧怪物同高 96dp,对战高度齐平)。
+                    //   真机实测:位置 (53,329)、渲染 138×264px = 50.3×96dp、缩放扫描最优 1.00(比例正确)、
+                    //   顶部离血条 8dp(与 Spacer 一致,无重叠)。
+                    //   ⚠️ 旧图在**后山 3/5/7/9/11** 五页仍用作「熊猫」(带云动画),本次**没动**它们。
                     Image(
-                        painter = painterResource(R.drawable.img_shilian2_recovered_8),
-                        contentDescription = "熊猫",
-                        modifier = Modifier.size(width = 104.dp, height = 56.dp),
+                        painter = painterResource(R.drawable.img_chuangdang_xiongmaoshaoxia),
+                        contentDescription = "熊猫少侠",
+                        modifier = Modifier.size(width = 52.dp, height = 96.dp),
                         contentScale = ContentScale.Fit,
                     )
                     Text(
