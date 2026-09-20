@@ -71,7 +71,40 @@ python scripts\chuangdang-regress\token_check.py         # 闯荡令余额(图�
 python scripts\chuangdang-regress\resample_forensics.py  # 像素差溯源:滤波差异还是真的不一样
 python scripts\chuangdang-regress\crop_evidence.py       # 生成人眼复核用的裁片
 python scripts\chuangdang-regress\verify_monster.py 3    # 单独盯第 3 关的怪物(逐帧连拍)
+python scripts\verify_fx.py                              # 交手动画(出手/格挡);加 --takehit 测"防御答错→熊猫受击"
 ```
+
+## 3.1 交手动画怎么验(2026-09-20 新增)
+
+熊猫的出手 / 格挡 / 受击是**一次性** `Animatable`(160/110/120 ms)。160 ms 的动作
+在真机上抓不到 —— 一次 `screencap` + `pull` 就要约 1.2 s。所以先把系统动画时长放大:
+
+```powershell
+adb shell settings put global animator_duration_scale 20   # 160ms → 3.2s
+python scripts\verify_fx.py
+adb shell settings put global animator_duration_scale 1    # 跑完必须还原(脚本自己也会还原)
+```
+
+代码里**不要**再去读 `Settings.Global.ANIMATOR_DURATION_SCALE` 自己乘一遍时长:
+Compose 的 `WindowRecomposer` 已经把这个倍率注入 `MotionDurationScale`,**所有 `tween` 都会被框架
+自动缩放**(源码 `WindowRecomposer_androidKt` 读的就是 `animator_duration_scale`)。手动再乘 = 乘两遍,
+生效倍率 = 倍率²(实测:系统 ×10 + 代码 ×10 → 一条 120+170ms 的动作在真机上放了 **29 秒**,
+取证时被误读成"熊猫停不下来地漂")。系统倍率为 0 时框架把时长归一为 0,动作自然不播 —— 这就是无障碍要求。
+
+**四条判据**(顺序即重要性):
+
+| # | 判据 | 怎么量 | 通过线 |
+|---|---|---|---|
+| ① | 动作确实发生 | 出手:相对"回位后那一帧"的**变化区域 bbox** 右缘有没有被顶出去;受击:**模板匹配熊猫墨迹的 x** 峰值 | 出手 14dp≈38.5px(+6% 放大)→ 实测 **+35px(12.7dp,峰值落在 3.2s 那帧)**;受击 −10dp=−27.5px → 实测 **−25px** |
+| ② | 回位无残留 | 轨迹收尾那一帧的墨迹 x 与**匹配误差** | 应回到静息值(受击:墨迹 x=54、误差 **1438**,与素材渲染结论里的静息基准相同)|
+| ③ | **不破坏静态渲染** | 同一个界面**静止**两帧互比 | 熊猫窗口与怪物窗口都应 ≈ 0 px |
+| ④ | 动画会结束 | 轨迹要**走完一个脉冲**并停在静息值上 | 稀疏 4 帧不够(看不到曲线),用 `TRACE_N=20`(约 32s)|
+
+判据 ③ 是"加动画"这件事的**回归条件**:动画只在 `fx.value > 0` 时才挂
+`graphicsLayer`(条件挂载而不是常挂),所以静息态与"加动画之前"逐像素一致。
+
+⚠️ 量受击**不能**用"窗口内任何变化像素的 bbox 左缘"当熊猫左缘 —— 那个 bbox 装的是背景、血条、
+滚动条的任意变化,背景一动就把左缘顶出去(§8 一度量到 -25px 全是假的)。**用掩膜 SSD 匹配熊猫自己的墨迹**。
 
 ## 4. 每个脚本干什么
 
@@ -93,6 +126,7 @@ python scripts\chuangdang-regress\verify_monster.py 3    # 单独盯第 3 关的
 | `resample_forensics.py` | 像素差溯源:滤波器指纹 / 降采样收敛 / 偏差回归 / 亚像素位移 | 先排除**测量本身的误差**,再谈缺陷 |
 | `crop_evidence.py` | 生成"真机裁片 / 期望模板 / 差异放大"三联图 | 数字只说哪里不对,**算不算问题要看图** |
 | `verify_monster.py` | 单独一关连拍(按红色像素数事后挑帧)| 素材是实图时以看图为主 |
+| `verify_fx.py`(在 `scripts\`,未入库)| 交手动画真机取证:`animator_duration_scale=20` 放大后连拍 | 见 §3.1 四条判据;核心是 ③"静息态与加动画前逐像素一致" |
 
 ## 5. 产物在哪
 
@@ -105,6 +139,7 @@ cd-test\
   crops\          人眼复核用的裁片(含 A/B 并排图)
   mapcheck2\      地图页截图(verify_badges 的输入)
   boss_pass\      Boss 通过态取证
+  fx\             交手动画连拍(verify_fx.py 的输出)
   assets_check.txt / render_check.txt / hits_check.txt / clip_report*.txt / resample_forensics.txt
 ```
 
@@ -122,6 +157,17 @@ cd-test\
 6. **"工具报通过"要连它的覆盖数一起看。** 批量脚本改过文件行尾后,`audit-comment-drift.ps1`
    照样报"0 漂移",但配对从 559 掉到 165 —— 工具已经看不见了(09-20 §4)。
 7. **幂等判断看"同一行",不要看固定窗口。** 「锚点后 60 字符内有 `img_` 就跳过」会误判跨行的情况(09-20 §4)。
+8. **"逐像素必须为 0"往往不是可测量的判据。** 量动画回位时先写的是这条,实测不成立:
+   常挂 `graphicsLayer` 的图层静止时也有 ~7.9k px 的 1px 级边缘抖动(同屏未挂的怪物是 **0**)。
+   判据要改成**能量到的量**:变化区域的 bbox 有没有超出墨迹轮廓,容差取"静止两帧的噪声底"。
+   → 反过来这也修了代码:图层改成**只在该动的时候挂**。
+9. **别把系统的动画倍率乘第二遍。** Compose 框架已经按 `animator_duration_scale` 缩放所有动画
+   (`WindowRecomposer_androidKt` → `MotionDurationScale`);代码里再乘一次,生效倍率就是倍率的平方
+   (×10 → 一条 290ms 的动作真的放 29 秒)。**判据:先确认"框架有没有替你做这件事",再决定自己要不要做。**
+10. **先证明"你量的那个东西就是你测的那个东西"。** 受击位移一度用"窗口内变化像素 bbox 的左缘"冒充
+   熊猫左缘 —— 背景但凡有变化,量到的就是背景。换成**掩膜模板匹配熊猫墨迹**之后曲线立刻干净。
+   同类:稀疏 4 帧看不出"脉冲还是斜坡",要看形状就得密集采样(20 帧)。
+
 
 ## 7. 相关的入库文档
 
