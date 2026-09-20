@@ -44,6 +44,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -95,8 +96,20 @@ private enum class CdFx {
  * @param stageIndex 关卡序号(1~4)
  */
 data class ChuangdangBattleActions(
-    /** 退出战斗回到地图(主动撤退 / 战败 / 通关都走这里)。 */
+    /**
+     * 退出战斗回到地图(主动撤退 / 战败 / 通关都走这里)。
+     *
+     * 2026-09-20:把原本只一个 onExit 拆成 4 个明确语义的回调 —— 因为
+     * 「主动撤退后是否要继续战斗」需要细分(策划 §9 「普通关失败」给出三选项:
+     * 前往补修 / 免费练习 / 重新出发)。练习模式与战败 / 胜利路径继续走 [onExit]。
+     */
     val onExit: () -> Unit = {},
+    /** 主动撤退后再点「继续练习」(策划 §9):回到本关、practice=true。 */
+    val onPracticeSame: () -> Unit = {},
+    /** 主动撤退后再点「重新出发」(策划 §9):从当前关重新开始正式战斗。 */
+    val onRestartSame: () -> Unit = {},
+    /** 主动撤退后再点「前往补修」(策划 §9):跳到修学/补修页面。 */
+    val onGoReview: () -> Unit = {},
 )
 
 private val BInk = Color(0xFF2E2A24)
@@ -244,12 +257,17 @@ fun ChuangdangBattleScreen(
     val pandaActive = pandaFxDp != 0f || pandaScaleX != 1f
     val monsterActive = monsterFxDp != 0f
 
-    // 2026-09-19 §6:中途返回时弹确认框(文档 §6.4"主动撤退:弹窗说明后果,确认后结束本次出发")。
-    //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
-    //   · 暂离 → 保留出发与关卡进度,该关显示「继续」,稍后进入不重复扣令
-    //   注意:胜负已分时不弹框 —— 胜利/战败走 advance() 直接退出(那里已处理 clearStage / endRun)。
-    //   练习模式没有"出发"可撤退(不消耗闯荡令),直接退出。
+    // 2026-09-20:撤退流程拆成两层(策划 §6.4 + §9「普通关失败」三选项):
+    //   1. 第一次触发 → [showRetreatDialog] = true,弹「要离开本次出发吗?」两按钮弹窗;
+    //   2. 用户点「撤退」→ 关弹窗、endRun()、再开 [showRetreatResult] = true 显示撤离后结果;
+    //   3. 用户在结果页选「继续练习 / 重新出发 / 前往补修 / 返回地图」,各走各自回调,然后 [onExit]。
+    //   这样:策划 §6.4 说的「弹窗说明后果,确认后结束本次出发」与 §9 三选项**两步合一**,
+    //   而不是把「暂离」做成显式按钮(策划原文并无此选项;切后台/关闭/断网 = 暂停是另一条独立规则)。
+    //
+    // 注意:胜负已分(Victory/Defeat)时不弹这一组 —— 它们走 advance() 直接退出结算面板。
+    // 练习模式也没有「出发」可撤退,直接退出。
     var showRetreatDialog by remember { mutableStateOf(false) }
+    var showRetreatResult by remember { mutableStateOf(false) }
 
     // 2026-09-19 §14:关前剧情(文档 §2「从当前未通关节点出发,阅读简短剧情并进入战斗」+
     //   §5 每关的「场景」文案)。数据一直在 CdStage.scene 里,只是此前没有任何 UI 读它。
@@ -682,6 +700,16 @@ fun ChuangdangBattleScreen(
                             },
                             onClick = { advance() },
                         )
+                        // 2026-09-20:结算面板也提供「撤退」入口(用户 1 号指令,补全触发路径),
+                        //   与顶部"撤退"按钮 + BackHandler 等价 —— 胜利/战败时 advance() 已自行
+                        //   退出战斗,这里仅 Resolved 阶段显示,避免胜利/战败后弹两次。
+                        if (phase == CdPhase.Resolved && !practiceMode) {
+                            Spacer(Modifier.height(8.dp))
+                            CdTextButton(
+                                text = "撤退本次出发",
+                                onClick = { showRetreatDialog = true },
+                            )
+                        }
                     }
                 }
                 else -> {
@@ -795,7 +823,10 @@ fun ChuangdangBattleScreen(
             Spacer(Modifier.weight(1f))
         }
 
-        // ── 撤退确认框(2026-09-19 §6,对应文档 §6.4 的"弹窗说明后果")──────────
+        // ── 撤退确认框(2026-09-20,对应策划 §6.4「弹窗说明后果,确认后结束本次出发」)─
+        //   弹窗只两个按钮:「撤退」「取消」 —— 策划没有「暂离」这一选项;
+        //   切后台/关闭/断网 = 暂停是另一条独立规则(策划 §6.4 末条)。
+        //   点「撤退」后,关闭弹窗并 endRun(),然后弹 [showRetreatResult] 三选项面板。
         if (showRetreatDialog) {
             Box(
                 modifier = Modifier
@@ -829,19 +860,36 @@ fun ChuangdangBattleScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        text = "撤退:结束本次出发,已消耗的闯荡令不返还 —— 本关将回到「可挑战」。",
-                        color = BInk,
-                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "暂离:保留出发与关卡进度,本关显示「继续」,稍后可从地图继续,不重复扣令。",
+                        // 2026-09-20:文案按策划 §6.4「失败不再额外扣」与 §9「普通关失败」对齐
+                        text = "本次出发已消耗 1 枚闯荡令,撤退不返还;本关将回到「可挑战」。" +
+                            "已通过的关卡与已获得的奖励保留。",
                         color = BInk,
                         style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
                     )
                     Spacer(Modifier.height(16.dp))
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        // 撤退 —— 有代价:结束出发,该关回到"可挑战"
+                        // 取消 —— 留在战斗中
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Color(0xFFEDE6D7))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = { showRetreatDialog = false },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "取消",
+                                color = BInk,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                        Spacer(Modifier.size(10.dp))
+                        // 撤退 —— 结束本次出发(策划 §6.4:闯荡令不返还)
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -854,7 +902,7 @@ fun ChuangdangBattleScreen(
                                     onClick = {
                                         showRetreatDialog = false
                                         ChuangdangStore.endRun()
-                                        actions.onExit()
+                                        showRetreatResult = true
                                     },
                                 ),
                             contentAlignment = Alignment.Center,
@@ -865,31 +913,116 @@ fun ChuangdangBattleScreen(
                                 style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
                             )
                         }
-                        Spacer(Modifier.size(10.dp))
-                        // 暂离 —— 保留进度:不结束出发,该关显示"继续"
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(22.dp))
-                                .background(BGold)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {
-                                        showRetreatDialog = false
-                                        actions.onExit()
-                                    },
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "暂离",
-                                color = Color.White,
-                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                            )
-                        }
                     }
+                }
+            }
+        }
+
+        // ── 撤退结果面板(策划 §9「普通关失败」三选项:补修 / 练习 / 重新出发)────────
+        //   撤退确认后展示:让用户知道"本关没丢、可以怎么再战"。
+        //   补修入口目前没有对应路由(修学/补修模块在"等后端的一批"里,见 SESSION-LOG-2026-09-20 待办 #9),
+        //   所以这里先弹一个轻量提示 + 提供默认回到修学主页 —— 模块接上后只需把 onGoReview 换成真正的补修页跳转。
+        if (showRetreatResult) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        // 撤离面板必须显式选一个动作才能走;点遮罩 = 不响应(防止误关)
+                        onClick = { },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.88f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { },
+                        )
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "本次出发已结束",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 17.sp),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        // 对照策划 §9「普通关失败」文案模板:此战惜败 → 这里用「本次主动撤退」
+                        text = "本次已消耗 1 枚闯荡令,不再额外扣除;" +
+                            "已通关的节点与已获得的奖励均保留。",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "本关知识点:${stage.knowledge}",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+
+                    // ── 三个主操作(策划 §9 三选项)──────────────────────────
+                    CdRetreatActionButton(
+                        text = "前往补修",
+                        sub = "回修学页补这一关的知识点",
+                        tint = BGold,
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onGoReview()
+                        },
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    CdRetreatActionButton(
+                        text = "免费练习",
+                        sub = "不消耗闯荡令,把本关再打一次",
+                        tint = Color(0xFF6B5B8A),
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onPracticeSame()
+                        },
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    CdRetreatActionButton(
+                        text = "重新出发",
+                        sub = "消耗 1 枚闯荡令,本关重新开始",
+                        tint = BCorrect,
+                        // 余额不足时按钮置灰,提示文字说明恢复方式
+                        enabled = ChuangdangStore.tokens > 0,
+                        sub2 = if (ChuangdangStore.tokens <= 0)
+                            "闯荡令不足,${ChuangdangStore.nextRestoreText()}"
+                        else null,
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onRestartSame()
+                        },
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    // 收尾的二级动作:返回地图
+                    Text(
+                        text = "返回地图",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    showRetreatResult = false
+                                    actions.onExit()
+                                },
+                            )
+                            .padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
         }
@@ -1114,5 +1247,57 @@ private fun CdPrimaryButton(text: String, onClick: () -> Unit, enabled: Boolean 
             color = Color.White,
             style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
         )
+    }
+}
+
+/**
+ * 撤退结果面板里的"主操作"按钮(策划 §9 三选项)。
+ *
+ * 区别于 [CdPrimaryButton]:这里要展示两行(主标 + 说明),让用户在三选项里
+ * 一眼看出区别;且**禁用时只把背景与说明文字改暗,不让按钮整体消失**
+ * (策划 §9 末段:"「重新出发」旁展示所需一枚令和当前余额,不足时给出恢复时间及可完成的补修入口")。
+ */
+@Composable
+private fun CdRetreatActionButton(
+    text: String,
+    sub: String,
+    tint: Color,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    /** 余额不足时的次级说明(放在 sub 下面);null = 不显示。 */
+    sub2: String? = null,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (enabled) tint else Color(0x55888888))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = sub,
+            color = Color(0xE6FFFFFF),
+            style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 16.sp),
+        )
+        if (sub2 != null) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = sub2,
+                color = Color(0xCCFFFFFF),
+                style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 14.sp),
+            )
+        }
     }
 }

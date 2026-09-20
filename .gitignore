@@ -33,6 +33,10 @@ write_vertical_text.py
 hs_err_*.log
 replay_*.log
 
+# Local uiautomator dumps pulled from device during真机验证/回归。
+#   留作本次验证证据(可在 commit 后用 git log 取回),但**不入库**(纯 dump 噪声)。
+ui_*.xml
+
 # Personal session notes (per conversation 2026-09-07)
 # SESSION-LOG-*.md in docs/ SHOULD be committed (team history)
 # but if you keep your own private notes elsewhere, ignore them

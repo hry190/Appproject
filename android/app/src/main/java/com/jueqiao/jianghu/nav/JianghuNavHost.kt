@@ -593,6 +593,26 @@ fun JianghuNavHost(
                 practiceMode = practice,
                 actions = ChuangdangBattleActions(
                     onExit = { navController.popBackStack() },
+                    // 2026-09-20:撤退结果面板三选项(策划 §9「普通关失败」)
+                    //   · 继续练习:留在战斗页路由,只把 practice 切到 true
+                    onPracticeSame = {
+                        navController.navigate(Routes.chuangdangBattle(stage, practice = true)) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
+                    //   · 重新出发:从当前关正式重打
+                    onRestartSame = {
+                        navController.navigate(Routes.chuangdangBattle(stage, practice = false)) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
+                    //   · 前往补修:目前修学/补修模块在"等后端的一批"里(SESSION-LOG-2026-09-20 待办 #9);
+                    //     先跳到修学主页,模块接上后改成真正的补修页跳转。
+                    onGoReview = {
+                        navController.navigate(Routes.Xiulian) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
                 ),
             )
         }
