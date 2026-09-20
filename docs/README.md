@@ -45,6 +45,7 @@
 | [IMAGE-COORDINATE-VERIFICATION.md](./IMAGE-COORDINATE-VERIFICATION.md) | 图片坐标验证方法 — PNG 像素校验 + AskUserQuestion 二步决策 + KDoc 真机调整留痕 | 2026-09-11 |
 | [REGRESSION-chuangdang-5stages-20260919.md](./REGRESSION-chuangdang-5stages-20260919.md) | 闯荡江湖五关回归 — 五个新素材 3 层校验(离线体检 / 真机渲染 / 命中效果)+ 全程通关跑测;查出 1 处文档数字错 | 2026-09-19 |
 | [DESIGN-SOURCES.md](./DESIGN-SOURCES.md) | **设计稿来源清单** — 295 个设计稿名 → 项目内资源名 → 引用处;含"代码没引用过"的 115 个(设计稿目录删除前的一次性快照) | 2026-09-20 |
+| [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md) | **闯荡江湖真机回归 Playbook** — 判据 / 执行顺序 / 脚本职责 / 7 条踩坑(脚本本体已撤出 git,判据留此) | 2026-09-20 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 | [SESSION-LOG-2026-09-20.md](./SESSION-LOG-2026-09-20.md) | 2026-09-20 收尾与对账日:Boss 通过态取证落地 + 三处决策留档 + **文档规范自检整改(5 处不符合全改)** + `adb reverse` 第 6 次清空并恢复 | 2026-09-20 |
 
@@ -69,16 +70,15 @@
   失败必返非零退出码(防"静默失效");建完必验证。
   (更早的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它硬编码 SDK 路径 + 靠机型名找设备 + 失败时仍返回 0)
 - [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
-- [scripts/chuangdang-regress/](../scripts/chuangdang-regress/) — **闯荡江湖真机回归套件**(2026-09-19 §25 固化进仓库)
-  自动过五关 + 逐帧成对采集(png + 同时刻 xml),再做**素材 / 渲染 / 命中 / 布局**四层像素校验。
-  先读该目录的 [README.md](../scripts/chuangdang-regress/README.md):前置条件、执行顺序、每条判据的来历、踩过的坑都在里面。
-  产物全部落在 `%TEMP%\cd-test`,**不落仓库**;`CD_SERIAL` / `CD_ADB` / `CD_TEST_DIR` 可覆盖默认值。
+- **闯荡江湖真机回归套件** —— ⚠️ **脚本已于 2026-09-20 撤出 git**(本地留在 `scripts/chuangdang-regress/`,`capture-*.py` 同理)。
+  判据 / 用法 / 踩坑固化进 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md)(纯文档,入库)。
+  取回脚本:`git log --oneline -- scripts/chuangdang-regress` → `git checkout <commit> -- <路径>`
 - [scripts/design-sources-inventory.py](../scripts/design-sources-inventory.py) — **重建设计稿来源清单**(2026-09-20 §4 新增)
   ```powershell
   python scripts/design-sources-inventory.py --write   # 刷新 docs/DESIGN-SOURCES.md
   ```
   从**代码注释里的设计稿名 + 源目录文件 + 按内容(sha256)比对 `res/`** 三路取材,
-  用来回答"删掉设计稿目录会失去什么":**392/410 内容已在仓库**、17 个真正找不到对应(见清单 §2-a)。
+  用来回答"删掉设计稿目录会失去什么"。同类清理脚本 `prune_design_sources.py` 在本地(未入库)。
 
 > 📌 **`adb reverse` 在 2026-09-18 之前没有脚本**(旧 `infra/adb-reverse.ps1` 靠 `adb devices` 找 `cupid` 机型,
 > 而该命令不带 `-l` 时不含机型 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)。
@@ -107,6 +107,7 @@
 | 代码审计 | `CODE-AUDIT-YYYY-MM-DD.md` | 多维度代码扫描结果快照(下次扫描另起一份,可用 diff 看趋势) |
 | **回归 / 验收记录** | **`REGRESSION-<主题>-YYYYMMDD.md`** 或 `*-acceptance.md` | **一次完整回归或阶段验收跑完时**(含判据、对照项与证据位置) |
 | **来源 / 对照清单** | **`DESIGN-SOURCES.md`** 等 `*-SOURCES.md` | **外部来源(设计稿等)即将不可得之前** —— 把"外部名 → 仓库内资源名"固化成表,删了就补不回来 |
+| **操作手册 / Playbook** | **`*-PLAYBOOK.md`** | **一套"怎么测 / 怎么判"成型时** —— 尤其当**工具脚本本身不入库**时,判据必须留在文档里 |
 | Sprint 计划 | `SPRINT-YYYY-MM-DD.md` | 启动一个多步骤功能开发 |
 | 分支合并 SOP | `MERGE-WORKFLOW.md` | 合并任何分支前必读(侦察 → 评估 → 建议 → 合并)|
 

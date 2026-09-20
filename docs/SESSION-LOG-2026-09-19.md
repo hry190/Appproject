@@ -1770,6 +1770,10 @@ private fun DrawScope.drawDamageMarks(hitCount: Int, faintThroughMarks: Boolean 
 
 > 用户决定:「可以记录下回归脚本」。这些脚本原先只活在 `%TEMP%\cd-test`(临时目录,清了就没了)。
 
+> ⚠️ **本节的决定已于 2026-09-20 被推翻**(用户:「一些辅助我开发的脚本不要提交到 git 比较好」):
+> 脚本**撤出 git、本地保留**,判据与踩坑改由 [CHUANGDANG-REGRESSION-PLAYBOOK.md](CHUANGDANG-REGRESSION-PLAYBOOK.md) 承载。
+> 详见 [SESSION-LOG-2026-09-20.md](SESSION-LOG-2026-09-20.md) §6。**本节保留原貌**(历史记录不改写)。
+
 ### 落到哪
 
 `scripts/chuangdang-regress/`(15 个脚本 + 一份 README),产物仍写 `%TEMP%\cd-test` —— **脚本入库,产物不入库**。

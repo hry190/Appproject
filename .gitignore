@@ -38,3 +38,11 @@ replay_*.log
 # but if you keep your own private notes elsewhere, ignore them
 notes/
 *.local.md
+
+# ⚠️ 辅助开发的**设备脚本**:本地保留、不入库(2026-09-20 用户决定)
+#   理由是它们绑设备/一次性,属于开发辅助而不是产品代码;
+#   **判据与踩坑已固化进 docs/CHUANGDANG-REGRESSION-PLAYBOOK.md**(纯文档,入库)。
+#   取回:git log --oneline -- scripts/chuangdang-regress  →  git checkout <commit> -- <路径>
+scripts/chuangdang-regress/
+scripts/capture-*.py
+scripts/debug-forgot.py

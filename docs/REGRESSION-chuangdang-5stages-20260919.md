@@ -184,8 +184,11 @@
 
 ## §9 复现方式
 
-脚本已固化进仓库:`scripts/chuangdang-regress/`(2026-09-19 §25;先读该目录的 README)
-—— 产物仍写 `%TEMP%\cd-test\`,不污染工作区。
+> ⚠️ **脚本已于 2026-09-20 撤出 git**(用户决定:辅助开发的设备脚本不入库)。
+> **判据 / 顺序 / 踩坑见 [CHUANGDANG-REGRESSION-PLAYBOOK.md](CHUANGDANG-REGRESSION-PLAYBOOK.md)**;
+> 脚本本体仍在本地 `scripts/chuangdang-regress/`(未跟踪),取回:
+> `git log --oneline -- scripts/chuangdang-regress` → `git checkout <commit> -- <路径>`。
+> 下面的命令照旧可用(本地路径不变);产物写 `%TEMP%\cd-test\`,不污染工作区。
 
 ```powershell
 # 0) 构建 + 装机(装机即重置进度,这一步是"从头开始"的前提)

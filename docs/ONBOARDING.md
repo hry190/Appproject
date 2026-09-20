@@ -569,6 +569,7 @@ chore(<scope>): <description>
 | 故障排查 | `docs/TROUBLESHOOTING.md` | 解决了一个反复出现的问题 |
 | **代码审计** | **`docs/CODE-AUDIT-YYYY-MM-DD.md`** | **多维度扫描结果(每次扫描另起一份)** |
 | **回归 / 验收记录** | **`docs/REGRESSION-<主题>-YYYYMMDD.md`** 或 `*-acceptance.md` | **一次完整回归或阶段验收跑完时**(判据 + 对照项 + 证据位置;**不是**"跑了一遍没问题"一句话) |
+| **操作手册 / Playbook** | **`docs/*-PLAYBOOK.md`** | **一套"怎么测 / 怎么判"成型时**;尤其当**工具脚本本身不入库**时,判据必须留在文档里 |
 | Sprint 计划 | `docs/SPRINT-YYYY-MM-DD.md` | 多步骤功能开发 |
 | 跨天摘要 | `docs/SUMMARY-YYYY-MM-DD-to-YYYY-MM-DD.md` | 跨天高层 TL;DR |
 
@@ -660,7 +661,7 @@ chore(<scope>): <description>
 | 安全配置 | [android/app/src/main/res/xml/network_security_config.xml](android/app/src/main/res/xml/network_security_config.xml) |
 | 备份规则 | [android/app/src/main/res/xml/backup_rules.xml](android/app/src/main/res/xml/backup_rules.xml) |
 | **屏幕适配方案** | **[android/docs/screen-adaptation.md](../android/docs/screen-adaptation.md)** | **必读 — 两段式/三段式 + 真机 dp 表** |
-| **真机回归套件**(自动过五关 + 像素判据) | **[scripts/chuangdang-regress/](../scripts/chuangdang-regress/)** | **改闯荡江湖/素材后要复跑时看它的 README** |
+| **真机回归 Playbook**(闯荡江湖:判据 / 顺序 / 踩坑) | **[docs/CHUANGDANG-REGRESSION-PLAYBOOK.md](CHUANGDANG-REGRESSION-PLAYBOOK.md)** | 改闯荡江湖 / 素材后要复跑时看它;**脚本本体不入库**(本地 `scripts/chuangdang-regress/`)|
 | AndroidManifest | [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml) |
 | 模块构建脚本 | [android/app/build.gradle.kts](android/app/build.gradle.kts) |
 | 后端启动 | [infra/start-dev.ps1](infra/start-dev.ps1) |

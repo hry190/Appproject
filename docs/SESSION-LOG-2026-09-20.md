@@ -194,6 +194,50 @@
 
 ---
 
+## §6 辅助脚本撤出 git + 判据转成 Playbook
+
+> 用户指令:「我觉得一些辅助我开发的一些脚本不要提交到 git 比较好」。
+
+### 怎么分的(31 个入库脚本 → 只留 3 个)
+
+| 类 | 文件 | 处置 |
+|---|---|---|
+| **环境 / 审计工具** | `setup-reverse.ps1`(每次插拔都要跑,ONBOARDING §3.4 引用)· `audit-comment-drift.ps1`(项目审计/可进 CI,§5.4 引用)| ✅ **留** —— 是项目工具,不是"我的辅助脚本" |
+| **登录页截图小工具**(10)| `capture-*.py` ×9 + `debug-forgot.py` | 🚚 **撤出**(本地保留)|
+| **闯荡江湖回归套件**(17)| `scripts/chuangdang-regress/*` | 🚚 **撤出**(本地保留)|
+| **文档生成器** | `design-sources-inventory.py` —— 它生成的是**入库文档** `DESIGN-SOURCES.md` | ✅ **留** —— 属于"文档的生成器",不是开发辅助 |
+
+### 撤出 ≠ 删掉(这是关键)
+
+```powershell
+git rm -r --cached scripts/chuangdang-regress          # 只从索引移除
+git rm --cached scripts/capture-*.py scripts/debug-forgot.py
+```
++ `.gitignore` 加规则(附"为什么"与取回方法)。结果:
+- **本地文件一个没少** —— 18 个(regress)+ 10 个(capture)照常能跑;
+- 以后不会再误提交;
+- **历史里还在**(想取回:`git log --oneline -- scripts/chuangdang-regress` → `git checkout <commit> -- <路径>`)。
+
+### 知识必须留下:README → `docs/CHUANGDANG-REGRESSION-PLAYBOOK.md`
+
+`chuangdang-regress/README.md` 里的**判据、负对照、7 条踩坑**是这套东西最值钱的部分,
+不能跟着代码出库 → 转成入库文档 **Playbook**(纯文档):
+- 新增 `docs/` 文档类型「**操作手册 / Playbook**」(`*-PLAYBOOK.md`),两处类型表都登记;
+- 本地 `README.md` 改成 3 行指针,指向 Playbook;
+- **更新引用**(5 处):`ONBOARDING §12.1` · `docs/README 工具脚本区` · 回归报告 `§9 复现方式` ·
+  09-19 `§25`(加"已于 09-20 推翻"的指向,原貌不改写)· 本日志「产出索引」。
+
+### 沉淀(§6)
+
+1. **"不入库"和"丢掉"是两件事。** 撤出仓库用 `git rm --cached` + `.gitignore`:**文件留在本地、历史里也还在**。
+   直接删才是真丢 —— 除非你确实不打算再跑。
+2. **脚本出库时,先问"它的知识在哪"。** 这次的价值不在那 17 个 `.py`,而在 README 里的判据与踩坑;
+   所以先把知识搬进 `docs/`(纯文档入库),再撤代码 —— **顺序反了就得凭记忆重写**。
+3. **入库标准是"团队/项目要不要它",不是"好不好用"。** 审计脚本、环境恢复脚本团队都要 → 留;
+   绑设备、一次性的 → 走。(同一把尺子也让"文档生成器"留下:它生成的东西在仓库里。)
+
+---
+
 ## 🔔 待办 / 未决
 
 | # | 事项 | 状态 |
@@ -215,6 +259,6 @@
 | 规范三处出处 | [docs/README.md](./README.md) · [ONBOARDING.md](./ONBOARDING.md) §9/§12.1 · [CONTRIBUTING.md](../CONTRIBUTING.md) §9/§12 |
 | 回归报告(已无"未覆盖"悬空项)| [REGRESSION-chuangdang-5stages-20260919.md](./REGRESSION-chuangdang-5stages-20260919.md) |
 | 昨日完整记录(§1~§26,含通过态取证)| [SESSION-LOG-2026-09-19.md](./SESSION-LOG-2026-09-19.md) |
-| 真机回归套件(含 `boss_score.py` / `boss_capture.py`)| [../scripts/chuangdang-regress/](../scripts/chuangdang-regress/) |
+| 真机回归套件(含 `boss_score.py` / `boss_capture.py`)| ⚠️ **脚本已撤出 git(§6)** —— 判据见 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md);脚本本体在本地 `scripts/chuangdang-regress/` |
 | **设计稿来源清单**(295 名 → 资源名;含 115 个未引用文件)| [DESIGN-SOURCES.md](./DESIGN-SOURCES.md) |
-| 清单生成器(可重算,认新旧两种注释写法)| [../scripts/design-sources-inventory.py](../scripts/design-sources-inventory.py) |
+| 清单生成器(可重算,认新旧两种注释写法)| [../scripts/design-sources-inventory.py](../scripts/design-sources-inventory.py)(**保留入库**);清理脚本 `prune_design_sources.py` 在本地 |
