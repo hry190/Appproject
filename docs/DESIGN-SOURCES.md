@@ -14,12 +14,13 @@
 
 | 项 | 值 |
 |---|---|
-| 导出时间 | 2026-09-20 10:35 |
+| 导出时间 | 2026-09-20 10:58 |
 | 代码注释里的引用行 | **579** 行 |
 | 设计稿源目录 | `D:\图` —— **410 个文件 / 364.3 MB** |
 | 被代码引用到的设计稿 | **295** 个 |
 | 其中同行已写项目内资源名 | 295 个 |
-| **目录里存在、但代码从未引用** | **115** 个(随目录删除即永久消失,见第二节)|
+| 目录里**内容已在仓库**(逐字节一致)| **392** / 410 个 |
+| 注释里**查不到出处**的目录文件 | **115** 个 → 其中 98 个内容已在仓库、**17 个真正找不到对应**
 
 ## ① 代码引用过的设计稿 → 项目内资源
 
@@ -321,28 +322,53 @@
 | `创作档案5.png` | `img_chuangzuodangan5_bg` | Chuangzuodangan5Screen.kt:73 |
 | `创作档案6.png` | `img_chuangzuodangan6_bg` | Chuangzuodangan6Screen.kt:61 |
 
-## ② 目录里存在、但代码从未引用(删除后不留痕迹)
+## ②-a 注释查不到出处、**内容也找不到对应** —— 删除前值得过一眼(17 个)
 
-> 这些文件在代码注释里查不到出处。若其中有还要用的,请在删除前导入 `res/drawable-nodpi/` 并在此登记。
+> ⚠️ 别把这一节读成「没用的文件」:它只说明**仓库里没有逐字节相同的副本**。
+> 已知的两类正常情况:
+>   · **被处理过的素材** —— 例如三个敌人原图(棋冠石像 / 百声纸鹤 / 百面机枢)在 §20~§22 按用户要求
+>     **裁掉水印**后才入库,内容自然对不上;删目录会失去**未裁的原始版本**;
+>   · 过度导出/压缩过的图,或确实没进过项目。
 
-- `86.png` · `AI教练辅助记录.png` · `Android Compact - 109.png` · `Android Compact - 124.png` · `Ellipse 20.png` · `Ellipse 5.png`
-- `Ellipse 56.png` · `Ellipse 58.png` · `Ellipse 60.png` · `Ellipse 61.png` · `Ellipse 62.png` · `Group 165.png`
-- `Group 212.png` · `Group 213.png` · `Group 23.png` · `Group 253.png` · `Group 258.png` · `Group 273.png`
-- `Group 280.png` · `Group 291.png` · `Group 709.png` · `Group280.png` · `Rectangle 16.png` · `Rectangle 18.png`
+- `image 44.png` —— 2.64 MB
+- `演武场视频首页.png` —— 1.96 MB
+- `棋冠石像.png` —— 1.38 MB
+- `百面机枢.png` —— 1.11 MB
+- `百声纸鹤.png` —— 0.47 MB
+- `未 完 待 续.png` —— 0.06 MB
+- `Ellipse 20.png` —— 0.05 MB
+- `Group 273.png` —— 0.03 MB
+- `image 51.png` —— 0.01 MB
+- `AI教练辅助记录.png` —— 0.01 MB
+- `Group 291.png` —— 0.01 MB
+- `修改版本记录.png` —— 0.01 MB
+- `原创 记录.png` —— 0.01 MB
+- `选择作品查看.png` —— 0.00 MB
+- `Group 258.png` —— 0.00 MB
+- `Group 213.png` —— 0.00 MB
+- `Vector.png` —— 0.00 MB
+
+## ②-b 注释查不到出处,但**内容已在仓库里**(98 个,删除无影响)
+
+> 这些文件在注释里查不到,但按**内容**比对,仓库 `res/` 里有一份逐字节相同的副本 —— 可以放心删。
+> (反例提醒:五个敌人素材在 `res/` 里叫 `img_chuangdang_*`,注释里查不到 `铜齿门卫.png` 这种写法,
+>  只按注释判断会误报成「未引用」。)
+
+- `86.png` · `Android Compact - 109.png` · `Android Compact - 124.png` · `Ellipse 5.png` · `Ellipse 56.png` · `Ellipse 58.png`
+- `Ellipse 60.png` · `Ellipse 61.png` · `Ellipse 62.png` · `Group 165.png` · `Group 212.png` · `Group 23.png`
+- `Group 253.png` · `Group 280.png` · `Group 709.png` · `Group280.png` · `Rectangle 16.png` · `Rectangle 18.png`
 - `Rectangle 186.png` · `Rectangle 220.png` · `Rectangle 221.png` · `Rectangle 227.png` · `Rectangle 228.png` · `Rectangle 231.png`
 - `Rectangle 245.png` · `Rectangle 25.png` · `Rectangle 251.png` · `Rectangle 6.png` · `Rectangle156.png` · `Rectangle16.png`
-- `Return (返回).png` · `Return(返回).png` · `Vector 579.png` · `Vector 611.png` · `Vector.png` · `image 134.png`
-- `image 217.png` · `image 307.png` · `image 38.png` · `image 430.png` · `image 431.png` · `image 44.png`
-- `image 51.png` · `image 52.png` · `image 540.png` · `image 59.png` · `image 61.png` · `image 62.png`
-- `image 75.png` · `修改版本记录.png` · `创作.png` · `加载 1.png` · `原创 记录.png` · `待解锁.png`
-- `断目机关蝠.png` · `未 完 待 续.png` · `未标题-1 41.png` · `未标题-1 50.png` · `未标题-1 51.png` · `未标题-1 72.png`
+- `Return (返回).png` · `Return(返回).png` · `Vector 579.png` · `Vector 611.png` · `image 134.png` · `image 217.png`
+- `image 307.png` · `image 38.png` · `image 430.png` · `image 431.png` · `image 52.png` · `image 540.png`
+- `image 59.png` · `image 61.png` · `image 62.png` · `image 75.png` · `创作.png` · `加载 1.png`
+- `待解锁.png` · `断目机关蝠.png` · `未标题-1 41.png` · `未标题-1 50.png` · `未标题-1 51.png` · `未标题-1 72.png`
 - `未标题-1-恢复的 5.png` · `未标题-1-恢复的 8.png` · `未标题-1-恢复的-恢复的 4.png` · `未标题-150.png` · `未标题-151.png` · `未标题-2 2.png`
 - `未标题-2 23.png` · `未标题-2 24.png` · `未标题-2 26.png` · `未标题-2 28.png` · `未标题-2 30.png` · `未标题-2 31.png`
 - `未标题-2 32.png` · `未标题-2 33.png` · `未标题-2 38.png` · `未标题-2 41.png` · `未标题-2 42.png` · `未标题-2 44.png`
 - `未标题-2 46.png` · `未标题-2 47.png` · `未标题-2 50.png` · `未标题-2 56.png` · `未标题-2-恢复的 1.png` · `未标题-2-恢复的 10.png`
 - `未标题-2-恢复的 14.png` · `未标题-2-恢复的 16.png` · `未标题-2-恢复的 17.png` · `未标题-2-恢复的 18.png` · `未标题-2.png` · `未标题-232.png`
 - `未标题-241.png` · `未标题-3.png` · `未标题-4.png` · `未标题-5.png` · `未标题-6.png` · `未标题-7.png`
-- `未标题-8.png` · `未标题-9.png` · `未标题1.png` · `棋冠石像.png` · `滚轮.png` · `演武场视频首页.png`
-- `百声纸鹤.png` · `百面机枢.png` · `背景.png` · `试炼.png` · `试炼转换.png` · `选择作品查看.png`
-- `铜齿门卫.png`
+- `未标题-8.png` · `未标题-9.png` · `未标题1.png` · `滚轮.png` · `背景.png` · `试炼.png`
+- `试炼转换.png` · `铜齿门卫.png`
 

@@ -10,6 +10,7 @@
     python scripts/design-sources-inventory.py            # 打印统计,不写文件
     python scripts/design-sources-inventory.py --write    # 写 docs/DESIGN-SOURCES.md
 """
+import hashlib
 import os
 import re
 import sys
@@ -58,6 +59,7 @@ for dirpath, _dirs, files in os.walk(SRC):
 
 # 目录里真实存在的文件(名 → 体积)
 on_disk = {}
+disk_hash = {}
 if os.path.isdir(DESIGN_DIR):
     for f in os.listdir(DESIGN_DIR):
         fp = os.path.join(DESIGN_DIR, f)
@@ -83,12 +85,54 @@ no_res = [(n, v) for n, v in matched.items()
           if not any(r for _fn, _ln, r, _t in v)]
 unreferenced = sorted(set(on_disk) - {n for n in matched if n in on_disk})
 
+# ── 内容比对:注释查不到出处 ≠ 没用过 ────────────────────────────────────────
+# 反例(实测):五个敌人素材在 res/ 里叫 img_chuangdang_*,注释里查不到 `铜齿门卫.png` 这种写法,
+# 于是它们会被列进"未引用" —— 但内容明明就在仓库里。故按**文件内容**再判一次:
+#   · 与仓库内某资源逐字节一致 → 已导入,删设计稿无影响
+#   · 找不到任何同内容文件     → 才需要人过一眼(可能是被裁/压过的,也可能真没用过)
+def _sha(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+res_by_hash = {}
+res_root = os.path.join(REPO, "android", "app", "src", "main", "res")
+for dirpath, _dirs, files in os.walk(res_root):
+    for fn in files:
+        fp = os.path.join(dirpath, fn)
+        try:
+            res_by_hash.setdefault(_sha(fp), os.path.basename(fp))
+        except Exception:
+            pass
+
+in_repo, orphan = [], []
+for f in unreferenced:
+    try:
+        h = _sha(os.path.join(DESIGN_DIR, f))
+    except Exception:
+        orphan.append(f)
+        continue
+    disk_hash[f] = h
+    (in_repo if h in res_by_hash else orphan).append(f)
+
+# 整个目录里"内容已在仓库"的比例(不只未引用的那些)—— 说明这批设计稿大部分已经进过代码
+whole_in_repo = 0
+for f in on_disk:
+    h = disk_hash.get(f) or _sha(os.path.join(DESIGN_DIR, f))
+    if h in res_by_hash:
+        whole_in_repo += 1
+
 print("注释引用行 %d / 设计稿名(去重) %d" % (len(records), len(referenced)))
-print("目录文件 %d 个(%.1f MB)" % (len(on_disk), sum(on_disk.values()) / 1048576.0))
+print("目录文件 %d 个(%.1f MB);其中内容与仓库内资源逐字节一致的 %d 个"
+      % (len(on_disk), sum(on_disk.values()) / 1048576.0, whole_in_repo))
 print("对得上磁盘文件名的 %d 个;对不上的 %d 个"
       % (len([n for n in matched if n in on_disk]), len([n for n in matched if n not in on_disk])))
 print("同行缺资源名的设计稿 %d 个" % len(no_res))
-print("代码未引用的目录文件 %d 个" % len(unreferenced))
+print("注释查不到出处 %d 个 → 其中内容已在仓库里 %d 个,真正找不到对应 %d 个"
+      % (len(unreferenced), len(in_repo), len(orphan)))
 
 if "--write" not in sys.argv:
     print("\n(只统计,未写文件;加 --write 才写 %s)" % OUT)
@@ -121,7 +165,9 @@ A("| 设计稿源目录 | `%s` —— **%d 个文件 / %.1f MB**%s |"
      "" if on_disk else "(导出时该目录已不存在)"))
 A("| 被代码引用到的设计稿 | **%d** 个 |" % len(matched))
 A("| 其中同行已写项目内资源名 | %d 个 |" % (len(matched) - len(no_res)))
-A("| **目录里存在、但代码从未引用** | **%d** 个(随目录删除即永久消失,见第二节)|" % len(unreferenced))
+A("| 目录里**内容已在仓库**(逐字节一致)| **%d** / %d 个 |" % (whole_in_repo, len(on_disk)))
+A("| 注释里**查不到出处**的目录文件 | **%d** 个 → 其中 %d 个内容已在仓库、**%d 个真正找不到对应**"
+  % (len(unreferenced), len(in_repo), len(orphan)))
 A("")
 A("## ① 代码引用过的设计稿 → 项目内资源")
 A("")
@@ -135,13 +181,27 @@ for name in sorted(matched):
         where += " 等 %d 处" % len(v)
     A("| `%s` | %s | %s |" % (name, ("`" + "`, `".join(res) + "`") if res else "**未标注**", where))
 A("")
-if unreferenced:
-    A("## ② 目录里存在、但代码从未引用(删除后不留痕迹)")
+if orphan:
+    A("## ②-a 注释查不到出处、**内容也找不到对应** —— 删除前值得过一眼(%d 个)" % len(orphan))
     A("")
-    A("> 这些文件在代码注释里查不到出处。若其中有还要用的,请在删除前导入 `res/drawable-nodpi/` 并在此登记。")
+    A("> ⚠️ 别把这一节读成「没用的文件」:它只说明**仓库里没有逐字节相同的副本**。")
+    A("> 已知的两类正常情况:")
+    A(">   · **被处理过的素材** —— 例如三个敌人原图(棋冠石像 / 百声纸鹤 / 百面机枢)在 §20~§22 按用户要求")
+    A(">     **裁掉水印**后才入库,内容自然对不上;删目录会失去**未裁的原始版本**;")
+    A(">   · 过度导出/压缩过的图,或确实没进过项目。")
     A("")
-    for i in range(0, len(unreferenced), 6):
-        A("- " + " · ".join("`%s`" % x for x in unreferenced[i:i + 6]))
+    for f in sorted(orphan, key=lambda x: -on_disk.get(x, 0)):
+        A("- `%s` —— %.2f MB" % (f, on_disk.get(f, 0) / 1048576.0))
+    A("")
+if in_repo:
+    A("## ②-b 注释查不到出处,但**内容已在仓库里**(%d 个,删除无影响)" % len(in_repo))
+    A("")
+    A("> 这些文件在注释里查不到,但按**内容**比对,仓库 `res/` 里有一份逐字节相同的副本 —— 可以放心删。")
+    A("> (反例提醒:五个敌人素材在 `res/` 里叫 `img_chuangdang_*`,注释里查不到 `铜齿门卫.png` 这种写法,")
+    A(">  只按注释判断会误报成「未引用」。)")
+    A("")
+    for i in range(0, len(in_repo), 6):
+        A("- " + " · ".join("`%s`" % x for x in sorted(in_repo)[i:i + 6]))
     A("")
 
 open(OUT, "w", encoding="utf-8").write("\n".join(lines) + "\n")

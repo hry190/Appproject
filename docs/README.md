@@ -73,6 +73,12 @@
   自动过五关 + 逐帧成对采集(png + 同时刻 xml),再做**素材 / 渲染 / 命中 / 布局**四层像素校验。
   先读该目录的 [README.md](../scripts/chuangdang-regress/README.md):前置条件、执行顺序、每条判据的来历、踩过的坑都在里面。
   产物全部落在 `%TEMP%\cd-test`,**不落仓库**;`CD_SERIAL` / `CD_ADB` / `CD_TEST_DIR` 可覆盖默认值。
+- [scripts/design-sources-inventory.py](../scripts/design-sources-inventory.py) — **重建设计稿来源清单**(2026-09-20 §4 新增)
+  ```powershell
+  python scripts/design-sources-inventory.py --write   # 刷新 docs/DESIGN-SOURCES.md
+  ```
+  从**代码注释里的设计稿名 + 源目录文件 + 按内容(sha256)比对 `res/`** 三路取材,
+  用来回答"删掉设计稿目录会失去什么":**392/410 内容已在仓库**、17 个真正找不到对应(见清单 §2-a)。
 
 > 📌 **`adb reverse` 在 2026-09-18 之前没有脚本**(旧 `infra/adb-reverse.ps1` 靠 `adb devices` 找 `cupid` 机型,
 > 而该命令不带 `-l` 时不含机型 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)。
