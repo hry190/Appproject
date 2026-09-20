@@ -214,16 +214,19 @@ if os.path.exists(DELETED_LOG):
         A("")
         A("> 判据:它们的**内容逐字节存在于 `res/`**,且那份副本是 **git 跟踪**的文件 ——")
         A("> 所以删除是**可逆**的(随时能从仓库复制回来),删的只是「设计稿目录里的那一份」。")
+        A("> 其中**没有仓库副本**的那些(`仓库内副本 = -`)是**不可逆**的:删前记了 sha256,")
+        A("> 万一以后在别处找到同名/疑似文件,可以用哈希核对是不是同一张。")
         A("> 记录本身留在这里,是为了以后有人问「这张图当初是不是有原图」时能查到。")
         A("> 数据源:[`docs/design-sources-deleted.txt`](./design-sources-deleted.txt)(删除时由脚本追加,一张一行)。")
         A("")
-        A("| 设计稿文件名 | 体积 | 仓库内副本 |")
-        A("|---|---|---|")
+        A("| 设计稿文件名 | 体积 | 仓库内副本 | sha256(仅不可逆的) |")
+        A("|---|---|---|---|")
         for r in rows:
             name = r[0]
             size = ("%.2f MB" % (int(r[1]) / 1048576.0)) if len(r) > 1 and r[1].isdigit() else "-"
-            peer = r[2] if len(r) > 2 else "-"
-            A("| `%s` | %s | `%s` |" % (name, size, peer))
+            peer = r[2] if len(r) > 2 and r[2] else "-"
+            digest = (r[3][:16] + "…") if len(r) > 3 and r[3] else "—"
+            A("| `%s` | %s | `%s` | `%s` |" % (name, size, peer, digest))
         A("")
 
 open(OUT, "w", encoding="utf-8").write("\n".join(lines) + "\n")
