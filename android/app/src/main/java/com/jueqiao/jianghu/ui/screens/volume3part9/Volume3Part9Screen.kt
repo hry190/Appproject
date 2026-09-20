@@ -42,10 +42,10 @@ import com.jueqiao.jianghu.R
  *     本屏用 image 336/337(分别为 698×612 / 672×604) —— 图1 同像素族,图2 不同
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 336.png(已复制为 res/drawable-nodpi/img_volume3part9_image_336.png)
- *   - 图2:D:\图\image 337.png(已复制为 res/drawable-nodpi/img_volume3part9_image_337.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 336.png(已复制为 res/drawable-nodpi/img_volume3part9_image_336.png)
+ *   - 图2:设计稿 image 337.png(已复制为 res/drawable-nodpi/img_volume3part9_image_337.png)
  */
 @Composable
 fun Volume3Part9Screen(

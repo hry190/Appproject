@@ -43,9 +43,9 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+300=435,在书框 Y=88-872 范围内(余量 437dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 539.png(已复制为 res/drawable-nodpi/img_volume8part14_image_539.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 539.png(已复制为 res/drawable-nodpi/img_volume8part14_image_539.png)
  *
  * 点击跳 Gunlun11(Vol-8 卷末闭环,仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 模式;第八卷入口卷)。
  *

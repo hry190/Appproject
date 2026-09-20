@@ -44,12 +44,12 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+129=264,图2 Y=295+173=468,图3 Y=497+178=675,图4 Y=690+153=843(均在书框 Y=88-872 内)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 458.png(已复制为 res/drawable-nodpi/img_volume7part11_image_458.png)
- *   - 图2:D:\图\image 459.png(已复制为 res/drawable-nodpi/img_volume7part11_image_459.png)
- *   - 图3:D:\图\image 460.png(已复制为 res/drawable-nodpi/img_volume7part11_image_460.png)— 2026-09-13 用户修正
- *   - 图4:D:\图\image 461.png(已复制为 res/drawable-nodpi/img_volume7part11_image_461.png)— 2026-09-13 用户新增
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 458.png(已复制为 res/drawable-nodpi/img_volume7part11_image_458.png)
+ *   - 图2:设计稿 image 459.png(已复制为 res/drawable-nodpi/img_volume7part11_image_459.png)
+ *   - 图3:设计稿 image 460.png(已复制为 res/drawable-nodpi/img_volume7part11_image_460.png)— 2026-09-13 用户修正
+ *   - 图4:设计稿 image 461.png(已复制为 res/drawable-nodpi/img_volume7part11_image_461.png)— 2026-09-13 用户新增
  *
  * **本屏无后继页,故未接 clickable**(等 Vol-7-12 创建时按历次约定回填 onOpenVolume7Part12)。
  *

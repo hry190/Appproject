@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+330=465,图2 Y=478+340=818(均在书框 Y=88-872 范围内,余量 407/54dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 485.png(已复制为 res/drawable-nodpi/img_volume10part12_image_485.png)
- *   - 图2:D:\图\image 85.png(已复制为 res/drawable-nodpi/img_volume10part12_image_85.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 485.png(已复制为 res/drawable-nodpi/img_volume10part12_image_485.png)
+ *   - 图2:设计稿 image 85.png(已复制为 res/drawable-nodpi/img_volume10part12_image_85.png)
  *
  * 本屏跳转目标:点击"人作主，机助力"标题 → Vol-10-13(创建于 2026-09-13,本屏兑现 §74.3 KDoc 承诺,回填 onOpenVolume10Part13)。
  */

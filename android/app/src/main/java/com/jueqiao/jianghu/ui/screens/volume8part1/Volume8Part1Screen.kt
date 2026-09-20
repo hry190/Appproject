@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 Y=478+394=872,正好到书框底 — 极紧但 fit
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 464.png(已复制为 res/drawable-nodpi/img_volume8part1_image_464.png)
- *   - 图2:D:\图\image 465.png(已复制为 res/drawable-nodpi/img_volume8part1_image_465.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 464.png(已复制为 res/drawable-nodpi/img_volume8part1_image_464.png)
+ *   - 图2:设计稿 image 465.png(已复制为 res/drawable-nodpi/img_volume8part1_image_465.png)
  *
  * 本屏暂无后继页,故未接 clickable(等 Vol-8-2 创建时按历次约定回填 onOpenVolume8Part2)。
  */

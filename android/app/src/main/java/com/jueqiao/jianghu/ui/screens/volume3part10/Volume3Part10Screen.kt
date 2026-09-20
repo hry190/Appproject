@@ -42,10 +42,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 资源 2026-09-11 由用户替换:从原 712×880(766KB)→ 新版 1065×1215(1.71MB,清晰度↑2.2×),宽高比保持 0.877,坐标不变
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 338.png(已复制为 res/drawable-nodpi/img_volume3part10_image_338.png)
- *   - 图2:D:\图\image 339.png(已复制为 res/drawable-nodpi/img_volume3part10_image_339.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 338.png(已复制为 res/drawable-nodpi/img_volume3part10_image_338.png)
+ *   - 图2:设计稿 image 339.png(已复制为 res/drawable-nodpi/img_volume3part10_image_339.png)
  */
 @Composable
 fun Volume3Part10Screen(

@@ -41,10 +41,10 @@ import com.jueqiao.jianghu.R
  *   - 代码后续真机上调过:图1 W=365→355;图2 W=371→355(见行内注释)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 346.png(已复制为 res/drawable-nodpi/img_volume3part14_image_346.png)
- *   - 图2:D:\图\image 36.png(已复制为 res/drawable-nodpi/img_volume3part14_image_36.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 346.png(已复制为 res/drawable-nodpi/img_volume3part14_image_346.png)
+ *   - 图2:设计稿 image 36.png(已复制为 res/drawable-nodpi/img_volume3part14_image_36.png)
  */
 @Composable
 fun Volume3Part14Screen(

@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+330=465,图2 Y=478+340=818(均在书框 Y=88-872 范围内,余量 407/54dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 476.png(已复制为 res/drawable-nodpi/img_volume10part7_image_476.png)
- *   - 图2:D:\图\image 46.png(已复制为 res/drawable-nodpi/img_volume10part7_image_46.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 476.png(已复制为 res/drawable-nodpi/img_volume10part7_image_476.png)
+ *   - 图2:设计稿 image 46.png(已复制为 res/drawable-nodpi/img_volume10part7_image_46.png)
  *
  * 本屏跳转目标:点击"借招也要署名"标题 → Vol-10-8(创建于 2026-09-13,本屏兑现 §69.3 KDoc 承诺,回填 onOpenVolume10Part8)。
  */

@@ -47,8 +47,8 @@ import kotlin.math.sin
 
 /**
  * 创作档案3页面 — 从 ChuangzuodanganScreen 完整复制,改两处:
- *  1. 背景改为 D:\图\创作档案3.png(img_chuangzuodangan3_bg)
- *  2. 熊猫图改为 D:\图\image 64.png,位置 X=204, Y=687, 190×212
+ *  1. 背景改为 设计稿 创作档案3.png(img_chuangzuodangan3_bg)
+ *  2. 熊猫图改为 设计稿 image 64.png → img_chuangzuodangan3_image64,位置 X=204, Y=687, 190×212
  */
 @Composable
 fun Chuangzuodangan3Screen(
@@ -74,7 +74,7 @@ fun Chuangzuodangan3Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案3.png)
+        // 全屏背景(设计稿 创作档案3.png → img_chuangzuodangan3_bg)
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan3_bg),
             contentDescription = null,

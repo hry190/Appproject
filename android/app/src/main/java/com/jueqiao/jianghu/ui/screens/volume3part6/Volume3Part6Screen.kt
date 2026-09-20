@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 代码后续真机上调过:图2 Y=351→471, W=446→346, H=422→322(见行内注释)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 330.png(已复制为 res/drawable-nodpi/img_volume3part6_image_330.png)
- *   - 图2:D:\图\image 331.png(已复制为 res/drawable-nodpi/img_volume3part6_image_331.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 330.png(已复制为 res/drawable-nodpi/img_volume3part6_image_330.png)
+ *   - 图2:设计稿 image 331.png(已复制为 res/drawable-nodpi/img_volume3part6_image_331.png)
  */
 @Composable
 fun Volume3Part6Screen(

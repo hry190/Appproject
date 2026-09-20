@@ -40,10 +40,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 Y=478+321=799,在书框 Y=88-872 范围内(余量 73dp;沿用 Vol-5-7+ 真机调整过的 Y=478)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 415.png(已复制为 res/drawable-nodpi/img_volume6part4_image_415.png)
- *   - 图2:D:\图\image 416.png(已复制为 res/drawable-nodpi/img_volume6part4_image_416.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 415.png(已复制为 res/drawable-nodpi/img_volume6part4_image_415.png)
+ *   - 图2:设计稿 image 416.png(已复制为 res/drawable-nodpi/img_volume6part4_image_416.png)
  *
  * 本屏暂无后继页,故未接 clickable(等 Vol-6-5 创建时按历次约定回填 onOpenVolume6Part5)。
  */

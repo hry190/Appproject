@@ -44,10 +44,10 @@ import com.jueqiao.jianghu.R
  *   - §21o:图2 的 y 被无关提交 cfac82c 误改成 891(已修复,见行内注释)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 333.png(已复制为 res/drawable-nodpi/img_volume3part7_image_333.png)
- *   - 图2:D:\图\image 334.png(已复制为 res/drawable-nodpi/img_volume3part7_image_334.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 333.png(已复制为 res/drawable-nodpi/img_volume3part7_image_333.png)
+ *   - 图2:设计稿 image 334.png(已复制为 res/drawable-nodpi/img_volume3part7_image_334.png)
  */
 @Composable
 fun Volume3Part7Screen(

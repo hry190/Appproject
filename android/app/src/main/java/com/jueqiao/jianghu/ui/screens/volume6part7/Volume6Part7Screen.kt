@@ -40,10 +40,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 Y=478+341=819,在书框 Y=88-872 范围内(余量 53dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 420.png(已复制为 res/drawable-nodpi/img_volume6part7_image_420.png)
- *   - 图2:D:\图\image 42.png(已复制为 res/drawable-nodpi/img_volume6part7_image_42.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 420.png(已复制为 res/drawable-nodpi/img_volume6part7_image_420.png)
+ *   - 图2:设计稿 image 42.png(已复制为 res/drawable-nodpi/img_volume6part7_image_42.png)
  *
  * 标题变更史(2026-09-12):
  *   - 初版 4 字「问近邻」(疑似拼写错误)— Vol-6-7 创建时

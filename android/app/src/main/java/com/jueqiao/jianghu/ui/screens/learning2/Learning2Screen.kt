@@ -38,8 +38,8 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  *
  * 资源来源:
  *   - 背景 / 返回按钮与学习1 同源
- *   - 中央卷轴:D:\图\image 174.png(已复制为 res/drawable-nodpi/img_learning_image_174.png)
- *   - 标签:D:\图\Group 196.png(已复制为 res/drawable-nodpi/img_learning_group_196.png)
+ *   - 中央卷轴:设计稿 image 174.png(已复制为 res/drawable-nodpi/img_learning_image_174.png)
+ *   - 标签:设计稿 Group 196.png(已复制为 res/drawable-nodpi/img_learning_group_196.png)
  */
 @Composable
 fun Learning2Screen(

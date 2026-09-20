@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+340=475,图2 Y=478+314=792(均在书框 Y=88-872 范围内,余量 397/80dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 475.png(已复制为 res/drawable-nodpi/img_volume10part5_image_475.png)
- *   - 图2:D:\图\image 474.png(已复制为 res/drawable-nodpi/img_volume10part5_image_474.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 475.png(已复制为 res/drawable-nodpi/img_volume10part5_image_475.png)
+ *   - 图2:设计稿 image 474.png(已复制为 res/drawable-nodpi/img_volume10part5_image_474.png)
  *
  * 本屏跳转目标:点击"偏见从何而来"标题 → Vol-10-6(创建于 2026-09-13,本屏兑现 §67.3 KDoc 承诺,回填 onOpenVolume10Part6)。
  */

@@ -36,11 +36,11 @@ import com.jueqiao.jianghu.R
  *   - 图3(image 284.png,X=24, Y=609, W=356, H=217)— 下部
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 281.png(已复制为 res/drawable-nodpi/img_volume2part4_image_281.png)— **复用 Vol-2-4 资源**(不重复复制)
- *   - 图2:D:\图\image 283.png(已复制为 res/drawable-nodpi/img_volume2part4_image_283.png)— **复用 Vol-2-4 资源**
- *   - 图3:D:\图\image 284.png(已复制为 res/drawable-nodpi/img_volume2part4_image_284.png)— **复用 Vol-2-4 资源**
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 281.png(已复制为 res/drawable-nodpi/img_volume2part4_image_281.png)— **复用 Vol-2-4 资源**(不重复复制)
+ *   - 图2:设计稿 image 283.png(已复制为 res/drawable-nodpi/img_volume2part4_image_283.png)— **复用 Vol-2-4 资源**
+ *   - 图3:设计稿 image 284.png(已复制为 res/drawable-nodpi/img_volume2part4_image_284.png)— **复用 Vol-2-4 资源**
  */
 @Composable
 fun Volume2Part5Screen(

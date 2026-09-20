@@ -40,9 +40,9 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+333=468,在书框 Y=88-872 范围内(余量 404dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 435.png(已复制为 res/drawable-nodpi/img_volume6part15_image_435.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 435.png(已复制为 res/drawable-nodpi/img_volume6part15_image_435.png)
  *
  * 卷末闭环:点击"不知看命中率"标题 → Gunlun14(创建于 2026-09-13,本屏兑现 §35.3/§48/§78 卷末闭环链沉淀 + Vol-6 唯一已知漏;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 / Vol-10-14→Gunlun13 模式;**第六卷入口卷** Gunlun14)。
  */

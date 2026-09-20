@@ -36,11 +36,11 @@ import com.jueqiao.jianghu.R
  *   - 图3(image 245.png,X=20, Y=570, W=353, H=247)— 下半区域(贴近书框底沿 Y=851)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 243.png(已复制为 res/drawable-nodpi/img_volume1part7_image_243.png)
- *   - 图2:D:\图\group.png(已复制为 res/drawable-nodpi/img_volume1part7_group.png)
- *   - 图3:D:\图\image 245.png(已复制为 res/drawable-nodpi/img_volume1part7_image_245.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 243.png(已复制为 res/drawable-nodpi/img_volume1part7_image_243.png)
+ *   - 图2:设计稿 group.png(已复制为 res/drawable-nodpi/img_volume1part7_group.png)
+ *   - 图3:设计稿 image 245.png(已复制为 res/drawable-nodpi/img_volume1part7_image_245.png)
  */
 @Composable
 fun Volume1Part7Screen(

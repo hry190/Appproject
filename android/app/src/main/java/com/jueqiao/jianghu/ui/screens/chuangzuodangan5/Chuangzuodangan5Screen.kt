@@ -70,7 +70,7 @@ fun Chuangzuodangan5Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案5.png)
+        // 全屏背景(设计稿 创作档案5.png → img_chuangzuodangan5_bg)
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan5_bg),
             contentDescription = null,

@@ -73,7 +73,7 @@ fun Gunlun1Screen(
             }
         }
 
-        // Rectangle 86.png 气泡(D:\图\Rectangle 86.png)— X=23, Y=324, W=148, H=84
+        // Rectangle 86.png 气泡(设计稿 Rectangle 86.png → img_gunlun1_rect86)— X=23, Y=324, W=148, H=84
         //   点击气泡跳转到滚轮2
         Box(
             modifier = Modifier

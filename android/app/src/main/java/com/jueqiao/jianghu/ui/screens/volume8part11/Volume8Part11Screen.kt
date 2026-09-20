@@ -43,9 +43,9 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+168=303,在书框 Y=88-872 范围内(余量 569dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 534.png(已复制为 res/drawable-nodpi/img_volume8part11_image_534.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 534.png(已复制为 res/drawable-nodpi/img_volume8part11_image_534.png)
  *
  * 点击跳 Vol-8-12(Vol-8-12 创建时回填 callback 与 .clickable)。
  *

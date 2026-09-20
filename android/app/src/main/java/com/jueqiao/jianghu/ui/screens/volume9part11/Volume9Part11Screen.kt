@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+288=423,图2 Y=478+312=790(均在书框 Y=88-872 范围内,余量 449/82dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 511.png(已复制为 res/drawable-nodpi/img_volume9part11_image_511.png)
- *   - 图2:D:\图\image 512.png(已复制为 res/drawable-nodpi/img_volume9part11_image_512.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 511.png(已复制为 res/drawable-nodpi/img_volume9part11_image_511.png)
+ *   - 图2:设计稿 image 512.png(已复制为 res/drawable-nodpi/img_volume9part11_image_512.png)
  *
  * 本屏跳转目标:点击"上下文决定答法"标题 → Vol-9-12(创建于 2026-09-13,本屏兑现 §55.3 KDoc 承诺,回填 onOpenVolume9Part12)。
  */

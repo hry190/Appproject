@@ -31,7 +31,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
   - 复用 StandardGunlunScaffold 提供背景 + 熊猫(可点击) + 返回按钮
  *   - 本页独有元素:10 本书 + 介绍(竖排"正心守道录" + #2E1E60 64% 不透明六边形)
  *
- * 资源(2026-09-09 替换完成,从 D:\图/ 复制为 res/drawable-nodpi/img_gunlun13_*.png):
+ * 资源(2026-09-09 替换完成,从设计稿导入为 res/drawable-nodpi/img_gunlun13_*.png):
  *   - "秘籍"槽位 (X=8)         ← 未标题-2 42.png        → img_gunlun13_untitled_2_42
  *   - 已解锁秘籍1 (X=-21)      ← 未标题-241.png          → img_gunlun13_untitled_241
  *   - 已解锁秘籍2 (X=50)       ← 未标题-2 44.png         → img_gunlun13_untitled_2_44

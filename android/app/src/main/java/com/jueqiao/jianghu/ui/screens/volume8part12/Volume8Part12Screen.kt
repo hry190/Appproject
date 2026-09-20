@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+311=446,图 2 Y=369+147=516(均在书框 Y=88-872 范围内,**图 1 与图 2 Y 重叠 369~446 区域 77dp**)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 535.png(已复制为 res/drawable-nodpi/img_volume8part12_image_535.png)
- *   - 图2:D:\图\image 536.png(已复制为 res/drawable-nodpi/img_volume8part12_image_536.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 535.png(已复制为 res/drawable-nodpi/img_volume8part12_image_535.png)
+ *   - 图2:设计稿 image 536.png(已复制为 res/drawable-nodpi/img_volume8part12_image_536.png)
  *
  * 点击跳 Vol-8-13(Vol-8-13 创建时回填 callback 与 .clickable)。
  *

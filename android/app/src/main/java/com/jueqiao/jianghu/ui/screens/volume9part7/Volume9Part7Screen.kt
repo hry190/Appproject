@@ -44,10 +44,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 W=355,图2 W=384 — 宽度不一致(19dp 差),由新规则按各自 PNG 比例 fit 自然形成,布局上 image 2 偏右突出 X=18+384=402(父 Box 宽 854 余量 452)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 503.png(已复制为 res/drawable-nodpi/img_volume9part7_image_503.png)
- *   - 图2:D:\图\image 504.png(已复制为 res/drawable-nodpi/img_volume9part7_image_504.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 503.png(已复制为 res/drawable-nodpi/img_volume9part7_image_503.png)
+ *   - 图2:设计稿 image 504.png(已复制为 res/drawable-nodpi/img_volume9part7_image_504.png)
  *
  * 本屏跳转目标:点击"大模型核心"标题 → Vol-9-8(创建于 2026-09-13,本屏兑现 §51.3 KDoc 承诺,回填 onOpenVolume9Part8)。
  */

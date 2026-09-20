@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+328=463,图2 Y=478+340=818(均在书框 Y=88-872 范围内,余量 409/54dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 470.png(已复制为 res/drawable-nodpi/img_volume10part1_image_470.png)
- *   - 图2:D:\图\image 70.png(已复制为 res/drawable-nodpi/img_volume10part1_image_70.png)— **注意编号小,易与 image 7/70x 系列混淆;drawable 名独立为 img_volume10part1_image_70 避免冲突**
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 470.png(已复制为 res/drawable-nodpi/img_volume10part1_image_470.png)
+ *   - 图2:设计稿 image 70.png(已复制为 res/drawable-nodpi/img_volume10part1_image_70.png)— **注意编号小,易与 image 7/70x 系列混淆;drawable 名独立为 img_volume10part1_image_70 避免冲突**
  *
  * 本屏跳转目标:点击"少取才安全"标题 → Vol-10-2(创建于 2026-09-13,本屏兑现 §62.4 KDoc 承诺,回填 onOpenVolume10Part2)。
  */

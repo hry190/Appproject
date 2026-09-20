@@ -58,7 +58,7 @@ fun Chuangzuodangan6Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(D:\图\创作档案6.png)
+        // 全屏背景(设计稿 创作档案6.png → img_chuangzuodangan6_bg)
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan6_bg),
             contentDescription = null,
@@ -183,8 +183,8 @@ for (i in 0 until xuanzeN) {
 
 
 
-// image 54.png(X=-8, Y=233, W=132, H=106)— 莲花(D:\图\image 54.png)
-// image 57.png(X=10, Y=203, W=282, H=173)— 飘雾(D:\图\image 57.png)
+// image 54.png(X=-8, Y=233, W=132, H=106)— 莲花(设计稿 image 54.png → img_chuangzuodangan6_image54)
+// image 57.png(X=10, Y=203, W=282, H=173)— 飘雾(设计稿 image 57.png → img_chuangzuodangan6_image57)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan6_image57),
     contentDescription = null,
@@ -203,7 +203,7 @@ Image(
     contentScale = ContentScale.Fit,
 )
 
-// Rectangle 24.png — 雾气(D:\图\Rectangle 24.png)
+// Rectangle 24.png — 雾气(设计稿 Rectangle 24.png → img_chuangzuodangan6_rect24)
 // 与其他页一致模式:fillMaxWidth 容器 + Image 用 ContentScale.FillWidth
 //   本页 Y = 245.32, 文本绝对 Y = 380(内 Box offset 134.68)
 Box(

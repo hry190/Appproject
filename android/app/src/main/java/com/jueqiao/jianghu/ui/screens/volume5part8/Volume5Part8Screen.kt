@@ -40,10 +40,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 Y=478+321=799,在书框 Y=88-872 范围内安全(余量 73dp;用户 2026-09-12 真机 Y=318→478 调整)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 398.png(已复制为 res/drawable-nodpi/img_volume5part8_image_398.png)
- *   - 图2:D:\图\image 399.png(已复制为 res/drawable-nodpi/img_volume5part8_image_399.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 398.png(已复制为 res/drawable-nodpi/img_volume5part8_image_398.png)
+ *   - 图2:设计稿 image 399.png(已复制为 res/drawable-nodpi/img_volume5part8_image_399.png)
  */
 @Composable
 fun Volume5Part8Screen(

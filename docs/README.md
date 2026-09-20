@@ -44,6 +44,7 @@
 | [CODE-AUDIT-2026-09-11.md](./CODE-AUDIT-2026-09-11.md) | v3 代码审计 — Vol-2 doc 批(0 runtime bug,9 HIGH pre-existing)| 2026-09-11 |
 | [IMAGE-COORDINATE-VERIFICATION.md](./IMAGE-COORDINATE-VERIFICATION.md) | 图片坐标验证方法 — PNG 像素校验 + AskUserQuestion 二步决策 + KDoc 真机调整留痕 | 2026-09-11 |
 | [REGRESSION-chuangdang-5stages-20260919.md](./REGRESSION-chuangdang-5stages-20260919.md) | 闯荡江湖五关回归 — 五个新素材 3 层校验(离线体检 / 真机渲染 / 命中效果)+ 全程通关跑测;查出 1 处文档数字错 | 2026-09-19 |
+| [DESIGN-SOURCES.md](./DESIGN-SOURCES.md) | **设计稿来源清单** — 295 个设计稿名 → 项目内资源名 → 引用处;含"代码没引用过"的 115 个(设计稿目录删除前的一次性快照) | 2026-09-20 |
 | [SUMMARY-2026-09-09-to-2026-09-10.md](./SUMMARY-2026-09-09-to-2026-09-10.md) | 跨两天高层 TL;DR + 8 优先行动 | 2026-09-10 |
 | [SESSION-LOG-2026-09-20.md](./SESSION-LOG-2026-09-20.md) | 2026-09-20 收尾与对账日:Boss 通过态取证落地 + 三处决策留档 + **文档规范自检整改(5 处不符合全改)** + `adb reverse` 第 6 次清空并恢复 | 2026-09-20 |
 
@@ -99,6 +100,7 @@
 | 故障排查 | `TROUBLESHOOTING.md` | 解决了一个反复出现的问题,值得记录 |
 | 代码审计 | `CODE-AUDIT-YYYY-MM-DD.md` | 多维度代码扫描结果快照(下次扫描另起一份,可用 diff 看趋势) |
 | **回归 / 验收记录** | **`REGRESSION-<主题>-YYYYMMDD.md`** 或 `*-acceptance.md` | **一次完整回归或阶段验收跑完时**(含判据、对照项与证据位置) |
+| **来源 / 对照清单** | **`DESIGN-SOURCES.md`** 等 `*-SOURCES.md` | **外部来源(设计稿等)即将不可得之前** —— 把"外部名 → 仓库内资源名"固化成表,删了就补不回来 |
 | Sprint 计划 | `SPRINT-YYYY-MM-DD.md` | 启动一个多步骤功能开发 |
 | 分支合并 SOP | `MERGE-WORKFLOW.md` | 合并任何分支前必读(侦察 → 评估 → 建议 → 合并)|
 
@@ -117,6 +119,7 @@
 - `SESSION-LOG-*.md`(团队历史)
 - `CODE-AUDIT-*.md`(扫描快照,可用 diff 看趋势)
 - `REGRESSION-*.md` / `*-acceptance.md`(回归与验收记录,判据和证据要能复查)
+- `DESIGN-SOURCES.md` 等 `*-SOURCES.md`(外部来源的对照表 —— 来源一旦消失,它是唯一线索)
 - `DECISIONS.md`(架构决策)
 - `TROUBLESHOOTING.md`(解决方案)
 

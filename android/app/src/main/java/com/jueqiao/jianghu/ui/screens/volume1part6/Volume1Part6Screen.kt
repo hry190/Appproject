@@ -35,10 +35,10 @@ import com.jueqiao.jianghu.R
  *   - 标题文本"感知-推理-行动闭环"(字号 24,bold,黑色,X=110, Y=67, W=213, H=32)— 顶层
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 240.png(已复制为 res/drawable-nodpi/img_volume1part6_image_240.png)
- *   - 图2:D:\图\Mask group.png(已复制为 res/drawable-nodpi/img_volume1part6_mask_group.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 240.png(已复制为 res/drawable-nodpi/img_volume1part6_image_240.png)
+ *   - 图2:设计稿 Mask group.png(已复制为 res/drawable-nodpi/img_volume1part6_mask_group.png)
  */
 @Composable
 fun Volume1Part6Screen(

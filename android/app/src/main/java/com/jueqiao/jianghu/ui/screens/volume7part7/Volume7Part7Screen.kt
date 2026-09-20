@@ -40,10 +40,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+187=322,图2 Y=381+177=558(均在书框 Y=88-872 内,图 1 与图 2 间距 59dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 450.png(已复制为 res/drawable-nodpi/img_volume7part7_image_450.png)
- *   - 图2:D:\图\image 451.png(已复制为 res/drawable-nodpi/img_volume7part7_image_451.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 450.png(已复制为 res/drawable-nodpi/img_volume7part7_image_450.png)
+ *   - 图2:设计稿 image 451.png(已复制为 res/drawable-nodpi/img_volume7part7_image_451.png)
  *
  * 本屏暂无后继页,故未接 clickable(等 Vol-7-8 创建时按历次约定回填 onOpenVolume7Part8)。
  */

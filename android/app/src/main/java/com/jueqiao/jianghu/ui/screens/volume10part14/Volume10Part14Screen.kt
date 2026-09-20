@@ -43,9 +43,9 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+320=455,在书框 Y=88-872 范围内(余量 417dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 488.png(已复制为 res/drawable-nodpi/img_volume10part14_image_488.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 488.png(已复制为 res/drawable-nodpi/img_volume10part14_image_488.png)
  *
  * 卷末闭环:点击"人作主，机助力"标题 → Gunlun13(创建于 2026-09-13,本屏兑现 §76.3 KDoc "等 Vol-10-15 回填"承诺改为卷末闭环,**Vol-10 = 14 屏卷末**;仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 / Vol-9-15→Gunlun9 模式;**第十卷入口卷** Gunlun13)。
  */

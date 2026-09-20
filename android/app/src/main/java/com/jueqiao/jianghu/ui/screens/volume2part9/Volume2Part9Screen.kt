@@ -34,9 +34,9 @@ import com.jueqiao.jianghu.R
  *   - 图1(image 293.png,X=28, Y=155, W=332, H=237)— 上部(只 1 张图)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 293.png(已复制为 res/drawable-nodpi/img_volume2part9_image_293.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 293.png(已复制为 res/drawable-nodpi/img_volume2part9_image_293.png)
  */
 @Composable
 fun Volume2Part9Screen(

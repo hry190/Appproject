@@ -28,7 +28,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
  * 滚轮15 页 — 滚轮14 → 点击"熊猫"贴图跳转目标。
  *
  * 布局:10 本书 + 介绍("正心守道录" + #601E37 76% 不透明六边形)。
- * 资源专属 gunlun15 drawables,从 D:\图/ 复制为 res/drawable-nodpi/img_gunlun15_*.png。
+ * 资源专属 gunlun15 drawables,从设计稿导入为 res/drawable-nodpi/img_gunlun15_*.png。
  *
  * 资源(2026-09-09 替换完成):
  *   - "秘籍"槽位 (X=8)         ← 未标题-2 42.png            → img_gunlun15_untitled_2_42

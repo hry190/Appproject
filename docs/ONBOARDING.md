@@ -669,7 +669,7 @@ chore(<scope>): <description>
 
 | 用途 | 路径 |
 | |---|
-| 设计稿源 | `D:\图\`(本地,**不在 git**) |
+| 设计稿源 | `D:\图\`(本地,**不在 git**;**计划可能被删除**)—— 删除后靠 [DESIGN-SOURCES.md](DESIGN-SOURCES.md) 查"哪张设计稿 → 哪个资源" |
 | APK 输出 | `android/app/build/outputs/apk/debug/app-debug.apk` |
 | Gradle 用户缓存 | `C:\Users\28784\.gradle\caches` |
 

@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 Y=478+282=760,在书框 Y=88-872 范围内(余量 112dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 524.png(已复制为 res/drawable-nodpi/img_volume8part5_image_524.png)
- *   - 图2:D:\图\image 522.png(已复制为 res/drawable-nodpi/img_volume8part5_image_522.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 524.png(已复制为 res/drawable-nodpi/img_volume8part5_image_524.png)
+ *   - 图2:设计稿 image 522.png(已复制为 res/drawable-nodpi/img_volume8part5_image_522.png)
  *
  * 本屏暂无后继页,故未接 clickable(等 Vol-8-6 创建时按历次约定回填 onOpenVolume8Part6)。
  *

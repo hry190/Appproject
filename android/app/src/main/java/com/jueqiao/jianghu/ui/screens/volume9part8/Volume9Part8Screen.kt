@@ -43,10 +43,10 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+348=483,图2 Y=478+218=696(均在书框 Y=88-872 范围内,余量 389/176dp)— 图2 是扁横图所以上下留白较多(176dp 余量)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
- *   - 图1:D:\图\image 505.png(已复制为 res/drawable-nodpi/img_volume9part8_image_505.png)
- *   - 图2:D:\图\image 506.png(已复制为 res/drawable-nodpi/img_volume9part8_image_506.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(复用第一卷-2 img_volume1part2_group_256.png 资源)
+ *   - 图1:设计稿 image 505.png(已复制为 res/drawable-nodpi/img_volume9part8_image_505.png)
+ *   - 图2:设计稿 image 506.png(已复制为 res/drawable-nodpi/img_volume9part8_image_506.png)
  *
  * 本屏跳转目标:点击"大模型核心"标题 → Vol-9-9(创建于 2026-09-13,本屏兑现 §52.3 KDoc 承诺,回填 onOpenVolume9Part9)。
  */

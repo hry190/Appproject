@@ -44,10 +44,10 @@ import com.jueqiao.jianghu.R
  * 注:链路为 Vol-3-9 → 3-10 → 3-11 → 3-12(标准递增)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 341.png(已复制为 res/drawable-nodpi/img_volume3part12_image_341.png)
- *   - 图2:D:\图\image 342.png(已复制为 res/drawable-nodpi/img_volume3part12_image_342.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 341.png(已复制为 res/drawable-nodpi/img_volume3part12_image_341.png)
+ *   - 图2:设计稿 image 342.png(已复制为 res/drawable-nodpi/img_volume3part12_image_342.png)
  */
 @Composable
 fun Volume3Part12Screen(

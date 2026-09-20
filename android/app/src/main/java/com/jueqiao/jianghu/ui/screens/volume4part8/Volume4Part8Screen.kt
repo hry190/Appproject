@@ -37,9 +37,9 @@ import com.jueqiao.jianghu.R
  *   - image 367 实测 1049×888(横向矩形,比率 1.181);用户给 W=355 H=311 渲染比 1.141 与原图差 3.4%,几乎完美
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 367.png(已复制为 res/drawable-nodpi/img_volume4part8_image_367.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 367.png(已复制为 res/drawable-nodpi/img_volume4part8_image_367.png)
  */
 @Composable
 fun Volume4Part8Screen(

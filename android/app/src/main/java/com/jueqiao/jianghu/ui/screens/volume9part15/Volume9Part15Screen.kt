@@ -43,9 +43,9 @@ import com.jueqiao.jianghu.R
  *   - 图1 Y=135+268=403,在书框 Y=88-872 范围内(余量 469dp)
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
- *   - 图1:D:\图\image 519.png(已复制为 res/drawable-nodpi/img_volume9part15_image_519.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 255.png(复用第一卷 img_volume1_group_255.png 资源)
+ *   - 图1:设计稿 image 519.png(已复制为 res/drawable-nodpi/img_volume9part15_image_519.png)
  *
  * 卷末闭环:点击"会说不等于知道"标题 → Gunlun9(创建于 2026-09-13,本屏兑现 §60.3 KDoc "等 Vol-9-16 回填"承诺改为卷末闭环,仿 Vol-4-14→Gunlun8 / Vol-5-15→Gunlun12 / Vol-7-12→Gunlun16 / Vol-8-14→Gunlun11 模式;**第九卷入口卷** Gunlun9)。
  */

@@ -40,10 +40,10 @@ import com.jueqiao.jianghu.R
  *   - 图2 素材不同(image 230 → image 234)+ 位置 + 尺寸不同
  *
  * 资源来源:
- *   - 背景:D:\图\image 129.png(复用第一卷 img_volume1_bg.png 资源)
- *   - 书框:D:\图\Group 256.png(已复制为 res/drawable-nodpi/img_volume1part2_group_256.png)
- *   - 图1:D:\图\image 30.png(已复制为 res/drawable-nodpi/img_volume1part2_image_30.png)
- *   - 图2:D:\图\image 234.png(已复制为 res/drawable-nodpi/img_volume1part2_image_234.png)
+ *   - 背景:设计稿 image 129.png(复用第一卷 img_volume1_bg.png 资源)
+ *   - 书框:设计稿 Group 256.png(已复制为 res/drawable-nodpi/img_volume1part2_group_256.png)
+ *   - 图1:设计稿 image 30.png(已复制为 res/drawable-nodpi/img_volume1part2_image_30.png)
+ *   - 图2:设计稿 image 234.png(已复制为 res/drawable-nodpi/img_volume1part2_image_234.png)
  */
 @Composable
 fun Volume1Part2Screen(
