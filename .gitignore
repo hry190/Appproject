@@ -39,10 +39,11 @@ replay_*.log
 notes/
 *.local.md
 
-# ⚠️ 辅助开发的**设备脚本**:本地保留、不入库(2026-09-20 用户决定)
-#   理由是它们绑设备/一次性,属于开发辅助而不是产品代码;
-#   **判据与踩坑已固化进 docs/CHUANGDANG-REGRESSION-PLAYBOOK.md**(纯文档,入库)。
-#   取回:git log --oneline -- scripts/chuangdang-regress  →  git checkout <commit> -- <路径>
-scripts/chuangdang-regress/
-scripts/capture-*.py
-scripts/debug-forgot.py
+# ⚠️ 本地工具脚本:**整个 scripts/ 不入库**(2026-09-20 用户决定)
+#   理由:它们要么绑设备(真机回归、截图小工具)、要么是我这边的辅助脚本,
+#         属于开发辅助而不是产品代码。**文件留在本地、历史里也还在**。
+#   取回:git log --oneline -- scripts/<名字>  →  git checkout <commit> -- scripts/<名字>
+#   ⚠️ 判据与踩坑**不在这里,已固化进 docs/**(纯文档入库):
+#     · docs/CHUANGDANG-REGRESSION-PLAYBOOK.md —— 闯荡江湖真机回归的判据/顺序/踩坑
+#     · ONBOARDING §3.4 / §5.4 里给了 setup-reverse / audit-comment-drift 的等价命令
+/scripts/

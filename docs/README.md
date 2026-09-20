@@ -58,32 +58,26 @@
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — 协作约定
 - [android/docs/screen-adaptation.md](../android/docs/screen-adaptation.md) — 屏幕适配方案(两段式/三段式 + 真机 dp 表)
 
-**工具脚本**(不是文档,但排查时常用):
-- [scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1) — 审计注释里的几何值(X/Y/W/H)与代码是否一致;
-  默认只读,`-Fix` 对齐,`-FailOnDrift` 供 CI。判据见 `ONBOARDING.md` §5.4
-  > ⚠️ 它**只覆盖几何值**;"0 漂移 ≠ 注释没问题" —— 段号引用、复用源指向、状态描述这类**叙事性注释查不到**
-- [scripts/setup-reverse.ps1](../scripts/setup-reverse.ps1) — **重建 `adb reverse` 端口转发**(2026-09-18 §2 新建)
-  ```powershell
-  ./scripts/setup-reverse.ps1 -Serial 21908b7a   # 多设备时必须显式指定 -Serial
-  ./scripts/setup-reverse.ps1 -Quiet             # 静默(仅出错时输出);已设就跳过(约 60ms)
-  ```
-  失败必返非零退出码(防"静默失效");建完必验证。
-  (更早的 `infra/adb-reverse.ps1` 已于 2026-09-16 删除 —— 它硬编码 SDK 路径 + 靠机型名找设备 + 失败时仍返回 0)
-- [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停
-- **闯荡江湖真机回归套件** —— ⚠️ **脚本已于 2026-09-20 撤出 git**(本地留在 `scripts/chuangdang-regress/`,`capture-*.py` 同理)。
-  判据 / 用法 / 踩坑固化进 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md)(纯文档,入库)。
-  取回脚本:`git log --oneline -- scripts/chuangdang-regress` → `git checkout <commit> -- <路径>`
-- [scripts/design-sources-inventory.py](../scripts/design-sources-inventory.py) — **重建设计稿来源清单**(2026-09-20 §4 新增)
-  ```powershell
-  python scripts/design-sources-inventory.py --write   # 刷新 docs/DESIGN-SOURCES.md
-  ```
-  从**代码注释里的设计稿名 + 源目录文件 + 按内容(sha256)比对 `res/`** 三路取材,
-  用来回答"删掉设计稿目录会失去什么"。同类清理脚本 `prune_design_sources.py` 在本地(未入库)。
+**工具脚本**:⚠️ **`scripts/` 整个目录不入库**(2026-09-20 用户决定 —— 它们绑设备、属于开发辅助,不是产品代码)。
+文件都在本地、历史里也还在;取回办法见 `.gitignore` 里那段注释(`git log --oneline -- scripts/<名字>` → `git checkout <commit> -- <名字>`)。
+**判据与踩坑不放在脚本里,已固化进文档**(这才是不随脚本丢失的部分):
+
+| 脚本(本地) | 干什么 | 文档在哪 |
+|---|---|---|
+| `scripts/audit-comment-drift.ps1` | 审计注释里的几何值(X/Y/W/H)与代码是否一致;`-Fix` 对齐、`-FailOnDrift` 供 CI | `ONBOARDING.md` §5.4(判据 + "0 漂移 ≠ 注释没问题") |
+| `scripts/setup-reverse.ps1` | **重建 `adb reverse` 端口转发**(多设备必须 `-Serial`) | `ONBOARDING.md` §3.4(含手动等价命令) |
+| `scripts/chuangdang-regress/`(17 + README) | 闯荡江湖真机回归:自动过五关 + 素材/渲染/命中/布局四层像素校验 | **[CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md)** |
+| `scripts/capture-*.py` / `debug-forgot.py` | 登录 / 注册 / 忘记密码页的截图小工具 | 脚本自带 `--help` 式注释(一次性用) |
+| `scripts/design-sources-inventory.py` | 重建设计稿来源清单(`--write` 刷新 [DESIGN-SOURCES.md](./DESIGN-SOURCES.md)) | 同上清单的「怎么用 / 怎么维护」 |
+| `scripts/prune_design_sources.py` | 按"内容是否已在仓库"清理设计稿目录(默认预演) | [SESSION-LOG-2026-09-20.md](./SESSION-LOG-2026-09-20.md) §5 |
+
+- [infra/start-dev.ps1](../infra/start-dev.ps1) / [stop-dev.ps1](../infra/stop-dev.ps1) — 后端启停(**这两个在 `infra/`,仍在库里**)
 
 > 📌 **`adb reverse` 在 2026-09-18 之前没有脚本**(旧 `infra/adb-reverse.ps1` 靠 `adb devices` 找 `cupid` 机型,
 > 而该命令不带 `-l` 时不含机型 → 静默失效,从未成功过。见 SESSION-LOG-2026-09-16 §21s)。
-> **现在请用 `scripts/setup-reverse.ps1`**(见上);手动等价命令(多设备时必须带 `-s`):
-> `adb -s <serial> reverse tcp:8010 tcp:8010`
+> **现在**:手动一行即可(**多设备时必须带 `-s`**;`scripts/setup-reverse.ps1` 是本地便利脚本,不入库):
+> `adb -s <serial> reverse tcp:8010 tcp:8010`,然后**从设备侧探活**:
+> `adb -s <serial> shell "curl -s -o /dev/null -w '%{http_code}' --max-time 6 http://127.0.0.1:8010/docs"` → 应回 `200`
 
 ---
 

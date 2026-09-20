@@ -120,7 +120,9 @@ D:\Appproject\
 ├── CONTRIBUTING.md             # 协作约定(与本文件互补)
 ├── DEV-SETUP.md                # 详细环境配置步骤
 ├── ENVIRONMENT.md              # 项目根的 ENV 文件
-└── D:\图\                      # ⚠ 设计稿源文件,**不在 git 里**,本地临时目录
+├── scripts/                    # ⚠ 本地工具脚本(审计 / adb 转发 / 真机回归 / 截图),**不在 git 里**
+│                                #   判据与用法写在本文 §3.4/§5.4 与 docs/CHUANGDANG-REGRESSION-PLAYBOOK.md
+└── D:\图\                      # ⚠ 设计稿源文件,**不在 git 里**,本地目录;来源对照见 docs/DESIGN-SOURCES.md
 ```
 
 ---
@@ -303,12 +305,13 @@ img_<页面拼音>_<Figma 节点名>.png
 - ✅ 默认采用"两段式":外层 `Box(fillMaxSize)` 放背景,内层 `Box(fillMaxSize, windowInsetsPadding(navigationBars))` 放内容
 - ✅ 元素位置用 `align(Alignment.X) + offset(x, y)` 表达,不直接算绝对坐标
 - ✅ 改元素 offset/size 时,**同步 inline 注释里的 `// 元素(X=?, Y=?, W=?, H=?)`**
-  - 这条容易漏。**审计脚本**:[scripts/audit-comment-drift.ps1](../scripts/audit-comment-drift.ps1)
+  - 这条容易漏。**审计脚本**:`scripts/audit-comment-drift.ps1`(**本地脚本,不入库**,2026-09-20 起 —— 取回见 `.gitignore` 注释)
     ```powershell
     ./scripts/audit-comment-drift.ps1              # 只审计(默认、只读):列出"注释 ≠ 代码"的行
     ./scripts/audit-comment-drift.ps1 -Fix         # 把注释对齐到代码(改前建议先提交,便于 git diff 复核)
     ./scripts/audit-comment-drift.ps1 -FailOnDrift # 有漂移则返回非 0,给 CI/pre-commit 用
     ```
+    > 📌 判据(它只覆盖几何值、以及"整数值别输出成 380.0"这类细节)**写在本文里**,不依赖脚本存在。
   - ⚠️ `-Fix` 的前提是"**代码值才是对的**"(真机调过的那一方)。如果没人担保谁对,
     先查 `git log -p --follow <file>` 定性 —— 2026-09-16 §21o 就出现过**代码错、注释对**的反例
     (坐标被一个无关提交误改),那种情况跑 `-Fix` 会把正确的注释也改错。

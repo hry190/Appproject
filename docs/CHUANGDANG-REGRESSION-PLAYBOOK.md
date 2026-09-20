@@ -9,9 +9,9 @@
 
 | 项 | 说明 |
 |---|---|
-| 本地位置 | `scripts/chuangdang-regress/`(17 个 `.py`)—— **不在 git**,`.gitignore` 已排除,不会被误提交 |
+| 本地位置 | `scripts/chuangdang-regress/`(17 个 `.py`)—— **不在 git**:2026-09-20 起 **`scripts/` 整个目录都不入库**,`.gitignore` 已排除 |
 | 取回 | `git log --oneline -- scripts/chuangdang-regress` 找到最后一个含它的提交(如 `6714bf8`),<br>`git checkout 6714bf8 -- scripts/chuangdang-regress` |
-| 为什么撤出 | 用户 2026-09-20 决定:设备相关的一次性辅助脚本不进产品仓库(同类:`scripts/capture-*.py`)。**知识留在本文,代码留在本地** |
+| 为什么撤出 | 用户 2026-09-20 决定:**绑设备 / 一次性的辅助脚本不进产品仓库**(同一批还有 `capture-*.py`、`setup-reverse.ps1`、`audit-comment-drift.ps1`)。**知识留在本文,代码留在本地** —— 这也是本文存在的理由 |
 
 ## 1. 为什么需要它(而不是人眼看)
 
