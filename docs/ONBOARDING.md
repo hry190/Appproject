@@ -568,6 +568,7 @@ chore(<scope>): <description>
 | 决策记录 | `docs/DECISIONS.md` | 做了重要的架构 / 设计决策 |
 | 故障排查 | `docs/TROUBLESHOOTING.md` | 解决了一个反复出现的问题 |
 | **代码审计** | **`docs/CODE-AUDIT-YYYY-MM-DD.md`** | **多维度扫描结果(每次扫描另起一份)** |
+| **回归 / 验收记录** | **`docs/REGRESSION-<主题>-YYYYMMDD.md`** 或 `*-acceptance.md` | **一次完整回归或阶段验收跑完时**(判据 + 对照项 + 证据位置;**不是**"跑了一遍没问题"一句话) |
 | Sprint 计划 | `docs/SPRINT-YYYY-MM-DD.md` | 多步骤功能开发 |
 | 跨天摘要 | `docs/SUMMARY-YYYY-MM-DD-to-YYYY-MM-DD.md` | 跨天高层 TL;DR |
 
@@ -579,7 +580,7 @@ chore(<scope>): <description>
 
 ### 9.3 git 政策
 
-- **应该 commit**:`SESSION-LOG-*.md`、`CODE-AUDIT-*.md`、`DECISIONS.md`、`TROUBLESHOOTING.md`、`SUMMARY-*.md`
+- **应该 commit**:`SESSION-LOG-*.md`、`CODE-AUDIT-*.md`、`REGRESSION-*.md`(与 `*-acceptance.md`)、`DECISIONS.md`、`TROUBLESHOOTING.md`、`SUMMARY-*.md`
 - **不应该 commit**:个人笔记、未结论的临时排查
 
 ---
@@ -659,6 +660,7 @@ chore(<scope>): <description>
 | 安全配置 | [android/app/src/main/res/xml/network_security_config.xml](android/app/src/main/res/xml/network_security_config.xml) |
 | 备份规则 | [android/app/src/main/res/xml/backup_rules.xml](android/app/src/main/res/xml/backup_rules.xml) |
 | **屏幕适配方案** | **[android/docs/screen-adaptation.md](../android/docs/screen-adaptation.md)** | **必读 — 两段式/三段式 + 真机 dp 表** |
+| **真机回归套件**(自动过五关 + 像素判据) | **[scripts/chuangdang-regress/](../scripts/chuangdang-regress/)** | **改闯荡江湖/素材后要复跑时看它的 README** |
 | AndroidManifest | [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml) |
 | 模块构建脚本 | [android/app/build.gradle.kts](android/app/build.gradle.kts) |
 | 后端启动 | [infra/start-dev.ps1](infra/start-dev.ps1) |

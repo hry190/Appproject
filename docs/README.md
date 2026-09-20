@@ -96,6 +96,7 @@
 | 决策记录 | `DECISIONS.md` | 做了重要的架构 / 设计决策 |
 | 故障排查 | `TROUBLESHOOTING.md` | 解决了一个反复出现的问题,值得记录 |
 | 代码审计 | `CODE-AUDIT-YYYY-MM-DD.md` | 多维度代码扫描结果快照(下次扫描另起一份,可用 diff 看趋势) |
+| **回归 / 验收记录** | **`REGRESSION-<主题>-YYYYMMDD.md`** 或 `*-acceptance.md` | **一次完整回归或阶段验收跑完时**(含判据、对照项与证据位置) |
 | Sprint 计划 | `SPRINT-YYYY-MM-DD.md` | 启动一个多步骤功能开发 |
 | 分支合并 SOP | `MERGE-WORKFLOW.md` | 合并任何分支前必读(侦察 → 评估 → 建议 → 合并)|
 
@@ -112,6 +113,8 @@
 
 **应该 commit 到 git 的**:
 - `SESSION-LOG-*.md`(团队历史)
+- `CODE-AUDIT-*.md`(扫描快照,可用 diff 看趋势)
+- `REGRESSION-*.md` / `*-acceptance.md`(回归与验收记录,判据和证据要能复查)
 - `DECISIONS.md`(架构决策)
 - `TROUBLESHOOTING.md`(解决方案)
 

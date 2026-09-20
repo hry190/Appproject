@@ -1929,3 +1929,12 @@ private fun DrawScope.drawDamageMarks(hitCount: Int, faintThroughMarks: Boolean 
 | 五关数据与规则(题库 38 题 / 五维评分) | `.../ui/screens/chuangdang/ChuangdangData.kt` · `ChuangdangBossScreen.kt` |
 | 敌人形象(素材表 + 命中叠加层) | `.../ui/screens/chuangdang/ChuangdangMonsters.kt` |
 | 地图页(徽记已换素材图) | `.../ui/screens/chuangdang/ChuangdangMapScreen.kt` |
+
+### 改动对账(照 `CONTRIBUTING.md` §12)
+
+| 项 | 本日 §23~§26 的改动 |
+|---|---|
+| 改动文件清单 | `ChuangdangMonsters.kt`(素材查表 + 贯穿痕档位)· `ChuangdangMapScreen.kt`(徽记)· 新增 `scripts/chuangdang-regress/`(17 个文件)· `docs/` 4 个文件 |
+| 是否新建 drawable 资源 | **无**(徽记复用五个已有素材,没加新图)|
+| 是否改 NavHost | **无** |
+| 是否加新的 Route 常量 | **无** |
