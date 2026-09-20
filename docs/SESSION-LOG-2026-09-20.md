@@ -30,9 +30,9 @@
 | 项 | 值 |
 |---|---|
 | 工作分支 | `zzz` |
-| 最近 commit | `fe099c4` chore(scripts): scripts/ 整个目录撤出 git(出库 ABCD),判据全部转移到文档 |
-| 分支同步 | ⚠️ **`main` 有意落后 4 个提交**(用户选 1b:攒到发布时一起同步)—— `main` = `6714bf8`,`zzz` = `origin/zzz` = `fe099c4` |
-| 今日 commit(09-20,**14 笔**) | 跨午夜 2 笔:`d83da4a` 通过态取证 · `bcc1092` 09-19 日志 TL;DR<br>上午:`43a2b1b` 决策留档 · `f4697aa` 提交口径 · `a708088` 规范自检 · `194d7d7` 建本日志 · `bc53266` 归属重划 · `7b36e8c` 注释去盘符 + 来源清单 · `32bc575` 待办编号修正<br>下午:`3f76ae4` 未引用文件按内容再判 · `580c531` 删 98 个(可逆)· `6714bf8` 删 17 个(记哈希)· `98953e7` 脚本出库 B+C · `fe099c4` 脚本出库 ABCD |
+| 最近 commit | `2b0adb8` docs: §8 交手动画记录 + Playbook §3.1 四条判据与三条新坑 |
+| 分支同步 | ⚠️ **`main` 有意落后 2 个提交**(用户口径:只在明说时同步)—— `main` = `origin/main` = `c6dc4b2`(§7 之后用户指示同步过一次),`zzz` = `origin/zzz` = `2b0adb8` |
+| 今日 commit(09-20,**16 笔**) | 跨午夜 2 笔:`d83da4a` 通过态取证 · `bcc1092` 09-19 日志 TL;DR<br>上午:`43a2b1b` 决策留档 · `f4697aa` 提交口径 · `a708088` 规范自检 · `194d7d7` 建本日志 · `bc53266` 归属重划 · `7b36e8c` 注释去盘符 + 来源清单 · `32bc575` 待办编号修正<br>下午:`3f76ae4` 未引用文件按内容再判 · `580c531` 删 98 个(可逆)· `6714bf8` 删 17 个(记哈希)· `98953e7` 脚本出库 B+C · `fe099c4` 脚本出库 ABCD<br>傍晚:`d84498e` 删目录落指纹 · `33c7482` 快照刷新 + 删目录前自检<br>夜间:`c6dc4b2` 熊猫少侠换新形象(§7,已同步 main)· `31a58a7` 交手动画 + 倍率乘两遍的修复(§8)· `2b0adb8` §8 文档 |
 | 09-19 会话跨午夜的 2 笔 | `d83da4a` 通过态取证 · `bcc1092` 09-19 日志 TL;DR —— **归 09-19** |
 | 工作区 | 干净 |
 | 入库脚本 | **0 个**(`scripts/` 整体不入库,本地 31 个照常可用)|
@@ -415,6 +415,10 @@ Compose 的 `WindowRecomposer` 已经把这个倍率注入 `MotionDurationScale`
 2. **先证明"你量的那个东西就是你测的那个东西"。** 用 bbox 左缘冒充熊猫左缘,量到的一直是背景。
 3. **一次错误的结论,往往由两层各自的错组成。** 这次是"自己乘了两遍" + "量错了对象";
    只修一层,另一层还会以别的面目出现。
+4. **提交信息的编码**:本机 `pwsh` 是 **Windows PowerShell 5.1**,`Set-Content -Encoding utf8`
+   会写 **BOM** → commit 主题行会多出一个不可见字符(实测 `git cat-file commit` 头三字节 `EF BB BF`)。
+   用 `[System.IO.File]::WriteAllText($p, $text, (New-Object System.Text.UTF8Encoding($false)))` 落文件;
+   已发生的用 `git commit --amend -F` 修(未推送前)。
 
 ---
 
@@ -429,8 +433,9 @@ Compose 的 `WindowRecomposer` 已经把这个倍率注入 `MotionDurationScale`
 | 5 | ~~设计稿目录删除后改 `ONBOARDING §12.2`~~ | ✅ **已兑现**(§5):目录 2026-09-20 已删,三处文档同步改成"已删除" |
 | 6 | ~~**`D:\图` 目录本身**~~ | ✅ **已删**(§5):删前落全量指纹,现共 410 行 = 目录从建到删的全部内容 |
 | 7 | **后山 3/5/7/9/11 五页的「熊猫」要不要一起换成新形象** | ⏸ **待用户定**(§7):本次只换了对战页;那五页还带云/位移动画,换完需重新看动画 |
-| 8 | 等后端的一批 | ⏳ 进度落库 / 服务器判定格挡 / 防重提交 / 学习后开放副本 / 补修错题联动 / 工坊带入任务与作品版本 / 修为与配饰持久化 / 闯荡令的学习与补修奖励 / AI 评审 / 与其他模块联动 |
-| 9 | 文档标"可选/后续"的 | ⏳ 战利品池、完整皮肤、其他九本秘籍 |
+| 8 | **下一个模块做什么** | ⏸ **待用户定**:09-20 用户选了"换个模块"但未点名(候选:行李 / 创作·工坊 / 大会 / 学习,或清 TODO);约定**先只读侦察、报方案,再动代码** |
+| 9 | 等后端的一批 | ⏳ 进度落库 / 服务器判定格挡 / 防重提交 / 学习后开放副本 / 补修错题联动 / 工坊带入任务与作品版本 / 修为与配饰持久化 / 闯荡令的学习与补修奖励 / AI 评审 / 与其他模块联动 |
+| 10 | 文档标"可选/后续"的 | ⏳ 战利品池、完整皮肤、其他九本秘籍 |
 
 ---
 
@@ -444,3 +449,6 @@ Compose 的 `WindowRecomposer` 已经把这个倍率注入 `MotionDurationScale`
 | 真机回归套件(含 `boss_score.py` / `boss_capture.py`)| ⚠️ **脚本已撤出 git(§6)** —— 判据见 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md);脚本本体在本地 `scripts/chuangdang-regress/` |
 | **设计稿来源清单**(295 名 → 资源名;含 115 个未引用文件)| [DESIGN-SOURCES.md](./DESIGN-SOURCES.md) |
 | 清单生成器 / 清理脚本 | ⚠️ **本地脚本、不入库(§6)**:`scripts/design-sources-inventory.py`(重算清单)、`scripts/prune_design_sources.py`(清理,默认预演) |
+| 熊猫少侠新素材(对战页)| `res/drawable-nodpi/img_chuangdang_xiongmaoshaoxia.png`(§7;注释记 `设计稿 image 72.png → img_chuangdang_xiongmaoshaoxia`)|
+| 交手动画 | `ui/screens/chuangdang/ChuangdangBattleScreen.kt` 的 `CdFx` / `Animatable` / 条件挂载 `graphicsLayer`(§8)|
+| 动画取证脚本(本地不入库)| `scripts/verify_fx.py`(v3;判据见 Playbook **§3.1**)|
