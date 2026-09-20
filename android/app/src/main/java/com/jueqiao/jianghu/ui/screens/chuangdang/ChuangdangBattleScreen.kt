@@ -51,14 +51,29 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.random.Random
 
 /**
- * 交手时放哪一种一次性动画(2026-09-20 §8)。
+ * 交手时放哪一种一次性动画(2026-09-20 §8,§9 扩充为"双方都会动")。
  *
  * 设计约束(用户定的口径 + 项目既有教训):
  *   · **一次性**,不循环 —— 循环动画会让 `uiautomator dump` 等不到 idle,而"每帧配 dump"是像素回归的地基;
  *   · **不整屏震** —— 文字区域是这个项目最脆的地方(§10/§12/§19 三次修的都是文字),震屏会一起晃到它;
  *   · **不改交互节奏** —— 动画在结算面板底下播,不加"等动画放完才能点继续"的门。
+ *
+ * 命名从"谁的动作"来(§9 改的名):原先 Lunge / Block / TakeHit 只描述了熊猫那一侧,
+ * 而 §9 之后**怪物也会主动扑击**,读名字要先知道"这是谁在动"才不会改错。
  */
-private enum class CdFx { None, Lunge, Block, TakeHit }
+private enum class CdFx {
+    None,
+    /** 进攻命中:熊猫前冲,怪物挨打后仰。 */
+    PandaStrike,
+    /** 进攻被格挡:熊猫只前顶一点点(不放"出手+受击",那会谎报战果)。 */
+    PandaGraze,
+    /** 怪物扑击:反击起手 / 防御题起手 —— **只有怪物动**,熊猫不动。 */
+    MonsterJab,
+    /** 防御答对:怪物扑上来**被挡回**,熊猫挡一下并被顶退一点。 */
+    MonsterBlocked,
+    /** 防御答错:怪物扑上来**命中**,熊猫受击后退。 */
+    MonsterHits,
+}
 
 /**
  * 2026-09-19 §6 闯荡江湖 · 战斗页(第 1~4 关的三心攻防)
@@ -134,12 +149,20 @@ fun ChuangdangBattleScreen(
     var headline by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
 
-    // ── 2026-09-20 §8:交手动画(出手 / 格挡 / 受击)────────────────────────────
-    //   为什么用"种类 + 计数器"两个状态:同一种动画连续触发时(连打两下都是 Lunge),
+    // ── 2026-09-20 §8:交手动画(出手 / 格挡 / 受击);§9 起**怪物也会主动扑击** ──────────
+    //   为什么用"种类 + 计数器"两个状态:同一种动画连续触发时(连打两下都是同一种),
     //   只改种类不会让 LaunchedEffect 重跑 —— 必须让 tick 变。
     var fxKind by remember { mutableStateOf(CdFx.None) }
     var fxTick by remember { mutableIntStateOf(0) }
-    /** 0→1→0 的一次性冲量;所有位移/缩放都由它按种类换算,这样一个 Animatable 够用。 */
+    /**
+     * 一次性冲量,取值不限于 [0,1]:**负半程用来表达"被顶回去/被挡回"**。
+     *
+     * 为什么一个 Animatable 就够(§9 的设计要点):扑击那一拍需要**双方同时**动 ——
+     * 怪物扑上来(−12dp)又被挡回(+6dp),熊猫挡一下(+4dp)再被顶退(−2dp)。
+     * 若给两路各一个 Animatable,就得并发跑两段动画(`launch` + `join`);
+     * 而这两条曲线**形状相同、只差系数**:同一段 1 → −0.5 → 0 的冲量,
+     * 熊猫取 +4dp/单位、怪物取 −12dp/单位,正好得到 +4→−2 与 −12→+6 —— 一次动画、两条曲线。
+     */
     val fx = remember { Animatable(0f) }
     // ⚠️ 这里**不要**自己去读 `Settings.Global.ANIMATOR_DURATION_SCALE` 再乘一遍时长:
     //   Compose 的 `WindowRecomposer` 已经把系统这个倍率注入 `MotionDurationScale`,
@@ -151,36 +174,75 @@ fun ChuangdangBattleScreen(
     //   · 系统倍率 = 0(开发者选项关掉动画)→ 框架把动画时长归一为 0,动作直接不播(符合无障碍预期)。
     LaunchedEffect(fxTick) {
         if (fxTick == 0) return@LaunchedEffect
-        val (outMs, backMs) = when (fxKind) {
-            CdFx.Lunge -> 160 to 140      // 出手:冲出去快、收回来略慢
-            CdFx.Block -> 110 to 110      // 格挡:短促一顿
-            CdFx.TakeHit -> 120 to 170    // 受击:被打退得快、晃回来更慢
+        fx.snapTo(0f)
+        when (fxKind) {
+            // 出手:冲出去快、收回来略慢(怪物挨打后仰是**同一拍被动发生**的,见下面映射表)
+            CdFx.PandaStrike -> {
+                fx.animateTo(1f, tween(160, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(140, easing = LinearOutSlowInEasing))
+            }
+            // 被格挡:短促一顿,没有后半程
+            CdFx.PandaGraze -> {
+                fx.animateTo(1f, tween(110, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(110, easing = LinearOutSlowInEasing))
+            }
+            // 怪物扑击(反击起手 / 防御题起手):扑得快、收得慢一点
+            CdFx.MonsterJab -> {
+                fx.animateTo(1f, tween(140, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(200, easing = LinearOutSlowInEasing))
+            }
+            // 扑上来 → **被挡回**(负半程)→ 归位:熊猫在这里"顶了一下又被顶退"
+            CdFx.MonsterBlocked -> {
+                fx.animateTo(1f, tween(130, easing = FastOutSlowInEasing))
+                fx.animateTo(-0.5f, tween(90, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(180, easing = LinearOutSlowInEasing))
+            }
+            // 扑上来命中:熊猫被打退得快、晃回来更慢
+            CdFx.MonsterHits -> {
+                fx.animateTo(1f, tween(120, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(170, easing = LinearOutSlowInEasing))
+            }
             CdFx.None -> return@LaunchedEffect
         }
-        fx.snapTo(0f)
-        fx.animateTo(1f, tween(outMs, easing = FastOutSlowInEasing))
-        fx.animateTo(0f, tween(backMs, easing = LinearOutSlowInEasing))
     }
     // 位移/缩放映射:一次性动画只碰 offset / scale,**不动尺寸、不动文字、不整屏震**。
+    //   系数 × 冲量 = 这一拍的位移;冲量走负半程时系数不变,符号自然翻转("被顶退/被挡回")。
     val pandaFxDp = when (fxKind) {
-        CdFx.Lunge -> 14f * fx.value
-        CdFx.Block -> 4f * fx.value
-        CdFx.TakeHit -> -10f * fx.value
+        CdFx.PandaStrike -> 14f * fx.value        // 出手前冲
+        CdFx.PandaGraze -> 4f * fx.value          // 被格挡:只前顶一点点
+        CdFx.MonsterJab -> 0f                     // 怪物扑击时熊猫不动
+        CdFx.MonsterBlocked -> 4f * fx.value      // +4dp 顶住 → 负半程 −2dp 被顶退(用户 3a)
+        CdFx.MonsterHits -> -10f * fx.value       // 受击后退(用户 3b:保持 -10dp)
         CdFx.None -> 0f
     }
-    val monsterFxDp = if (fxKind == CdFx.Lunge) -8f * fx.value else 0f
+    val monsterFxDp = when (fxKind) {
+        CdFx.PandaStrike -> -8f * fx.value        // 挨打后仰(被动)
+        CdFx.PandaGraze -> 0f                     // 没打中,怪物不动
+        CdFx.MonsterJab -> -12f * fx.value        // 扑击(用户 2a)
+        CdFx.MonsterBlocked -> -12f * fx.value    // 扑击 → 负半程 +6dp **被挡回**(用户 2a)
+        CdFx.MonsterHits -> -12f * fx.value       // 扑击命中(用户 2a)
+        CdFx.None -> 0f
+    }
     val pandaScaleX = when (fxKind) {
-        CdFx.Lunge -> 1f + 0.06f * fx.value
-        CdFx.Block -> 1f + 0.02f * fx.value
-        CdFx.TakeHit -> 1f + 0.02f * fx.value
+        CdFx.PandaStrike -> 1f + 0.06f * fx.value
+        CdFx.PandaGraze -> 1f + 0.02f * fx.value
+        CdFx.MonsterJab -> 1f
+        CdFx.MonsterBlocked -> 1f + 0.02f * fx.value
+        CdFx.MonsterHits -> 1f + 0.02f * fx.value
         CdFx.None -> 1f
     }
-    val pandaScaleY = if (fxKind == CdFx.TakeHit) 1f - 0.04f * fx.value else pandaScaleX
-    // ⚠️ 只在"动画进行中"才挂 graphicsLayer。
+    // 只有"挨实了"才压扁(压扁=受击的读法;挡下来不该压扁)
+    val pandaScaleY = if (fxKind == CdFx.MonsterHits) 1f - 0.04f * fx.value else pandaScaleX
+    // ⚠️ 只在"这一侧真的要动"时才挂 graphicsLayer。
     //   实测:常挂着这一层,静止时也会让熊猫边缘出现 1px 级抖动(两帧静止截图的差异 7.9k px,
     //   而同屏怪物是 **0** px)—— 那会让"素材渲染正确"这条既有结论变成"看起来对"。
     //   条件挂载后,静息态的绘制与加动画之前**逐像素一致**。
-    val fxActive = fx.value > 0f
+    //   §9 两点改动:
+    //     · 判据从 `> 0f` 改成 `!= 0f` —— 被挡回那半程冲量是**负的**,用 `> 0f` 会提前摘图层;
+    //     · 拆成**两侧各自**判断 —— 怪物扑击时熊猫本来就不动,那一拍熊猫不该挂图层
+    //       (这样"1b/1c 时熊猫逐像素不动"才是一条能验证的结论,而不是"差不多没动")。
+    val pandaActive = pandaFxDp != 0f || pandaScaleX != 1f
+    val monsterActive = monsterFxDp != 0f
 
     // 2026-09-19 §6:中途返回时弹确认框(文档 §6.4"主动撤退:弹窗说明后果,确认后结束本次出发")。
     //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
@@ -253,18 +315,26 @@ fun ChuangdangBattleScreen(
      * 2026-09-19 §15:入参从"选了第几项"改成"这次答得对不对" —— 三种交互各自判定
      * (点选比下标、排序比次序、分类逐条比类别),状态机这层不需要知道是哪一种。
      */
+    /**
+     * 2026-09-20 §8/§9:触发一次交手动画。
+     *
+     * 为什么是"种类 + 计数器"两个状态(而不是只改种类):同一种动作**连续触发**时
+     * (例如连打两下都是怪物扑击),只改种类不会让 `LaunchedEffect` 重跑 —— 必须让 tick 变。
+     *
+     * 用法口径(用户 1a/1b/1c):
+     *   · 进攻命中 → `PandaStrike`;进攻被格挡 → `PandaGraze`;进攻**答错** → `MonsterJab`(怪物反击起手);
+     *   · 防御题**出现** → `MonsterJab`(在 `advance()` 里,不与作答绑定);
+     *   · 防御答对 → `MonsterBlocked`(扑上来被挡回);防御答错 → `MonsterHits`(扑上来命中)。
+     */
+    val cue: (CdFx) -> Unit = { kind ->
+        fxKind = kind
+        fxTick += 1
+    }
+
     fun answer(isCorrect: Boolean) {
         if (lastCorrect != null) return
         if (phase != CdPhase.Attack && phase != CdPhase.Defense) return
         lastCorrect = isCorrect
-
-        // 2026-09-20 §8:顺手决定这一拍放哪种动画(用户口径:
-        //   进攻命中 → 出手;防御答对 → 挡一下;**防御答错 → 熊猫受击**;
-        //   进攻答错只是"转入防御题",本身不出手,故不放动画。)
-        fun cue(kind: CdFx) {
-            fxKind = kind
-            fxTick += 1
-        }
 
         if (phase == CdPhase.Attack) {
             if (isCorrect) {
@@ -288,13 +358,14 @@ fun ChuangdangBattleScreen(
                     }
                 }
                 // 被格挡时不放"出手+受击"(那会谎报战果),只给熊猫一个极小的前顶示意
-                cue(if (blocked) CdFx.Block else CdFx.Lunge)
+                cue(if (blocked) CdFx.PandaGraze else CdFx.PandaStrike)
                 detail = question.explanation
                 pendingDefense = false
                 phase = if (enemyHearts <= 0) CdPhase.Victory else CdPhase.Resolved
             } else {
                 // ③ 进攻答错 → 怪物攻击,稍后给一次防御机会
                 headline = "答错了,怪物反击!"
+                cue(CdFx.MonsterJab)   // §9 / 用户 1b:面板既然写着"怪物反击",怪物就得真的扑一下
                 detail = question.explanation
                 pendingDefense = true
                 phase = CdPhase.Resolved
@@ -303,12 +374,12 @@ fun ChuangdangBattleScreen(
             // ④ 防御作答
             if (isCorrect) {
                 headline = "挡下了!"
-                cue(CdFx.Block)
+                cue(CdFx.MonsterBlocked)   // §9 / 用户 1a+2a+3a:怪物扑上来被挡回,熊猫顶一下再被顶退
                 detail = question.explanation
             } else {
                 playerHearts -= 1
                 headline = "防御失败,-1 心"
-                cue(CdFx.TakeHit)   // 这一幕挨打的是熊猫(玩家掉心)
+                cue(CdFx.MonsterHits)   // §9:怪物扑上来命中,挨打的是熊猫(玩家掉心)
                 detail = question.explanation
             }
             pendingDefense = false
@@ -339,6 +410,10 @@ fun ChuangdangBattleScreen(
                     defenseIdx += 1
                     pendingDefense = false
                     phase = CdPhase.Defense
+                    // §9 / 用户 1c:防御题**出现**时,怪物先扑一次(蓄势)—— 与"作答结果"无关,
+                    //   所以它不在 answer() 里,而在这次相位切换上。一次性动画在题目底下播完即止,
+                    //   不加"动画放完才能作答"的门(§8 约束三)。
+                    cue(CdFx.MonsterJab)
                 } else {
                     attackIdx += 1
                     phase = CdPhase.Attack
@@ -436,13 +511,13 @@ fun ChuangdangBattleScreen(
                     Image(
                         painter = painterResource(R.drawable.img_chuangdang_xiongmaoshaoxia),
                         contentDescription = "熊猫少侠",
-                        // 2026-09-20 §8:出手 / 格挡 / 受击的位移与缩放都走 graphicsLayer ——
+                        // 2026-09-20 §8/§9:出手 / 格挡 / 受击 / 被顶退的位移与缩放都走 graphicsLayer ——
                         //   它**只影响绘制,不影响布局**(槽位 52×96dp 不变),所以不会把旁边的心/文字挤动。
-                        //   且**只在动画期间挂载**(见 fxActive 的注释):静息态逐像素与加动画前一致。
+                        //   且**只在熊猫这一侧真的要动时挂载**(见 pandaActive 的注释):静息态逐像素与加动画前一致。
                         modifier = Modifier
                             .size(width = 52.dp, height = 96.dp)
                             .then(
-                                if (fxActive) Modifier.graphicsLayer {
+                                if (pandaActive) Modifier.graphicsLayer {
                                     translationX = pandaFxDp.dp.toPx()
                                     scaleX = pandaScaleX
                                     scaleY = pandaScaleY
@@ -480,12 +555,12 @@ fun ChuangdangBattleScreen(
                     CdMonster(
                         glyph = stage.enemyGlyph,
                         hitCount = CD_MAX_HEARTS - enemyHearts,
-                        // 2026-09-20 §8:挨打时向后一顿(只挪绘制,不挪布局;命中叠加层跟着一起动)
-                        //   同样**只在动画期间挂载** graphicsLayer,静息态不受影响。
+                        // 2026-09-20 §8/§9:挨打后仰、以及**主动扑击 / 被挡回**,都只挪绘制不挪布局
+                        //   (命中叠加层跟着一起动);**只在怪物这一侧真的要动时挂载**,静息态不受影响。
                         modifier = Modifier
                             .size(width = 132.dp, height = 96.dp)
                             .then(
-                                if (fxActive) Modifier.graphicsLayer {
+                                if (monsterActive) Modifier.graphicsLayer {
                                     translationX = monsterFxDp.dp.toPx()
                                 } else Modifier,
                             ),
