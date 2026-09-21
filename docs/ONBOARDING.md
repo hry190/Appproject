@@ -591,14 +591,21 @@ chore(<scope>): <description>
 
 ## 10. 测试
 
-### 10.1 现状(2026-09-10)
+### 10.1 现状(2026-09-21)
 
 | 维度 | 状态 |
 | |---|
-| 单元测试文件数 | 3(`ConferenceModelsTest.kt`、`RoutesTest.kt`、`ResponsiveDesignCanvasTest.kt`) |
+| 单元测试文件数 | 5(`luggage/ConferenceModelsTest.kt`、`luggage/CreationToolCallModelsTest.kt`、`nav/RoutesTest.kt`、`nav/HoushanNavigationTest.kt`、`ui/components/ResponsiveDesignCanvasTest.kt`);共 **16 条**,`./gradlew :app:testDebugUnitTest` 全过 |
 | 测试覆盖 | ~0% |
+| 仪器测试(`androidTest/`)| ❌ **目录不存在**;`build.gradle.kts` 未引任何 Compose UI 测试依赖 |
 
 ⚠ **V2 审计重大发现**:**新加的整条学习/滚轮导航链路 0 行为测试**。一个 click → navigation 测试就能逮到 PendingUnlock dead button 这种 bug。
+
+> 📌 2026-09-21 新增的 `HoushanNavigationTest` 覆盖**后山 1~11 的跳转声明**(路由常量 / `composable` 注册 /
+> `onOpenHoushanN` 与 `Routes.ShilianM` 的 N==M 对应 / 无死页 / `onBack` 存在)。
+> ⚠️ 它**不是** §10.2 第 1 条要求的那种 click 测试 —— 它是**源码级静态校验**(不实例化 Composable、
+> 不给 `NavHostController` 发点击),所以**测不到"点了按钮但闭包忘了 `navigate`"**。
+> 要覆盖到那一层需要 `androidx.navigation:navigation-testing`(`TestNavHostController`),当前**未引入**。
 
 ### 10.2 必须测的事(优先级)
 

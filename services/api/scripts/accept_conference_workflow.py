@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,11 +12,13 @@ import httpx
 
 
 class ConferenceAcceptance:
-    def __init__(self, client, internal_token: str) -> None:
+    def __init__(self, client, internal_token: str, video_path: Path | None = None) -> None:
         self.client = client
         self.internal = {"X-Internal-Token": internal_token}
         self.events: list[dict] = []
         self.key = str(uuid.uuid4())
+        self.video_path = video_path
+        self.preview_asset_id: str | None = None
 
     def call(self, method, path, headers=None, body=None, expected=200, code=None):
         response = self.client.request(method, path, headers=headers, json=body)
@@ -36,12 +39,56 @@ class ConferenceAcceptance:
         }, expected=201)
         return {"Authorization": f"Bearer {data['tokens']['access_token']}"}
 
+    def upload_video(self, author: dict[str, str]) -> str:
+        assert self.video_path is not None
+        raw = self.video_path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        intent = self.call("POST", "/v1/uploads/intents", author, {
+            "purpose": "CREATION_LAYER",
+            "filename": self.video_path.name,
+            "declared_mime": "video/mp4",
+            "byte_size": len(raw),
+            "sha256": digest,
+        }, expected=201)
+        response = self.client.put(
+            f"/v1/uploads/{intent['id']}/object",
+            headers={**author, "Content-Type": "video/mp4"},
+            content=raw,
+        )
+        self.events.append({"method": "PUT", "path": f"/v1/uploads/{intent['id']}/object",
+                            "status": response.status_code, "expected": 204})
+        assert response.status_code == 204, response.text
+        asset = self.call(
+            "POST",
+            f"/v1/uploads/{intent['id']}/complete",
+            {**author, "Idempotency-Key": f"video-{intent['id']}"},
+            {"byte_size": len(raw), "sha256": digest},
+            expected=202,
+        )
+        processed = self.call(
+            "POST",
+            f"/v1/internal/media-assets/{asset['id']}/process",
+            self.internal,
+            {"content_safety_outcome": "PASSED", "aigc_detected": True},
+        )
+        assert processed["status"] == "READY"
+        assert processed["actual_mime"] == "video/mp4"
+        assert processed["duration_ms"] == 8_000
+        return processed["id"]
+
     def version(self, author, project, parent=None):
+        if self.preview_asset_id:
+            layers = [{"layer_id": "video-main", "kind": "IMAGE", "name": "机关蝶动态作品",
+                       "z_index": 0, "asset_id": self.preview_asset_id, "aigc": False}]
+        else:
+            layers = [{"layer_id": "title", "kind": "TEXT", "name": "结构说明", "z_index": 0,
+                       "text_content": "缩短传动轴，减少晃动" if parent else "机关结构示意"}]
         return self.call("POST", f"/v1/creation-projects/{project}/versions", author, {
             "parent_version_id": parent,
-            "layers": [{"layer_id": "title", "kind": "TEXT", "name": "结构说明", "z_index": 0,
-                        "text_content": "缩短传动轴，减少晃动" if parent else "机关结构示意"}],
-            "canvas_width": 800, "canvas_height": 600,
+            "layers": layers,
+            "canvas_width": 720 if self.preview_asset_id else 800,
+            "canvas_height": 1280 if self.preview_asset_id else 600,
+            "preview_asset_id": self.preview_asset_id,
             "change_summary": "根据评招改善结构" if parent else "完成首版结构图",
             "modification_reason": "采纳同门的结构建议" if parent else None,
         }, expected=201)
@@ -49,19 +96,38 @@ class ConferenceAcceptance:
     def prepare(self, author_phone, reviewer_phone, age_band="ADULT", initialize_controls=False):
         author = self.register(author_phone, age_band)
         reviewer = self.register(reviewer_phone)
+        if self.video_path is not None:
+            profile = self.call("GET", "/v1/profile", author)
+            self.call("PATCH", "/v1/profile", author, {
+                "nickname": "阿昭", "row_version": profile["row_version"],
+            })
+            self.preview_asset_id = self.upload_video(author)
         project = self.call("POST", "/v1/creation-projects", author, {
-            "title": "双账号验收·机关结构图", "media_type": "ILLUSTRATION",
+            "title": "会发光的机关蝶" if self.video_path else "双账号验收·机关结构图",
+            "description": (
+                "我先拆出翅膀结构，再用光影让它像真的一样飞起来。"
+                if self.video_path else None
+            ),
+            "media_type": "VIDEO" if self.video_path else "ILLUSTRATION",
             "default_visibility": "PRIVATE"}, expected=201)["id"]
         version = self.version(author, project)
         submission_path = f"/v1/creation-projects/{project}/submissions"
-        submission_body = {"creation_version_id": version["id"], "visibility": "COMMUNITY"}
+        submission_body = {
+            "creation_version_id": version["id"],
+            "visibility": "COMMUNITY",
+            "conference_category": "ART" if self.video_path else "SCIENCE",
+        }
         submit_headers = {**author, "Idempotency-Key": self.key}
         self.call("POST", submission_path, submit_headers, submission_body, 409,
                   "SUBMISSION_STAGE_INVALID")
         current = self.call("GET", f"/v1/creation-projects/{project}", author)
         method = self.call("PUT", f"/v1/creation-projects/{project}/method", author, {
-            "name": "结构图创作", "goal": "准确说明机关结构", "audience": ["同门"],
-            "format": "图文", "steps": ["构思", "制作", "测试"],
+            "name": "机关蝶动态创作" if self.video_path else "结构图创作",
+            "goal": "用结构与光影呈现机关蝶" if self.video_path else "准确说明机关结构",
+            "audience": ["同门"],
+            "format": "竖屏视频" if self.video_path else "图文",
+            "steps": ["拆解翅膀", "制作动态", "光影测试"] if self.video_path else ["构思", "制作", "测试"],
+            "source_asset_ids": [self.preview_asset_id] if self.preview_asset_id else [],
             "expected_revision": current["row_version"],
         })
         revision = method["project_revision"]
@@ -82,15 +148,37 @@ class ConferenceAcceptance:
                   "SUBMISSION_INCOMPLETE")
         prefix = f"/v1/creation-versions/{version['id']}"
         self.call("PUT", prefix + "/learning-card", author, {
-            "manual_page_ids": [], "method_summary": "先拆解结构再绘制示意图",
+            "manual_page_ids": [],
+            "method_summary": "创意与选择由我完成 · AI辅助构图" if self.video_path else "先拆解结构再绘制示意图",
             "unresolved_questions": [], "questions_confirmed": True})
+        provenance_items = [{
+            "item_type": "HUMAN_CONTRIBUTION",
+            "contribution_type": "创意与选择" if self.video_path else "构思",
+            "description": "本人完成主题构思、动态节奏与最终发布选择" if self.video_path else "本人构图",
+            "license_type": "ORIGINAL",
+        }]
+        if self.video_path:
+            provenance_items.append({
+                "item_type": "AI_CONTRIBUTION",
+                "contribution_type": "AI辅助构图",
+                "description": "AI辅助视觉构图，动态与发布选择由本人完成",
+                "license_type": "NOT_APPLICABLE",
+                "ai_provider": "local-motion-renderer",
+                "ai_model": "mechanical-butterfly-motion-v1",
+                "ai_tool_action": "image-to-video",
+                "prompt_summary": "机关蝶、竹林工坊、金色光影",
+                "output_asset_id": self.preview_asset_id,
+                "user_modified": True,
+            })
         self.call("PUT", prefix + "/provenance-manifest", author, {
-            "human_contribution_summary": "本人构思并编写结构说明", "ai_assistance_used": False,
-            "aigc_label_declared": False, "unresolved_rights": False,
-            "items": [{"item_type": "HUMAN_CONTRIBUTION", "contribution_type": "构思",
-                       "description": "本人构图", "license_type": "ORIGINAL"}]})
+            "human_contribution_summary": "创意、结构拆解与最终选择由本人完成",
+            "ai_assistance_used": bool(self.video_path),
+            "ai_contribution_summary": "AI辅助构图与光影表达" if self.video_path else None,
+            "aigc_label_declared": bool(self.video_path), "unresolved_rights": False,
+            "items": provenance_items})
         self.call("PUT", prefix + "/seal-check", author, {
-            "work_description": "介绍机关结构的图文作品", "learning_reflection": "学会拆分结构",
+            "work_description": "机关蝶在竹林工坊中舒展翅膀的动态作品" if self.video_path else "介绍机关结构的图文作品",
+            "learning_reflection": "学会结合结构拆解和光影表现" if self.video_path else "学会拆分结构",
             "next_improvement": "根据反馈改善稳定性", "identity_privacy_confirmed": True,
             "contact_privacy_confirmed": True, "portrait_rights_confirmed": True})
         if age_band != "ADULT":
@@ -166,12 +254,24 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--author-phone", default="13990801001")
     parser.add_argument("--reviewer-phone", default="13990801002")
+    parser.add_argument(
+        "--video",
+        type=Path,
+        help="Optional local H.264 MP4 used to seed the approved mechanical-butterfly work",
+    )
     args = parser.parse_args()
     parsed = urlparse(args.base_url)
     if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost"}:
         parser.error("Only a local disposable development server is supported")
     with httpx.Client(base_url=args.base_url, timeout=30) as client:
-        run = ConferenceAcceptance(client, "dev-internal-worker-token-change-me-123456")
+        video_path = args.video.resolve() if args.video else None
+        if video_path is not None and not video_path.is_file():
+            parser.error(f"Video does not exist: {video_path}")
+        run = ConferenceAcceptance(
+            client,
+            "dev-internal-worker-token-change-me-123456",
+            video_path=video_path,
+        )
         setup = run.prepare(args.author_phone, args.reviewer_phone)
         result = {"project_id": setup["project"], "publication_id": setup["publication"]}
         if not args.prepare_only:

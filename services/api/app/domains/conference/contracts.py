@@ -59,6 +59,13 @@ class ConferenceMatchQueueState(str, Enum):
     EXITED = "EXITED"
 
 
+class ConferenceMatchQueuePhase(str, Enum):
+    IDLE = "IDLE"
+    JOINED = "JOINED"
+    FILTERING = "FILTERING"
+    LOCKED = "LOCKED"
+
+
 class ConferenceUserEvaluationKind(str, Enum):
     SELF = "SELF"
     PEER = "PEER"
@@ -75,6 +82,23 @@ class ConferenceMatchOutcome(str, Enum):
     LOSE = "LOSE"
     TIE = "TIE"
     ENDED_WITHOUT_RESULT = "ENDED_WITHOUT_RESULT"
+
+
+class ConferenceMatchHistoryOutcome(str, Enum):
+    WIN = "WIN"
+    LOSE = "LOSE"
+    TIE = "TIE"
+
+
+class ConferenceMatchReflectionStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+
+
+class ConferenceMatchJudgmentStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    NOT_REQUIRED = "NOT_REQUIRED"
 
 
 class ConferenceReviewCreate(ContractModel):
@@ -208,6 +232,11 @@ class ConferenceCollectionListPublic(ContractModel):
     items: list[ConferenceCollectionPublic]
 
 
+class ConferenceLikePublic(ContractModel):
+    publication_id: uuid.UUID
+    liked_at: datetime
+
+
 class ConferenceDerivativeRequestCreate(ContractModel):
     source_publication_id: uuid.UUID
     requested_use: str = Field(min_length=1, max_length=1000)
@@ -273,11 +302,26 @@ class ConferenceMatchJoin(ContractModel):
     manual_page_id: uuid.UUID
 
 
+class ConferenceMatchOpponentPublic(ContractModel):
+    alias: str
+    avatar_key: str
+    age_band_label: str
+    stage_label: str
+
+
 class ConferenceMatchQueuePublic(ContractModel):
     queue_id: uuid.UUID | None
     status: ConferenceMatchQueueState
+    phase: ConferenceMatchQueuePhase
     manual_page_id: uuid.UUID | None
+    manual_title: str | None
+    manual_page_no: int | None
     match_id: uuid.UUID | None
+    match_code: str | None
+    pool_size: int = Field(ge=0)
+    wait_seconds: int = Field(ge=0)
+    server_time: datetime
+    anonymous_opponent: ConferenceMatchOpponentPublic | None
     joined_at: datetime | None
     expires_at: datetime | None
     updated_at: datetime | None
@@ -510,6 +554,38 @@ class ConferenceMatchResultPublic(ContractModel):
     participants: list[ConferenceMatchParticipantResultPublic]
     my_reflection: ConferenceMatchReflectionPublic | None
     ended_at: datetime | None
+
+
+class ConferenceMatchRecordSummaryPublic(ContractModel):
+    total: int = Field(ge=0)
+    wins: int = Field(ge=0)
+    ties: int = Field(ge=0)
+    pending_reflections: int = Field(ge=0)
+
+
+class ConferenceMatchRecordPublic(ContractModel):
+    match_id: uuid.UUID
+    manual_id: uuid.UUID
+    manual_title: str
+    manual_page_no: int
+    status: ConferenceMatchStatus
+    outcome: ConferenceMatchOutcome
+    my_score: float | None
+    opponent_score: float | None
+    anonymous_opponent: ConferenceMatchOpponentPublic
+    judgment_status: ConferenceMatchJudgmentStatus
+    reflection_status: ConferenceMatchReflectionStatus
+    created_at: datetime
+    ended_at: datetime | None
+
+
+class ConferenceMatchRecordListPublic(ContractModel):
+    items: list[ConferenceMatchRecordPublic]
+    summary: ConferenceMatchRecordSummaryPublic
+    page: int = Field(ge=1)
+    limit: int = Field(ge=1, le=50)
+    total: int = Field(ge=0)
+    has_more: bool
 
 
 class ConferenceLetterPublic(ContractModel):

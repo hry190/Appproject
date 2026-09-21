@@ -66,9 +66,66 @@ def test_production_configuration_accepts_explicit_secure_values() -> None:
         minio_secret_key="production-minio-secret-value",
         internal_worker_token="production-internal-worker-token-long-enough-123",
         image_generation_provider="disabled",
+        conversation_coach_provider="deepseek",
+        deepseek_api_key="test-production-deepseek-key",
+        conversation_coach_model="deepseek-vision-model",
         conference_judge_provider="disabled",
     )
     assert settings.environment == "production"
+
+
+def test_production_deepseek_conversation_requires_its_own_key() -> None:
+    with pytest.raises(ValidationError, match="DeepSeek API key"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            database_url="postgresql+psycopg://app:secret@db/app",
+            allowed_hosts=["api.example.test"],
+            jwt_secret="production-jwt-secret-that-is-long-and-random-enough",
+            phone_encryption_key=Fernet.generate_key().decode(),
+            phone_lookup_key="production-phone-lookup-key-at-least-32-characters",
+            verification_code_key="production-code-digest-key-at-least-32-characters",
+            fixed_verification_code=None,
+            sms_provider="tencent",
+            media_storage_provider="minio",
+            media_virus_scanner="clamav",
+            minio_secret_key="production-minio-secret-value",
+            internal_worker_token="production-internal-worker-token-long-enough-123",
+            image_generation_provider="disabled",
+            conversation_coach_provider="deepseek",
+            conference_judge_provider="disabled",
+        )
+
+
+def test_production_volcengine_image_generation_requires_key_and_https() -> None:
+    secure = {
+        "environment": "production",
+        "database_url": "postgresql+psycopg://app:secret@db/app",
+        "allowed_hosts": ["api.example.test"],
+        "jwt_secret": "production-jwt-secret-that-is-long-and-random-enough",
+        "phone_encryption_key": Fernet.generate_key().decode(),
+        "phone_lookup_key": "production-phone-lookup-key-at-least-32-characters",
+        "verification_code_key": "production-code-digest-key-at-least-32-characters",
+        "fixed_verification_code": None,
+        "sms_provider": "tencent",
+        "media_storage_provider": "minio",
+        "media_virus_scanner": "clamav",
+        "minio_secret_key": "production-minio-secret-value",
+        "internal_worker_token": "production-internal-worker-token-long-enough-123",
+        "image_generation_provider": "volcengine",
+        "conversation_coach_provider": "deepseek",
+        "deepseek_api_key": "test-production-deepseek-key",
+        "conference_judge_provider": "disabled",
+    }
+    with pytest.raises(ValidationError, match="Volcengine image generation"):
+        Settings(_env_file=None, **secure)
+    with pytest.raises(ValidationError, match="Volcengine Ark API must use HTTPS"):
+        Settings(
+            _env_file=None,
+            **secure,
+            volcengine_ark_api_key="test-production-volcengine-key",
+            volcengine_ark_base_url="http://ark.example.test/api/v3",
+        )
 
 
 def test_production_conference_judge_rejects_development_and_plain_http() -> None:
@@ -87,6 +144,8 @@ def test_production_conference_judge_rejects_development_and_plain_http() -> Non
         "minio_secret_key": "production-minio-secret-value",
         "internal_worker_token": "production-internal-worker-token-long-enough-123",
         "image_generation_provider": "disabled",
+        "conversation_coach_provider": "openai",
+        "openai_api_key": "test-production-openai-key",
     }
     with pytest.raises(ValidationError, match="conference judging"):
         Settings(_env_file=None, **secure)

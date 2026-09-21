@@ -294,6 +294,106 @@ class LuggageApi(
         CreationIntentAnalysisDto::class.java,
     )
 
+    suspend fun startCreationConversation(
+        accessToken: String,
+        payload: CreationConversationStartDto,
+        idempotencyKey: String,
+    ): CreationConversationDto = requestJson(
+        requestBuilder("/v1/creation-conversations:start")
+            .authorized(accessToken)
+            .header("Idempotency-Key", idempotencyKey)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun getCreationConversation(
+        accessToken: String,
+        projectId: String,
+    ): CreationConversationDto = get(
+        accessToken,
+        "/v1/creation-projects/$projectId/conversation",
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun resumeCreationConversation(
+        accessToken: String,
+        projectId: String,
+    ): CreationConversationDto = requestJson(
+        requestBuilder("/v1/creation-projects/$projectId/conversation:resume")
+            .authorized(accessToken)
+            .post(ByteArray(0).toRequestBody(null))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun addCreationConversationMessage(
+        accessToken: String,
+        projectId: String,
+        payload: CreationConversationMessageCreateDto,
+        idempotencyKey: String,
+    ): CreationConversationDto = requestJson(
+        requestBuilder("/v1/creation-projects/$projectId/conversation/messages")
+            .authorized(accessToken)
+            .header("Idempotency-Key", idempotencyKey)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun acceptCreationConversationSuggestion(
+        accessToken: String,
+        projectId: String,
+        messageId: String,
+        payload: CreationConversationActionDto,
+    ): CreationConversationDto = requestJson(
+        requestBuilder(
+            "/v1/creation-projects/$projectId/conversation/suggestions/$messageId:accept"
+        )
+            .authorized(accessToken)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun generateFromCreationConversation(
+        accessToken: String,
+        projectId: String,
+        payload: CreationConversationGenerateDto,
+        idempotencyKey: String,
+    ): CreationConversationGenerationDto = requestJson(
+        requestBuilder("/v1/creation-projects/$projectId/conversation:generate")
+            .authorized(accessToken)
+            .header("Idempotency-Key", idempotencyKey)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationGenerationDto::class.java,
+    )
+
+    suspend fun returnCreationConversation(
+        accessToken: String,
+        projectId: String,
+        payload: CreationConversationActionDto,
+    ): CreationConversationDto = requestJson(
+        requestBuilder("/v1/creation-projects/$projectId/conversation:return")
+            .authorized(accessToken)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
+    suspend fun saveCreationConversationResult(
+        accessToken: String,
+        projectId: String,
+        payload: CreationConversationActionDto,
+    ): CreationConversationDto = requestJson(
+        requestBuilder("/v1/creation-projects/$projectId/conversation:save-result")
+            .authorized(accessToken)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build(),
+        CreationConversationDto::class.java,
+    )
+
     suspend fun createMediaUploadIntent(
         accessToken: String,
         payload: MediaUploadIntentCreateDto,
@@ -671,6 +771,15 @@ class LuggageApi(
         PublicationDto::class.java,
     )
 
+    suspend fun getConferenceCategorySuggestions(
+        accessToken: String,
+        projectId: String,
+    ): ConferenceCategorySuggestionListDto = get(
+        accessToken,
+        "/v1/creation-projects/$projectId/conference-category-suggestions",
+        ConferenceCategorySuggestionListDto::class.java,
+    )
+
     suspend fun getModerationCase(
         accessToken: String,
         publicationId: String,
@@ -799,11 +908,18 @@ class LuggageApi(
     suspend fun getConferenceFeed(
         accessToken: String,
         cursor: String? = null,
+        category: String? = null,
     ): ConferenceFeedDto = get(
         accessToken,
         "/v1/conference/feed",
         ConferenceFeedDto::class.java,
-        mapOf("cursor" to cursor),
+        mapOf("cursor" to cursor, "category" to category),
+    )
+
+    suspend fun getMyConferenceWorks(accessToken: String): ConferenceFeedDto = get(
+        accessToken,
+        "/v1/conference/me/works",
+        ConferenceFeedDto::class.java,
     )
 
     suspend fun getConferenceWork(
@@ -814,6 +930,30 @@ class LuggageApi(
         "/v1/conference/publications/$publicationId",
         ConferenceWorkDto::class.java,
     )
+
+    suspend fun addConferenceLike(
+        accessToken: String,
+        publicationId: String,
+    ): ConferenceLikeDto = requestJson(
+        requestBuilder("/v1/conference/likes/$publicationId")
+            .authorized(accessToken)
+            .put(ByteArray(0).toRequestBody(null))
+            .build(),
+        ConferenceLikeDto::class.java,
+    )
+
+    suspend fun removeConferenceLike(accessToken: String, publicationId: String) =
+        withContext(Dispatchers.IO) {
+            execute(
+                requestBuilder("/v1/conference/likes/$publicationId")
+                    .authorized(accessToken)
+                    .delete()
+                    .build(),
+            ).use { response ->
+                val body = response.body?.string().orEmpty()
+                if (!response.isSuccessful) throw parseApiError(response.code, body)
+            }
+        }
 
     suspend fun getConferenceReviews(
         accessToken: String,
@@ -979,6 +1119,27 @@ class LuggageApi(
         "/v1/conference/matches/$matchId",
         ConferenceMatchDetailDto::class.java,
     )
+
+    suspend fun getConferenceMatchRecords(
+        accessToken: String,
+        outcome: String?,
+        reflectionStatus: String?,
+        page: Int,
+        limit: Int,
+    ): ConferenceMatchRecordListDto {
+        val params = mutableMapOf(
+            "page" to page.toString(),
+            "limit" to limit.toString(),
+        )
+        outcome?.let { params["outcome"] = it }
+        reflectionStatus?.let { params["reflection_status"] = it }
+        return get(
+            accessToken,
+            "/v1/conference/matches",
+            ConferenceMatchRecordListDto::class.java,
+            params,
+        )
+    }
 
     suspend fun answerConferenceMatch(
         accessToken: String,

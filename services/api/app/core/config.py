@@ -72,6 +72,7 @@ class Settings(BaseSettings):
         ge=1_000_000,
         le=100_000_000,
     )
+    media_max_video_duration_seconds: int = Field(default=60, ge=1, le=600)
     media_upload_ttl_minutes: int = Field(default=15, ge=5, le=60)
     media_download_ttl_minutes: int = Field(default=5, ge=1, le=30)
     # Local/demo storage must still return a browser/Android-readable signed URL.
@@ -93,15 +94,25 @@ class Settings(BaseSettings):
         min_length=32,
     )
 
-    image_generation_provider: Literal["development", "openai", "disabled"] = (
-        "development"
-    )
+    image_generation_provider: Literal[
+        "development", "openai", "volcengine", "disabled"
+    ] = "development"
     image_generation_model: str = "gpt-image-2-2026-04-21"
     image_generation_daily_limit: int = Field(default=6, ge=1, le=50)
     image_generation_max_retries: int = Field(default=2, ge=0, le=5)
     image_generation_timeout_seconds: int = Field(default=180, ge=15, le=600)
     openai_api_key: SecretStr | None = None
     openai_base_url: str = "https://api.openai.com/v1"
+    volcengine_ark_api_key: SecretStr | None = None
+    volcengine_ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
+    volcengine_image_size: str = "2K"
+    volcengine_image_watermark: bool = True
+    deepseek_api_key: SecretStr | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+
+    conversation_coach_provider: Literal["openai", "deepseek", "disabled"] = "disabled"
+    conversation_coach_model: str = "gpt-4.1-mini"
+    conversation_coach_timeout_seconds: int = Field(default=60, ge=5, le=180)
 
     conference_judge_provider: Literal["development", "webhook", "disabled"] = (
         "development"
@@ -133,7 +144,13 @@ class Settings(BaseSettings):
             raise ValueError("fixed_verification_code must contain exactly six digits")
         return value
 
-    @field_validator("openai_api_key", "conference_judge_webhook_token", mode="before")
+    @field_validator(
+        "openai_api_key",
+        "volcengine_ark_api_key",
+        "deepseek_api_key",
+        "conference_judge_webhook_token",
+        mode="before",
+    )
     @classmethod
     def blank_secret_is_none(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
@@ -189,6 +206,33 @@ class Settings(BaseSettings):
             raise ValueError("production image generation cannot use development provider")
         if self.image_generation_provider == "openai" and self.openai_api_key is None:
             raise ValueError("OpenAI image generation requires an API key")
+        if (
+            self.image_generation_provider == "volcengine"
+            and self.volcengine_ark_api_key is None
+        ):
+            raise ValueError("Volcengine image generation requires an API key")
+        if (
+            self.image_generation_provider == "volcengine"
+            and not self.volcengine_ark_base_url.startswith("https://")
+        ):
+            raise ValueError("production Volcengine Ark API must use HTTPS")
+        if self.conversation_coach_provider not in {"openai", "deepseek"}:
+            raise ValueError("production conversation coach must use a real model provider")
+        if (
+            self.conversation_coach_provider == "openai"
+            and self.openai_api_key is None
+        ):
+            raise ValueError("conversation coach requires an OpenAI API key")
+        if (
+            self.conversation_coach_provider == "deepseek"
+            and self.deepseek_api_key is None
+        ):
+            raise ValueError("conversation coach requires a DeepSeek API key")
+        if (
+            self.conversation_coach_provider == "deepseek"
+            and not self.deepseek_base_url.startswith("https://")
+        ):
+            raise ValueError("production DeepSeek API must use HTTPS")
         if self.conference_judge_provider == "development":
             raise ValueError("production conference judging cannot use development provider")
         if self.conference_judge_provider == "webhook":

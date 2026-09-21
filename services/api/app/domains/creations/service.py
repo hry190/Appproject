@@ -19,6 +19,12 @@ from app.domains.learning.models import ManualProgress
 from app.domains.creations.contracts import (
     CreationChangeLogListPublic,
     CreationChangeLogPublic,
+    CreationConversationGenerate,
+    CreationConversationMessageCreate,
+    CreationConversationMessagePublic,
+    CreationConversationPublic,
+    CreationConversationResultAction,
+    CreationConversationStart,
     CreationDisplayStatus,
     CreationIntentAnalysisPublic,
     CreationIntentAnalyze,
@@ -36,6 +42,8 @@ from app.domains.creations.contracts import (
     CreationStageTransition,
     CreationStageTransitionPublic,
     CreationSubmissionCreate,
+    ConferenceCategorySuggestionListPublic,
+    ConferenceCategorySuggestionPublic,
     CreationTestIssuePublic,
     CreationTestIssueResolve,
     CreationTestRecordCreate,
@@ -59,9 +67,23 @@ from app.domains.creations.contracts import (
     ProvenanceManifestPut,
     PublicationPublic,
 )
+from app.domains.creations.conversation_coach import (
+    CoachImage,
+    CoachManual,
+    CoachTurn,
+    ConversationCoach,
+    ConversationCoachContext,
+    ConversationCoachError,
+)
 from app.domains.creations.models import (
+    ConferenceCategory,
     CreationChangeAction,
     CreationChangeLog,
+    CreationConversation,
+    CreationConversationMessage,
+    CreationConversationMessageKind,
+    CreationConversationRole,
+    CreationConversationStatus,
     CreationExportJob,
     CreationIntent,
     CreationIntentStatus,
@@ -73,6 +95,7 @@ from app.domains.creations.models import (
     CreationSealStatus,
     CreationStage,
     CreationStageEvent,
+    CreationSuggestionDecision,
     CreationTestIssue,
     CreationTestRecord,
     CreationTestResult,
@@ -81,6 +104,8 @@ from app.domains.creations.models import (
     CreationToolCallStatus,
     CreationVersion,
     CreationVisibility,
+    ImageGenerationJob,
+    ImageGenerationJobStatus,
     IntentAnalysis,
     LayerKind,
     LearningCard,
@@ -104,6 +129,7 @@ from app.domains.media.references import (
     collect_version_asset_ids,
     is_asset_referenced_by_live_data,
 )
+from app.domains.media.storage import ObjectNotFoundError, ObjectStore
 from app.domains.distribution.models import (
     Classroom,
     ClassroomMembership,
@@ -162,9 +188,18 @@ def _as_utc(value: datetime | None) -> datetime | None:
 
 
 class CreationService:
-    def __init__(self, *, db: Session, request_id: str = "unknown") -> None:
+    def __init__(
+        self,
+        *,
+        db: Session,
+        request_id: str = "unknown",
+        conversation_coach: ConversationCoach | None = None,
+        object_store: ObjectStore | None = None,
+    ) -> None:
         self.db = db
         self.request_id = request_id
+        self.conversation_coach = conversation_coach
+        self.object_store = object_store
 
     def create_project(
         self,
@@ -370,6 +405,568 @@ class CreationService:
             confidence=confidence,
             expires_at=expires_at,
         )
+
+    def start_conversation(
+        self,
+        user: User,
+        payload: CreationConversationStart,
+        idempotency_key: str,
+    ) -> CreationConversationPublic:
+        """Create the project, its internal method, and the first coach turn atomically."""
+        self._require_creation_allowed(user)
+        fingerprint = _fingerprint(payload)
+        replay = self.db.scalar(
+            select(CreationProject).where(
+                CreationProject.owner_user_id == user.id,
+                CreationProject.create_idempotency_key == idempotency_key,
+            )
+        )
+        if replay is not None:
+            if replay.create_request_fingerprint != fingerprint:
+                raise ApiError(409, "IDEMPOTENCY_CONFLICT", "同一次开始操作不能用于不同想法")
+            return self._require_conversation_public(user, replay.id)
+
+        self._validate_source_assets(user, payload.attachment_asset_ids)
+        self._validate_learned_manuals(user, payload.manual_page_ids)
+        if payload.derivative_authorization_id is not None:
+            self._require_active_derivative_authorization(
+                user, payload.derivative_authorization_id
+            )
+
+        idea = " ".join(payload.idea.split())
+        now = utcnow()
+        media_type = (
+            CreationMediaType.COMIC if "漫画" in idea else CreationMediaType.ILLUSTRATION
+        )
+        format_name = "漫画分镜" if media_type == CreationMediaType.COMIC else "图文画面"
+        method_name = "漫画创作整理" if media_type == CreationMediaType.COMIC else "图文创作整理"
+        steps = ["理解想法", "对话完善", "保存草稿", "生成并检查", "由学生确认保存"]
+        intent = CreationIntent(
+            owner_user_id=user.id,
+            text=idea,
+            attachment_refs=[],
+            attachment_asset_ids=[str(item) for item in payload.attachment_asset_ids],
+            manual_page_ids=[str(item) for item in payload.manual_page_ids],
+            resource_links=payload.resource_links,
+            status=CreationIntentStatus.CONVERTED,
+            expires_at=now + timedelta(days=30),
+        )
+        self.db.add(intent)
+        self.db.flush()
+        self.db.add(
+            IntentAnalysis(
+                intent_id=intent.id,
+                schema_version="2.0",
+                suggestion={
+                    "method_draft": {
+                        "name": method_name,
+                        "goal": idea,
+                        "audience": ["同学与老师"],
+                        "format": format_name,
+                        "steps": steps,
+                        "resource_links": payload.resource_links,
+                        "source_asset_ids": [
+                            str(item) for item in payload.attachment_asset_ids
+                        ],
+                        "manual_page_ids": [str(item) for item in payload.manual_page_ids],
+                        "recommended_media_type": media_type.value,
+                    },
+                    "questions": [],
+                },
+                confidence="MEDIUM",
+                safety_flags=self._conversation_safety_flags(idea),
+                model_ref="conversation-rules-v2",
+            )
+        )
+        privacy = self.db.get(PrivacySetting, user.id)
+        project = CreationProject(
+            owner_user_id=user.id,
+            title=(payload.title or self._derive_conversation_title(idea)).strip()[:100],
+            description=idea,
+            media_type=media_type,
+            source_intent_id=intent.id,
+            derivative_authorization_id=payload.derivative_authorization_id,
+            default_visibility=(
+                privacy.default_work_visibility
+                if privacy is not None
+                else CreationVisibility.PRIVATE
+            ),
+            current_stage=CreationStage.DRAFT,
+            stage_updated_at=now,
+            create_idempotency_key=idempotency_key,
+            create_request_fingerprint=fingerprint,
+            row_version=3,
+            created_at=now,
+            updated_at=now,
+        )
+        self.db.add(project)
+        try:
+            self.db.flush()
+        except IntegrityError as exc:
+            self.db.rollback()
+            replay = self.db.scalar(
+                select(CreationProject).where(
+                    CreationProject.owner_user_id == user.id,
+                    CreationProject.create_idempotency_key == idempotency_key,
+                )
+            )
+            if replay is not None and replay.create_request_fingerprint == fingerprint:
+                return self._require_conversation_public(user, replay.id)
+            raise ApiError(409, "CREATION_CONFLICT", "作品开始创建时发生冲突，请重试") from exc
+
+        method = CreationMethod(
+            project_id=project.id,
+            version_number=1,
+            created_by_user_id=user.id,
+            name=method_name,
+            goal=idea,
+            audience=["同学与老师"],
+            format=format_name,
+            steps=steps,
+            resource_links=payload.resource_links,
+            source_asset_ids=[str(item) for item in payload.attachment_asset_ids],
+            manual_page_ids=[str(item) for item in payload.manual_page_ids],
+            created_at=now,
+        )
+        self.db.add(method)
+        self.db.add(
+            CreationStageEvent(
+                project_id=project.id,
+                actor_user_id=user.id,
+                from_stage=CreationStage.IDEATION,
+                to_stage=CreationStage.DRAFT,
+                reason="系统已根据学生想法建立内部创作方案，进入对话完善",
+                created_at=now,
+            )
+        )
+        conversation = CreationConversation(
+            project_id=project.id,
+            owner_user_id=user.id,
+            status=CreationConversationStatus.DIALOGUE,
+            initial_idea=idea,
+            attachment_asset_ids=[str(item) for item in payload.attachment_asset_ids],
+            manual_page_ids=[str(item) for item in payload.manual_page_ids],
+            draft_version_ids=[],
+            saved_version_ids=[],
+            row_version=1,
+            started_at=now,
+            updated_at=now,
+        )
+        self.db.add(conversation)
+        first_message = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.STUDENT,
+            kind=CreationConversationMessageKind.IDEA,
+            content=idea,
+            decision=CreationSuggestionDecision.NONE,
+            created_at=now,
+        )
+        self.db.add(first_message)
+        self.db.flush()
+        coach_message = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.COACH,
+            kind=CreationConversationMessageKind.SUGGESTION,
+            content=self._conversation_coach_reply(
+                project,
+                conversation,
+                action="start",
+            ),
+            decision=CreationSuggestionDecision.PENDING,
+            in_reply_to_id=first_message.id,
+            created_at=now + timedelta(microseconds=1),
+        )
+        self.db.add(coach_message)
+        self.db.flush()
+        conversation.active_suggestion_id = coach_message.id
+        self._log(
+            project,
+            user,
+            CreationChangeAction.PROJECT_CREATED,
+            "根据学生想法创建作品",
+            {"media_type": media_type.value},
+        )
+        self._log(
+            project,
+            user,
+            CreationChangeAction.CONVERSATION_STARTED,
+            "开始与创作教练交流",
+            {
+                "attachment_count": len(payload.attachment_asset_ids),
+                "manual_count": len(payload.manual_page_ids),
+            },
+        )
+        self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def get_conversation(
+        self, user: User, project_id: uuid.UUID
+    ) -> CreationConversationPublic:
+        return self._require_conversation_public(user, project_id)
+
+    def resume_conversation(
+        self, user: User, project_id: uuid.UUID
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        self._require_active(project)
+        conversation = self.db.get(CreationConversation, project.id)
+        if conversation is None:
+            conversation = self._create_legacy_conversation(user, project)
+            self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def add_conversation_message(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        payload: CreationConversationMessageCreate,
+        idempotency_key: str,
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        self._require_active(project)
+        conversation = self.db.scalar(
+            select(CreationConversation)
+            .where(
+                CreationConversation.project_id == project.id,
+                CreationConversation.owner_user_id == user.id,
+            )
+            .with_for_update()
+        )
+        if conversation is None:
+            conversation = self._create_legacy_conversation(user, project)
+            self.db.flush()
+        fingerprint = _fingerprint(payload)
+        replay = self.db.scalar(
+            select(CreationConversationMessage).where(
+                CreationConversationMessage.owner_user_id == user.id,
+                CreationConversationMessage.client_idempotency_key == idempotency_key,
+            )
+        )
+        if replay is not None:
+            if replay.project_id != project.id or replay.request_fingerprint != fingerprint:
+                raise ApiError(409, "IDEMPOTENCY_CONFLICT", "同一次发送不能用于不同消息")
+            return self._conversation_public(project, conversation)
+        if conversation.status == CreationConversationStatus.GENERATING:
+            raise ApiError(409, "CREATION_GENERATING", "作品正在创作，请稍等一下")
+
+        pending = self._pending_conversation_suggestion(conversation)
+        if pending is not None:
+            pending.decision = CreationSuggestionDecision.REPLACED
+        text = " ".join(payload.text.split())
+        student = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.STUDENT,
+            kind=CreationConversationMessageKind.MESSAGE,
+            content=text,
+            decision=CreationSuggestionDecision.NONE,
+            in_reply_to_id=pending.id if pending else None,
+            client_idempotency_key=idempotency_key,
+            request_fingerprint=fingerprint,
+        )
+        self.db.add(student)
+        self.db.flush()
+        coach = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.COACH,
+            kind=CreationConversationMessageKind.SUGGESTION,
+            content=self._conversation_coach_reply(
+                project,
+                conversation,
+                action="student_message",
+            ),
+            decision=CreationSuggestionDecision.PENDING,
+            in_reply_to_id=student.id,
+        )
+        self.db.add(coach)
+        self.db.flush()
+        conversation.active_suggestion_id = coach.id
+        conversation.status = CreationConversationStatus.DIALOGUE
+        conversation.updated_at = utcnow()
+        conversation.row_version += 1
+        project.updated_at = conversation.updated_at
+        self._log(
+            project,
+            user,
+            CreationChangeAction.CONVERSATION_MESSAGE_ADDED,
+            "学生补充创作想法，教练给出新建议",
+            {"message_id": str(student.id)},
+        )
+        self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def accept_conversation_suggestion(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        message_id: uuid.UUID,
+        expected_revision: int,
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        self._require_active(project)
+        conversation = self.db.scalar(
+            select(CreationConversation)
+            .where(CreationConversation.project_id == project.id)
+            .with_for_update()
+        )
+        if conversation is None:
+            raise ApiError(404, "CREATION_CONVERSATION_NOT_FOUND", "还没有可以继续的创作对话")
+        suggestion = self.db.scalar(
+            select(CreationConversationMessage).where(
+                CreationConversationMessage.id == message_id,
+                CreationConversationMessage.project_id == project.id,
+                CreationConversationMessage.owner_user_id == user.id,
+                CreationConversationMessage.role == CreationConversationRole.COACH,
+                CreationConversationMessage.kind == CreationConversationMessageKind.SUGGESTION,
+            )
+        )
+        if suggestion is None:
+            raise ApiError(404, "CREATION_SUGGESTION_NOT_FOUND", "这条建议不存在")
+        if suggestion.decision == CreationSuggestionDecision.ACCEPTED:
+            return self._conversation_public(project, conversation)
+        if conversation.row_version != expected_revision:
+            raise ApiError(409, "VERSION_CONFLICT", "对话已经更新，请刷新后再试")
+        if suggestion.decision != CreationSuggestionDecision.PENDING:
+            raise ApiError(409, "SUGGESTION_NOT_PENDING", "这条建议已经被新的想法替代")
+        suggestion.decision = CreationSuggestionDecision.ACCEPTED
+        next_message = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.COACH,
+            kind=CreationConversationMessageKind.SUGGESTION,
+            content=self._conversation_coach_reply(
+                project,
+                conversation,
+                action="suggestion_accepted",
+            ),
+            decision=CreationSuggestionDecision.PENDING,
+            in_reply_to_id=suggestion.id,
+        )
+        self.db.add(next_message)
+        self.db.flush()
+        conversation.active_suggestion_id = next_message.id
+        conversation.plan_summary = self._build_conversation_plan(conversation)
+        conversation.updated_at = utcnow()
+        conversation.row_version += 1
+        project.updated_at = conversation.updated_at
+        self._log(
+            project,
+            user,
+            CreationChangeAction.CONVERSATION_SUGGESTION_ACCEPTED,
+            "学生采纳教练建议并继续完善",
+            {"suggestion_id": str(suggestion.id)},
+        )
+        self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def return_conversation_to_dialogue(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        payload: CreationConversationResultAction,
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        conversation = self.db.scalar(
+            select(CreationConversation)
+            .where(CreationConversation.project_id == project.id)
+            .with_for_update()
+        )
+        if conversation is None:
+            raise ApiError(404, "CREATION_CONVERSATION_NOT_FOUND", "还没有可以继续的创作对话")
+        if conversation.row_version != payload.expected_revision:
+            raise ApiError(409, "VERSION_CONFLICT", "对话已经更新，请刷新后再试")
+        if conversation.status == CreationConversationStatus.GENERATING:
+            raise ApiError(409, "CREATION_GENERATING", "作品正在创作，请稍等一下")
+        conversation.status = CreationConversationStatus.DIALOGUE
+        conversation.active_suggestion_id = None
+        conversation.updated_at = utcnow()
+        conversation.row_version += 1
+        self.db.add(
+            CreationConversationMessage(
+                project_id=project.id,
+                owner_user_id=user.id,
+                role=CreationConversationRole.COACH,
+                kind=CreationConversationMessageKind.MESSAGE,
+                content="当然可以。告诉我你最想修改的地方，我们继续一起调整。",
+                decision=CreationSuggestionDecision.NONE,
+            )
+        )
+        self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def save_conversation_result(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        payload: CreationConversationResultAction,
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        conversation = self.db.scalar(
+            select(CreationConversation)
+            .where(CreationConversation.project_id == project.id)
+            .with_for_update()
+        )
+        if conversation is None or conversation.result_version_id is None:
+            raise ApiError(409, "CREATION_RESULT_NOT_READY", "作品还没有准备好")
+        result_id = str(conversation.result_version_id)
+        if result_id in conversation.saved_version_ids:
+            return self._conversation_public(project, conversation)
+        if conversation.row_version != payload.expected_revision:
+            raise ApiError(409, "VERSION_CONFLICT", "作品已经更新，请刷新后再试")
+        version = self.db.get(CreationVersion, conversation.result_version_id)
+        if version is None or version.project_id != project.id:
+            raise ApiError(409, "CREATION_RESULT_NOT_READY", "作品结果暂时无法保存")
+        conversation.saved_version_ids = [*conversation.saved_version_ids, result_id]
+        conversation.status = CreationConversationStatus.SAVED
+        conversation.updated_at = utcnow()
+        conversation.row_version += 1
+        project.updated_at = conversation.updated_at
+        self._log(
+            project,
+            user,
+            CreationChangeAction.CONVERSATION_RESULT_SAVED,
+            f"学生确认保存第 {version.version_number} 版作品",
+            {"version_id": result_id},
+            version=version,
+        )
+        self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def prepare_conversation_generation(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        payload: CreationConversationGenerate,
+        idempotency_key: str,
+    ) -> tuple[CreationVersionPublic, str, CreationProjectPublic, bool]:
+        project = self._require_project(user, project_id, for_update=True)
+        self._require_active(project)
+        conversation = self.db.scalar(
+            select(CreationConversation)
+            .where(CreationConversation.project_id == project.id)
+            .with_for_update()
+        )
+        if conversation is None:
+            raise ApiError(404, "CREATION_CONVERSATION_NOT_FOUND", "还没有可以保存的创作对话")
+        fingerprint = _fingerprint(payload)
+        if conversation.last_generation_idempotency_key == idempotency_key:
+            if conversation.last_generation_request_fingerprint != fingerprint:
+                raise ApiError(409, "IDEMPOTENCY_CONFLICT", "同一次保存不能用于不同对话状态")
+            draft_id = uuid.UUID(conversation.draft_version_ids[-1])
+            draft = self.db.get(CreationVersion, draft_id)
+            if draft is None:
+                raise ApiError(409, "CREATION_DRAFT_MISSING", "草稿暂时无法恢复，请重新保存")
+            summary = conversation.plan_summary or self._build_conversation_plan(conversation)
+            return (
+                self._version_public(draft),
+                self._private_generation_prompt(summary),
+                self._project_public(project, self._latest_publication(project.id)),
+                conversation.active_generation_job_id is not None,
+            )
+        if conversation.row_version != payload.expected_revision:
+            raise ApiError(409, "VERSION_CONFLICT", "对话已经更新，请刷新后再保存")
+        if conversation.status == CreationConversationStatus.GENERATING:
+            raise ApiError(409, "CREATION_GENERATING", "作品正在创作，请稍等一下")
+        if conversation.status == CreationConversationStatus.RESULT_READY:
+            raise ApiError(409, "CREATION_RESULT_WAITING", "请先保存作品或返回沟通")
+
+        summary = self._build_conversation_plan(conversation)
+        parent = self._current_version(project)
+        draft = self.create_version(
+            user,
+            project.id,
+            CreationVersionCreate(
+                parent_version_id=parent.id if parent else None,
+                layers=[
+                    LayerSnapshot(
+                        layer_id=(
+                            "conversation:"
+                            + hashlib.sha256(idempotency_key.encode()).hexdigest()[:32]
+                        ),
+                        kind=LayerKind.TEXT,
+                        name="创作方案",
+                        z_index=0,
+                        visible=True,
+                        text_content=summary,
+                        aigc=False,
+                    )
+                ],
+                canvas_width=1080,
+                canvas_height=1920,
+                change_summary="保存对话整理出的创作草稿",
+                modification_reason="学生确认当前交流内容并开始创作",
+            ),
+            idempotency_key=f"conversation-draft:{idempotency_key}",
+        )
+        project = self._require_project(user, project.id, for_update=True)
+        if project.current_stage != CreationStage.PRODUCTION:
+            transition = self.transition_stage(
+                user,
+                project.id,
+                CreationStageTransition(
+                    from_stage=project.current_stage,
+                    to_stage=CreationStage.PRODUCTION,
+                    reason="学生保存对话草稿，系统开始生成作品",
+                    expected_revision=project.row_version,
+                ),
+            )
+            project = self._require_project(user, project.id, for_update=True)
+            assert transition.current_stage == CreationStage.PRODUCTION
+        conversation = self.db.get(CreationConversation, project.id)
+        assert conversation is not None
+        conversation.plan_summary = summary
+        conversation.draft_version_ids = [
+            *conversation.draft_version_ids,
+            str(draft.id),
+        ]
+        conversation.status = CreationConversationStatus.GENERATING
+        conversation.active_generation_job_id = None
+        conversation.result_version_id = None
+        conversation.last_generation_idempotency_key = idempotency_key
+        conversation.last_generation_request_fingerprint = fingerprint
+        conversation.row_version += 1
+        conversation.updated_at = utcnow()
+        self.db.commit()
+        project = self._require_project(user, project.id)
+        return (
+            draft,
+            self._private_generation_prompt(summary),
+            self._project_public(project, self._latest_publication(project.id)),
+            False,
+        )
+
+    def attach_conversation_generation(
+        self,
+        user: User,
+        project_id: uuid.UUID,
+        job_id: uuid.UUID,
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id, for_update=True)
+        conversation = self.db.get(CreationConversation, project.id)
+        job = self.db.get(ImageGenerationJob, job_id)
+        if conversation is None or job is None or job.project_id != project.id:
+            raise ApiError(409, "CREATION_GENERATION_MISSING", "生成任务暂时无法关联")
+        if conversation.active_generation_job_id != job.id:
+            conversation.active_generation_job_id = job.id
+            conversation.status = CreationConversationStatus.GENERATING
+            conversation.updated_at = utcnow()
+            conversation.row_version += 1
+            self.db.commit()
+        return self._conversation_public(project, conversation)
+
+    def mark_conversation_generation_failed(
+        self, user: User, project_id: uuid.UUID
+    ) -> None:
+        project = self._require_project(user, project_id, for_update=True)
+        conversation = self.db.get(CreationConversation, project.id)
+        if conversation is not None:
+            conversation.status = CreationConversationStatus.GENERATION_FAILED
+            conversation.updated_at = utcnow()
+            conversation.row_version += 1
+            self.db.commit()
 
     def list_projects(
         self,
@@ -1359,6 +1956,7 @@ class CreationService:
                 "当前监护设置不允许发布到社区",
             )
         target_classroom_id = payload.target_classroom_id
+        conference_category = payload.conference_category
         if visibility == CreationVisibility.GUARDIAN_ONLY:
             if target_classroom_id is not None:
                 raise ApiError(422, "CLASSROOM_TARGET_INVALID", "家长可见作品不能指定班级")
@@ -1385,12 +1983,17 @@ class CreationService:
                     raise ApiError(409, "CLASSROOM_MEMBERSHIP_REQUIRED", "请先加入目标班级再提交")
         elif target_classroom_id is not None:
             raise ApiError(422, "CLASSROOM_TARGET_INVALID", "当前可见范围不能指定班级")
+        if visibility == CreationVisibility.COMMUNITY and conference_category is None:
+            raise ApiError(422, "CONFERENCE_CATEGORY_REQUIRED", "发布到作品页前请选择作品分类")
+        if visibility != CreationVisibility.COMMUNITY and conference_category is not None:
+            raise ApiError(422, "CONFERENCE_CATEGORY_INVALID", "仅公开作品可以选择作品页分类")
         publication = Publication(
             project_id=project.id,
             creation_version_id=version.id,
             owner_user_id=user.id,
             status=PublicationStatus.PENDING_CHECK,
             visibility=visibility,
+            conference_category=conference_category,
             classroom_id=target_classroom_id,
             idempotency_key=idempotency_key,
             request_fingerprint=request_fingerprint,
@@ -1427,6 +2030,11 @@ class CreationService:
             {
                 "visibility": publication.visibility.value,
                 "classroom_id": str(publication.classroom_id) if publication.classroom_id else None,
+                "conference_category": (
+                    publication.conference_category.value
+                    if publication.conference_category is not None
+                    else None
+                ),
             },
             version=version,
         )
@@ -1444,6 +2052,45 @@ class CreationService:
                 return self._publication_public(replay)
             raise ApiError(409, "SUBMISSION_CONFLICT", "作品提交发生冲突，请刷新后重试") from exc
         return self._publication_public(publication)
+
+    def suggest_conference_categories(
+        self, user: User, project_id: uuid.UUID
+    ) -> ConferenceCategorySuggestionListPublic:
+        project = self._require_project(user, project_id)
+        text = f"{project.title} {project.description or ''}".lower()
+        keyword_groups = {
+            ConferenceCategory.ART: ("画", "艺术", "设计", "色彩", "构图", "故事", "动画", "漫画", "音乐"),
+            ConferenceCategory.SCIENCE: ("科学", "实验", "生物", "物理", "化学", "机械", "机关", "结构", "光影", "自然"),
+            ConferenceCategory.MATH: ("数学", "几何", "计算", "公式", "比例", "统计", "测量", "函数"),
+            ConferenceCategory.LANGUAGE: ("语文", "文字", "诗", "阅读", "写作", "表达", "汉字", "文学"),
+        }
+        scores = {category: 0.12 for category in ConferenceCategory}
+        if project.media_type in {
+            CreationMediaType.ILLUSTRATION,
+            CreationMediaType.COMIC,
+            CreationMediaType.MIXED_MEDIA,
+        }:
+            scores[ConferenceCategory.ART] += 0.32
+        for category, keywords in keyword_groups.items():
+            scores[category] += min(0.48, sum(0.12 for word in keywords if word in text))
+        ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0].value))
+        total = sum(score for _, score in ranked) or 1.0
+        labels = {
+            ConferenceCategory.ART: "画面、表达与创作媒介更接近艺术方向",
+            ConferenceCategory.SCIENCE: "主题中包含科学、结构或实验线索",
+            ConferenceCategory.MATH: "主题中包含计算、几何或数据线索",
+            ConferenceCategory.LANGUAGE: "主题中包含阅读、写作或语言表达线索",
+        }
+        return ConferenceCategorySuggestionListPublic(
+            items=[
+                ConferenceCategorySuggestionPublic(
+                    category=category,
+                    confidence=round(score / total, 4),
+                    reason=labels[category],
+                )
+                for category, score in ranked
+            ]
+        )
 
     def delete_project(self, user: User, project_id: uuid.UUID) -> None:
         project = self._require_project(user, project_id, for_update=True)
@@ -1562,6 +2209,419 @@ class CreationService:
                 for log in logs
             ]
         )
+
+    def _require_conversation_public(
+        self, user: User, project_id: uuid.UUID
+    ) -> CreationConversationPublic:
+        project = self._require_project(user, project_id)
+        conversation = self.db.scalar(
+            select(CreationConversation).where(
+                CreationConversation.project_id == project.id,
+                CreationConversation.owner_user_id == user.id,
+            )
+        )
+        if conversation is None:
+            raise ApiError(
+                404,
+                "CREATION_CONVERSATION_NOT_FOUND",
+                "这件旧作品还没有对话记录，请先继续创作",
+            )
+        return self._conversation_public(project, conversation)
+
+    def _create_legacy_conversation(
+        self, user: User, project: CreationProject
+    ) -> CreationConversation:
+        intent = (
+            self.db.get(CreationIntent, project.source_intent_id)
+            if project.source_intent_id is not None
+            else None
+        )
+        method = self.db.scalar(
+            select(CreationMethod)
+            .where(CreationMethod.project_id == project.id)
+            .order_by(CreationMethod.version_number.desc())
+            .limit(1)
+        )
+        idea = " ".join(
+            (intent.text if intent is not None else project.description or project.title).split()
+        )
+        asset_ids = (
+            list(intent.attachment_asset_ids)
+            if intent is not None
+            else list(method.source_asset_ids) if method is not None else []
+        )
+        manual_ids = (
+            list(intent.manual_page_ids)
+            if intent is not None
+            else list(method.manual_page_ids) if method is not None else []
+        )
+        if project.current_stage == CreationStage.IDEATION:
+            if method is None:
+                method = CreationMethod(
+                    project_id=project.id,
+                    version_number=1,
+                    created_by_user_id=user.id,
+                    name="创作对话整理",
+                    goal=idea,
+                    audience=["同学与老师"],
+                    format=(
+                        "漫画分镜"
+                        if project.media_type == CreationMediaType.COMIC
+                        else "图文画面"
+                    ),
+                    steps=["理解想法", "对话完善", "保存草稿", "生成并检查", "由学生确认保存"],
+                    resource_links=[],
+                    source_asset_ids=asset_ids,
+                    manual_page_ids=manual_ids,
+                )
+                self.db.add(method)
+            now = utcnow()
+            self.db.add(
+                CreationStageEvent(
+                    project_id=project.id,
+                    actor_user_id=user.id,
+                    from_stage=CreationStage.IDEATION,
+                    to_stage=CreationStage.DRAFT,
+                    reason="旧作品转入对话式创作，内部方案已准备好",
+                )
+            )
+            project.current_stage = CreationStage.DRAFT
+            project.stage_updated_at = now
+            project.updated_at = now
+            project.row_version += 1
+
+        latest_job = self.db.scalar(
+            select(ImageGenerationJob)
+            .where(ImageGenerationJob.project_id == project.id)
+            .order_by(ImageGenerationJob.created_at.desc(), ImageGenerationJob.id.desc())
+            .limit(1)
+        )
+        status = CreationConversationStatus.DIALOGUE
+        result_version_id: uuid.UUID | None = None
+        active_job_id: uuid.UUID | None = None
+        if latest_job is not None:
+            if latest_job.status in {
+                ImageGenerationJobStatus.QUEUED,
+                ImageGenerationJobStatus.RUNNING,
+                ImageGenerationJobStatus.SAFETY_CHECK,
+                ImageGenerationJobStatus.VERSIONING,
+            }:
+                status = CreationConversationStatus.GENERATING
+                active_job_id = latest_job.id
+            elif latest_job.status == ImageGenerationJobStatus.COMPLETED:
+                status = CreationConversationStatus.RESULT_READY
+                result_version_id = latest_job.output_version_id
+                active_job_id = latest_job.id
+            elif latest_job.status in {
+                ImageGenerationJobStatus.FAILED,
+                ImageGenerationJobStatus.REJECTED,
+            }:
+                status = CreationConversationStatus.GENERATION_FAILED
+                active_job_id = latest_job.id
+        saved_ids: list[str] = []
+        publication = self._latest_publication(project.id)
+        if publication is not None:
+            saved_ids.append(str(publication.creation_version_id))
+            if status == CreationConversationStatus.DIALOGUE:
+                status = CreationConversationStatus.SAVED
+        conversation = CreationConversation(
+            project_id=project.id,
+            owner_user_id=user.id,
+            status=status,
+            initial_idea=idea,
+            attachment_asset_ids=asset_ids,
+            manual_page_ids=manual_ids,
+            draft_version_ids=[],
+            saved_version_ids=saved_ids,
+            active_generation_job_id=active_job_id,
+            result_version_id=result_version_id,
+            row_version=1,
+        )
+        self.db.add(conversation)
+        student = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.STUDENT,
+            kind=CreationConversationMessageKind.IDEA,
+            content=idea,
+            decision=CreationSuggestionDecision.NONE,
+        )
+        self.db.add(student)
+        self.db.flush()
+        coach = CreationConversationMessage(
+            project_id=project.id,
+            owner_user_id=user.id,
+            role=CreationConversationRole.COACH,
+            kind=CreationConversationMessageKind.SUGGESTION,
+            content=self._conversation_coach_reply(
+                project,
+                conversation,
+                action="resume",
+            ),
+            decision=CreationSuggestionDecision.PENDING,
+            in_reply_to_id=student.id,
+        )
+        self.db.add(coach)
+        self.db.flush()
+        conversation.active_suggestion_id = coach.id
+        self._log(
+            project,
+            user,
+            CreationChangeAction.CONVERSATION_STARTED,
+            "旧作品恢复为对话式创作",
+            {},
+        )
+        return conversation
+
+    def _conversation_public(
+        self,
+        project: CreationProject,
+        conversation: CreationConversation,
+    ) -> CreationConversationPublic:
+        messages = self.db.scalars(
+            select(CreationConversationMessage)
+            .where(CreationConversationMessage.project_id == project.id)
+            .order_by(
+                CreationConversationMessage.created_at,
+                CreationConversationMessage.id,
+            )
+        ).all()
+        asset_ids = self._valid_uuid_list(conversation.attachment_asset_ids)
+        manual_ids = self._valid_uuid_list(conversation.manual_page_ids)
+        assets = self.db.scalars(
+            select(MediaAsset).where(MediaAsset.id.in_(asset_ids))
+        ).all() if asset_ids else []
+        asset_name_by_id = {asset.id: asset.original_filename for asset in assets}
+        manuals = self.db.scalars(
+            select(ManualPage).where(ManualPage.id.in_(manual_ids))
+        ).all() if manual_ids else []
+        manual_title_by_id = {manual.id: manual.title for manual in manuals}
+        return CreationConversationPublic(
+            project=self._project_public(project, self._latest_publication(project.id)),
+            status=conversation.status,
+            initial_idea=conversation.initial_idea,
+            attachment_asset_ids=asset_ids,
+            attachment_names=[
+                asset_name_by_id.get(asset_id, "已上传的草图") for asset_id in asset_ids
+            ],
+            manual_page_ids=manual_ids,
+            manual_titles=[
+                manual_title_by_id.get(manual_id, "已选择的秘籍") for manual_id in manual_ids
+            ],
+            derivative_source_title=self._derivative_source_title(project),
+            plan_summary=conversation.plan_summary,
+            messages=[self._conversation_message_public(message) for message in messages],
+            draft_version_ids=self._valid_uuid_list(conversation.draft_version_ids),
+            saved_version_ids=self._valid_uuid_list(conversation.saved_version_ids),
+            active_generation_job_id=conversation.active_generation_job_id,
+            result_version_id=conversation.result_version_id,
+            row_version=conversation.row_version,
+            started_at=_as_utc(conversation.started_at),
+            updated_at=_as_utc(conversation.updated_at),
+        )
+
+    @staticmethod
+    def _conversation_message_public(
+        message: CreationConversationMessage,
+    ) -> CreationConversationMessagePublic:
+        return CreationConversationMessagePublic(
+            id=message.id,
+            project_id=message.project_id,
+            role=message.role,
+            kind=message.kind,
+            content=message.content,
+            decision=message.decision,
+            in_reply_to_id=message.in_reply_to_id,
+            created_at=_as_utc(message.created_at),
+        )
+
+    def _pending_conversation_suggestion(
+        self, conversation: CreationConversation
+    ) -> CreationConversationMessage | None:
+        if conversation.active_suggestion_id is None:
+            return None
+        return self.db.scalar(
+            select(CreationConversationMessage).where(
+                CreationConversationMessage.id == conversation.active_suggestion_id,
+                CreationConversationMessage.project_id == conversation.project_id,
+                CreationConversationMessage.decision == CreationSuggestionDecision.PENDING,
+            )
+        )
+
+    def _build_conversation_plan(self, conversation: CreationConversation) -> str:
+        messages = self.db.scalars(
+            select(CreationConversationMessage)
+            .where(CreationConversationMessage.project_id == conversation.project_id)
+            .order_by(CreationConversationMessage.created_at, CreationConversationMessage.id)
+        ).all()
+        requirements = [
+            message.content
+            for message in messages
+            if message.role == CreationConversationRole.STUDENT
+            and message.kind == CreationConversationMessageKind.MESSAGE
+        ][-6:]
+        accepted = [
+            message.content
+            for message in messages
+            if message.role == CreationConversationRole.COACH
+            and message.kind == CreationConversationMessageKind.SUGGESTION
+            and message.decision == CreationSuggestionDecision.ACCEPTED
+        ][-4:]
+        parts = [f"最初想法：{conversation.initial_idea}"]
+        if requirements:
+            parts.append("学生后来补充：" + "；".join(requirements))
+        if accepted:
+            parts.append("已经采纳的方向：" + "；".join(accepted))
+        if conversation.attachment_asset_ids:
+            asset_ids = self._valid_uuid_list(conversation.attachment_asset_ids)
+            assets = self.db.scalars(
+                select(MediaAsset).where(MediaAsset.id.in_(asset_ids))
+            ).all()
+            names = "、".join(asset.original_filename for asset in assets)
+            parts.append(f"学生上传并通过安全检查的参考草图：{names}。")
+        if conversation.manual_page_ids:
+            manual_ids = self._valid_uuid_list(conversation.manual_page_ids)
+            manuals = self.db.scalars(
+                select(ManualPage).where(ManualPage.id.in_(manual_ids))
+            ).all()
+            titles = "、".join(manual.title for manual in manuals)
+            parts.append(f"学生主动选择的已学秘籍：{titles}。")
+        project = self.db.get(CreationProject, conversation.project_id)
+        derivative_title = self._derivative_source_title(project) if project else None
+        if derivative_title:
+            parts.append(f"经授权参考的同门作品：{derivative_title}，只借鉴思路不照搬。")
+        return "\n".join(parts)[:3000]
+
+    @staticmethod
+    def _private_generation_prompt(summary: str) -> str:
+        return (
+            f"请根据以下已由学生确认的创作方案生成一幅适合中小学生展示的竖版作品。\n"
+            f"{summary}\n"
+            "主体清楚、动作自然、画面层次简洁，避免文字水印和个人隐私信息。"
+        )[:2000]
+
+    @staticmethod
+    def _conversation_safety_flags(text: str) -> list[str]:
+        flags: list[str] = []
+        if any(word in text for word in ("电话", "手机号", "住址", "学校全名")):
+            flags.append("POSSIBLE_PERSONAL_INFORMATION")
+        if any(word in text for word in ("视频", "小游戏", "程序", "配音", "互动故事")):
+            flags.append("MVP_MEDIA_FALLBACK")
+        return flags
+
+    @staticmethod
+    def _derive_conversation_title(idea: str) -> str:
+        compact = "".join(idea.split()).strip("，。！？、,.!? ")
+        return (compact[:14] or "我的新作品")
+
+    def _conversation_coach_reply(
+        self,
+        project: CreationProject,
+        conversation: CreationConversation,
+        *,
+        action: str,
+        extra_turn: CoachTurn | None = None,
+    ) -> str:
+        if self.conversation_coach is None:
+            raise ApiError(503, "COACH_SERVICE_UNAVAILABLE", "教练暂时没连上，请稍后再试。")
+        messages = self.db.scalars(
+            select(CreationConversationMessage)
+            .where(CreationConversationMessage.project_id == project.id)
+            .order_by(
+                CreationConversationMessage.created_at,
+                CreationConversationMessage.id,
+            )
+        ).all()
+        turns = [
+            CoachTurn(
+                role=message.role.value,
+                content=message.content,
+                decision=message.decision.value,
+            )
+            for message in messages
+        ]
+        if extra_turn is not None:
+            turns.append(extra_turn)
+
+        asset_ids = self._valid_uuid_list(conversation.attachment_asset_ids)
+        assets = (
+            self.db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids))).all()
+            if asset_ids
+            else []
+        )
+        attachment_names = tuple(asset.original_filename for asset in assets)
+        images: list[CoachImage] = []
+        if self.object_store is not None:
+            for asset in assets[:3]:
+                if not asset.private_object_key or not (asset.actual_mime or "").startswith("image/"):
+                    continue
+                if asset.byte_size > 5 * 1024 * 1024:
+                    continue
+                try:
+                    data, content_type = self.object_store.read_private_with_type(
+                        asset.private_object_key
+                    )
+                except ObjectNotFoundError:
+                    continue
+                images.append(
+                    CoachImage(
+                        filename=asset.original_filename,
+                        content_type=content_type,
+                        data=data,
+                    )
+                )
+
+        manual_ids = self._valid_uuid_list(conversation.manual_page_ids)
+        manual_rows = (
+            self.db.scalars(select(ManualPage).where(ManualPage.id.in_(manual_ids))).all()
+            if manual_ids
+            else []
+        )
+        manuals = tuple(
+            CoachManual(
+                title=manual.title,
+                core_logic=manual.core_logic,
+                life_hook=manual.life_hook,
+                interaction_evidence=manual.interaction_evidence,
+            )
+            for manual in manual_rows
+        )
+        context = ConversationCoachContext(
+            initial_idea=conversation.initial_idea,
+            turns=tuple(turns),
+            attachment_names=attachment_names,
+            images=tuple(images),
+            manuals=manuals,
+            derivative_source_title=self._derivative_source_title(project),
+        )
+        try:
+            return self.conversation_coach.reply(context, action=action)
+        except ConversationCoachError as exc:
+            raise ApiError(503, exc.code, exc.user_message) from exc
+
+    @staticmethod
+    def _valid_uuid_list(values: list[str]) -> list[uuid.UUID]:
+        parsed: list[uuid.UUID] = []
+        for value in values:
+            try:
+                parsed.append(uuid.UUID(str(value)))
+            except (TypeError, ValueError):
+                continue
+        return parsed
+
+    def _derivative_source_title(self, project: CreationProject) -> str | None:
+        if project.derivative_authorization_id is None:
+            return None
+        authorization = self.db.get(
+            ConferenceDerivativeAuthorization, project.derivative_authorization_id
+        )
+        if authorization is None:
+            return "已授权的同门作品"
+        publication = self.db.get(Publication, authorization.source_publication_id)
+        if publication is None:
+            return "已授权的同门作品"
+        source_project = self.db.get(CreationProject, publication.project_id)
+        return source_project.title if source_project is not None else "已授权的同门作品"
 
     def _require_project(
         self, user: User, project_id: uuid.UUID, *, for_update: bool = False
@@ -2247,6 +3307,7 @@ class CreationService:
             creation_version_id=publication.creation_version_id,
             status=publication.status,
             visibility=publication.visibility,
+            conference_category=publication.conference_category,
             classroom_id=publication.classroom_id,
             return_reason_code=publication.return_reason_code,
             return_reason_summary=publication.return_reason_summary,

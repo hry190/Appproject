@@ -46,8 +46,15 @@ from app.models import User
 
 
 ALLOWED_IMAGE_MIMES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_VIDEO_MIMES = {"video/mp4"}
+ALLOWED_MEDIA_MIMES = ALLOWED_IMAGE_MIMES | ALLOWED_VIDEO_MIMES
 FORMAT_TO_MIME = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
-MIME_TO_EXTENSION = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MIME_TO_EXTENSION = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "video/mp4": "mp4",
+}
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -88,14 +95,14 @@ class MediaService:
         self, user: User, payload: UploadIntentCreate
     ) -> UploadIntentPublic:
         mime = payload.declared_mime.lower()
-        if mime not in ALLOWED_IMAGE_MIMES:
+        if mime not in ALLOWED_MEDIA_MIMES:
             raise ApiError(
                 422,
                 "MEDIA_TYPE_NOT_ALLOWED",
-                "目前只支持 JPEG、PNG 和 WebP 图片，不支持 SVG 或未知格式",
+                "目前只支持 JPEG、PNG、WebP 图片和 H.264 MP4 视频",
             )
         if payload.byte_size > self.settings.media_max_upload_bytes:
-            raise ApiError(413, "MEDIA_TOO_LARGE", "图片超过允许的大小上限")
+            raise ApiError(413, "MEDIA_TOO_LARGE", "媒体文件超过允许的大小上限")
         upload_id = uuid.uuid4()
         extension = MIME_TO_EXTENSION[mime]
         object_key = f"users/{user.id}/uploads/{upload_id}.{extension}"
@@ -518,19 +525,89 @@ class MediaService:
             return self._reject_asset(asset, "MALWARE_DETECTED", "文件未通过安全检查")
         self._scan(asset, MediaScanKind.VIRUS, MediaScanOutcome.PASSED, None, virus.detector_version)
 
-        try:
-            sanitized, width, height, thumbnails = self._sanitize_image(raw, actual_mime)
-        except ValueError as exc:
-            code = str(exc)
-            self._scan(asset, MediaScanKind.DECODE, MediaScanOutcome.FAILED, code, "pillow-12")
-            return self._reject_asset(asset, code, "图片无法安全解码或像素尺寸过大")
-        self._scan(asset, MediaScanKind.DECODE, MediaScanOutcome.PASSED, None, "pillow-12")
-        self._scan(asset, MediaScanKind.PIXEL_LIMIT, MediaScanOutcome.PASSED, None, "pixel-limit-v1", {"width": width, "height": height})
-        self._scan(asset, MediaScanKind.METADATA, MediaScanOutcome.PASSED, None, "metadata-strip-v1")
+        duration_ms = None
+        if actual_mime == "video/mp4":
+            try:
+                width, height, duration_ms = self._probe_mp4(raw)
+            except ValueError as exc:
+                code = str(exc)
+                self._scan(
+                    asset,
+                    MediaScanKind.DECODE,
+                    MediaScanOutcome.FAILED,
+                    code,
+                    "mp4-struct-v1",
+                )
+                return self._reject_asset(
+                    asset, code, "视频无法安全解码或参数不符合要求"
+                )
+            sanitized = raw
+            thumbnails: dict[int, tuple[bytes, int, int]] = {}
+            self._scan(
+                asset,
+                MediaScanKind.DECODE,
+                MediaScanOutcome.PASSED,
+                None,
+                "mp4-struct-v1",
+            )
+            self._scan(
+                asset,
+                MediaScanKind.PIXEL_LIMIT,
+                MediaScanOutcome.PASSED,
+                None,
+                "video-dimension-limit-v1",
+                {"width": width, "height": height, "duration_ms": duration_ms},
+            )
+            self._scan(
+                asset,
+                MediaScanKind.METADATA,
+                MediaScanOutcome.NOT_RUN,
+                None,
+                "video-pass-through-v1",
+            )
+        else:
+            try:
+                sanitized, width, height, thumbnails = self._sanitize_image(
+                    raw, actual_mime
+                )
+            except ValueError as exc:
+                code = str(exc)
+                self._scan(
+                    asset,
+                    MediaScanKind.DECODE,
+                    MediaScanOutcome.FAILED,
+                    code,
+                    "pillow-12",
+                )
+                return self._reject_asset(
+                    asset, code, "图片无法安全解码或像素尺寸过大"
+                )
+            self._scan(
+                asset,
+                MediaScanKind.DECODE,
+                MediaScanOutcome.PASSED,
+                None,
+                "pillow-12",
+            )
+            self._scan(
+                asset,
+                MediaScanKind.PIXEL_LIMIT,
+                MediaScanOutcome.PASSED,
+                None,
+                "pixel-limit-v1",
+                {"width": width, "height": height},
+            )
+            self._scan(
+                asset,
+                MediaScanKind.METADATA,
+                MediaScanOutcome.PASSED,
+                None,
+                "metadata-strip-v1",
+            )
 
         if payload.content_safety_outcome == MediaScanOutcome.FAILED:
             self._scan(asset, MediaScanKind.CONTENT_SAFETY, MediaScanOutcome.FAILED, payload.content_reason_code or "CONTENT_UNSAFE", "external-content-review")
-            return self._reject_asset(asset, payload.content_reason_code or "CONTENT_UNSAFE", "图片内容未通过安全检查")
+            return self._reject_asset(asset, payload.content_reason_code or "CONTENT_UNSAFE", "媒体内容未通过安全检查")
         content_outcome = (
             payload.content_safety_outcome
             if payload.content_safety_outcome != MediaScanOutcome.NOT_RUN
@@ -562,7 +639,8 @@ class MediaService:
         asset.private_object_key = original_key
         asset.width = width
         asset.height = height
-        asset.metadata_stripped = True
+        asset.duration_ms = duration_ms
+        asset.metadata_stripped = actual_mime != "video/mp4"
         asset.aigc_detected = payload.aigc_detected
         asset.status = MediaAssetStatus.READY
         asset.ready_at = utcnow()
@@ -579,7 +657,12 @@ class MediaService:
             target_id=asset.id,
             result="READY",
             request_id=self.request_id,
-            safe_diff={"actual_mime": actual_mime, "width": width, "height": height},
+            safe_diff={
+                "actual_mime": actual_mime,
+                "width": width,
+                "height": height,
+                "duration_ms": duration_ms,
+            },
         )
         self.db.commit()
         return self._asset_public(asset)
@@ -664,6 +747,7 @@ class MediaService:
             sha256=asset.sha256,
             width=asset.width,
             height=asset.height,
+            duration_ms=asset.duration_ms,
             metadata_stripped=asset.metadata_stripped,
             aigc_detected=asset.aigc_detected,
             rejection_code=asset.rejection_code,
@@ -684,7 +768,94 @@ class MediaService:
             return "image/png"
         if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
             return "image/webp"
+        if len(data) >= 16 and data[4:8] == b"ftyp":
+            return "video/mp4"
         return None
+
+    def _probe_mp4(self, data: bytes) -> tuple[int, int, int]:
+        """Validate a bounded H.264 MP4 and read its display size and duration."""
+
+        def boxes(start: int, end: int):
+            cursor = start
+            while cursor + 8 <= end:
+                size = int.from_bytes(data[cursor : cursor + 4], "big")
+                kind = data[cursor + 4 : cursor + 8]
+                header = 8
+                if size == 1:
+                    if cursor + 16 > end:
+                        raise ValueError("VIDEO_CONTAINER_INVALID")
+                    size = int.from_bytes(data[cursor + 8 : cursor + 16], "big")
+                    header = 16
+                elif size == 0:
+                    size = end - cursor
+                if size < header or cursor + size > end:
+                    raise ValueError("VIDEO_CONTAINER_INVALID")
+                yield kind, cursor + header, cursor + size
+                cursor += size
+
+        moov = None
+        has_media_data = False
+        for kind, payload_start, box_end in boxes(0, len(data)):
+            if kind == b"moov":
+                moov = (payload_start, box_end)
+            elif kind == b"mdat" and box_end > payload_start:
+                has_media_data = True
+        if moov is None or not has_media_data:
+            raise ValueError("VIDEO_CONTAINER_INVALID")
+        moov_start, moov_end = moov
+        moov_bytes = data[moov_start:moov_end]
+        if b"avc1" not in moov_bytes and b"avc3" not in moov_bytes:
+            raise ValueError("VIDEO_CODEC_NOT_H264")
+
+        duration_ms = None
+        width = None
+        height = None
+        for kind, payload_start, box_end in boxes(moov_start, moov_end):
+            if kind == b"mvhd":
+                version = data[payload_start]
+                if version == 0 and payload_start + 20 <= box_end:
+                    timescale = int.from_bytes(
+                        data[payload_start + 12 : payload_start + 16], "big"
+                    )
+                    duration = int.from_bytes(
+                        data[payload_start + 16 : payload_start + 20], "big"
+                    )
+                elif version == 1 and payload_start + 32 <= box_end:
+                    timescale = int.from_bytes(
+                        data[payload_start + 20 : payload_start + 24], "big"
+                    )
+                    duration = int.from_bytes(
+                        data[payload_start + 24 : payload_start + 32], "big"
+                    )
+                else:
+                    raise ValueError("VIDEO_DURATION_INVALID")
+                if timescale <= 0 or duration <= 0:
+                    raise ValueError("VIDEO_DURATION_INVALID")
+                duration_ms = round(duration * 1000 / timescale)
+            elif kind == b"trak":
+                for child_kind, child_start, child_end in boxes(
+                    payload_start, box_end
+                ):
+                    if child_kind != b"tkhd" or child_end - child_start < 8:
+                        continue
+                    candidate_width = (
+                        int.from_bytes(data[child_end - 8 : child_end - 4], "big")
+                        >> 16
+                    )
+                    candidate_height = (
+                        int.from_bytes(data[child_end - 4 : child_end], "big")
+                        >> 16
+                    )
+                    if candidate_width > 0 and candidate_height > 0:
+                        width, height = candidate_width, candidate_height
+                        break
+        if duration_ms is None:
+            raise ValueError("VIDEO_DURATION_INVALID")
+        if duration_ms > self.settings.media_max_video_duration_seconds * 1000:
+            raise ValueError("VIDEO_DURATION_EXCEEDED")
+        if width is None or height is None or width > 10000 or height > 10000:
+            raise ValueError("INVALID_DIMENSIONS")
+        return width, height, duration_ms
 
     def _sanitize_image(
         self, data: bytes, mime_type: str

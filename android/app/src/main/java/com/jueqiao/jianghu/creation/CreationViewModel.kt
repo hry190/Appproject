@@ -10,6 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.jueqiao.jianghu.auth.AuthApiException
 import com.jueqiao.jianghu.luggage.CreationIntentAnalysisDto
 import com.jueqiao.jianghu.luggage.CreationIntentAnalyzeDto
+import com.jueqiao.jianghu.luggage.CreationConversationDto
+import com.jueqiao.jianghu.luggage.CreationConversationMessageDto
+import com.jueqiao.jianghu.luggage.CreationConversationStartDto
 import com.jueqiao.jianghu.luggage.CreationExportCreateDto
 import com.jueqiao.jianghu.luggage.CreationExportJobDto
 import com.jueqiao.jianghu.luggage.CreationLayerDto
@@ -70,6 +73,7 @@ data class CreationDeskState(
     val continuingProjectId: String? = null,
     val continueMessage: String? = null,
     val analyzingIntent: Boolean = false,
+    val startingConversation: Boolean = false,
     val intentAnalysis: CreationIntentAnalysisDto? = null,
     val analysisError: String? = null,
     val manualSources: List<CreationManualOption> = emptyList(),
@@ -80,6 +84,10 @@ data class CreationDeskState(
     val sketchSourceMessage: String? = null,
     val creatingProject: Boolean = false,
     val createError: String? = null,
+    val conversationBusy: Boolean = false,
+    val conversationMessage: String? = null,
+    val conversationError: String? = null,
+    val conversationProjectId: String? = null,
     val savingDraft: Boolean = false,
     val draftSaveMessage: String? = null,
     val draftMessageProjectId: String? = null,
@@ -137,6 +145,7 @@ class CreationViewModel(
     private var pendingEditorCommit: PendingCommit? = null
     private var pendingExportCommit: PendingCommit? = null
     private var pendingContinueCommit: PendingCommit? = null
+    private var pendingConversationCommit: PendingCommit? = null
 
     fun loadEditor(projectId: String) {
         if (_state.value.editorLoading && _state.value.editorProjectId == projectId) return
@@ -154,7 +163,7 @@ class CreationViewModel(
             try {
                 val detail = repository.creationDetail(projectId)
                 val current = detail.versions.maxByOrNull { it.versionNumber }
-                    ?: error("作品还没有可编辑版本")
+                    ?: error("作品还没有可以继续修改的内容")
                 val assetIds = current.layers.mapNotNull { it.assetId }.distinct()
                 val assets = coroutineScope {
                     assetIds.map { assetId ->
@@ -189,7 +198,7 @@ class CreationViewModel(
 
     fun compareEditorWithPrevious(version: CreationVersionDto) {
         if (version.parentVersionId == null) {
-            _state.value = _state.value.copy(editorMessage = "V1 是首个版本，没有上一版可比较")
+            _state.value = _state.value.copy(editorMessage = "这是第一版作品，还没有上一版可以比较")
             return
         }
         viewModelScope.launch {
@@ -234,7 +243,7 @@ class CreationViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 editorSaving = true,
-                editorMessage = "正在保存不可变新版本…",
+                editorMessage = "正在保存新的作品版本……",
                 editorDiff = null,
             )
             try {
@@ -257,11 +266,11 @@ class CreationViewModel(
                     editorProject = project,
                     editorVersions = listOf(saved) + _state.value.editorVersions
                         .filterNot { it.id == saved.id },
-                    editorMessage = "已保存为 V${saved.versionNumber}；旧版本仍可查看，AI 修改标记已同步",
+                    editorMessage = "已保存第 ${saved.versionNumber} 版，之前的版本仍可查看",
                     editorExportBusy = false,
                     editorExportVersionId = saved.id,
                     editorExportJob = null,
-                    editorExportMessage = "新版本尚未生成导出文件",
+                    editorExportMessage = "新版本还没有可以下载的文件",
                 )
                 pendingEditorCommit = null
                 onSaved(saved)
@@ -447,66 +456,230 @@ class CreationViewModel(
 
     fun continueProject(
         projectId: String,
-        onReady: (CreationVersionDto) -> Unit,
+        onReady: () -> Unit,
     ) {
         if (_state.value.continuingProjectId != null) return
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 continuingProjectId = projectId,
-                continueMessage = "正在创建新的修改版本…",
+                continueMessage = "正在回到上次的创作对话……",
             )
             try {
-                val detail = repository.creationDetail(projectId)
-                val source = detail.versions.maxByOrNull { it.versionNumber }
-                    ?: error("这件作品还没有可继续的版本")
-                val signature = "continue|$projectId|${source.id}"
-                val commit = pendingContinueCommit
-                    ?.takeIf { it.signature == signature }
-                    ?: PendingCommit(signature, "android-continue-${UUID.randomUUID()}")
-                        .also { pendingContinueCommit = it }
-                val saved = repository.createCreationVersion(
-                    projectId = projectId,
-                    payload = CreationVersionCreateDto(
-                        parentVersionId = source.id,
-                        layers = source.layers,
-                        canvasWidth = source.canvasWidth,
-                        canvasHeight = source.canvasHeight,
-                        previewAssetId = source.previewAssetId,
-                        changeSummary = "从创作档案继续创作",
-                        modificationReason = "创建新的修改版本，保留原有版本和提交记录",
-                    ),
-                    idempotencyKey = commit.idempotencyKey,
-                )
-                var project = repository.creationProject(projectId)
-                if (project.currentStage != "PRODUCTION") {
-                    val transition = repository.transitionCreationStage(
-                        projectId = projectId,
-                        payload = CreationStageTransitionDto(
-                            fromStage = project.currentStage,
-                            toStage = "PRODUCTION",
-                            reason = "从创作档案创建新版本并继续制作",
-                            expectedRevision = project.rowVersion,
-                        ),
-                    )
-                    project = project.copy(
-                        currentStage = transition.currentStage,
-                        rowVersion = transition.projectRevision,
-                    )
-                }
+                val conversation = repository.resumeCreationConversation(projectId)
                 _state.value = _state.value.copy(
                     continuingProjectId = null,
-                    continueMessage = "已创建第 ${saved.versionNumber} 版，原版本仍保留",
-                    recentProjects = listOf(project) + _state.value.recentProjects
-                        .filterNot { it.id == project.id },
+                    continueMessage = "已经回到上次的创作进度",
+                    recentProjects = listOf(conversation.project) + _state.value.recentProjects
+                        .filterNot { it.id == conversation.project.id },
                 )
                 pendingContinueCommit = null
-                onReady(saved)
+                onReady()
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 _state.value = _state.value.copy(
                     continuingProjectId = null,
                     continueMessage = error.userMessage("暂时无法继续创作，请稍后重试"),
+                )
+            }
+        }
+    }
+
+    fun startConversation(
+        idea: String,
+        attachmentAssetIds: List<String>,
+        manualPageIds: List<String>,
+        onStarted: (CreationConversationDto) -> Unit,
+    ) {
+        val normalized = idea.trim()
+        if (normalized.length < 2 || _state.value.startingConversation) return
+        val signature = buildString {
+            append(normalized)
+            append('|').append(attachmentAssetIds.sorted().joinToString(","))
+            append('|').append(manualPageIds.sorted().joinToString(","))
+            append('|').append(_state.value.derivativeAuthorizationId.orEmpty())
+        }
+        val commit = pendingConversationCommit
+            ?.takeIf { it.signature == signature }
+            ?: PendingCommit(signature, "android-conversation-${UUID.randomUUID()}")
+                .also { pendingConversationCommit = it }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                startingConversation = true,
+                analysisError = null,
+                createError = null,
+            )
+            try {
+                val conversation = repository.startCreationConversation(
+                    payload = CreationConversationStartDto(
+                        idea = normalized,
+                        title = deriveConversationTitle(normalized),
+                        attachmentAssetIds = attachmentAssetIds.distinct(),
+                        manualPageIds = manualPageIds.distinct(),
+                        derivativeAuthorizationId = _state.value.derivativeAuthorizationId,
+                    ),
+                    idempotencyKey = commit.idempotencyKey,
+                )
+                _state.value = _state.value.copy(
+                    startingConversation = false,
+                    derivativeAuthorizationId = null,
+                    derivativeSourceTitle = null,
+                    sketchSource = null,
+                    sketchSourceMessage = null,
+                    recentProjects = listOf(conversation.project) + _state.value.recentProjects
+                        .filterNot { it.id == conversation.project.id },
+                )
+                pendingConversationCommit = null
+                onStarted(conversation)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    startingConversation = false,
+                    analysisError = error.userMessage("暂时无法开始创作，你的想法仍保留在本页"),
+                )
+            }
+        }
+    }
+
+    fun sendConversationMessage(
+        projectId: String,
+        text: String,
+        onComplete: () -> Unit,
+    ) {
+        val normalized = text.trim()
+        if (normalized.length < 2 || _state.value.conversationBusy) return
+        val signature = "message|$projectId|$normalized"
+        val commit = pendingConversationCommit
+            ?.takeIf { it.signature == signature }
+            ?: PendingCommit(signature, "android-message-${UUID.randomUUID()}")
+                .also { pendingConversationCommit = it }
+        runConversation(projectId, "正在听你说……") {
+            repository.addCreationConversationMessage(
+                projectId = projectId,
+                text = normalized,
+                idempotencyKey = commit.idempotencyKey,
+            )
+            pendingConversationCommit = null
+            onComplete()
+            "教练已经根据你的新想法重新整理"
+        }
+    }
+
+    fun acceptConversationSuggestion(
+        projectId: String,
+        message: CreationConversationMessageDto,
+        expectedRevision: Int,
+        onComplete: () -> Unit,
+    ) {
+        if (_state.value.conversationBusy) return
+        runConversation(projectId, "正在继续分析……") {
+            repository.acceptCreationConversationSuggestion(
+                projectId = projectId,
+                messageId = message.id,
+                expectedRevision = expectedRevision,
+            )
+            onComplete()
+            "已采纳，教练继续帮你完善"
+        }
+    }
+
+    fun saveConversationDraftAndGenerate(
+        projectId: String,
+        expectedRevision: Int,
+        onComplete: () -> Unit,
+    ) {
+        if (_state.value.generationBusy || _state.value.conversationBusy) return
+        val signature = "conversation-generation|$projectId|$expectedRevision"
+        val commit = pendingConversationCommit
+            ?.takeIf { it.signature == signature }
+            ?: PendingCommit(signature, "android-convgen-${UUID.randomUUID()}")
+                .also { pendingConversationCommit = it }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                generationBusy = true,
+                generationMessage = "正在整理我们刚才商量好的想法……",
+                generationProjectId = projectId,
+                conversationMessage = null,
+                conversationError = null,
+                conversationProjectId = projectId,
+            )
+            try {
+                val queued = repository.generateFromCreationConversation(
+                    projectId = projectId,
+                    expectedRevision = expectedRevision,
+                    idempotencyKey = commit.idempotencyKey,
+                ).generation
+                pendingConversationCommit = null
+                val result = awaitImageGeneration(queued)
+                finishImageGeneration(result, onComplete)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    generationBusy = false,
+                    generationMessage = error.userMessage("这次创作没有完成，请稍后重试"),
+                    generationProjectId = projectId,
+                )
+                onComplete()
+            }
+        }
+    }
+
+    fun returnConversationToDialogue(
+        projectId: String,
+        expectedRevision: Int,
+        onComplete: () -> Unit,
+    ) {
+        if (_state.value.conversationBusy) return
+        runConversation(projectId, "正在回到我们的对话……") {
+            repository.returnCreationConversation(projectId, expectedRevision)
+            onComplete()
+            "告诉我你最想修改的地方吧"
+        }
+    }
+
+    fun saveConversationResult(
+        projectId: String,
+        expectedRevision: Int,
+        onComplete: () -> Unit,
+    ) {
+        if (_state.value.conversationBusy) return
+        runConversation(projectId, "正在保存作品……") {
+            repository.saveCreationConversationResult(projectId, expectedRevision)
+            onComplete()
+            "作品已经保存到创作档案"
+        }
+    }
+
+    private fun runConversation(
+        projectId: String,
+        pendingMessage: String,
+        action: suspend () -> String,
+    ) {
+        _state.value = _state.value.copy(
+            conversationBusy = true,
+            conversationMessage = pendingMessage,
+            conversationError = null,
+            conversationProjectId = projectId,
+        )
+        viewModelScope.launch {
+            try {
+                val message = action()
+                _state.value = _state.value.copy(
+                    conversationBusy = false,
+                    conversationMessage = message,
+                    conversationError = null,
+                    conversationProjectId = projectId,
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    conversationBusy = false,
+                    conversationMessage = null,
+                    conversationError = error.userMessage("暂时没有完成，请稍后重试"),
+                    conversationProjectId = projectId,
                 )
             }
         }
@@ -791,8 +964,8 @@ class CreationViewModel(
         "QUEUED" -> "生成任务已排队"
         "RUNNING" -> "正在生成画面…"
         "SAFETY_CHECK" -> "画面已生成，正在进行媒体安全检查…"
-        "VERSIONING" -> "安全检查通过，正在写入新版本…"
-        "COMPLETED" -> "生成完成，已写入新的不可变版本"
+        "VERSIONING" -> "检查通过，正在准备作品……"
+        "COMPLETED" -> "作品做好了，快看看吧"
         "REJECTED" -> job.errorSummary ?: "生成内容未通过安全检查"
         else -> job.errorSummary ?: "图片生成失败"
     }
@@ -1158,10 +1331,11 @@ class CreationViewModel(
         versionId: String,
         visibility: String,
         targetClassroomId: String? = null,
+        conferenceCategory: String? = null,
         onComplete: (PublicationDto) -> Unit,
     ) {
         if (_state.value.workflowBusy) return
-        val signature = "submission|$projectId|$versionId|$visibility|${targetClassroomId.orEmpty()}"
+        val signature = "submission|$projectId|$versionId|$visibility|${targetClassroomId.orEmpty()}|${conferenceCategory.orEmpty()}"
         val commit = pendingWorkflowCommit
             ?.takeIf { it.signature == signature }
             ?: PendingCommit(signature, "android-submission-${UUID.randomUUID()}")
@@ -1173,6 +1347,7 @@ class CreationViewModel(
                     creationVersionId = versionId,
                     visibility = visibility,
                     targetClassroomId = targetClassroomId,
+                    conferenceCategory = conferenceCategory,
                 ),
                 idempotencyKey = commit.idempotencyKey,
             )
@@ -1297,6 +1472,11 @@ class CreationViewModel(
 
     private fun Exception.userMessage(fallback: String): String =
         (this as? AuthApiException)?.message ?: fallback
+
+    private fun deriveConversationTitle(idea: String): String = idea
+        .replace(Regex("[\\s，。！？、,.!?]+"), "")
+        .take(14)
+        .ifBlank { "我的新作品" }
 
     private suspend fun readSketch(uri: Uri): SelectedSketch = withContext(Dispatchers.IO) {
         val resolver = getApplication<Application>().contentResolver

@@ -63,89 +63,26 @@ import com.jueqiao.jianghu.luggage.ConferenceWorkDto
 import com.jueqiao.jianghu.luggage.ManualPageDto
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConferenceHubScreen(
     state: ConferenceUiState,
     onBack: () -> Unit,
     onLoad: () -> Unit,
-    onLoadMore: () -> Unit,
-    onOpenWork: (String) -> Unit,
-    onOpenCollections: () -> Unit,
-    onOpenRequests: () -> Unit,
     onOpenLetters: () -> Unit,
+    onOpenRecords: () -> Unit,
     onOpenMatch: () -> Unit,
+    onOpenCreation: () -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("演武场") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onOpenCollections) {
-                        Icon(Icons.Outlined.Bookmark, contentDescription = "我的收藏")
-                    }
-                    IconButton(onClick = onOpenRequests) {
-                        Icon(Icons.Outlined.Inbox, contentDescription = "授权记录")
-                    }
-                    IconButton(onClick = onOpenLetters) {
-                        Icon(Icons.Outlined.MailOutline, contentDescription = "大会书信")
-                    }
-                    IconButton(onClick = onOpenMatch) {
-                        Icon(Icons.Outlined.SportsKabaddi, contentDescription = "匿名切磋")
-                    }
-                    IconButton(onClick = onLoad) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "刷新")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        when {
-            state.loading && state.works.isEmpty() -> LoadingContent(padding)
-            state.error != null && state.works.isEmpty() -> ErrorContent(
-                padding = padding,
-                message = state.error,
-                onRetry = onLoad,
-            )
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
-                    end = 16.dp,
-                    bottom = padding.calculateBottomPadding() + 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                if (state.error != null) {
-                    item { InlineError(state.error, onLoad) }
-                }
-                items(state.works, key = ConferenceWorkDto::publicationId) { work ->
-                    ConferenceWorkCard(work = work, onClick = { onOpenWork(work.publicationId) })
-                }
-                if (state.nextCursor != null) {
-                    item {
-                        OutlinedButton(
-                            onClick = onLoadMore,
-                            enabled = !state.loading,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("加载更多")
-                        }
-                    }
-                }
-                if (state.works.isEmpty()) {
-                    item { EmptyContent("暂无可见作品") }
-                }
-            }
-        }
-    }
+    ConferenceArenaHubContent(
+        state = state,
+        onBack = onBack,
+        onRefresh = onLoad,
+        onOpenLetters = onOpenLetters,
+        onOpenRecords = onOpenRecords,
+        onOpenMatch = onOpenMatch,
+        onOpenCreation = onOpenCreation,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -653,6 +590,10 @@ fun ConferenceMatchScreen(
     onCreateEvaluation: (String, String, Double, String, String, String) -> Unit,
     onCreateReflection: (String, String, String) -> Unit,
     onStartNewMatch: () -> Unit,
+    onOpenCreation: () -> Unit,
+    onOpenArena: () -> Unit,
+    onOpenRecords: () -> Unit,
+    onOpenLetters: () -> Unit,
     onMessageShown: () -> Unit,
 ) {
     LaunchedEffect(directMatchId) { onLoad(directMatchId) }
@@ -671,244 +612,93 @@ fun ConferenceMatchScreen(
             onMessageShown()
         }
     }
-    var reportReason by rememberSaveable { mutableStateOf("SAFETY_CONCERN") }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("匿名切磋") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onLoad(directMatchId) }) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "刷新")
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHost) },
-    ) { padding ->
-        val queue = state.matchQueue
-        val detail = state.matchDetail
-        val result = state.matchResult
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
-                end = 16.dp,
-                bottom = padding.calculateBottomPadding() + 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (state.loading && queue == null && detail == null) item { LoadingRow() }
-            state.error?.let { error ->
-                item { InlineError(error) { onLoad(directMatchId) } }
-            }
-            if (detail != null) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = MatchStatusLabels[detail.status] ?: detail.status,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                "我方 ${detail.myProgress.answered}/${detail.myProgress.total} · " +
-                                    "对方 ${detail.opponentProgress.answered}/${detail.opponentProgress.total}",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            LinearProgressIndicator(
-                                progress = {
-                                    detail.myProgress.answered.toFloat() /
-                                        detail.myProgress.total.coerceAtLeast(1)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            if (detail.status != "ENDED") {
-                                OutlinedButton(onClick = onExit) { Text("退出切磋") }
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    items(MatchReasons) { reason ->
-                                        FilterChip(
-                                            selected = reportReason == reason,
-                                            onClick = { reportReason = reason },
-                                            label = { Text(MatchReasonLabels[reason] ?: reason) },
-                                        )
-                                    }
-                                }
-                                OutlinedButton(
-                                    onClick = { onReport(detail.matchId, reportReason) },
-                                ) {
-                                    Text("举报并结束")
-                                }
-                            }
-                        }
-                    }
-                }
-                if (detail.status == "ACTIVE") {
-                    items(detail.questions, key = ConferenceMatchQuestionDto::id) { question ->
-                        MatchQuestionCard(
-                            question = question,
-                            existingAnswer = detail.myAnswers.firstOrNull {
-                                it.questionId == question.id
-                            }?.answer,
-                            enabled = !state.loading,
-                            onSubmit = { answer, reason ->
-                                onSubmitAnswer(detail.matchId, question.id, answer, reason)
-                            },
-                        )
-                    }
-                } else if (detail.status == "AWAITING_JUDGMENT") {
-                    item { EmptyContent("双方回答已完成，正在生成匿名评审结果…") }
-                }
-                if (result != null) {
-                    item {
-                        MatchResultCard(
-                            result = result,
-                            busy = state.loading,
-                            onCreateEvaluation = { kind, score, summary, strength, improvement ->
-                                onCreateEvaluation(
-                                    result.matchId,
-                                    kind,
-                                    score,
-                                    summary,
-                                    strength,
-                                    improvement,
-                                )
-                            },
-                            onCreateReflection = { learned, improvement ->
-                                onCreateReflection(result.matchId, learned, improvement)
-                            },
-                            onStartNewMatch = onStartNewMatch,
-                        )
-                    }
-                }
-            } else if (queue != null && queue.status == "WAITING") {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text("正在等待同门", style = MaterialTheme.typography.titleMedium)
-                            Text("匹配成功后会自动进入答题。", style = MaterialTheme.typography.bodyMedium)
-                            OutlinedButton(onClick = onExit) { Text("退出排队") }
-                        }
-                    }
-                }
-            } else {
-                item { Text("选择秘籍", style = MaterialTheme.typography.titleMedium) }
-                items(state.matchManuals, key = ManualPageDto::id) { manual ->
-                    ManualMatchRow(manual = manual, onClick = { onJoin(manual.id) })
-                }
-                if (!state.loading && state.matchManuals.isEmpty()) {
-                    item { EmptyContent("暂无可选秘籍") }
-                }
-            }
-        }
-    }
+    ConferenceArenaMatchContent(
+        state = state,
+        onBack = onBack,
+        onRefresh = { onLoad(directMatchId) },
+        onJoin = onJoin,
+        onExit = onExit,
+        onReport = onReport,
+        onSubmitAnswer = onSubmitAnswer,
+        onCreateEvaluation = onCreateEvaluation,
+        onCreateReflection = onCreateReflection,
+        onStartNewMatch = onStartNewMatch,
+        onOpenCreation = onOpenCreation,
+        onOpenArena = onOpenArena,
+        onOpenRecords = onOpenRecords,
+        onOpenLetters = onOpenLetters,
+        snackbarHost = snackbarHost,
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConferenceMatchRecordsScreen(
+    state: ConferenceUiState,
+    onBack: () -> Unit,
+    onLoad: (String?, String?, Boolean) -> Unit,
+    onOpenMatch: (String) -> Unit,
+    onOpenArena: () -> Unit,
+    onOpenLetters: () -> Unit,
+    onMessageShown: () -> Unit,
+) {
+    LaunchedEffect(Unit) { onLoad(null, null, false) }
+    val snackbarHost = remember { SnackbarHostState() }
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            snackbarHost.showSnackbar(it)
+            onMessageShown()
+        }
+    }
+    ConferenceArenaRecordsContent(
+        state = state,
+        onBack = onBack,
+        onRefresh = {
+            onLoad(state.matchRecordsOutcome, state.matchRecordsReflectionStatus, false)
+        },
+        onFilter = { outcome, reflectionStatus ->
+            onLoad(outcome, reflectionStatus, false)
+        },
+        onLoadMore = {
+            onLoad(state.matchRecordsOutcome, state.matchRecordsReflectionStatus, true)
+        },
+        onOpenMatch = onOpenMatch,
+        onOpenArena = onOpenArena,
+        onOpenLetters = onOpenLetters,
+        snackbarHost = snackbarHost,
+    )
+}
+
 @Composable
 fun ConferenceLettersScreen(
     state: ConferenceUiState,
     onBack: () -> Unit,
     onLoad: () -> Unit,
-    onOpenLetter: (ConferenceLetterDto) -> Unit,
+    onMarkRead: (ConferenceLetterDto) -> Unit,
+    onOpenTarget: (ConferenceLetterDto) -> Boolean,
+    onOpenArena: () -> Unit,
+    onOpenRecords: () -> Unit,
     onOpenPublicationInbox: () -> Unit,
+    onMessageShown: () -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("大会书信（${state.unreadLetterCount} 未读）") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onLoad) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "刷新")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
-                end = 16.dp,
-                bottom = padding.calculateBottomPadding() + 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item {
-                OutlinedButton(
-                    onClick = onOpenPublicationInbox,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("查看作品与班级来信") }
-            }
-            if (state.loading && state.letters.isEmpty()) item { LoadingRow() }
-            state.error?.let { error -> item { InlineError(error, onLoad) } }
-            items(state.letters, key = ConferenceLetterDto::id) { letter ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenLetter(letter) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (letter.isRead) {
-                            MaterialTheme.colorScheme.surface
-                        } else {
-                            MaterialTheme.colorScheme.primaryContainer
-                        },
-                    ),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(letter.title, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                ConferenceLetterCategoryLabels[letter.category] ?: letter.category,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        }
-                        Text(letter.body, style = MaterialTheme.typography.bodyMedium)
-                        if (!letter.isRead) {
-                            Text(
-                                "未读",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                }
-            }
-            if (!state.loading && state.letters.isEmpty()) {
-                item { EmptyContent("暂无大会书信") }
-            }
+    val snackbarHost = remember { SnackbarHostState() }
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            snackbarHost.showSnackbar(it)
+            onMessageShown()
         }
     }
+    ConferenceArenaLettersContent(
+        state = state,
+        onBack = onBack,
+        onRefresh = onLoad,
+        onMarkRead = onMarkRead,
+        onOpenTarget = onOpenTarget,
+        onOpenArena = onOpenArena,
+        onOpenRecords = onOpenRecords,
+        onOpenPublicationInbox = onOpenPublicationInbox,
+        snackbarHost = snackbarHost,
+    )
 }
 
 @Composable

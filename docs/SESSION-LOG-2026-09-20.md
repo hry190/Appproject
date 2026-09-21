@@ -1,6 +1,6 @@
 # SESSION-LOG-2026-09-20
 
-> 昨日: [SESSION-LOG-2026-09-19.md](./SESSION-LOG-2026-09-19.md)(1940 行,§1~§26,顶部有 TL;DR)——**那轮工作的正本**
+> 昨日: [SESSION-LOG-2026-09-19.md](./SESSION-LOG-2026-09-19.md)(1944 行,§1~§26,顶部有 TL;DR)——**那轮工作的正本**
 > **创建于 2026-09-20**,起因:09-19 的会话跨过午夜、09-20 上午又接着做了几件收尾(决策留档、文档规范自检),
 > 需要按会话 / 按天分开归档,并把"下一天先读什么"钉清楚。
 > 今日工作: **三处决策留档 + 文档规范自检整改 + 环境体检 + 设计稿目录清理与来源清单(§4~§6)
@@ -48,7 +48,8 @@
 | 交手动画 | ✅ 出手 / 格挡 / 受击(§8)+ **怪物扑击三个时刻**(§9):一次性 `Animatable`(冲量带符号)+ 两侧各自条件挂载 `graphicsLayer`;真机四条路全过,静息噪声底 **0 px** |
 
 > ⚠️ 上表是**收工时(2026-09-20)**刷新的快照;**本文自身的提交会让 HEAD 再前进一格**。
-> 查真实状态:`git log --oneline -1` + `git status -sb` + `git rev-parse --short main zzz`。
+> 查真实状态:`git log --oneline -1` + `git status -sb` + `git for-each-ref --format='%(refname:short) %(objectname:short)' refs/heads/main refs/heads/zzz`。
+> (2026-09-21 订正:原文写的 `git rev-parse --short main zzz` 会报 `fatal: Needed a single revision` —— 多 ref 不能用 `--short`。)
 
 ---
 

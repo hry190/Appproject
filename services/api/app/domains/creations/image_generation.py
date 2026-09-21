@@ -6,6 +6,7 @@ import io
 import json
 import random
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
@@ -205,9 +206,203 @@ class OpenAIImageGenerator:
         return GeneratedImage(data=data, content_type="image/png")
 
 
+class VolcengineImageGenerator:
+    """Server-side adapter for Volcengine Ark Seedream image generation."""
+
+    provider_ref = "volcengine"
+    external_data_shared = True
+    _allowed_result_host_suffixes = (
+        ".volces.com",
+        ".volcengine.com",
+        ".byteimg.com",
+        ".bytepluses.com",
+    )
+
+    def __init__(self, settings: Settings) -> None:
+        if settings.volcengine_ark_api_key is None:
+            raise ValueError("Volcengine Ark API key is required")
+        self.model_ref = settings.image_generation_model
+        self.api_key = settings.volcengine_ark_api_key.get_secret_value()
+        self.endpoint = (
+            f"{settings.volcengine_ark_base_url.rstrip('/')}/images/generations"
+        )
+        self.output_size = settings.volcengine_image_size
+        self.watermark = settings.volcengine_image_watermark
+        self.timeout = settings.image_generation_timeout_seconds
+        self.max_download_bytes = settings.media_max_upload_bytes
+
+    def generate(
+        self,
+        *,
+        prompt: str,
+        size: ImageGenerationSize,
+        quality: ImageGenerationQuality,
+        user_ref: str,
+    ) -> GeneratedImage:
+        del quality, user_ref
+        composition = {
+            ImageGenerationSize.SQUARE: "1:1 方形构图",
+            ImageGenerationSize.PORTRAIT: "3:4 竖版构图",
+            ImageGenerationSize.LANDSCAPE: "4:3 横版构图",
+        }[size]
+        body = json.dumps(
+            {
+                "model": self.model_ref,
+                "prompt": f"{prompt}\n画面比例：{composition}。",
+                "response_format": "url",
+                "size": self.output_size,
+                "stream": False,
+                "watermark": self.watermark,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            self.endpoint,
+            data=body,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                raw = response.read(1_000_001)
+        except urllib.error.HTTPError as exc:
+            raw_error = exc.read().decode(errors="replace")
+            provider_code = ""
+            provider_message = ""
+            try:
+                error = json.loads(raw_error).get("error", {})
+                provider_code = str(error.get("code") or error.get("type") or "")
+                provider_message = str(error.get("message") or "")
+            except json.JSONDecodeError:
+                pass
+            provider_error = f"{provider_code} {provider_message}".lower()
+            rejected = any(
+                marker in provider_error
+                for marker in ("safety", "policy", "sensitive", "moderation")
+            )
+            quota_exhausted = any(
+                marker in provider_error
+                for marker in (
+                    "accountoverdue",
+                    "overdue balance",
+                    "insufficient balance",
+                    "quotaexceeded",
+                    "quota exceeded",
+                )
+            )
+            authentication_failed = exc.code in {401, 403} and not quota_exhausted
+            if rejected:
+                code = "IMAGE_PROVIDER_REJECTED"
+                summary = "生成内容未通过模型安全策略"
+                retryable = False
+            elif quota_exhausted:
+                code = "IMAGE_PROVIDER_QUOTA_EXHAUSTED"
+                summary = "图片创作额度不足，请联系老师"
+                retryable = False
+            elif authentication_failed:
+                code = "IMAGE_PROVIDER_NOT_READY"
+                summary = "图片创作服务尚未准备好，请联系老师"
+                retryable = False
+            elif exc.code == 429:
+                code = "IMAGE_PROVIDER_BUSY"
+                summary = "现在创作的人有点多，请稍后再试"
+                retryable = True
+            else:
+                code = "IMAGE_PROVIDER_HTTP_ERROR"
+                summary = "图片生成服务暂时不可用"
+                retryable = exc.code >= 500
+            raise ImageGenerationProviderError(
+                code,
+                summary,
+                retryable=retryable,
+                rejected=rejected,
+            ) from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_UNAVAILABLE",
+                "图片生成服务连接失败，请稍后重试",
+                retryable=True,
+            ) from exc
+        if len(raw) > 1_000_000:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_INVALID_RESPONSE",
+                "图片生成服务返回了无法识别的结果",
+                retryable=True,
+            )
+        try:
+            payload = json.loads(raw)
+            item = payload["data"][0]
+            result_url = str(item["url"])
+        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_INVALID_RESPONSE",
+                "图片生成服务返回了无法识别的结果",
+                retryable=True,
+            ) from exc
+        self._validate_result_url(result_url)
+        try:
+            image_request = urllib.request.Request(
+                result_url,
+                headers={"User-Agent": "JiqiaoJianghu-ImageFetcher/1.0"},
+            )
+            with urllib.request.urlopen(image_request, timeout=self.timeout) as response:
+                data = response.read(self.max_download_bytes + 1)
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_RESULT_UNAVAILABLE",
+                "图片已经生成，但暂时无法取回，请稍后重试",
+                retryable=True,
+            ) from exc
+        if not data or len(data) > self.max_download_bytes:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_RESULT_INVALID",
+                "生成图片大小不符合要求，请重新创作",
+                retryable=True,
+            )
+        content_type = self._image_content_type(data)
+        if content_type is None:
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_RESULT_INVALID",
+                "生成结果不是可识别的图片，请重新创作",
+                retryable=True,
+            )
+        return GeneratedImage(data=data, content_type=content_type)
+
+    @classmethod
+    def _validate_result_url(cls, value: str) -> None:
+        parsed = urllib.parse.urlsplit(value)
+        hostname = (parsed.hostname or "").lower()
+        if parsed.scheme != "https" or not any(
+            hostname.endswith(suffix) for suffix in cls._allowed_result_host_suffixes
+        ):
+            raise ImageGenerationProviderError(
+                "IMAGE_PROVIDER_INVALID_RESPONSE",
+                "图片生成服务返回了不安全的结果地址",
+                retryable=False,
+            )
+
+    @staticmethod
+    def _image_content_type(data: bytes) -> str | None:
+        if data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return "image/png"
+        if data.startswith(b"\xff\xd8\xff"):
+            return "image/jpeg"
+        if data.startswith((b"GIF87a", b"GIF89a")):
+            return "image/gif"
+        if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+            return "image/webp"
+        return None
+
+
 def build_image_generator(settings: Settings) -> ImageGenerator | None:
     if settings.image_generation_provider == "disabled":
         return None
     if settings.image_generation_provider == "openai":
         return OpenAIImageGenerator(settings)
+    if settings.image_generation_provider == "volcengine":
+        return VolcengineImageGenerator(settings)
     return DevelopmentImageGenerator()
