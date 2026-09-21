@@ -414,23 +414,35 @@ def build_conversation_coach(settings):
 
 > 事后已把 `.env` **还原为 `development`** 并与备份逐行比对确认一致。
 
-### §7.4 ⚠️ 顺带查出的真实缺口
+### §7.4 顺带查出的缺口 —— ⚠️ 初次结论有误,当场订正
 
-`infra/docker-compose.yml` 把 api/worker 需要的变量逐条列全(`JIANGHU_IMAGE_GENERATION_PROVIDER`、
-`JIANGHU_CONFERENCE_JUDGE_PROVIDER` …),**但一条 `JIANGHU_CONVERSATION_COACH_*` 都没有**。
+**初次结论(错)**:以为是 `infra/docker-compose.yml` 没配 conversation coach,导致"任何人拉下来都是空白"。
 
-对照 `worker` 里现有的:
-```yaml
-JIANGHU_CONFERENCE_JUDGE_PROVIDER: ${CONFERENCE_JUDGE_PROVIDER:-development}   # 有 dev 默认值
-```
+**实际(订正)**:查证后发现 ——
 
-⚠️ **而且不是"补一行就行"**:`conversation_coach_provider` 的合法值只有 `openai|deepseek|disabled`,
-**压根没有 `development`** —— 不像 judge / image_generation 那样有 dev 实现。
-所以修法只有两条:① 给 coach 加一个 `development` 值(改代码,向 judge/image 的模式对齐);
-② 只在文档写明「本地要跑对话流,须把 `JIANGHU_ENVIRONMENT` 设为 `test`」。
+| 检查 | 事实 |
+|---|---|
+| `infra/docker-compose.yml` 是否入库 | ✅ **入库**,`zzz`/`main`/两个 `feature` 分支都有,未被 ignore,历史上没删过 |
+| coach 变量从哪来 | compose 用 `env_file: ../services/api/.env` → **真正的来源是 `.env`**,不是 compose |
+| `.env` 从哪来 | `services/api/README.md:7` —— 「将 `.env.example` 复制为 `.env`」 |
+| **`.env.example` 里有 coach 配置吗** | ✅ **有**,而且是**本次合并的 `beefab2` 加进去的**:<br>`JIANGHU_CONVERSATION_COACH_PROVIDER=deepseek` / `..._MODEL=deepseek-v4-flash-vision-exp` / `..._TIMEOUT_SECONDS=60` / `JIANGHU_DEEPSEEK_API_KEY=***`(占位符)|
+| 我的本地 `.env` 里有吗 | ❌ **0 行** —— 它是**合并之前**从旧模板复制来的 |
 
-**后果**:任何人拉下这个分支、按 `start-dev.ps1` 起环境,生图对话页都是**空白且无任何提示**。
-这条建议在合进主线后补上。
+**⇒ 真正的因果**:`env_file` 只在**容器创建时**读 `.env`,**拉取代码不会更新别人的 `.env`**。
+我的 `.env` 建于合并前,缺那几行 → 落到默认 `disabled` → 503。
+**这是「老 `.env` 不自动跟上」的迁移问题,不是仓库缺口。**
+
+**⇒ 因此**:`infra/docker-compose.yml` **不需要补** —— coach 变量本来就不该写在 compose 里(它走 `env_file`)。
+
+**真正值得做的两条**:
+1. **文档补一句**:拉取后若 `.env` 早于本次合并,需把 `.env.example` 的新增段手动并进 `.env`
+   (否则会撞上"功能静默不可用",正是本次的坑);
+2. **本地无密钥想跑通对话流**:把 `JIANGHU_ENVIRONMENT` 设为 `test`(走
+   `ScriptedTestConversationCoach()`,确定性实现,不需要 key)。注意 `.env.example` 默认给的是
+   `PROVIDER=deepseek` + **占位符 key** —— 那样会去调真实 DeepSeek 而失败,**不是一条能直接跑通的路**。
+
+> 📌 **这条纠正本身也是一个教训**:我先前只看了 compose 文件就下了结论,
+> 没顺着 `env_file` → `.env` → `.env.example` 这条链查下去。**"配置从哪来"要追到源头再断言。**
 
 ### §7.5 另一处观察(未断言为缺陷)
 
@@ -545,6 +557,10 @@ git checkout zzz && git reset --hard main && git push --force origin zzz
 12. **沙箱分支验证法值得复用。** 建一个临时分支真合一遍 → 跑完全部闸门 → **正式合并时验证
     「树与沙箱逐字节相同」**,那么沙箱上的验证结论就能**直接沿用**,无需重复跑。
     本次靠这一条,正式合并只需重跑一次 `testDebugUnitTest` 即可确认(`git diff --stat` 为空是硬证据)。
+13. **断言"配置缺了"之前,要顺着来源链追到源头。** 我先只看了 `infra/docker-compose.yml` 就断定
+    "compose 没配 coach → 任何人拉下来都空白";实际上 compose 用 `env_file`,变量来自 `.env`,
+    而 `.env` 由 `.env.example` 复制而来 —— **`.env.example` 里明明有**(还是本次合并加的)。
+    真实原因是"我的 `.env` 建于合并前、拉取不会更新它"。**追链一步,结论就反了**(§7.4)。
 
 ---
 
@@ -557,7 +573,7 @@ git checkout zzz && git reset --hard main && git push --force origin zzz
 | 3 | 后山跳转是否要升级到 `TestNavHostController`(需加 `androidx.navigation.testing` 依赖)| ⏳ 等用户决定;加依赖前先问 |
 | 4 | 后山尚有 6 页未纳入任何自动化(本次只测**跳转逻辑**,不测渲染/素材/动画)| ⏳ 如需覆盖,参照 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md) |
 | 5 | 09-21 上午两笔(`d420c26` / `5a1eaf2`)的技术细节 | ⏳ 无归属日志;**要看直接看代码**,别替它编理由 |
-| 6 | **`infra/docker-compose.yml` 补 conversation coach 配置**(§7.4)| ⏳ **建议优先** —— 否则任何人起 dev 环境,生图对话页都空白且无提示。注意 coach **没有 `development` 值**,补配置要先决定改代码还是只写文档 |
+| 6 | ~~`infra/docker-compose.yml` 补 conversation coach 配置~~ → **订正**:compose **不需要补**(coach 变量走 `env_file`);真正该做的是**文档补一句「拉取后需把 `.env.example` 的新增段并进本地 `.env`」**(§7.4)| ⏳ 待办;另注:coach **没有 `development` 值**,本地无密钥只能靠 `JIANGHU_ENVIRONMENT=test` |
 | 7 | app 在教练 503 时**不显示错误提示**(§7.5)| ⏳ 仅观察,未断言为缺陷;值得看一眼 |
 | 8 | **演武场·视频 / 大会·竞技场两屏从未肉眼验证** | ⏳ 改动第二/第三大(`+818/−503`、全新 2228 行),只过了编译与单测 |
 | 9 | `services/api/.venv`(为跑后端测试创建)| ⏳ 已在本 `git/info/exclude` 排除,不入库;可随时删 |
