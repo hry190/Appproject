@@ -276,6 +276,10 @@ fun ChuangdangBattleScreen(
     // 练习模式也没有「出发」可撤退,直接退出。
     var showRetreatDialog by remember { mutableStateOf(false) }
     var showRetreatResult by remember { mutableStateOf(false) }
+    // 2026-09-21:胜利结算弹窗 —— 替代在最后一题答题区上叠内嵌按钮。
+    // 触发:advance() 把 CdPhase.Victory 时设 true。
+    // 内容:关卡名 + 战利品 + 2 个按钮(继续挑战 下一关 / 回到地图)。
+    var showVictoryDialog by remember { mutableStateOf(false) }
 
     // 2026-09-19 §14:关前剧情(文档 §2「从当前未通关节点出发,阅读简短剧情并进入战斗」+
     //   §5 每关的「场景」文案)。数据一直在 CdStage.scene 里,只是此前没有任何 UI 读它。
@@ -388,6 +392,12 @@ fun ChuangdangBattleScreen(
                 detail = question.explanation
                 pendingDefense = false
                 phase = if (enemyHearts <= 0) CdPhase.Victory else CdPhase.Resolved
+                // 2026-09-21 改:胜利时直接弹弹窗 —— 不需要玩家再点一次按钮。
+                //   (advance() 里也设了 showVictoryDialog = true 是兜底:phase 变 Victory 但 answer() 走了别的分支)
+                if (phase == CdPhase.Victory && !practiceMode) {
+                    ChuangdangStore.clearStage(stage.index)
+                    showVictoryDialog = true
+                }
             } else {
                 // ③ 进攻答错 → 怪物攻击,稍后给一次防御机会
                 headline = "答错了,怪物反击!"
@@ -417,9 +427,20 @@ fun ChuangdangBattleScreen(
     fun advance() {
         when (phase) {
             CdPhase.Victory -> {
-                // 练习模式不解锁正式节点(文档 §2:"不解锁正式通关节点")
-                if (!practiceMode) ChuangdangStore.clearStage(stage.index)
-                actions.onExit()
+                // 2026-09-21:胜利改弹窗。
+                // 弹窗触发:answer() 在判定 phase=Victory 时直接设 showVictoryDialog=true(主流路径);
+                //   本函数只兜底(比如 phase 状态被外部改),实际很少进。
+                //   · 练习模式仍走 onExit(弹窗仅给"胜利"用)
+                //   · 正式模式:answer() 已 clearStage;此处仅同步设弹窗
+                if (practiceMode) {
+                    actions.onExit()
+                } else {
+                    // 兜底:如果 answer() 没设(不该发生),这里补一次
+                    if (!showVictoryDialog) {
+                        ChuangdangStore.clearStage(stage.index)
+                        showVictoryDialog = true
+                    }
+                }
             }
             CdPhase.Defeat -> {
                 // 练习模式本来就没有开始出发,故不结束别人的出发状态
@@ -701,23 +722,41 @@ fun ChuangdangBattleScreen(
                             )
                         }
                         Spacer(Modifier.height(12.dp))
-                        // 2026-09-21:胜利结算面板加「继续挑战 下一关」主按钮
-                        //   · 策划 §6.1:普通关通过后继续下一关不额外扣令(已在 runActive 状态)——
-                        //     这是「继续挑战」按钮的成本判据(玩家不必担心再扣 1 枚)
-                        //   · 第 4 关胜利 → 第 5 关(Boss):见 advance() / onGoNext
-                        //   · 第 5 关(Boss)胜利:NavHost 不传 onGoNext(无下一关),只显示「返回地图」
-                        //   · 战败 / 练习模式:也不显示「继续挑战」(练习不连发 / 战败已 endRun)
-                        if (phase == CdPhase.Victory && !practiceMode && actions.onGoNext != null) {
-                            CdPrimaryButton(text = "继续挑战 下一关", onClick = actions.onGoNext!!)
-                            Spacer(Modifier.height(8.dp))
+                        // 2026-09-21 改:胜利结算不显示内嵌按钮 —— 改为弹窗(见 showVictoryDialog)
+                        // 战败仍显示「返回地图」按钮(走 advance() 退出),但胜利改为弹窗。
+                        if (phase != CdPhase.Victory) {
+                            CdPrimaryButton(
+                                text = when (phase) {
+                                    CdPhase.Defeat -> "返回地图"
+                                    else -> if (pendingDefense) "迎击(防御作答)" else "继续"
+                                },
+                                onClick = { advance() },
+                            )
+                        } else {
+                            // 胜利时,改用「战斗胜利,请稍候...」提示,真正的「继续挑战 下一关 /
+                            // 回到地图」两个按钮在弹窗中。
+                            // 弹窗由 advance() 在 CdPhase.Victory 分支自动弹出。
+                            // 这里不放任何按钮,避免点"返回地图"绕过弹窗
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(Color(0xFFEDE6D7))
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = { advance() },  // 兜底:点提示也能触发弹窗
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "战斗胜利,请选择下一步",
+                                    color = BInkSoft,
+                                    style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
+                                )
+                            }
                         }
-                        CdPrimaryButton(
-                            text = when (phase) {
-                                CdPhase.Victory, CdPhase.Defeat -> "返回地图"
-                                else -> if (pendingDefense) "迎击(防御作答)" else "继续"
-                            },
-                            onClick = { advance() },
-                        )
                         // 2026-09-20:结算面板也提供「撤退」入口(用户 1 号指令,补全触发路径),
                         //   与顶部"撤退"按钮 + BackHandler 等价 —— 胜利/战败时 advance() 已自行
                         //   退出战斗,这里仅 Resolved 阶段显示,避免胜利/战败后弹两次。
@@ -1041,6 +1080,128 @@ fun ChuangdangBattleScreen(
                             .padding(vertical = 8.dp),
                         textAlign = TextAlign.Center,
                     )
+                }
+            }
+        }
+
+        // ── 胜利结算弹窗(2026-09-21)──────────────────────────────
+        // 触发:advance() 在 CdPhase.Victory 时设 showVictoryDialog = true。
+        // 形态:与「撤退确认」弹窗同构(全屏遮罩 + 居中卡片),避免在最后一题答题区上
+        //   叠内嵌按钮 —— 玩家看到的不是「下一题已经弹出在答」,而是「本关打完,选下一步」。
+        // 内容:关卡名 + 战利品 + 2 按钮:
+        //   · 主按钮:继续挑战下一关(走 actions.onGoNext,stage=4 时是 Boss 路由)
+        //   · 副按钮:回到地图(走 actions.onExit)
+        // 注意:NavHost 不传 onGoNext 时(只可能在 Boss 通后)advance() 直接 onExit,
+        //   所以本弹窗**不会在无下一关的场景出现**。
+        if (showVictoryDialog) {
+            // 下一关按钮文案:第 4 关时叫「挑战 Boss」,其他关叫「继续挑战下一关」。
+            // (这是显示差异,onGoNext 回调始终是同一个 navigate 调用)
+            val nextLabel = if (stage.index == 4) "挑战 Boss" else "继续挑战下一关"
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        // 点遮罩 = 回到地图(安全默认,与弹窗主操作并行可触)
+                        onClick = {
+                            showVictoryDialog = false
+                            actions.onExit()
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.86f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { },  // 吃掉面板内点击,避免穿透关弹窗
+                        )
+                        .padding(20.dp),
+                ) {
+                    Text(
+                        text = "战斗胜利",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        // 关卡名:铜齿门卫 / 断目机关蝠 / 棋冠石将 / 百声纸鹤(第 4 关) / ...
+                        text = "第 ${stage.index} 关 · ${stage.title} · ${stage.enemyName}",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    // 战后剧情(文档 §5 每关都有一句,用于衔接下一关)
+                    Text(
+                        text = stage.aftermath,
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 20.sp),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "获得「${stage.title}」通关印记,回到地图可继续下一关。",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        // 副按钮:回到地图(浅灰)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Color(0xFFEDE6D7))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        showVictoryDialog = false
+                                        actions.onExit()
+                                    },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "回到地图",
+                                color = BInk,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                        Spacer(Modifier.size(10.dp))
+                        // 主按钮:继续挑战下一关 / 挑战 Boss(绿色)
+                        Box(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(BCorrect)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        showVictoryDialog = false
+                                        // onGoNext 是 ChuangdangBattleActions 上的可空字段;
+                                        // 进了此弹窗说明非空(advance() 已在 Victory 分支检查),
+                                        // 但 UI 层用 ?: 兜底,避免万一后人不小心让弹窗在 onGoNext=null 时弹出
+                                        actions.onGoNext?.invoke()
+                                    },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = nextLabel,
+                                color = Color.White,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                    }
                 }
             }
         }
