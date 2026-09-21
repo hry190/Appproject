@@ -3,42 +3,54 @@
 > 昨日: [SESSION-LOG-2026-09-20.md](./SESSION-LOG-2026-09-20.md)(861 行,§1~§12,顶部有 TL;DR)
 > **创建于 2026-09-21**,起因:今日分两段 —— 上午是闯荡江湖「胜利结算」收尾(`d420c26` / `5a1eaf2`),
 > 下午用户要求「跑一次后山板块的测试」,查完发现**后山没有任何现成测试**,遂新建一套,
-> 随后按用户指令把 `zzz` 同步到 `main`。两段此前都没有归属日志,故按天归一份。
-> 今日工作: **后山 1~11 页跳转逻辑回归单测(新建)+ `zzz` → `main` 同步 + 一次合并 SOP 偏差的自查与补验 + 文档对账**
-> 状态: 工作区干净。`zzz` 与 `origin/zzz` 已同步;`main` 与 `origin/main` 已同步。
+> 随后把 `zzz` 同步到 `main`。**傍晚到夜间转入另一条线**:用户要评估 `feature/creation-contest-demo`
+> 能不能合进来 —— 于是建沙箱分支真跑了一遍合并、装机做两版对照、重建后端、定位 503 根因,
+> 最后正式合并进 `zzz` 并同步到 `main`(§5~§9)。
+> 今日工作: **后山 1~11 页跳转逻辑回归单测(新建)+ 合并 SOP 偏差自查 + 文档对账
+> + 沙箱验证 creation-contest-demo 合并 + 真机两版对照 + 后端重建与 503 根因 + 正式合并进 zzz/main + 一处命名纠正**
+> 状态: 工作区干净。`zzz` = `main` = `origin/zzz` = `origin/main`(同一提交,SOP 4.6 已执行)。
 
-> 📌 **归属说明**:09-21 有 **3 笔** commit。其中 `d420c26`(09:19)、`5a1eaf2`(09:34)
-> 是**本会话之前**的上午提交(闯荡江湖胜利结算),本日志只登记、不重述其技术细节 ——
-> 要看做了什么请直接看 commit / 代码,别在文档里替它编理由。
-> 本会话的实质产出是 `719e278`(后山单测)与 `325b827`(合并 commit)。
+> 📌 **归属说明**:09-21 的 commit 分三类 ——
+> ① 上午两笔(`d420c26` / `5a1eaf2`,闯荡江湖胜利结算)是**本会话之前**的提交,本日志只登记、不重述;
+> ② 本会话的实质产出:`719e278`(后山单测)、`16057cf`(本日志+对账)、`cf6a0ba`(合并进 zzz)、`43bff43`(合并进 main);
+> ③ 合并带进来的 `beefab2` / `a4b3741` 属 `feature/creation-contest-demo` 原作者 Zqw66666666,细节看那两个 commit。
+> **要看做了什么请直接看 commit / 代码,别在文档里替它编理由。**
 
 ## 🎯 今日 TL;DR
 
-**一句话**:用户要「跑一次后山板块的测试」,查下来后山**一条测试都没有**(`scripts/` 那套真机回归只管闯荡江湖),
-于是先建了一套**纯 JVM 的后山跳转逻辑回归单测**(5 条),再把 `zzz` 同步进 `main`;
-同步之后回头读 `docs/MERGE-WORKFLOW.md` 才发现**我没按那份 SOP 走**,已把漏掉的验证补做并在此如实记录。
+**一句话**:前半段用户要「跑一次后山板块的测试」,查下来后山**一条测试都没有**,
+于是建了一套纯 JVM 的后山跳转逻辑单测并同步 `zzz`→`main`;
+后半段评估 `feature/creation-contest-demo` 能否合并 —— **建沙箱分支真跑一遍、装机对照、重建后端、
+端到端跑通对话流,再正式合并**,顺带纠正了一个我自己臆造的页面中文名。
 
 | 段 | 做了什么 | 关键结论 |
 |---|---|---|
 | §1 | **后山板块跳转逻辑单测**(新建 `HoushanNavigationTest`,5 条)| 后山此前 **0 条测试**;新测试纯 JVM、不动依赖、不改任何源码 |
-| §2 | `zzz` → `main` 同步 | `719e278` → merge `325b827` → 推 `main` + 推 `zzz`;`git diff main zzz` 为空 |
-| §3 | **合并 SOP 偏差自查 + 补验**(今日最该记的一条)| 我没读 `MERGE-WORKFLOW.md` 就合了;漏了 **Step 4.2「推送前跑编译+测试」**。已补:main 上 16/16 通过 |
-| §4 | 文档对账 | 顺手查出并修掉 **4 处**没跟上的(2 处行数 + 1 处索引 + **1 条根本跑不通的命令**),另修 1 处被本次改动搞过期的(ONBOARDING 测试文件数) |
+| §2 | `zzz` → `main` 同步(第一次) | `719e278` → merge `325b827` → 推 `main` + 推 `zzz` |
+| §3 | **合并 SOP 偏差自查 + 补验** | 我没读 `MERGE-WORKFLOW.md` 就合了;漏了 **Step 4.2「推送前跑编译+测试」**。已补 |
+| §4 | 文档对账 | 查出并修掉 **4 处**漂移(2 处行数 + 1 处索引 + **1 条跑不通的命令**) |
+| §5 | **沙箱分支真跑合并**(`test/merge-creation-contest-demo`)| 1 处真冲突;⚠️ `JianghuNavHost.kt` **无冲突警告却被静默改写**(3041→2865) |
+| §6 | **真机两版对照**(装合并版 + 装 zzz 版)| 主界面不变;工坊文案变;**生图对话页结构完全不同**(「下一步」→「保存上传草稿」)|
+| §7 | **后端重建 + 503 根因** | 容器跑的是 **09-09 镜像**且无挂载;重建后接口从 404→503→**200**;根因是 `conversation_coach_provider` 默认 `disabled` |
+| §8 | **正式合并进 `zzz` 并同步 `main`** | 树与沙箱**逐字节相同**;`main` 侧零冲突;SOP 4.6 已完成(`zzz` = `main`)|
+| §9 | **命名纠正:`shengtu` = 生图,不是「圣途」** | 我凭读音臆造的中文名;仓库里有权威对照表(`ENVIRONMENT.md`)我一直没查 |
 
 ## 快速参考(收工时刷新)
 
 | 项 | 值 |
 |---|---|
 | 工作分支 | `zzz` |
-| 最近 commit | `719e278`;合并 commit `325b827` 在 `main` 上。**现行哈希用 `git log -1` 取,别照抄这里** |
-| 分支同步 | ✅ 今日**用户明说**后同步过一次(`main` = `origin/main` = `325b827`)。⚠️ **合并后拓扑是 `main` 比 `zzz` 多 1 笔**(那笔 merge commit),`main..zzz` = **0** —— **别照抄本表**:`git rev-list --count main..zzz` / `zzz..main` 现算 |
-| 今日 commit(09-21,3 笔)| `d420c26` 胜利结算面板加「继续挑战 下一关」主按钮(09:19,本会话前)· `5a1eaf2` 胜利结算改为弹窗式(09:34,本会话前)· `719e278` **后山 1~11 页跳转逻辑单测**(15:32,本会话) |
-| 合并 commit | `325b827` merge zzz → main(09:21 15:32),带 19 笔入 `main` |
+| 最近 commit | `43bff43` merge zzz → main。**现行哈希用 `git log -1` 取,别照抄这里** |
+| 分支同步 | ✅ **`zzz` = `main` = `origin/zzz` = `origin/main` = 同一提交** —— SOP 4.6 已执行(`reset --hard main` + `push --force`)|
+| 今日 commit(09-21)| 本会话之前:`d420c26`(09:19)· `5a1eaf2`(09:34)—— 闯荡江湖胜利结算<br>本会话:`719e278` 后山单测(15:32)· `16057cf` 09-21 日志+对账 · `cf6a0ba` merge zzz ← creation-contest-demo · `43bff43` merge zzz → main<br>合并带入:`beefab2` / `a4b3741`(原作者 Zqw66666666)|
 | 工作区 | 干净 |
 | 后山测试 | ✅ **新增 5 条**(`HoushanNavigationTest`);改动前项目仅 4 个测试文件,后山 0 条 |
-| 单测总数 | **16 条全过**(`./gradlew :app:testDebugUnitTest`,在 `main` 上 `--rerun` 复核过) |
+| 单测总数 | **19 条全过**(`./gradlew :app:testDebugUnitTest`;zzz 16 + 合并带入 3)|
+| 后端测试 | ✅ **123 passed**(`services/api/.venv` + `pytest`;21 文件 / 内存 SQLite,不需 Postgres)|
 | 设计稿目录 | `D:\图` —— 仍处于已删除状态(2026-09-20 删);与今日无关 |
-| 真机 | ⚠️ **今日未接真机**。本轮工作全部在 JVM 单测层,未跑 `adb`、未装 APK、未动 `ChuangdangStore` 进度 |
+| 真机 | ✅ **接过了**(`21908b7a` / 2201123C / Android 15)。做了**合并版 vs zzz 版**两轮装机对照;`adb reverse` 过程中**又被清空 2 次**,均当场重建 |
+| `feature/*` 分支 | `feature/creation-contest-demo` 已并入 `main`;`feature/authentication-foundation` 早已并入。两个都 `ahead=0`,可删 |
+| 沙箱分支 | `test/merge-creation-contest-demo` —— **已删除**(本地 + 远端);它只是验证用,内容已由 `cf6a0ba` 承载 |
 
 > ⚠️ 上表是**收工时(2026-09-21)**刷新的快照;**本文自身的提交会让 HEAD 再前进一格**。
 > 查真实状态:`git log --oneline -1` + `git status -sb` + `git for-each-ref --format='%(refname:short) %(objectname:short)' refs/heads/main refs/heads/zzz`。
@@ -201,14 +213,16 @@ fatal: unable to access 'https://github.com/hry190/Appproject.git/':
 | `./gradlew :app:compileDebugKotlin`(on `main`)| ✅ BUILD SUCCESSFUL |
 | `./gradlew :app:testDebugUnitTest --rerun`(on `main`)| ✅ **16/16 通过**(报告时间戳确认是本次新生成的) |
 
-### §3.4 还没做:SOP Step 4.6 的 `zzz` 对齐
+### §3.4 SOP Step 4.6 的 `zzz` 对齐 —— ✅ 当晚已执行
 
 SOP 写的是合并后 `git checkout zzz; git reset --hard main; git push --force origin zzz`,
 目的是让 **`zzz` 与 `main` 指向同一个 commit**。
 
-当前:**内容相同、hash 不同** —— `zzz` = `719e278`,`main` = `325b827`。
+当时状态是「内容相同、hash 不同」,`reset --hard` + `--force` push 属**破坏性**操作,故先搁置等用户点头。
 
-`reset --hard` + `--force` push 是**破坏性**操作,已向用户说明并等待点头,**未执行**。
+**2026-09-21 夜间已执行完毕**(见 §8.3):执行前核验 `main..zzz` = **0**(`zzz` 无任何独有提交),
+所以强推不丢东西;结果 `zzz` = `main` = `43bff43`,本地与远端四方一致。
+强推第一次因网络抖动失败(`Recv failure: Connection was reset`),代理确认正常后重试即成功。
 
 > 📌 另记一条**待复核**:SOP 的「Windows bash git 已知 bug」一节说 `git merge --no-ff`
 > 会被误解析成策略名 `theirs` 而报错、必须显式加 `--strategy=recursive`。
@@ -246,7 +260,256 @@ SOP 写的是合并后 `git checkout zzz; git reset --hard main; git push --forc
 
 ---
 
-## 沉淀(§1~§4)
+## §5 沙箱分支:把 `feature/creation-contest-demo` 真跑了一遍合并
+
+用户想知道「如果拉取,会不会有冲突或其他问题」。做法是**建一个沙箱分支真合一遍**,不碰 `zzz` / `main`。
+
+分支:`test/merge-creation-contest-demo`(基于 `zzz`)。
+
+### §5.1 先摸底:这个分支里有什么
+
+| 部分 | 文件 | 行数 | 说明 |
+|---|---|---|---|
+| `services/api` | 36 | +4342 / −559 | 新增 `conversation_coach.py` + 迁移 `0023`~`0026` + 2 个测试 + 素材 |
+| `android/app` | 24 | +5330 / −4341 | 新增 `dahui/ConferenceArenaDesign.kt`(2228 行)、`ConferenceWorksNavigationBar.kt` |
+| docs + scripts | 3 | +647 | 含 `creation-conversation-simplification-20260910.md`(设计说明)|
+
+### §5.2 冲突:1 个文件 / 1 个冲突块
+
+`merge-tree` 预判与真合并**结论一致**:
+
+```
+CONFLICT (content): shengtu/ShengtuScreen.kt
+Auto-merging: JianghuNavHost.kt / Routes.kt / RoutesTest.kt
+```
+
+**性质不是手滑,是重设计撞车**:
+
+| | base(09-11)| `zzz` | 分支 |
+|---|---|---|---|
+| `ShengtuScreen.kt` 行数 | 2223 | 2223 | **625** |
+| 组件集 | `ChatBubble`/`AgentThinkingPanel`/`CoachProposalCard` | 同 base | 换成 `ConversationBubble`/`CoachBubble`/`GenerationBubble`/`ConversationInput` |
+
+`zzz` 侧**只在那个区块改过注释**(`920368a`),分支整段删掉 → 三方合并判「修改/删除冲突」。
+**解法(本次采用):接受分支版**(`git checkout --theirs`)。
+
+### §5.3 ⚠️ 无冲突警告、却被静默改写的文件(本次最大的坑)
+
+`JianghuNavHost.kt` 报的是「Auto-merging」,**零冲突提示**,但行数 **3041 → 2865**:
+
+| | `zzz` | 合并后 |
+|---|---|---|
+| `onOpenCollections` | 1 | **0** |
+| `analysisNotice`(创作安全提示)| 2 | **0** |
+| `navigateConferenceRoot` | 0 | **13** |
+| `DahuiRecords` | 0 | 5 |
+| NavHost 引用的 `Routes.*` | — | ✅ **一条没少**(231→232,只多 `DahuiRecords`)|
+
+机制:这些行 **base 有、`zzz` 保留、分支删掉** → 三方合并**忠实执行了分支的删除**,换成分支自己那套接线
+(`navigateConferenceRoot` + 不同回调名)。**只看 git 的冲突提示会完全漏掉它** ——
+这正是 `MERGE-WORKFLOW.md` 开头警告的「Automatic merge went well ≠ 没冲突」。
+
+### §5.4 验证结果(全过)
+
+| 闸门 | 结果 |
+|---|---|
+| 冲突标记 / `.orig` | **0 处 / 0 个** |
+| `compileDebugKotlin` | ✅ BUILD SUCCESSFUL(1m25s)|
+| `testDebugUnitTest` | ✅ **19/19**(zzz 16 + 分支新 3)|
+| 后端 `pytest` | ✅ **123 passed**(40s)|
+| 迁移链 | ✅ **线性无分叉**:`0022` → `0023` → `0024` → `0025` → `0026` |
+
+---
+
+## §6 真机两版对照(合并版 vs `zzz` 版)
+
+### §6.1 前置:`adb reverse` 又被清空
+
+`adb -s 21908b7a reverse --list` **一开始就是空的**,设备侧 `/docs` 回 `000`。按 `ONBOARDING §3.4` 重建后:
+设备侧 `/docs` 与 `/openapi.json` 都回 **200**。**这一晚又被清空了 2 次**,均当场重建。
+
+### §6.2 装机
+
+`assembleDebug` → `adb install -r`。**第一次被 MIUI 挡下**:
+
+```
+INSTALL_FAILED_USER_RESTRICTED: Install canceled by user
+```
+
+这是**设备侧授权**(文档 09-16 / 09-18 都记过),不是包的问题;重试并在手机上确认后 `Success`。
+用 `dumpsys package ... | grep lastUpdateTime` 核对换包时间。
+
+### §6.3 同一路径走两遍,肉眼差异
+
+路径:`修炼页 → 作品创作 → 工坊 → 继续沟通 → 生图对话页`。
+
+| 页面 | 差异 |
+|---|---|
+| **修炼页(主界面)** | **完全没变** —— 文字节点逐条相同,坐标都没变 |
+| **工坊 · 创作台** | 教练台词:「我会先**帮你理清步骤**」→「我会先**听懂你的想法,再和你一起商量**」;作品卡按钮:「**制作**」→「**继续沟通**」;骨架相同 |
+| **生图对话页** | **结构完全不同**:`zzz` 底部是「**下一步**」(多步流程)+ 中间「创作教练建议,请确认」+「暂不采用 / 采用建议」;合并版是**单一对话页** + 唯一主动作「**保存上传草稿**」|
+
+这正是 §5.2 里 `CreationWorkflowDialog` / `ProductionWorkflowContent` / `SealWorkflowContent`
+那套五阶段 UI 与分支对话式 UI 的分野,**真机上肉眼可见**。
+
+---
+
+## §7 后端重建 + 503 根因(本节的技术含量最高)
+
+### §7.1 发现:后端根本没跟着换
+
+合并带了 36 个后端文件,但**运行中的后端一行新代码都没有**:
+
+| 检查 | 结果 |
+|---|---|
+| 后端形态 | **Docker 容器** `jianghu-dev-api-1`(PID 9904 是 Docker Desktop 后台,不是 uvicorn)|
+| 容器挂载 | **无挂载 —— 代码打进镜像** |
+| 镜像构建时间 | **2026-09-09 13:56**(12 天前);容器当天重启过但没重建镜像 |
+| 运行中 openapi | 115 条路径,**conversation 相关 0 条** |
+| 直探新接口 | `POST /v1/creation-conversations:start` → **404** |
+| 测试分支工作区 | ✅ 确实有(`creations.py:106`)|
+
+### §7.2 重建
+
+compose 的 `api` 服务 `build.context: ../services/api` → 直接吃工作区代码,所以重建即可。
+`docker compose up -d --build api worker`(**exit=0**,两个镜像 Built)。
+启动命令自带 `alembic upgrade head` → **迁移 `0023`~`0026` 自动跑完**,`alembic current` = `0026_video_media (head)`。
+
+重建后:openapi **127** 条路径 / conversation **8 条**;`/creation-conversations:start` → **404 变 401**(需鉴权 = 路由已存在)。
+
+### §7.3 端到端:503 → 200
+
+重建后重走对话流,**接口通了但报 503**:
+
+```
+GET  /v1/creation-projects/{id}                      → 200 OK
+POST /v1/creation-projects/{id}/conversation:resume  → 503 Service Unavailable
+```
+
+**根因(源码 `conversation_coach.py:244`)**:
+
+```python
+def build_conversation_coach(settings):
+    if settings.environment == "test":
+        return ScriptedTestConversationCoach()
+    if settings.conversation_coach_provider == "disabled":
+        return None                    # ← 当前走这里
+    return OpenAIConversationCoach(settings)
+```
+
+`None` → `service.py:2526` 抛 `ApiError(503, "COACH_SERVICE_UNAVAILABLE", "教练暂时没连上,请稍后再试。")`
+
+**容器实际配置**:`JIANGHU_ENVIRONMENT=development`、`JIANGHU_CONVERSATION_COACH_PROVIDER` **未设置**(默认 `disabled`)、
+`JIANGHU_OPENAI_API_KEY` **空**、`JIANGHU_DEEPSEEK_API_KEY` **未设置**。
+
+**修法(本次采用 A)**:改 `services/api/.env` 第 4 行 `JIANGHU_ENVIRONMENT=development → test`,
+走 `ScriptedTestConversationCoach()`(**确定性实现,不需要任何 API key**),重启 api 容器。
+
+**结果**:`conversation:resume` → **200 OK**,生图对话页出现:
+
+- 学生气泡:`yth`
+- **教练气泡**:「我理解你希望"yth"。这次会以你的新要求为准,同时让主体和背景更清楚。你觉得这样可以吗?」
+  (与 `conversation_coach.py:237~241` 的脚本实现**逐字一致**,确认走的是 test 实现)
+- 「**采纳并继续**」按钮 + 输入框「继续和教练商量」+ ↑ 发送 + 底部「保存上传草稿」
+
+> 事后已把 `.env` **还原为 `development`** 并与备份逐行比对确认一致。
+
+### §7.4 ⚠️ 顺带查出的真实缺口
+
+`infra/docker-compose.yml` 把 api/worker 需要的变量逐条列全(`JIANGHU_IMAGE_GENERATION_PROVIDER`、
+`JIANGHU_CONFERENCE_JUDGE_PROVIDER` …),**但一条 `JIANGHU_CONVERSATION_COACH_*` 都没有**。
+
+对照 `worker` 里现有的:
+```yaml
+JIANGHU_CONFERENCE_JUDGE_PROVIDER: ${CONFERENCE_JUDGE_PROVIDER:-development}   # 有 dev 默认值
+```
+
+⚠️ **而且不是"补一行就行"**:`conversation_coach_provider` 的合法值只有 `openai|deepseek|disabled`,
+**压根没有 `development`** —— 不像 judge / image_generation 那样有 dev 实现。
+所以修法只有两条:① 给 coach 加一个 `development` 值(改代码,向 judge/image 的模式对齐);
+② 只在文档写明「本地要跑对话流,须把 `JIANGHU_ENVIRONMENT` 设为 `test`」。
+
+**后果**:任何人拉下这个分支、按 `start-dev.ps1` 起环境,生图对话页都是**空白且无任何提示**。
+这条建议在合进主线后补上。
+
+### §7.5 另一处观察(未断言为缺陷)
+
+教练 503 时,**app 侧不显示任何错误提示** —— 生图对话页 UI 框架完整加载,卷轴区空白,
+但那个 503 的用户文案「教练暂时没连上,请稍后再试。」**在界面上没看到**。仅记录观察。
+
+---
+
+## §8 正式合并进 `zzz` 并同步 `main`
+
+### §8.1 `zzz` ← `feature/creation-contest-demo`
+
+按 SOP Step 4 走(`--no-commit --no-ff --strategy=recursive`)。**冲突与沙箱完全一致**(同文件、同 1 块),
+用**同一种解法**(取分支版)。
+
+🎯 **关键一步:验证这次真合并的树与已验证的沙箱逐字节相同**
+
+```
+git diff --stat test/merge-creation-contest-demo   →  空
+```
+
+→ 沙箱上跑过的 `compileDebugKotlin` / `19/19` / 后端 `123 passed` **可直接沿用**。
+随后仍按 SOP 4.2 强制重跑 `testDebugUnitTest --rerun` → **19/19 通过**;0 标记 / 0 `.orig`。
+提交 **`cf6a0ba`**(两父:`16057cf` + `a4b3741`),推 `origin/zzz`。
+
+### §8.2 `main` ← `zzz`(第二次同步)
+
+侦察发现 `main` 与 `zzz` **已分叉**:`main..zzz` = 4,`zzz..main` = 1,merge-base = `719e278`。
+
+> 📌 顺带**纠正一处我先前的说法**:`main` 里**其实没有**那笔 09-21 文档提交 ——
+> 因为第一次「同步到 main」是在我**建日志之前**做的,`325b827` 的父是 `c6dc4b2` + `719e278`,不含 `16057cf`。
+
+`merge-tree` 试合并 → **exit=0,零冲突**;真合并同样零冲突。合并后
+**`main` 的树 == `zzz` 的树**(`fdf336c4`),推 `325b827..43bff43`。
+
+### §8.3 SOP 4.6:让 `zzz` 与 `main` 同一提交
+
+执行前核验 **`main..zzz` = 0**(`zzz` **无任何独有提交**),所以强推不丢东西。
+
+```bash
+git checkout zzz && git reset --hard main && git push --force origin zzz
+```
+
+第一次强推**网络抖动失败**(`Recv failure: Connection was reset`);代理端口确认在听、`curl` 回 200 后重试成功:
+`cf6a0ba..43bff43  zzz -> zzz`。
+
+**结果**:`zzz` = `main` = `origin/zzz` = `origin/main` = **`43bff43`**,四方一致。
+
+### §8.4 沙箱分支与已并入分支
+
+- `test/merge-creation-contest-demo`:**已删**(本地 + 远端)。它的 tip 不是 `zzz` 的祖先(是另一个合并 commit),
+  故用 `-D`;但**内容与 `zzz` 逐字节相同、两个父都在 `zzz` 历史里**,只有那个 commit 对象变不可达,不丢内容。
+- `feature/authentication-foundation`:早已并入,可删。
+- `feature/creation-contest-demo`:刚并入,`ahead=0`,可删。
+
+---
+
+## §9 命名纠正:`shengtu` = **生图**,不是「圣途」
+
+本条是**我自己的错误**,记下来防止重犯。
+
+整场会话里我一直把 `ui/screens/shengtu/` 那个页面叫「**圣途**页」。用户指出应当是「**生图**」。核实:
+
+| 检查 | 结果 |
+|---|---|
+| 「圣途」在仓库里出现次数 | **0**(源码 / 文档 / 提交信息 / 全部分支历史都搜不到)|
+| 权威出处 | `ENVIRONMENT.md` 第 199~206 行**本来就有一张 Screen → 中文名 对照表** |
+| 该表怎么写的 | `ShengtuScreen | ui/screens/shengtu/ | **生图页**` |
+| 旁证 | `CONTRIBUTING.md` 写作 `img_shengtu_bg.png`(**生图页**背景);`settings-integration.md`、`creation-workflow-integration.md` 同样写「生图」|
+
+**已处理**:本地截图文件名 `30-圣途对话页…` → `30-生图对话页…`;
+已核实**未污染仓库**(提交信息与所有分支历史里都搜不到「圣途」)。
+
+**教训**:这不是"表达随性",而是**有权威来源我没查** —— `ENVIRONMENT.md` 那张表就是为这件事准备的,
+我却在第一次提到该页时按读音臆造了一个中文名,然后一路用了十几轮。**涉及页面命名,先查表。**
+
+---
+
+## 沉淀(§1~§9)
 
 1. **搜代码用拼音,搜文档用中文。** 本项目的屏目录一律拼音(`houshan1..11` / `gunlun1..16` / `volumeNpartM`),
    中文只出现在注释、KDoc、docs 里。**先按中文搜会得到 0 结果,从而误判"这个功能不存在"。**
@@ -264,6 +527,24 @@ SOP 写的是合并后 `git checkout zzz; git reset --hard main; git push --forc
    **JVM 单测**(`app/src/test/`,16 条)与**真机回归**(`scripts/chuangdang-regress/`,只覆盖闯荡江湖)——
    用户说"后山板块的测试",两者**都不适用**(后山连单测都没有)。**先报现状、再让用户选方向**,
    比闷头造一套更省事。
+7. **页面中文名有权威表,不要按读音臆造。** `ENVIRONMENT.md` §结构里有现成的
+   `Screen 文件 → 目录 → 中文名` 对照表(`ShengtuScreen → 生图页`)。我凭读音造了个「圣途」,
+   一路用了十几轮才被用户纠正(§9)。**涉及页面命名,先查表。**
+8. **「Automatic merge went well」≠「内容正确」。** 本次 `JianghuNavHost.kt` 报 Auto-merging、
+   **零冲突警告**,但被静默改写掉 176 行(含 `onOpenCollections` / `analysisNotice`),§5.3。
+   合并后**必须 diff 关键文件**,不能只看 git 的冲突提示。SOP 自己警告过这一点,这次真撞上了。
+9. **合并前把 SOP 读一遍,是能省掉事后补验的。** §3 那次我没读就合了,漏了 Step 4.2;
+   §8 这次读了 SOP 再走,一次做全(侦察 → 评估 → 试合并 → 验证 → 提交 → 推送 → 4.6 对齐)。
+   **同一份 SOP,读与不读的差别就是"补做"与"一次做对"。**
+10. **后端容器里的代码是「构建时快照」。** compose 里 `api` 无挂载、代码打进镜像,
+   所以**切分支不会让容器跟着变** —— 换了源码必须 `--build` 重建,否则 app 在跑新代码、
+    后端还是十几天前的(§7.1 就是这样:镜像停在 09-09,新接口一路 404)。
+11. **端到端不通时,先分清"代码问题 / 配置没开 / 代码没上机"。** 本次三步都不是 bug:
+   ① 后端 404 = **代码没重建**;② 404→503 = **provider 默认 `disabled`**(配置);③ 页面空白 =
+    上面两步的后果。**在"这是 bug"之前,先把这三层排掉。**
+12. **沙箱分支验证法值得复用。** 建一个临时分支真合一遍 → 跑完全部闸门 → **正式合并时验证
+    「树与沙箱逐字节相同」**,那么沙箱上的验证结论就能**直接沿用**,无需重复跑。
+    本次靠这一条,正式合并只需重跑一次 `testDebugUnitTest` 即可确认(`git diff --stat` 为空是硬证据)。
 
 ---
 
@@ -271,11 +552,17 @@ SOP 写的是合并后 `git checkout zzz; git reset --hard main; git push --forc
 
 | # | 事项 | 状态 |
 |---|---|---|
-| 1 | `zzz` 是否 `reset --hard main` + force push(让 `zzz` == `main` 同一提交,SOP Step 4.6)| ⏳ 等用户点头(破坏性操作) |
-| 2 | 合并 SOP 的「`--no-ff` 被误解析为 `theirs`」是否已失效 | ⏳ 待复核(本次未复现) |
+| 1 | ~~`zzz` 是否 `reset --hard main` + force push~~ | ✅ **已执行**(§8.3):`zzz` = `main` = `43bff43` |
+| 2 | 合并 SOP 的「`--no-ff` 被误解析为 `theirs`」是否已失效 | ⏳ 待复核(两次都没复现)|
 | 3 | 后山跳转是否要升级到 `TestNavHostController`(需加 `androidx.navigation.testing` 依赖)| ⏳ 等用户决定;加依赖前先问 |
-| 4 | 后山尚有 6 页未纳入任何自动化(本次只测**跳转逻辑**,不测渲染/素材/动画)| ⏳ 如需覆盖,参照 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md) 另起一套 |
+| 4 | 后山尚有 6 页未纳入任何自动化(本次只测**跳转逻辑**,不测渲染/素材/动画)| ⏳ 如需覆盖,参照 [CHUANGDANG-REGRESSION-PLAYBOOK.md](./CHUANGDANG-REGRESSION-PLAYBOOK.md) |
 | 5 | 09-21 上午两笔(`d420c26` / `5a1eaf2`)的技术细节 | ⏳ 无归属日志;**要看直接看代码**,别替它编理由 |
+| 6 | **`infra/docker-compose.yml` 补 conversation coach 配置**(§7.4)| ⏳ **建议优先** —— 否则任何人起 dev 环境,生图对话页都空白且无提示。注意 coach **没有 `development` 值**,补配置要先决定改代码还是只写文档 |
+| 7 | app 在教练 503 时**不显示错误提示**(§7.5)| ⏳ 仅观察,未断言为缺陷;值得看一眼 |
+| 8 | **演武场·视频 / 大会·竞技场两屏从未肉眼验证** | ⏳ 改动第二/第三大(`+818/−503`、全新 2228 行),只过了编译与单测 |
+| 9 | `services/api/.venv`(为跑后端测试创建)| ⏳ 已在本 `git/info/exclude` 排除,不入库;可随时删 |
+| 10 | `feature/authentication-foundation` / `feature/creation-contest-demo` 已并入,可删 | ⏳ 两者 `ahead=0` |
+| 11 | 真机对照截图 8 张在 `D:\hermes\cache\merge-test-20260921\` | ⏳ 留作对照或清理 |
 
 ---
 
