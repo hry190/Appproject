@@ -593,6 +593,47 @@ fun JianghuNavHost(
                 practiceMode = practice,
                 actions = ChuangdangBattleActions(
                     onExit = { navController.popBackStack() },
+                    // 2026-09-20:撤退结果面板三选项(策划 §9「普通关失败」)
+                    //   · 继续练习:留在战斗页路由,只把 practice 切到 true
+                    onPracticeSame = {
+                        navController.navigate(Routes.chuangdangBattle(stage, practice = true)) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
+                    //   · 重新出发:从当前关正式重打
+                    onRestartSame = {
+                        navController.navigate(Routes.chuangdangBattle(stage, practice = false)) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
+                    //   · 前往补修:目前修学/补修模块在"等后端的一批"里(SESSION-LOG-2026-09-20 待办 #9);
+                    //     先跳到修学主页,模块接上后改成真正的补修页跳转。
+                    onGoReview = {
+                        navController.navigate(Routes.Xiulian) {
+                            popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                        }
+                    },
+                    // 2026-09-21:胜利后「继续挑战 下一关」直跳
+                    //   · 普通关 1→2→3→4 → chuangdangBattle(n+1) [策划 §6.1:runActive 期间不扣令]
+                    //   · 第 4 关 → Boss 路由(切到制作+评审页,不是战斗页)
+                    //   · Boss 屏战斗不挂这个回调(BossScreen 自己有 onBack)
+                    onGoNext = if (stage < CD_BOSS_INDEX - 1) {
+                        // stage = 1..3: 跳 stage+1
+                        {
+                            navController.navigate(Routes.chuangdangBattle(stage + 1, practice = false)) {
+                                popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                            }
+                        }
+                    } else if (stage == CD_BOSS_INDEX - 1) {
+                        // stage = 4: 跳 Boss 路由
+                        {
+                            navController.navigate(Routes.ChuangdangBoss) {
+                                popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                            }
+                        }
+                    } else {
+                        null  // 不该到这里(stage 5 走 Boss 路由,不会到战斗路由)
+                    },
                 ),
             )
         }

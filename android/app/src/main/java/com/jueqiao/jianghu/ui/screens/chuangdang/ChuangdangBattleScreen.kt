@@ -1,6 +1,10 @@
 package com.jueqiao.jianghu.ui.screens.chuangdang
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,15 +39,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlin.random.Random
+
+/**
+ * 交手时放哪一种一次性动画(2026-09-20 §8,§9 扩充为"双方都会动")。
+ *
+ * 设计约束(用户定的口径 + 项目既有教训):
+ *   · **一次性**,不循环 —— 循环动画会让 `uiautomator dump` 等不到 idle,而"每帧配 dump"是像素回归的地基;
+ *   · **不整屏震** —— 文字区域是这个项目最脆的地方(§10/§12/§19 三次修的都是文字),震屏会一起晃到它;
+ *   · **不改交互节奏** —— 动画在结算面板底下播,不加"等动画放完才能点继续"的门。
+ *
+ * 命名从"谁的动作"来(§9 改的名):原先 Lunge / Block / TakeHit 只描述了熊猫那一侧,
+ * 而 §9 之后**怪物也会主动扑击**,读名字要先知道"这是谁在动"才不会改错。
+ */
+private enum class CdFx {
+    None,
+    /** 进攻命中:熊猫前冲,怪物挨打后仰。 */
+    PandaStrike,
+    /** 进攻被格挡:熊猫只前顶一点点(不放"出手+受击",那会谎报战果)。 */
+    PandaGraze,
+    /** 怪物扑击:反击起手 / 防御题起手 —— **只有怪物动**,熊猫不动。 */
+    MonsterJab,
+    /** 防御答对:怪物扑上来**被挡回**,熊猫挡一下并被顶退一点。 */
+    MonsterBlocked,
+    /** 防御答错:怪物扑上来**命中**,熊猫受击后退。 */
+    MonsterHits,
+}
 
 /**
  * 2026-09-19 §6 闯荡江湖 · 战斗页(第 1~4 关的三心攻防)
@@ -64,8 +96,28 @@ import kotlin.random.Random
  * @param stageIndex 关卡序号(1~4)
  */
 data class ChuangdangBattleActions(
-    /** 退出战斗回到地图(主动撤退 / 战败 / 通关都走这里)。 */
+    /**
+     * 退出战斗回到地图(主动撤退 / 战败 / 通关都走这里)。
+     *
+     * 2026-09-20:把原本只一个 onExit 拆成 4 个明确语义的回调 —— 因为
+     * 「主动撤退后是否要继续战斗」需要细分(策划 §9 「普通关失败」给出三选项:
+     * 前往补修 / 免费练习 / 重新出发)。练习模式与战败/胜利路径继续走 [onExit]。
+     */
     val onExit: () -> Unit = {},
+    /** 主动撤退后再点「继续练习」(策划 §9):回到本关、practice=true。 */
+    val onPracticeSame: () -> Unit = {},
+    /** 主动撤退后再点「重新出发」(策划 §9):从当前关重新开始正式战斗。 */
+    val onRestartSame: () -> Unit = {},
+    /** 主动撤退后再点「前往补修」(策划 §9):跳到修学/补修页面。 */
+    val onGoReview: () -> Unit = {},
+    /**
+     * 胜利后点「继续挑战 下一关」:直跳到下一关(stage 1→2→3→4→Boss)。
+     *
+     * 策划 §6.1:「通过普通关后继续下一关不额外扣令」(runActive 期间,continue 不消耗)。
+     * 第 5 关(Boss)之后无下一关,BossScreen 不会传这个回调 —— 字段可空,
+     * UI 见 [CdPhase.Victory] 分支:**有回调**时显示「继续挑战 下一关」主按钮。
+     */
+    val onGoNext: (() -> Unit)? = null,
 )
 
 private val BInk = Color(0xFF2E2A24)
@@ -118,12 +170,116 @@ fun ChuangdangBattleScreen(
     var headline by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
 
-    // 2026-09-19 §6:中途返回时弹确认框(文档 §6.4"主动撤退:弹窗说明后果,确认后结束本次出发")。
-    //   · 撤退 → 结束本次出发,该关回到「可挑战」(闯荡令不返还)
-    //   · 暂离 → 保留出发与关卡进度,该关显示「继续」,稍后进入不重复扣令
-    //   注意:胜负已分时不弹框 —— 胜利/战败走 advance() 直接退出(那里已处理 clearStage / endRun)。
-    //   练习模式没有"出发"可撤退(不消耗闯荡令),直接退出。
+    // ── 2026-09-20 §8:交手动画(出手 / 格挡 / 受击);§9 起**怪物也会主动扑击** ──────────
+    //   为什么用"种类 + 计数器"两个状态:同一种动画连续触发时(连打两下都是同一种),
+    //   只改种类不会让 LaunchedEffect 重跑 —— 必须让 tick 变。
+    var fxKind by remember { mutableStateOf(CdFx.None) }
+    var fxTick by remember { mutableIntStateOf(0) }
+    /**
+     * 一次性冲量,取值不限于 [0,1]:**负半程用来表达"被顶回去/被挡回"**。
+     *
+     * 为什么一个 Animatable 就够(§9 的设计要点):扑击那一拍需要**双方同时**动 ——
+     * 怪物扑上来(−12dp)又被挡回(+6dp),熊猫挡一下(+4dp)再被顶退(−2dp)。
+     * 若给两路各一个 Animatable,就得并发跑两段动画(`launch` + `join`);
+     * 而这两条曲线**形状相同、只差系数**:同一段 1 → −0.5 → 0 的冲量,
+     * 熊猫取 +4dp/单位、怪物取 −12dp/单位,正好得到 +4→−2 与 −12→+6 —— 一次动画、两条曲线。
+     */
+    val fx = remember { Animatable(0f) }
+    // ⚠️ 这里**不要**自己去读 `Settings.Global.ANIMATOR_DURATION_SCALE` 再乘一遍时长:
+    //   Compose 的 `WindowRecomposer` 已经把系统这个倍率注入 `MotionDurationScale`,
+    //   所有 tween 都会被框架自动缩放(源码:`WindowRecomposer_androidKt` 里读的正是
+    //   `animator_duration_scale`)。手动再乘一次就是**乘两遍**。
+    //   实测(§8):系统倍率 =10、代码里也 ×10 时,一条 120+170ms 的动作在真机上放了 **29 秒**
+    //   (= 2.9s × 10),取证时被误判成"熊猫一直在漂"。所以这里只写本来的时长:
+    //   · 系统倍率 = 1(默认)→ 就是下面写的毫秒数;
+    //   · 系统倍率 = 0(开发者选项关掉动画)→ 框架把动画时长归一为 0,动作直接不播(符合无障碍预期)。
+    LaunchedEffect(fxTick) {
+        if (fxTick == 0) return@LaunchedEffect
+        fx.snapTo(0f)
+        when (fxKind) {
+            // 出手:冲出去快、收回来略慢(怪物挨打后仰是**同一拍被动发生**的,见下面映射表)
+            CdFx.PandaStrike -> {
+                fx.animateTo(1f, tween(160, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(140, easing = LinearOutSlowInEasing))
+            }
+            // 被格挡:短促一顿,没有后半程
+            CdFx.PandaGraze -> {
+                fx.animateTo(1f, tween(110, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(110, easing = LinearOutSlowInEasing))
+            }
+            // 怪物扑击(反击起手 / 防御题起手):扑得快、收得慢一点
+            CdFx.MonsterJab -> {
+                fx.animateTo(1f, tween(140, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(200, easing = LinearOutSlowInEasing))
+            }
+            // 扑上来 → **被挡回**(负半程)→ 归位:熊猫在这里"顶了一下又被顶退"
+            CdFx.MonsterBlocked -> {
+                fx.animateTo(1f, tween(130, easing = FastOutSlowInEasing))
+                fx.animateTo(-0.5f, tween(90, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(180, easing = LinearOutSlowInEasing))
+            }
+            // 扑上来命中:熊猫被打退得快、晃回来更慢
+            CdFx.MonsterHits -> {
+                fx.animateTo(1f, tween(120, easing = FastOutSlowInEasing))
+                fx.animateTo(0f, tween(170, easing = LinearOutSlowInEasing))
+            }
+            CdFx.None -> return@LaunchedEffect
+        }
+    }
+    // 位移/缩放映射:一次性动画只碰 offset / scale,**不动尺寸、不动文字、不整屏震**。
+    //   系数 × 冲量 = 这一拍的位移;冲量走负半程时系数不变,符号自然翻转("被顶退/被挡回")。
+    val pandaFxDp = when (fxKind) {
+        CdFx.PandaStrike -> 14f * fx.value        // 出手前冲
+        CdFx.PandaGraze -> 4f * fx.value          // 被格挡:只前顶一点点
+        CdFx.MonsterJab -> 0f                     // 怪物扑击时熊猫不动
+        CdFx.MonsterBlocked -> 4f * fx.value      // +4dp 顶住 → 负半程 −2dp 被顶退(用户 3a)
+        CdFx.MonsterHits -> -10f * fx.value       // 受击后退(用户 3b:保持 -10dp)
+        CdFx.None -> 0f
+    }
+    val monsterFxDp = when (fxKind) {
+        CdFx.PandaStrike -> -8f * fx.value        // 挨打后仰(被动)
+        CdFx.PandaGraze -> 0f                     // 没打中,怪物不动
+        CdFx.MonsterJab -> -12f * fx.value        // 扑击(用户 2a)
+        CdFx.MonsterBlocked -> -12f * fx.value    // 扑击 → 负半程 +6dp **被挡回**(用户 2a)
+        CdFx.MonsterHits -> -12f * fx.value       // 扑击命中(用户 2a)
+        CdFx.None -> 0f
+    }
+    val pandaScaleX = when (fxKind) {
+        CdFx.PandaStrike -> 1f + 0.06f * fx.value
+        CdFx.PandaGraze -> 1f + 0.02f * fx.value
+        CdFx.MonsterJab -> 1f
+        CdFx.MonsterBlocked -> 1f + 0.02f * fx.value
+        CdFx.MonsterHits -> 1f + 0.02f * fx.value
+        CdFx.None -> 1f
+    }
+    // 只有"挨实了"才压扁(压扁=受击的读法;挡下来不该压扁)
+    val pandaScaleY = if (fxKind == CdFx.MonsterHits) 1f - 0.04f * fx.value else pandaScaleX
+    // ⚠️ 只在"这一侧真的要动"时才挂 graphicsLayer。
+    //   实测:常挂着这一层,静止时也会让熊猫边缘出现 1px 级抖动(两帧静止截图的差异 7.9k px,
+    //   而同屏怪物是 **0** px)—— 那会让"素材渲染正确"这条既有结论变成"看起来对"。
+    //   条件挂载后,静息态的绘制与加动画之前**逐像素一致**。
+    //   §9 两点改动:
+    //     · 判据从 `> 0f` 改成 `!= 0f` —— 被挡回那半程冲量是**负的**,用 `> 0f` 会提前摘图层;
+    //     · 拆成**两侧各自**判断 —— 怪物扑击时熊猫本来就不动,那一拍熊猫不该挂图层
+    //       (这样"1b/1c 时熊猫逐像素不动"才是一条能验证的结论,而不是"差不多没动")。
+    val pandaActive = pandaFxDp != 0f || pandaScaleX != 1f
+    val monsterActive = monsterFxDp != 0f
+
+    // 2026-09-20:撤退流程拆成两层(策划 §6.4 + §9「普通关失败」三选项):
+    //   1. 第一次触发 → [showRetreatDialog] = true,弹「要离开本次出发吗?」两按钮弹窗;
+    //   2. 用户点「撤退」→ 关弹窗、endRun()、再开 [showRetreatResult] = true 显示撤离后结果;
+    //   3. 用户在结果页选「继续练习 / 重新出发 / 前往补修 / 返回地图」,各走各自回调,然后 [onExit]。
+    //   这样:策划 §6.4 说的「弹窗说明后果,确认后结束本次出发」与 §9 三选项**两步合一**,
+    //   而不是把「暂离」做成显式按钮(策划原文并无此选项;切后台/关闭/断网 = 暂停是另一条独立规则)。
+    //
+    // 注意:胜负已分(Victory/Defeat)时不弹这一组 —— 它们走 advance() 直接退出结算面板。
+    // 练习模式也没有「出发」可撤退,直接退出。
     var showRetreatDialog by remember { mutableStateOf(false) }
+    var showRetreatResult by remember { mutableStateOf(false) }
+    // 2026-09-21:胜利结算弹窗 —— 替代在最后一题答题区上叠内嵌按钮。
+    // 触发:advance() 把 CdPhase.Victory 时设 true。
+    // 内容:关卡名 + 战利品 + 2 个按钮(继续挑战 下一关 / 回到地图)。
+    var showVictoryDialog by remember { mutableStateOf(false) }
 
     // 2026-09-19 §14:关前剧情(文档 §2「从当前未通关节点出发,阅读简短剧情并进入战斗」+
     //   §5 每关的「场景」文案)。数据一直在 CdStage.scene 里,只是此前没有任何 UI 读它。
@@ -189,6 +345,22 @@ fun ChuangdangBattleScreen(
      * 2026-09-19 §15:入参从"选了第几项"改成"这次答得对不对" —— 三种交互各自判定
      * (点选比下标、排序比次序、分类逐条比类别),状态机这层不需要知道是哪一种。
      */
+    /**
+     * 2026-09-20 §8/§9:触发一次交手动画。
+     *
+     * 为什么是"种类 + 计数器"两个状态(而不是只改种类):同一种动作**连续触发**时
+     * (例如连打两下都是怪物扑击),只改种类不会让 `LaunchedEffect` 重跑 —— 必须让 tick 变。
+     *
+     * 用法口径(用户 1a/1b/1c):
+     *   · 进攻命中 → `PandaStrike`;进攻被格挡 → `PandaGraze`;进攻**答错** → `MonsterJab`(怪物反击起手);
+     *   · 防御题**出现** → `MonsterJab`(在 `advance()` 里,不与作答绑定);
+     *   · 防御答对 → `MonsterBlocked`(扑上来被挡回);防御答错 → `MonsterHits`(扑上来命中)。
+     */
+    val cue: (CdFx) -> Unit = { kind ->
+        fxKind = kind
+        fxTick += 1
+    }
+
     fun answer(isCorrect: Boolean) {
         if (lastCorrect != null) return
         if (phase != CdPhase.Attack && phase != CdPhase.Defense) return
@@ -215,12 +387,21 @@ fun ChuangdangBattleScreen(
                         headline = "命中!-1 心"
                     }
                 }
+                // 被格挡时不放"出手+受击"(那会谎报战果),只给熊猫一个极小的前顶示意
+                cue(if (blocked) CdFx.PandaGraze else CdFx.PandaStrike)
                 detail = question.explanation
                 pendingDefense = false
                 phase = if (enemyHearts <= 0) CdPhase.Victory else CdPhase.Resolved
+                // 2026-09-21 改:胜利时直接弹弹窗 —— 不需要玩家再点一次按钮。
+                //   (advance() 里也设了 showVictoryDialog = true 是兜底:phase 变 Victory 但 answer() 走了别的分支)
+                if (phase == CdPhase.Victory && !practiceMode) {
+                    ChuangdangStore.clearStage(stage.index)
+                    showVictoryDialog = true
+                }
             } else {
                 // ③ 进攻答错 → 怪物攻击,稍后给一次防御机会
                 headline = "答错了,怪物反击!"
+                cue(CdFx.MonsterJab)   // §9 / 用户 1b:面板既然写着"怪物反击",怪物就得真的扑一下
                 detail = question.explanation
                 pendingDefense = true
                 phase = CdPhase.Resolved
@@ -229,10 +410,12 @@ fun ChuangdangBattleScreen(
             // ④ 防御作答
             if (isCorrect) {
                 headline = "挡下了!"
+                cue(CdFx.MonsterBlocked)   // §9 / 用户 1a+2a+3a:怪物扑上来被挡回,熊猫顶一下再被顶退
                 detail = question.explanation
             } else {
                 playerHearts -= 1
                 headline = "防御失败,-1 心"
+                cue(CdFx.MonsterHits)   // §9:怪物扑上来命中,挨打的是熊猫(玩家掉心)
                 detail = question.explanation
             }
             pendingDefense = false
@@ -244,9 +427,20 @@ fun ChuangdangBattleScreen(
     fun advance() {
         when (phase) {
             CdPhase.Victory -> {
-                // 练习模式不解锁正式节点(文档 §2:"不解锁正式通关节点")
-                if (!practiceMode) ChuangdangStore.clearStage(stage.index)
-                actions.onExit()
+                // 2026-09-21:胜利改弹窗。
+                // 弹窗触发:answer() 在判定 phase=Victory 时直接设 showVictoryDialog=true(主流路径);
+                //   本函数只兜底(比如 phase 状态被外部改),实际很少进。
+                //   · 练习模式仍走 onExit(弹窗仅给"胜利"用)
+                //   · 正式模式:answer() 已 clearStage;此处仅同步设弹窗
+                if (practiceMode) {
+                    actions.onExit()
+                } else {
+                    // 兜底:如果 answer() 没设(不该发生),这里补一次
+                    if (!showVictoryDialog) {
+                        ChuangdangStore.clearStage(stage.index)
+                        showVictoryDialog = true
+                    }
+                }
             }
             CdPhase.Defeat -> {
                 // 练习模式本来就没有开始出发,故不结束别人的出发状态
@@ -263,6 +457,10 @@ fun ChuangdangBattleScreen(
                     defenseIdx += 1
                     pendingDefense = false
                     phase = CdPhase.Defense
+                    // §9 / 用户 1c:防御题**出现**时,怪物先扑一次(蓄势)—— 与"作答结果"无关,
+                    //   所以它不在 answer() 里,而在这次相位切换上。一次性动画在题目底下播完即止,
+                    //   不加"动画放完才能作答"的门(§8 约束三)。
+                    cue(CdFx.MonsterJab)
                 } else {
                     attackIdx += 1
                     phase = CdPhase.Attack
@@ -360,7 +558,18 @@ fun ChuangdangBattleScreen(
                     Image(
                         painter = painterResource(R.drawable.img_chuangdang_xiongmaoshaoxia),
                         contentDescription = "熊猫少侠",
-                        modifier = Modifier.size(width = 52.dp, height = 96.dp),
+                        // 2026-09-20 §8/§9:出手 / 格挡 / 受击 / 被顶退的位移与缩放都走 graphicsLayer ——
+                        //   它**只影响绘制,不影响布局**(槽位 52×96dp 不变),所以不会把旁边的心/文字挤动。
+                        //   且**只在熊猫这一侧真的要动时挂载**(见 pandaActive 的注释):静息态逐像素与加动画前一致。
+                        modifier = Modifier
+                            .size(width = 52.dp, height = 96.dp)
+                            .then(
+                                if (pandaActive) Modifier.graphicsLayer {
+                                    translationX = pandaFxDp.dp.toPx()
+                                    scaleX = pandaScaleX
+                                    scaleY = pandaScaleY
+                                } else Modifier,
+                            ),
                         contentScale = ContentScale.Fit,
                     )
                     Text(
@@ -393,7 +602,15 @@ fun ChuangdangBattleScreen(
                     CdMonster(
                         glyph = stage.enemyGlyph,
                         hitCount = CD_MAX_HEARTS - enemyHearts,
-                        modifier = Modifier.size(width = 132.dp, height = 96.dp),
+                        // 2026-09-20 §8/§9:挨打后仰、以及**主动扑击 / 被挡回**,都只挪绘制不挪布局
+                        //   (命中叠加层跟着一起动);**只在怪物这一侧真的要动时挂载**,静息态不受影响。
+                        modifier = Modifier
+                            .size(width = 132.dp, height = 96.dp)
+                            .then(
+                                if (monsterActive) Modifier.graphicsLayer {
+                                    translationX = monsterFxDp.dp.toPx()
+                                } else Modifier,
+                            ),
                     )
                     Text(
                         text = stage.enemyName,
@@ -505,13 +722,51 @@ fun ChuangdangBattleScreen(
                             )
                         }
                         Spacer(Modifier.height(12.dp))
-                        CdPrimaryButton(
-                            text = when (phase) {
-                                CdPhase.Victory, CdPhase.Defeat -> "返回地图"
-                                else -> if (pendingDefense) "迎击(防御作答)" else "继续"
-                            },
-                            onClick = { advance() },
-                        )
+                        // 2026-09-21 改:胜利结算不显示内嵌按钮 —— 改为弹窗(见 showVictoryDialog)
+                        // 战败仍显示「返回地图」按钮(走 advance() 退出),但胜利改为弹窗。
+                        if (phase != CdPhase.Victory) {
+                            CdPrimaryButton(
+                                text = when (phase) {
+                                    CdPhase.Defeat -> "返回地图"
+                                    else -> if (pendingDefense) "迎击(防御作答)" else "继续"
+                                },
+                                onClick = { advance() },
+                            )
+                        } else {
+                            // 胜利时,改用「战斗胜利,请稍候...」提示,真正的「继续挑战 下一关 /
+                            // 回到地图」两个按钮在弹窗中。
+                            // 弹窗由 advance() 在 CdPhase.Victory 分支自动弹出。
+                            // 这里不放任何按钮,避免点"返回地图"绕过弹窗
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(Color(0xFFEDE6D7))
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = { advance() },  // 兜底:点提示也能触发弹窗
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "战斗胜利,请选择下一步",
+                                    color = BInkSoft,
+                                    style = TextStyle(fontFamily = YaHei, fontSize = 13.sp),
+                                )
+                            }
+                        }
+                        // 2026-09-20:结算面板也提供「撤退」入口(用户 1 号指令,补全触发路径),
+                        //   与顶部"撤退"按钮 + BackHandler 等价 —— 胜利/战败时 advance() 已自行
+                        //   退出战斗,这里仅 Resolved 阶段显示,避免胜利/战败后弹两次。
+                        if (phase == CdPhase.Resolved && !practiceMode) {
+                            Spacer(Modifier.height(8.dp))
+                            CdTextButton(
+                                text = "撤退本次出发",
+                                onClick = { showRetreatDialog = true },
+                            )
+                        }
                     }
                 }
                 else -> {
@@ -625,7 +880,10 @@ fun ChuangdangBattleScreen(
             Spacer(Modifier.weight(1f))
         }
 
-        // ── 撤退确认框(2026-09-19 §6,对应文档 §6.4 的"弹窗说明后果")──────────
+        // ── 撤退确认框(2026-09-20,对应策划 §6.4「弹窗说明后果,确认后结束本次出发」)─
+        //   弹窗只两个按钮:「撤退」「取消」 —— 策划没有「暂离」这一选项;
+        //   切后台/关闭/断网 = 暂停是另一条独立规则(策划 §6.4 末条)。
+        //   点「撤退」后,关闭弹窗并 endRun(),然后弹 [showRetreatResult] 三选项面板。
         if (showRetreatDialog) {
             Box(
                 modifier = Modifier
@@ -659,19 +917,36 @@ fun ChuangdangBattleScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        text = "撤退:结束本次出发,已消耗的闯荡令不返还 —— 本关将回到「可挑战」。",
-                        color = BInk,
-                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "暂离:保留出发与关卡进度,本关显示「继续」,稍后可从地图继续,不重复扣令。",
+                        // 2026-09-20:文案按策划 §6.4「失败不再额外扣」与 §9「普通关失败」对齐
+                        text = "本次出发已消耗 1 枚闯荡令,撤退不返还;本关将回到「可挑战」。" +
+                            "已通过的关卡与已获得的奖励保留。",
                         color = BInk,
                         style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
                     )
                     Spacer(Modifier.height(16.dp))
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        // 撤退 —— 有代价:结束出发,该关回到"可挑战"
+                        // 取消 —— 留在战斗中
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Color(0xFFEDE6D7))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = { showRetreatDialog = false },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "取消",
+                                color = BInk,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                        Spacer(Modifier.size(10.dp))
+                        // 撤退 —— 结束本次出发(策划 §6.4:闯荡令不返还)
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -684,7 +959,7 @@ fun ChuangdangBattleScreen(
                                     onClick = {
                                         showRetreatDialog = false
                                         ChuangdangStore.endRun()
-                                        actions.onExit()
+                                        showRetreatResult = true
                                     },
                                 ),
                             contentAlignment = Alignment.Center,
@@ -695,26 +970,233 @@ fun ChuangdangBattleScreen(
                                 style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
                             )
                         }
-                        Spacer(Modifier.size(10.dp))
-                        // 暂离 —— 保留进度:不结束出发,该关显示"继续"
+                    }
+                }
+            }
+        }
+
+        // ── 撤退结果面板(策划 §9「普通关失败」三选项:补修 / 练习 / 重新出发)────────
+        //   撤退确认后展示:让用户知道"本关没丢、可以怎么再战"。
+        //   补修入口目前没有对应路由(修学/补修模块在"等后端的一批"里,见 SESSION-LOG-2026-09-20 待办 #9),
+        //   所以这里先弹一个轻量提示 + 提供默认回到修学主页 —— 模块接上后只需把 onGoReview 换成真正的补修页跳转。
+        if (showRetreatResult) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        // 撤离面板必须显式选一个动作才能走;点遮罩 = 不响应(防止误关)
+                        onClick = { },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.88f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { },
+                        )
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "本次出发已结束",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 17.sp),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        // 对照策划 §9「普通关失败」文案模板:此战惜败 → 这里用「本次主动撤退」
+                        text = "本次已消耗 1 枚闯荡令,不再额外扣除;" +
+                            "已通关的节点与已获得的奖励均保留。",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp, lineHeight = 19.sp),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "本关知识点:${stage.knowledge}",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+
+                    // ── 三个主操作(策划 §9 三选项)──────────────────────────
+                    CdRetreatActionButton(
+                        text = "前往补修",
+                        sub = "回修学页补这一关的知识点",
+                        tint = BGold,
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onGoReview()
+                        },
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    CdRetreatActionButton(
+                        text = "免费练习",
+                        sub = "不消耗闯荡令,把本关再打一次",
+                        tint = Color(0xFF6B5B8A),
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onPracticeSame()
+                        },
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    CdRetreatActionButton(
+                        text = "重新出发",
+                        sub = "消耗 1 枚闯荡令,本关重新开始",
+                        tint = BCorrect,
+                        // 余额不足时按钮置灰,提示文字说明恢复方式
+                        enabled = ChuangdangStore.tokens > 0,
+                        sub2 = if (ChuangdangStore.tokens <= 0)
+                            "闯荡令不足,${ChuangdangStore.nextRestoreText()}"
+                        else null,
+                        onClick = {
+                            showRetreatResult = false
+                            actions.onRestartSame()
+                        },
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    // 收尾的二级动作:返回地图
+                    Text(
+                        text = "返回地图",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    showRetreatResult = false
+                                    actions.onExit()
+                                },
+                            )
+                            .padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+
+        // ── 胜利结算弹窗(2026-09-21)──────────────────────────────
+        // 触发:advance() 在 CdPhase.Victory 时设 showVictoryDialog = true。
+        // 形态:与「撤退确认」弹窗同构(全屏遮罩 + 居中卡片),避免在最后一题答题区上
+        //   叠内嵌按钮 —— 玩家看到的不是「下一题已经弹出在答」,而是「本关打完,选下一步」。
+        // 内容:关卡名 + 战利品 + 2 按钮:
+        //   · 主按钮:继续挑战下一关(走 actions.onGoNext,stage=4 时是 Boss 路由)
+        //   · 副按钮:回到地图(走 actions.onExit)
+        // 注意:NavHost 不传 onGoNext 时(只可能在 Boss 通后)advance() 直接 onExit,
+        //   所以本弹窗**不会在无下一关的场景出现**。
+        if (showVictoryDialog) {
+            // 下一关按钮文案:第 4 关时叫「挑战 Boss」,其他关叫「继续挑战下一关」。
+            // (这是显示差异,onGoNext 回调始终是同一个 navigate 调用)
+            val nextLabel = if (stage.index == 4) "挑战 Boss" else "继续挑战下一关"
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xCC1A1712))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        // 点遮罩 = 回到地图(安全默认,与弹窗主操作并行可触)
+                        onClick = {
+                            showVictoryDialog = false
+                            actions.onExit()
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.86f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF7F3EA))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { },  // 吃掉面板内点击,避免穿透关弹窗
+                        )
+                        .padding(20.dp),
+                ) {
+                    Text(
+                        text = "战斗胜利",
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        // 关卡名:铜齿门卫 / 断目机关蝠 / 棋冠石将 / 百声纸鹤(第 4 关) / ...
+                        text = "第 ${stage.index} 关 · ${stage.title} · ${stage.enemyName}",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 12.sp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    // 战后剧情(文档 §5 每关都有一句,用于衔接下一关)
+                    Text(
+                        text = stage.aftermath,
+                        color = BInk,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 20.sp),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "获得「${stage.title}」通关印记,回到地图可继续下一关。",
+                        color = BInkSoft,
+                        style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 17.sp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        // 副按钮:回到地图(浅灰)
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(22.dp))
-                                .background(BGold)
+                                .background(Color(0xFFEDE6D7))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
-                                        showRetreatDialog = false
+                                        showVictoryDialog = false
                                         actions.onExit()
                                     },
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "暂离",
+                                text = "回到地图",
+                                color = BInk,
+                                style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                            )
+                        }
+                        Spacer(Modifier.size(10.dp))
+                        // 主按钮:继续挑战下一关 / 挑战 Boss(绿色)
+                        Box(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(BCorrect)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        showVictoryDialog = false
+                                        // onGoNext 是 ChuangdangBattleActions 上的可空字段;
+                                        // 进了此弹窗说明非空(advance() 已在 Victory 分支检查),
+                                        // 但 UI 层用 ?: 兜底,避免万一后人不小心让弹窗在 onGoNext=null 时弹出
+                                        actions.onGoNext?.invoke()
+                                    },
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = nextLabel,
                                 color = Color.White,
                                 style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
                             )
@@ -944,5 +1426,57 @@ private fun CdPrimaryButton(text: String, onClick: () -> Unit, enabled: Boolean 
             color = Color.White,
             style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
         )
+    }
+}
+
+/**
+ * 撤退结果面板里的"主操作"按钮(策划 §9 三选项)。
+ *
+ * 区别于 [CdPrimaryButton]:这里要展示两行(主标 + 说明),让用户在三选项里
+ * 一眼看出区别;且**禁用时只把背景与说明文字改暗,不让按钮整体消失**
+ * (策划 §9 末段:"「重新出发」旁展示所需一枚令和当前余额,不足时给出恢复时间及可完成的补修入口")。
+ */
+@Composable
+private fun CdRetreatActionButton(
+    text: String,
+    sub: String,
+    tint: Color,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    /** 余额不足时的次级说明(放在 sub 下面);null = 不显示。 */
+    sub2: String? = null,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (enabled) tint else Color(0x55888888))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            style = TextStyle(fontFamily = YaHei, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = sub,
+            color = Color(0xE6FFFFFF),
+            style = TextStyle(fontFamily = YaHei, fontSize = 11.sp, lineHeight = 16.sp),
+        )
+        if (sub2 != null) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = sub2,
+                color = Color(0xCCFFFFFF),
+                style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 14.sp),
+            )
+        }
     }
 }
