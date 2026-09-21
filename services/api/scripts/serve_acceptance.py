@@ -1,4 +1,5 @@
 """Disposable local API for the Android acceptance build. All data is lost on exit."""
+import argparse
 from pathlib import Path
 import tempfile
 import threading
@@ -22,11 +23,24 @@ from app.sms import NoopSmsProvider
 from app.stores import InMemoryRateLimiter, InMemoryVerificationStore
 
 
-def serve(database_path: Path):
-    settings = Settings(_env_file=None, environment="test", database_url="sqlite+pysqlite://",
-                        media_storage_provider="memory", media_virus_scanner="development",
-                        media_memory_public_base_url="http://10.0.2.2:8011",
-                        sms_provider="noop", fixed_verification_code="123456")
+def serve(database_path: Path, *, live_coach: bool = False) -> None:
+    settings = Settings(
+        _env_file=None if not live_coach else ".env",
+        environment="development" if live_coach else "test",
+        database_url="sqlite+pysqlite://",
+        media_storage_provider="memory",
+        media_virus_scanner="development",
+        media_memory_public_base_url="http://10.0.2.2:8011",
+        sms_provider="noop",
+        fixed_verification_code="123456",
+    )
+    if live_coach and settings.conversation_coach_provider == "disabled":
+        raise RuntimeError("Live coach mode requires a configured model provider")
+    if live_coach and settings.image_generation_provider == "development":
+        # A real-model demo must never present the deterministic test renderer as
+        # an AI-created work. Keep dialogue available, but require a separately
+        # configured external image provider before the creation action can run.
+        settings = settings.model_copy(update={"image_generation_provider": "disabled"})
     # Each request needs its own connection: StaticPool shares one connection across
     # concurrent Android reads and can corrupt an in-flight cursor's result shape.
     engine = create_engine(
@@ -51,7 +65,7 @@ def serve(database_path: Path):
     stop_worker = threading.Event()
 
     def run_local_worker() -> None:
-        """Process deterministic image jobs without Redis or direct business-row edits."""
+        """Process image jobs without Redis or direct business-row edits."""
         while not stop_worker.is_set():
             with app.state.session_factory() as db:
                 event = db.scalar(
@@ -94,8 +108,17 @@ def serve(database_path: Path):
 
     worker = threading.Thread(target=run_local_worker, name="acceptance-image-worker", daemon=True)
     worker.start()
+    coach_label = "configured live conversation coach" if live_coach else "test conversation coach"
+    image_label = (
+        "configured external image provider"
+        if settings.image_generation_provider in {"openai", "volcengine"}
+        else "external image provider not configured"
+        if live_coach
+        else "deterministic test image worker"
+    )
     print(
-        "Disposable acceptance API: 127.0.0.1:8011; temporary SQLite, memory media, noop SMS, deterministic image worker",
+        "Disposable acceptance API: 127.0.0.1:8011; temporary SQLite, memory media, "
+        f"noop SMS, {image_label}, {coach_label}",
         flush=True,
     )
     try:
@@ -112,12 +135,24 @@ def serve(database_path: Path):
         engine.dispose()
 
 
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--live-coach",
+        "--live-models",
+        dest="live_coach",
+        action="store_true",
+        help=(
+            "Load real model providers from services/api/.env; the local test image "
+            "renderer is disabled unless an external image provider is configured"
+        ),
+    )
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="jianghu-acceptance-") as directory:
         target = Path(directory).resolve()
         assert target.parent == Path(tempfile.gettempdir()).resolve()
         assert target.name.startswith("jianghu-acceptance-")
-        serve(target / "acceptance.db")
+        serve(target / "acceptance.db", live_coach=args.live_coach)
 
 
 if __name__ == "__main__":

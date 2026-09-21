@@ -13,6 +13,7 @@ from app.domains.catalog.models import ManualPage, ManualVolume
 from app.domains.conference.contracts import (
     ConferenceCollectionListPublic,
     ConferenceCollectionPublic,
+    ConferenceLikePublic,
     ConferenceDerivativeAuthorizationPublic,
     ConferenceDerivativeDecision,
     ConferenceDerivativeRequestCreate,
@@ -31,15 +32,23 @@ from app.domains.conference.contracts import (
     ConferenceMatchJudgmentCreate,
     ConferenceMatchJudgmentPublic,
     ConferenceMatchJudgmentQueuePublic,
+    ConferenceMatchJudgmentStatus,
+    ConferenceMatchHistoryOutcome,
     ConferenceMatchOutcome,
     ConferenceMatchParticipantResultPublic,
     ConferenceMatchPerspective,
+    ConferenceMatchOpponentPublic,
+    ConferenceMatchQueuePhase,
     ConferenceMatchQueuePublic,
     ConferenceMatchQueueState,
     ConferenceMatchQuestionPublic,
     ConferenceMatchProgressPublic,
     ConferenceMatchReflectionCreate,
     ConferenceMatchReflectionPublic,
+    ConferenceMatchReflectionStatus,
+    ConferenceMatchRecordListPublic,
+    ConferenceMatchRecordPublic,
+    ConferenceMatchRecordSummaryPublic,
     ConferenceMatchReportCreate,
     ConferenceMatchReportDecision,
     ConferenceMatchReportInternalPublic,
@@ -69,6 +78,7 @@ from app.domains.conference.models import (
     ConferenceDerivativeRequest,
     ConferenceLetter,
     ConferenceLetterCategory,
+    ConferenceLike,
     ConferenceMatch,
     ConferenceMatchAnswer,
     ConferenceMatchEndReason,
@@ -178,6 +188,53 @@ class ConferenceService:
         self, user: User, publication_id: uuid.UUID
     ) -> PublicationFeedItemPublic:
         return self._require_visible_community_item(user, publication_id)
+
+    def add_like(self, user: User, publication_id: uuid.UUID) -> ConferenceLikePublic:
+        self._require_visible_community_publication(user, publication_id)
+        existing = self.db.scalar(
+            select(ConferenceLike).where(
+                ConferenceLike.user_id == user.id,
+                ConferenceLike.publication_id == publication_id,
+            )
+        )
+        if existing is not None:
+            return ConferenceLikePublic(
+                publication_id=existing.publication_id,
+                liked_at=existing.created_at,
+            )
+        like = ConferenceLike(
+            user_id=user.id,
+            publication_id=publication_id,
+        )
+        self.db.add(like)
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            existing = self.db.scalar(
+                select(ConferenceLike).where(
+                    ConferenceLike.user_id == user.id,
+                    ConferenceLike.publication_id == publication_id,
+                )
+            )
+            if existing is None:
+                raise ApiError(409, "LIKE_WRITE_CONFLICT", "点赞失败，请重试")
+            like = existing
+        return ConferenceLikePublic(
+            publication_id=like.publication_id,
+            liked_at=like.created_at,
+        )
+
+    def remove_like(self, user: User, publication_id: uuid.UUID) -> None:
+        like = self.db.scalar(
+            select(ConferenceLike).where(
+                ConferenceLike.user_id == user.id,
+                ConferenceLike.publication_id == publication_id,
+            )
+        )
+        if like is not None:
+            self.db.delete(like)
+            self.db.commit()
 
     def list_reviews(
         self, user: User, publication_id: uuid.UUID, *, limit: int
@@ -1234,6 +1291,108 @@ class ConferenceService:
             ended_at=match.ended_at,
         )
 
+    def list_match_records(
+        self,
+        user: User,
+        *,
+        outcome: ConferenceMatchHistoryOutcome | None,
+        reflection_status: ConferenceMatchReflectionStatus | None,
+        page: int,
+        limit: int,
+    ) -> ConferenceMatchRecordListPublic:
+        participant_filter = or_(
+            ConferenceMatch.participant_a_user_id == user.id,
+            ConferenceMatch.participant_b_user_id == user.id,
+        )
+        completed_filter = ConferenceMatch.status == ConferenceMatchStatus.ENDED
+        reflection_exists = (
+            select(ConferenceMatchReflection.id)
+            .where(
+                ConferenceMatchReflection.match_id == ConferenceMatch.id,
+                ConferenceMatchReflection.user_id == user.id,
+            )
+            .exists()
+        )
+
+        query = select(ConferenceMatch).where(participant_filter, completed_filter)
+        if outcome == ConferenceMatchHistoryOutcome.WIN:
+            query = query.where(
+                ConferenceMatch.end_reason == ConferenceMatchEndReason.COMPLETED,
+                ConferenceMatch.winner_user_id == user.id,
+            )
+        elif outcome == ConferenceMatchHistoryOutcome.LOSE:
+            query = query.where(
+                ConferenceMatch.end_reason == ConferenceMatchEndReason.COMPLETED,
+                ConferenceMatch.winner_user_id.is_not(None),
+                ConferenceMatch.winner_user_id != user.id,
+            )
+        elif outcome == ConferenceMatchHistoryOutcome.TIE:
+            query = query.where(
+                ConferenceMatch.end_reason == ConferenceMatchEndReason.COMPLETED,
+                ConferenceMatch.winner_user_id.is_(None),
+            )
+        if reflection_status == ConferenceMatchReflectionStatus.COMPLETED:
+            query = query.where(reflection_exists)
+        elif reflection_status == ConferenceMatchReflectionStatus.PENDING:
+            query = query.where(
+                ConferenceMatch.end_reason == ConferenceMatchEndReason.COMPLETED,
+                ~reflection_exists,
+            )
+
+        filtered_count = int(
+            self.db.scalar(select(func.count()).select_from(query.subquery())) or 0
+        )
+        matches = list(
+            self.db.scalars(
+                query.order_by(
+                    ConferenceMatch.ended_at.desc(),
+                    ConferenceMatch.id.desc(),
+                )
+                .offset((page - 1) * limit)
+                .limit(limit)
+            ).all()
+        )
+
+        all_completed = list(
+            self.db.scalars(
+                select(ConferenceMatch).where(participant_filter, completed_filter)
+            ).all()
+        )
+        reflected_match_ids = set(
+            self.db.scalars(
+                select(ConferenceMatchReflection.match_id).where(
+                    ConferenceMatchReflection.user_id == user.id
+                )
+            ).all()
+        )
+        summary = ConferenceMatchRecordSummaryPublic(
+            total=len(all_completed),
+            wins=sum(
+                1
+                for match in all_completed
+                if self._match_outcome(match, user.id) == ConferenceMatchOutcome.WIN
+            ),
+            ties=sum(
+                1
+                for match in all_completed
+                if self._match_outcome(match, user.id) == ConferenceMatchOutcome.TIE
+            ),
+            pending_reflections=sum(
+                1
+                for match in all_completed
+                if match.end_reason == ConferenceMatchEndReason.COMPLETED
+                and match.id not in reflected_match_ids
+            ),
+        )
+        return ConferenceMatchRecordListPublic(
+            items=[self._match_record_public(match, user.id) for match in matches],
+            summary=summary,
+            page=page,
+            limit=limit,
+            total=filtered_count,
+            has_more=page * limit < filtered_count,
+        )
+
     def create_match_reflection(
         self,
         user: User,
@@ -1590,24 +1749,158 @@ class ConferenceService:
     def _queue_public(
         self, entry: ConferenceMatchQueue | None
     ) -> ConferenceMatchQueuePublic:
+        now = utcnow()
         if entry is None:
             return ConferenceMatchQueuePublic(
                 queue_id=None,
                 status=ConferenceMatchQueueState.IDLE,
+                phase=ConferenceMatchQueuePhase.IDLE,
                 manual_page_id=None,
+                manual_title=None,
+                manual_page_no=None,
                 match_id=None,
+                match_code=None,
+                pool_size=0,
+                wait_seconds=0,
+                server_time=now,
+                anonymous_opponent=None,
                 joined_at=None,
                 expires_at=None,
                 updated_at=None,
             )
+
+        manual_page = self.db.get(ManualPage, entry.manual_page_id)
+        pool_size = 0
+        if entry.status == ConferenceMatchQueueStatus.WAITING:
+            pool_size = int(
+                self.db.scalar(
+                    select(func.count(ConferenceMatchQueue.id)).where(
+                        ConferenceMatchQueue.manual_page_id == entry.manual_page_id,
+                        ConferenceMatchQueue.age_band == entry.age_band,
+                        ConferenceMatchQueue.status == ConferenceMatchQueueStatus.WAITING,
+                        ConferenceMatchQueue.expires_at.is_not(None),
+                        ConferenceMatchQueue.expires_at > now,
+                    )
+                )
+                or 0
+            )
+
+        wait_ended_at = (
+            entry.updated_at
+            if entry.status == ConferenceMatchQueueStatus.MATCHED
+            else now
+        )
+        joined_at = entry.joined_at
+        if joined_at.tzinfo is None:
+            joined_at = joined_at.replace(tzinfo=UTC)
+        if wait_ended_at.tzinfo is None:
+            wait_ended_at = wait_ended_at.replace(tzinfo=UTC)
+        wait_seconds = max(0, int((wait_ended_at - joined_at).total_seconds()))
+
+        phase = {
+            ConferenceMatchQueueStatus.WAITING: ConferenceMatchQueuePhase.FILTERING,
+            ConferenceMatchQueueStatus.MATCHED: ConferenceMatchQueuePhase.LOCKED,
+            ConferenceMatchQueueStatus.EXITED: ConferenceMatchQueuePhase.IDLE,
+        }[entry.status]
+        opponent = None
+        match_code = None
+        if entry.status == ConferenceMatchQueueStatus.MATCHED and entry.match_id is not None:
+            match_code = f"M-{entry.match_id.hex[:5].upper()}"
+            opponent = ConferenceMatchOpponentPublic(
+                alias="竹影同门",
+                avatar_key="PANDA_BAMBOO",
+                age_band_label="同龄",
+                stage_label="同阶段",
+            )
         return ConferenceMatchQueuePublic(
             queue_id=entry.id,
             status=ConferenceMatchQueueState(entry.status.value),
+            phase=phase,
             manual_page_id=entry.manual_page_id,
+            manual_title=manual_page.title if manual_page else None,
+            manual_page_no=manual_page.page_no if manual_page else None,
             match_id=entry.match_id,
+            match_code=match_code,
+            pool_size=pool_size,
+            wait_seconds=wait_seconds,
+            server_time=now,
+            anonymous_opponent=opponent,
             joined_at=entry.joined_at,
             expires_at=entry.expires_at,
             updated_at=entry.updated_at,
+        )
+
+    @staticmethod
+    def _match_outcome(
+        match: ConferenceMatch, user_id: uuid.UUID
+    ) -> ConferenceMatchOutcome:
+        if match.status != ConferenceMatchStatus.ENDED:
+            return ConferenceMatchOutcome.PENDING
+        if match.end_reason != ConferenceMatchEndReason.COMPLETED:
+            return ConferenceMatchOutcome.ENDED_WITHOUT_RESULT
+        if match.winner_user_id is None:
+            return ConferenceMatchOutcome.TIE
+        if match.winner_user_id == user_id:
+            return ConferenceMatchOutcome.WIN
+        return ConferenceMatchOutcome.LOSE
+
+    def _match_record_public(
+        self, match: ConferenceMatch, user_id: uuid.UUID
+    ) -> ConferenceMatchRecordPublic:
+        manual_page = self.db.get(ManualPage, match.manual_page_id)
+        if manual_page is None:
+            raise ApiError(500, "MATCH_MANUAL_NOT_FOUND", "切磋秘籍不存在")
+        opponent_user_id = self._opponent_id(match, user_id)
+        ai_evaluations = list(
+            self.db.scalars(
+                select(ConferenceMatchEvaluation).where(
+                    ConferenceMatchEvaluation.match_id == match.id,
+                    ConferenceMatchEvaluation.kind == ConferenceMatchEvaluationKind.AI,
+                )
+            ).all()
+        )
+        score_by_user = {
+            evaluation.subject_user_id: evaluation.score
+            for evaluation in ai_evaluations
+        }
+        has_reflection = self.db.scalar(
+            select(ConferenceMatchReflection.id).where(
+                ConferenceMatchReflection.match_id == match.id,
+                ConferenceMatchReflection.user_id == user_id,
+            )
+        ) is not None
+        judgment_status = (
+            ConferenceMatchJudgmentStatus.COMPLETED
+            if ai_evaluations
+            else (
+                ConferenceMatchJudgmentStatus.NOT_REQUIRED
+                if match.end_reason != ConferenceMatchEndReason.COMPLETED
+                else ConferenceMatchJudgmentStatus.PENDING
+            )
+        )
+        return ConferenceMatchRecordPublic(
+            match_id=match.id,
+            manual_id=match.manual_page_id,
+            manual_title=manual_page.title,
+            manual_page_no=manual_page.page_no,
+            status=match.status,
+            outcome=self._match_outcome(match, user_id),
+            my_score=score_by_user.get(user_id),
+            opponent_score=score_by_user.get(opponent_user_id),
+            anonymous_opponent=ConferenceMatchOpponentPublic(
+                alias="竹影同门",
+                avatar_key="PANDA_BAMBOO",
+                age_band_label="同龄",
+                stage_label="同阶段",
+            ),
+            judgment_status=judgment_status,
+            reflection_status=(
+                ConferenceMatchReflectionStatus.COMPLETED
+                if has_reflection
+                else ConferenceMatchReflectionStatus.PENDING
+            ),
+            created_at=match.matched_at,
+            ended_at=match.ended_at,
         )
 
     def _queue_match_judgment(self, match_id: uuid.UUID) -> None:

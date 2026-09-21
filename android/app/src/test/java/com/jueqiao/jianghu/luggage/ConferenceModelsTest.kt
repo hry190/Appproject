@@ -72,6 +72,42 @@ class ConferenceModelsTest {
     }
 
     @Test
+    fun parsesConferenceMatchRecordPageWithoutOpponentIdentity() {
+        val page = gson.fromJson(
+            """
+            {
+              "items":[{
+                "match_id":"match-1",
+                "manual_id":"manual-1",
+                "manual_title":"机关三步诀",
+                "manual_page_no":2,
+                "status":"ENDED",
+                "outcome":"WIN",
+                "my_score":91,
+                "opponent_score":84,
+                "anonymous_opponent":{"alias":"竹影同门","avatar_key":"PANDA_BAMBOO","age_band_label":"同龄","stage_label":"同阶段"},
+                "judgment_status":"COMPLETED",
+                "reflection_status":"PENDING",
+                "created_at":"2026-09-07T00:00:00Z",
+                "ended_at":"2026-09-07T00:08:00Z"
+              }],
+              "summary":{"total":3,"wins":1,"ties":1,"pending_reflections":2},
+              "page":1,
+              "limit":20,
+              "total":1,
+              "has_more":false
+            }
+            """.trimIndent(),
+            ConferenceMatchRecordListDto::class.java,
+        )
+
+        assertEquals("match-1", page.items.single().matchId)
+        assertEquals("竹影同门", page.items.single().anonymousOpponent.alias)
+        assertEquals(2, page.summary.pendingReflections)
+        assertEquals(false, page.hasMore)
+    }
+
+    @Test
     fun parsesConferenceCapabilitySwitch() {
         val capabilities = gson.fromJson(
             """

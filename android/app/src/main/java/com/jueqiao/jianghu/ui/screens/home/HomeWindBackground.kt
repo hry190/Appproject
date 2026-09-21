@@ -5,6 +5,7 @@ import android.graphics.BitmapShader
 import android.graphics.RuntimeShader
 import android.graphics.Shader
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -41,15 +42,18 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 
 /**
- * Home1 的动态背景。
+ * 首页与演武场共享的动态背景渲染器。
  *
- * 背景动画和落叶都位于内容层后方，因此熊猫、牌匾、快捷入口及其点击区域
- * 不会被移动或重新绘制。Android 13+ 使用像素级植被蒙版；旧版本保留静态
- * 背景，但仍显示光影和落叶。
+ * 调用方只提供底图和对应的植被蒙版；风动强度、相位、落叶和光尘始终使用
+ * 同一套参数。背景动画和落叶都位于内容层后方，因此人物、建筑上的独立组件
+ * 及其点击区域不会被移动或重新绘制。Android 13+ 使用像素级植被蒙版；
+ * 旧版本保留静态背景，但仍显示光影和落叶。
  */
 @Composable
 internal fun HomeWindBackground(
     modifier: Modifier = Modifier,
+    @DrawableRes backgroundRes: Int = R.drawable.img_home_bg,
+    @DrawableRes windMaskRes: Int = R.drawable.img_home_wind_mask,
 ) {
     var timeSeconds by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
@@ -65,6 +69,8 @@ internal fun HomeWindBackground(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ShaderWindBackground(
                 timeSeconds = timeSeconds,
+                backgroundRes = backgroundRes,
+                windMaskRes = windMaskRes,
                 modifier = Modifier
                     .fillMaxSize(0.5f)
                     .graphicsLayer {
@@ -74,7 +80,10 @@ internal fun HomeWindBackground(
                     },
             )
         } else {
-            StaticHomeBackground(modifier = Modifier.fillMaxSize())
+            StaticWindBackground(
+                backgroundRes = backgroundRes,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         WindAtmosphereLayer(
@@ -85,11 +94,12 @@ internal fun HomeWindBackground(
 }
 
 @Composable
-private fun StaticHomeBackground(
+private fun StaticWindBackground(
+    @DrawableRes backgroundRes: Int,
     modifier: Modifier = Modifier,
 ) {
     Image(
-        painter = painterResource(R.drawable.img_home_bg),
+        painter = painterResource(backgroundRes),
         contentDescription = null,
         modifier = modifier,
         contentScale = ContentScale.Crop,
@@ -100,20 +110,22 @@ private fun StaticHomeBackground(
 @Composable
 private fun ShaderWindBackground(
     timeSeconds: Float,
+    @DrawableRes backgroundRes: Int,
+    @DrawableRes windMaskRes: Int,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val backgroundBitmap = remember(context) {
+    val backgroundBitmap = remember(context, backgroundRes) {
         BitmapFactory.decodeResource(
             context.resources,
-            R.drawable.img_home_bg,
+            backgroundRes,
             BitmapFactory.Options().apply { inScaled = false },
         )
     }
-    val windMaskBitmap = remember(context) {
+    val windMaskBitmap = remember(context, windMaskRes) {
         BitmapFactory.decodeResource(
             context.resources,
-            R.drawable.img_home_wind_mask,
+            windMaskRes,
             BitmapFactory.Options().apply { inScaled = false },
         )
     }

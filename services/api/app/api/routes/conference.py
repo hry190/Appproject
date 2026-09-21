@@ -12,6 +12,7 @@ from app.api.dependencies import (
 from app.domains.conference.contracts import (
     ConferenceCollectionListPublic,
     ConferenceCollectionPublic,
+    ConferenceLikePublic,
     ConferenceDerivativeAuthorizationPublic,
     ConferenceDerivativeDecision,
     ConferenceDerivativeRequestCreate,
@@ -28,9 +29,12 @@ from app.domains.conference.contracts import (
     ConferenceMatchJudgmentCreate,
     ConferenceMatchJudgmentPublic,
     ConferenceMatchJudgmentQueuePublic,
+    ConferenceMatchHistoryOutcome,
     ConferenceMatchQueuePublic,
+    ConferenceMatchRecordListPublic,
     ConferenceMatchReflectionCreate,
     ConferenceMatchReflectionPublic,
+    ConferenceMatchReflectionStatus,
     ConferenceMatchReportCreate,
     ConferenceMatchReportDecision,
     ConferenceMatchReportListPublic,
@@ -57,6 +61,7 @@ from app.domains.distribution.contracts import (
     PublicationFeedItemPublic,
     PublicationFeedPagePublic,
 )
+from app.domains.creations.models import ConferenceCategory
 from app.models import User
 
 
@@ -71,10 +76,22 @@ internal_router = APIRouter(
 @router.get("/feed", response_model=PublicationFeedPagePublic)
 def conference_feed(
     cursor: str | None = Query(default=None, max_length=300),
+    category: ConferenceCategory | None = Query(default=None),
     user: User = Depends(get_current_user),
     service: ConferenceService = Depends(get_conference_service),
 ) -> PublicationFeedPagePublic:
-    return service.distribution.community_feed(user, cursor=cursor, limit=5)
+    return service.distribution.community_feed(
+        user, cursor=cursor, limit=5, category=category
+    )
+
+
+@router.get("/me/works", response_model=PublicationFeedPagePublic)
+def list_my_conference_works(
+    limit: int = Query(default=50, ge=1, le=100),
+    user: User = Depends(get_current_user),
+    service: ConferenceService = Depends(get_conference_service),
+) -> PublicationFeedPagePublic:
+    return service.distribution.owned_community_feed(user, limit=limit)
 
 
 @router.get(
@@ -86,6 +103,25 @@ def get_conference_work(
     service: ConferenceService = Depends(get_conference_service),
 ) -> PublicationFeedItemPublic:
     return service.get_work(user, publication_id)
+
+
+@router.put("/likes/{publication_id}", response_model=ConferenceLikePublic)
+def add_conference_like(
+    publication_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    service: ConferenceService = Depends(get_conference_service),
+) -> ConferenceLikePublic:
+    return service.add_like(user, publication_id)
+
+
+@router.delete("/likes/{publication_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_conference_like(
+    publication_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    service: ConferenceService = Depends(get_conference_service),
+) -> Response:
+    service.remove_like(user, publication_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -277,6 +313,24 @@ def exit_conference_match_queue(
     service: ConferenceService = Depends(get_conference_service),
 ) -> ConferenceMatchQueuePublic:
     return service.exit_match_queue(user)
+
+
+@router.get("/matches", response_model=ConferenceMatchRecordListPublic)
+def list_conference_match_records(
+    outcome: ConferenceMatchHistoryOutcome | None = Query(default=None),
+    reflection_status: ConferenceMatchReflectionStatus | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=50),
+    user: User = Depends(get_current_user),
+    service: ConferenceService = Depends(get_conference_service),
+) -> ConferenceMatchRecordListPublic:
+    return service.list_match_records(
+        user,
+        outcome=outcome,
+        reflection_status=reflection_status,
+        page=page,
+        limit=limit,
+    )
 
 
 @router.get("/matches/{match_id}", response_model=ConferenceMatchDetailPublic)

@@ -216,6 +216,24 @@ class ConferenceCollection(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class ConferenceLike(Base):
+    __tablename__ = "conference_likes"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "publication_id", name="uq_conference_likes_user_publication"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    publication_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("publications.id", ondelete="CASCADE"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class ConferenceDerivativeRequest(Base):
     __tablename__ = "conference_derivative_requests"
     __table_args__ = (
