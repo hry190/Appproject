@@ -613,6 +613,27 @@ fun JianghuNavHost(
                             popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
                         }
                     },
+                    // 2026-09-21:胜利后「继续挑战 下一关」直跳
+                    //   · 普通关 1→2→3→4 → chuangdangBattle(n+1) [策划 §6.1:runActive 期间不扣令]
+                    //   · 第 4 关 → Boss 路由(切到制作+评审页,不是战斗页)
+                    //   · Boss 屏战斗不挂这个回调(BossScreen 自己有 onBack)
+                    onGoNext = if (stage < CD_BOSS_INDEX - 1) {
+                        // stage = 1..3: 跳 stage+1
+                        {
+                            navController.navigate(Routes.chuangdangBattle(stage + 1, practice = false)) {
+                                popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                            }
+                        }
+                    } else if (stage == CD_BOSS_INDEX - 1) {
+                        // stage = 4: 跳 Boss 路由
+                        {
+                            navController.navigate(Routes.ChuangdangBoss) {
+                                popUpTo(Routes.ChuangdangBattlePattern) { inclusive = true }
+                            }
+                        }
+                    } else {
+                        null  // 不该到这里(stage 5 走 Boss 路由,不会到战斗路由)
+                    },
                 ),
             )
         }

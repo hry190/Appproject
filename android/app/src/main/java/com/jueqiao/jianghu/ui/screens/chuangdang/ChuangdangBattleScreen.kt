@@ -101,7 +101,7 @@ data class ChuangdangBattleActions(
      *
      * 2026-09-20:把原本只一个 onExit 拆成 4 个明确语义的回调 —— 因为
      * 「主动撤退后是否要继续战斗」需要细分(策划 §9 「普通关失败」给出三选项:
-     * 前往补修 / 免费练习 / 重新出发)。练习模式与战败 / 胜利路径继续走 [onExit]。
+     * 前往补修 / 免费练习 / 重新出发)。练习模式与战败/胜利路径继续走 [onExit]。
      */
     val onExit: () -> Unit = {},
     /** 主动撤退后再点「继续练习」(策划 §9):回到本关、practice=true。 */
@@ -110,6 +110,14 @@ data class ChuangdangBattleActions(
     val onRestartSame: () -> Unit = {},
     /** 主动撤退后再点「前往补修」(策划 §9):跳到修学/补修页面。 */
     val onGoReview: () -> Unit = {},
+    /**
+     * 胜利后点「继续挑战 下一关」:直跳到下一关(stage 1→2→3→4→Boss)。
+     *
+     * 策划 §6.1:「通过普通关后继续下一关不额外扣令」(runActive 期间,continue 不消耗)。
+     * 第 5 关(Boss)之后无下一关,BossScreen 不会传这个回调 —— 字段可空,
+     * UI 见 [CdPhase.Victory] 分支:**有回调**时显示「继续挑战 下一关」主按钮。
+     */
+    val onGoNext: (() -> Unit)? = null,
 )
 
 private val BInk = Color(0xFF2E2A24)
@@ -693,6 +701,16 @@ fun ChuangdangBattleScreen(
                             )
                         }
                         Spacer(Modifier.height(12.dp))
+                        // 2026-09-21:胜利结算面板加「继续挑战 下一关」主按钮
+                        //   · 策划 §6.1:普通关通过后继续下一关不额外扣令(已在 runActive 状态)——
+                        //     这是「继续挑战」按钮的成本判据(玩家不必担心再扣 1 枚)
+                        //   · 第 4 关胜利 → 第 5 关(Boss):见 advance() / onGoNext
+                        //   · 第 5 关(Boss)胜利:NavHost 不传 onGoNext(无下一关),只显示「返回地图」
+                        //   · 战败 / 练习模式:也不显示「继续挑战」(练习不连发 / 战败已 endRun)
+                        if (phase == CdPhase.Victory && !practiceMode && actions.onGoNext != null) {
+                            CdPrimaryButton(text = "继续挑战 下一关", onClick = actions.onGoNext!!)
+                            Spacer(Modifier.height(8.dp))
+                        }
                         CdPrimaryButton(
                             text = when (phase) {
                                 CdPhase.Victory, CdPhase.Defeat -> "返回地图"
