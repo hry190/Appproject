@@ -1,5 +1,7 @@
 package com.jueqiao.jianghu.ui.screens.chuangdang
 
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -9,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -32,15 +36,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -154,16 +163,25 @@ fun ChuangdangBattleScreen(
     var attackIdx by remember { mutableIntStateOf(0) }
     var defenseIdx by remember { mutableIntStateOf(0) }
     var phase by remember { mutableStateOf(CdPhase.Attack) }
+    // 2026-09-22 第三轮:CdOrder 拖动用 —— scope 用于 launch { dragOffset.snapTo / animateTo }。
+    //   Animatable 的 snapTo / animateTo 必须在 coroutine 上下文调,rememberCoroutineScope
+    //   给的是 Composable 生命周期的 scope(可取消,不会泄漏)。
+    val scope = rememberCoroutineScope()
     /**
      * 本题是否已作答、以及答得对不对(null = 还没作答)。
      *
      * 2026-09-19 §15:原先这里是 `selected: Int?`(选项下标),只够点选题用。
      * 引入排序 / 分类后,"选了什么"不再是一个下标,故这里只记**判定结果**;
-     * 各交互自己的中间状态由下方 `picked` / `assigned` 持有。
+     * 各交互自己的中间状态由下方 `assigned` 持有;CdOrder 的顺序是 [orderSteps] 自身
+     * (MutableList,玩家拖动直接重排,2026-09-22 改为拖动交互后取消 `picked`)。
      */
     var lastCorrect by remember { mutableStateOf<Boolean?>(null) }
     var pendingDefense by remember { mutableStateOf(false) } // 进攻答错 → 结算后转入防御题
     var blocked by remember { mutableStateOf(false) }
+    // 2026-09-22(用户):「撤退本次出发」按钮不在「攻击成功使怪兽-1 心」时显示 —— 该信号
+    //   在 answer() 里 enemyHearts -= 1 的两处被置 true,advance() 时与 lastCorrect 一同清空。
+    //   被格挡(blocked=true)不会置它 → 撤退按钮照常显示。
+    var didHit by remember { mutableStateOf(false) }
     // 2026-09-19 §6:文档 §3.3 的**保底** —— "一次攻击被格挡后,下一次正确攻击必定命中,
     //   即使期间出现答错回合"。故该标志只在"兑现命中"时清除,答错/防御作答都不影响它。
     var pendingGuaranteedHit by remember { mutableStateOf(false) }
@@ -320,12 +338,33 @@ fun ChuangdangBattleScreen(
         }
     }
 
-    // ── 排序题(§15):打乱后的展示顺序 + 玩家已点中的次序 ──────────────────
+    // 2026-09-22 第三轮(用户反馈「卡顿」):CdOrder 拖动重写为「跟手指走 + 松手再换位」。
+    //   之前的实现:每帧 onDrag 都改 orderSteps → Compose 重组整棵子树 → 真机 14% 丢帧
+    //   (dumpsys gfxinfo:99% 帧 300ms,正常 Compose 应 < 1%)。这一版:
+    //   - 拖动期间:orderSteps 不动;只更新「被拖行」的 dragOffset(Animatable)
+    //     → 零数据层写入 → 零重组 → 零卡顿
+    //   - 松手时:按 dragOffset 算 target,一次性 swap orderSteps(一次重组)
+    //   - 归位:swap 后 dragOffset.animateTo(0f) 平滑归位(被拖行从「浮在中间」滑回原位)
     val orderSteps = remember(question) {
-        if (question is CdOrder) question.steps.shuffled() else emptyList<String>()
+        if (question is CdOrder) {
+            mutableStateListOf<String>().apply { addAll(question.steps.shuffled()) }
+        } else {
+            mutableStateListOf()
+        }
     }
-    /** 玩家依次点中的步骤在 [orderSteps] 中的下标 —— 这个列表的顺序就是作答顺序。 */
-    var picked by remember(question) { mutableStateOf<List<Int>>(emptyList()) }
+    // 拖动态:谁在被拖、跟手指偏移多少;跟随 Composable 生命周期(不复用 question key,
+    //   原因同 dragSource 之前的 NPE —— 旧 holder 被 dispose 会让 lambda 持有野引用)。
+    var dragIndex by remember { mutableStateOf<Int?>(null) }
+    // 2026-09-22 第四轮(用户反馈「闪烁」):从 Animatable 改回 mutableFloatStateOf。
+    //   之前用 Animatable.snapTo(0f) 在 onDragStart 做防抖 + scope.launch 每次新建 coroutine,
+    //   导致 Animatable 内部状态机反复取消 → 视觉上「疯狂闪」,且 13% 丢帧没改善。
+    //   改用 mutableFloatStateOf 后:onDrag 直接写 = 0 重组;graphicsLayer 块读 value 自动标脏;
+    //   松手时 animateTo(0f) 仍可用(在 onDragEnd 的 scope.launch 里)。
+    var dragOffsetPx by remember { mutableFloatStateOf(0f) }
+    // 归位后的 rowHeightPx(松手算 target 用) —— 拖动期间实际不参与换位,只是常量
+    val rowHeightPx = with(LocalDensity.current) {
+        (CD_OPTION_MIN_HEIGHT + 8.dp).toPx()
+    }
 
     // ── 分类题(§15):每条当前归入的类别(-1 = 还没归) ────────────────────
     //   注意要显式写 List<Int> —— 两个分支分别是 List<Int> 与 emptyList(),
@@ -375,6 +414,7 @@ fun ChuangdangBattleScreen(
                     pendingGuaranteedHit = false
                     blocked = false
                     enemyHearts -= 1
+                    didHit = true   // 2026-09-22:见 didHit 声明
                     headline = "识破一式 · 必定命中!-1 心"
                 } else {
                     blocked = Random.nextFloat() < cdBlockRate(correctCount)
@@ -384,6 +424,7 @@ fun ChuangdangBattleScreen(
                         headline = "被格挡了 · 已看穿破绽"
                     } else {
                         enemyHearts -= 1
+                        didHit = true   // 2026-09-22:见 didHit 声明
                         headline = "命中!-1 心"
                     }
                 }
@@ -450,9 +491,14 @@ fun ChuangdangBattleScreen(
             CdPhase.Resolved -> {
                 // 换题前把作答状态清干净(§15:三种交互各有中间状态,都要重置)
                 lastCorrect = null
-                picked = emptyList()
+                // picked 已删除(2026-09-22:CdOrder 改拖动后,顺序直接由 [orderSteps] 持有;
+                //   关卡切换时由 remember(question) 自动重置,这里不需要手动清)
                 assigned = if (question is CdSort) List(question.items.size) { -1 } else emptyList()
                 blocked = false
+                didHit = false   // 2026-09-22:本回合是否真造成伤害,清零
+                dragIndex = null   // 2026-09-22:CdOrder 拖动态复位
+                // dragOffset 在 Composable 生命周期内一直存在;这里不重置 — 拖动结束后
+                //   父层 onDragEnd 已经 animateTo(0f) 归位,下一次拖动 onDragStart 会 snapTo(0f)
                 if (pendingDefense) {
                     defenseIdx += 1
                     pendingDefense = false
@@ -760,7 +806,12 @@ fun ChuangdangBattleScreen(
                         // 2026-09-20:结算面板也提供「撤退」入口(用户 1 号指令,补全触发路径),
                         //   与顶部"撤退"按钮 + BackHandler 等价 —— 胜利/战败时 advance() 已自行
                         //   退出战斗,这里仅 Resolved 阶段显示,避免胜利/战败后弹两次。
-                        if (phase == CdPhase.Resolved && !practiceMode) {
+                        // 2026-09-22(用户):「撤退本次出发」**仅**在以下三个条件**同时**满足时显示:
+                        //   ① 我方只剩 1 条生命(策划:生命充裕时不允许中途撤退);
+                        //   ② 本回合不是「攻击成功使怪兽-1 心」(被格挡不算,防御作答不算,
+                        //      进攻答错/被反击不算 —— 只在「真造成伤害」那一拍避让);
+                        //   ③ 非练习模式(由原始条件继承)。
+                        if (phase == CdPhase.Resolved && !practiceMode && playerHearts == 1 && !didHit) {
                             Spacer(Modifier.height(8.dp))
                             CdTextButton(
                                 text = "撤退本次出发",
@@ -812,36 +863,76 @@ fun ChuangdangBattleScreen(
                         }
 
                         is CdOrder -> {
+                            // 2026-09-22 第六轮(用户反馈「拖动时其他选项让位」):实时让位模式。
+                            //   拖动期间就 swap orderSteps(不只是松手才换),被拖行**不浮**——
+                            //   它跟手指走,其他行实时挪开腾位。视觉上 = 微信拖动列表。
+                            //   第五轮解决了 graphicsLayer 读 State 的闪烁问题,所以现在可以放心
+                            //   在 onDrag 里频繁 swap(mutableStateListOf 写时只标脏该 item)。
                             Text(
-                                text = "按正确顺序依次点选(已选 ${picked.size}/${orderSteps.size})",
+                                text = "拖动「≡」调整顺序,松手后点击「确认顺序」",
                                 color = BInkSoft,
                                 style = TextStyle(fontFamily = YaHei, fontSize = 11.sp),
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
                             orderSteps.forEachIndexed { i, step ->
-                                val at = picked.indexOf(i)
-                                CdOptionRow(
-                                    text = if (at >= 0) "${at + 1}. $step" else step,
-                                    // 已点过的步骤变灰但仍可看;点它不生效(不返工不扣分,因为排序
-                                    // 判定的是"第一次点满的顺序",重来请用下方「重排」)。
-                                    highlight = if (at >= 0) BGold else null,
-                                    onClick = {
-                                        if (at < 0 && picked.size < orderSteps.size) {
-                                            val next = picked + i
-                                            picked = next
-                                            if (next.size == orderSteps.size) {
-                                                // 判定:玩家点出的步骤序列是否等于数据里的正确顺序
-                                                answer(next.map { orderSteps[it] } == q.steps)
+                                val isDragging = dragIndex == i
+                                CdDraggableOrderRow(
+                                    text = step,
+                                    isDragging = isDragging,
+                                    // 第七轮(用户反馈「看不到让位」):被拖行**跟着手指浮起**,
+                                    //   其他行拖动期间静止(松手才 swap)。这是用户已经看到但我
+                                    //   误以为「不直观」的版本 —— 实际是「直观」,上一版「实时让位」
+                                    //   因为被拖行不浮、玩家无视觉锚点,反而看不出让位。
+                                    dragOffsetPx = if (isDragging) dragOffsetPx else 0f,
+                                    onDragStart = {
+                                        dragIndex = i
+                                        dragOffsetPx = 0f
+                                    },
+                                    onDragEnd = {
+                                        val src = dragIndex
+                                        dragIndex = null
+                                        if (src != null) {
+                                            // 松手才 swap(与第一版一致):按最终 offset 算 target,
+                                            //   一次性 swap 多次;被拖行已在 onDragEnd 之前归位,
+                                            //   所以这一帧只动 orderSteps 不动 dragOffsetPx。
+                                            val offsetSteps = (dragOffsetPx / rowHeightPx).roundToInt()
+                                            val target = (src + offsetSteps).coerceIn(0, orderSteps.lastIndex)
+                                            if (target != src) {
+                                                if (target > src) {
+                                                    for (k in src until target) {
+                                                        java.util.Collections.swap(orderSteps, k, k + 1)
+                                                    }
+                                                } else {
+                                                    for (k in src downTo target + 1) {
+                                                        java.util.Collections.swap(orderSteps, k, k - 1)
+                                                    }
+                                                }
+                                            }
+                                            // 归位动画:dragOffsetPx 平滑滑到 0
+                                            scope.launch {
+                                                val anim = Animatable(dragOffsetPx)
+                                                anim.animateTo(0f, tween(180))
+                                                dragOffsetPx = 0f
                                             }
                                         }
+                                    },
+                                    onDrag = { deltaYPx ->
+                                        // 写 dragOffsetPx 让被拖行**跟手指走**;不动 orderSteps。
+                                        //   松手时 onDragEnd 一次性 swap(用户已有体验:被拖行浮起 +
+                                        //   松手 swap + 180ms 缓动归位)。
+                                        dragOffsetPx = deltaYPx
                                     },
                                 )
                                 Spacer(Modifier.height(8.dp))
                             }
-                            if (picked.isNotEmpty() && picked.size < orderSteps.size) {
-                                CdTextButton(text = "重排", onClick = { picked = emptyList() })
-                                Spacer(Modifier.height(8.dp))
-                            }
+                            // 确认按钮:与之前一致
+                            val touched = orderSteps != q.steps
+                            CdPrimaryButton(
+                                text = if (touched) "确认顺序" else "请先拖动调整顺序",
+                                enabled = touched,
+                                onClick = { answer(orderSteps == q.steps) },
+                            )
+                            Spacer(Modifier.height(8.dp))
                         }
 
                         is CdSort -> {
@@ -1476,6 +1567,73 @@ private fun CdRetreatActionButton(
                 text = sub2,
                 color = Color(0xCCFFFFFF),
                 style = TextStyle(fontFamily = YaHei, fontSize = 10.sp, lineHeight = 14.sp),
+            )
+        }
+    }
+}
+
+// ── 2026-09-22 第三轮:CdOrder 拖动排序的「一行」 ────────────────────────────────
+//   第三轮关键改造:加一个 dragOffsetPx 参数(由父层 Animatable 提供),用 graphicsLayer 的
+//   translationY 直接吃这个 px 偏移 → 该行位置跟着手指走,无需任何数据层改动 → 零重组。
+//   isDragging 仍控制 alpha(半透明反馈);translationY 在 isDragging=false 时强制为 0
+//   (防止归位动画中其他行误用该值)。
+@Composable
+private fun CdDraggableOrderRow(
+    text: String,
+    isDragging: Boolean,
+    /** 拖动偏移(px,>0 向下)。isDragging=false 时忽略。 */
+    dragOffsetPx: Float,
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit,
+    /** 拖动过程中每帧回调,入参是「手指相对此行**起拖时**位置」的累计 y 偏移(px,>0 向下)。 */
+    onDrag: (deltaYPx: Float) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = CD_OPTION_MIN_HEIGHT)
+            // graphicsLayer 只放 alpha(不读 dragOffsetPx 那个会闪的 State)—— alpha 翻转
+            //   频率低(只在 onDragStart / onDragEnd 时变),不引起高频闪烁。
+            .graphicsLayer { alpha = if (isDragging) 0.5f else 1f }
+            .clip(RoundedCornerShape(12.dp))
+            .background(BCardBg)
+            .border(1.dp, Color(0x332E2A24), RoundedCornerShape(12.dp))
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        onDragStart()
+                    },
+                    onDragEnd = onDragEnd,
+                    onDragCancel = onDragEnd,
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        onDrag(change.position.y)
+                    },
+                )
+            }
+            .padding(horizontal = 14.dp, vertical = 11.dp)
+            // 2026-09-22 第五轮(用户反馈「闪」):用 Modifier.offset { block } 而不是 graphicsLayer
+            //   读 translationY。关键差别:offset 的 block 也在每帧执行,但读 State **不**触发
+            //   Composable 重组 —— 只触发 layout layer 移动。graphicsLayer 读 State 会把 Composable
+            //   标脏,每帧一次重组 → 14~16% 丢帧 + 视觉闪烁(实测验过)。
+            .then(
+                if (isDragging) Modifier.offset { androidx.compose.ui.unit.IntOffset(0, dragOffsetPx.roundToInt()) }
+                else Modifier
+            ),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // 「≡」把手 —— 纯文字占位,提示「此处可拖」
+            Text(
+                text = "≡",
+                color = BInkSoft,
+                style = TextStyle(fontFamily = YaHei, fontSize = 18.sp, fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(end = 10.dp),
+            )
+            Text(
+                text = text,
+                color = BInk,
+                style = TextStyle(fontFamily = YaHei, fontSize = 13.sp, lineHeight = 20.sp),
             )
         }
     }
