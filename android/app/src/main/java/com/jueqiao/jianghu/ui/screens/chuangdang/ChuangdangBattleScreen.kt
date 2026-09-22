@@ -1594,7 +1594,10 @@ private fun CdDraggableOrderRow(
             .heightIn(min = CD_OPTION_MIN_HEIGHT)
             // graphicsLayer 只放 alpha(不读 dragOffsetPx 那个会闪的 State)—— alpha 翻转
             //   频率低(只在 onDragStart / onDragEnd 时变),不引起高频闪烁。
-            .graphicsLayer { alpha = if (isDragging) 0.5f else 1f }
+            // 2026-09-22(用户):去掉半透明 —— 拖动期间行保持不透明。
+            //   之前 graphicsLayer { alpha = if (isDragging) 0.5f else 1f } 现在 alpha 恒为 1f。
+            //   跟手仍保留(Modifier.offset 块),玩家通过位置变化识别「正在拖」。
+            .graphicsLayer { alpha = 1f }
             .clip(RoundedCornerShape(12.dp))
             .background(BCardBg)
             .border(1.dp, Color(0x332E2A24), RoundedCornerShape(12.dp))
