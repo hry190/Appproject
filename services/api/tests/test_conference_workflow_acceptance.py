@@ -12,7 +12,12 @@ def test_creation_publication_feedback_revision_uses_only_http(client: TestClien
 
 
 @pytest.mark.parametrize("initialize_controls", [False, True])
-def test_minor_community_submission_respects_guardian_controls(client: TestClient, initialize_controls):
+def test_minor_community_submission_is_not_blocked_by_legacy_controls(client: TestClient, initialize_controls):
     acceptance = ConferenceAcceptance(client, "dev-internal-worker-token-change-me-123456")
-    assert acceptance.prepare("13990802001", "13990802002", "AGE_14_TO_17",
-                              initialize_controls=initialize_controls)["minor_restricted"]
+    result = acceptance.prepare(
+        "13990802001",
+        "13990802002",
+        "AGE_14_TO_17",
+        initialize_controls=initialize_controls,
+    )
+    assert result["publication"]

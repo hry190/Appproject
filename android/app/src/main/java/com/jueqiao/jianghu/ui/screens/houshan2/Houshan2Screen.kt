@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
@@ -18,7 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,11 +32,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 后山2 页 — 后山1 页 → 点击"气泡"跳转目标。
- *
- * 与后山1 页的差异:
- *   - 没有气泡 Rectangle156.png 及其文本
- * 复制自 Houshan1Screen.kt,移除气泡。
+ * 识机真诀剧情步骤。整屏仍可轻触继续，但气泡明确说明了当前观察任务。
  */
 @Composable
 fun Houshan2Screen(
@@ -43,6 +45,11 @@ fun Houshan2Screen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .testTag("houshan_story_continue")
+            .semantics {
+                contentDescription = "识机真诀剧情，轻触继续"
+                role = Role.Button
+            }
             .clickable(onClick = onOpenHoushan3),
     ) {
         // 全屏背景图(后山页背景.png)
@@ -67,7 +74,7 @@ fun Houshan2Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签1",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -99,7 +106,7 @@ fun Houshan2Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签2",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -131,7 +138,7 @@ fun Houshan2Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签3",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -163,7 +170,7 @@ fun Houshan2Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签4",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -187,18 +194,45 @@ fun Houshan2Screen(
                 )
             }
 
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18)— 点击回到后山1 页
+            Box(
+                modifier = Modifier
+                    .offset(x = 136.dp, y = 508.dp)
+                    .size(width = 177.dp, height = 107.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_shilian_rect156),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+                Text(
+                    text = "先观察沿途的机关：它凭什么作出判断？把你的猜想记在心里。\n轻触继续",
+                    color = Color.Black,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 19.sp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                )
+            }
+
+            // 图标仍在原坐标，外层触控区扩为 48dp。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 30.dp, y = 60.dp)
-                    .size(width = 18.dp, height = 18.dp)
+                    .offset(x = 15.dp, y = 45.dp)
+                    .size(48.dp)
+                    .testTag("houshan_story_back")
+                    .semantics {
+                        contentDescription = "返回山峰选择"
+                        role = Role.Button
+                    }
                     .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.FillBounds,
                 )
             }

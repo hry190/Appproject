@@ -13,7 +13,6 @@ enum class AuthOperation {
     Bootstrapping,
     Login,
     RequestCode,
-    GuardianConsent,
     Register,
     ResetPassword,
     RefreshAccount,
@@ -46,11 +45,31 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 val authenticated = repository.restoreSession()
                 _uiState.value = AuthUiState()
                 onComplete(authenticated)
+            } catch (error: AuthApiException) {
+                val keepLocalSession = error.statusCode != 401 && repository.hasStoredSession()
+                if (keepLocalSession) {
+                    _uiState.value = AuthUiState(
+                        errorMessage = "网络暂时不可用，已保留本地登录状态",
+                        errorCode = "NETWORK_UNAVAILABLE",
+                        requestId = error.requestId,
+                    )
+                } else {
+                    setError(error)
+                }
+                onComplete(keepLocalSession)
             } catch (error: CancellationException) {
                 throw error
-            } catch (error: Exception) {
-                setUnexpectedError()
-                onComplete(false)
+            } catch (_: Exception) {
+                val keepLocalSession = repository.hasStoredSession()
+                if (keepLocalSession) {
+                    _uiState.value = AuthUiState(
+                        errorMessage = "网络或服务暂时不可用，已保留本地登录状态",
+                        errorCode = "NETWORK_UNAVAILABLE",
+                    )
+                } else {
+                    setUnexpectedError()
+                }
+                onComplete(keepLocalSession)
             }
         }
     }
@@ -88,39 +107,11 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun verifyGuardianConsent(
-        childPhone: String,
-        guardianPhone: String,
-        verificationCode: String,
-        onSuccess: (String) -> Unit,
-    ) {
-        if (_uiState.value.operation != null) return
-        viewModelScope.launch {
-            _uiState.value = AuthUiState(operation = AuthOperation.GuardianConsent)
-            try {
-                val response = repository.verifyGuardianConsent(
-                    childPhone,
-                    guardianPhone,
-                    verificationCode,
-                )
-                _uiState.value = AuthUiState()
-                onSuccess(response.guardianConsentToken)
-            } catch (error: AuthApiException) {
-                setError(error)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                setUnexpectedError()
-            }
-        }
-    }
-
     fun register(
         phone: String,
         verificationCode: String,
         password: String,
         ageBand: AgeBand,
-        guardianConsentToken: String?,
         onSuccess: () -> Unit,
     ) {
         launch(AuthOperation.Register, onSuccess) {
@@ -129,7 +120,6 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 verificationCode,
                 password,
                 ageBand,
-                guardianConsentToken,
             )
         }
     }

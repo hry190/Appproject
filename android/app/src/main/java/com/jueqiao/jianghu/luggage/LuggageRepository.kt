@@ -94,12 +94,15 @@ class LuggageRepository(
         api.submitMigrationEvidence(token, lessonId, payload, idempotencyKey)
     }
 
-    suspend fun recordLessonRead(manualId: String): LessonReadEventAcceptedDto =
+    suspend fun recordLessonRead(
+        manualId: String,
+        idempotencyKey: String,
+    ): LessonReadEventAcceptedDto =
         authorized { token ->
             api.recordLessonRead(
                 accessToken = token,
                 lessonId = manualId,
-                idempotencyKey = "android-read-${java.util.UUID.randomUUID()}",
+                idempotencyKey = idempotencyKey,
             )
         }
 
@@ -124,6 +127,9 @@ class LuggageRepository(
 
     suspend fun creations(status: String? = null, cursor: String? = null): CreationProjectListDto =
         authorized { token -> api.getCreations(token, status, cursor) }
+
+    suspend fun allCreationProjects(): List<CreationProjectDto> =
+        collectCreationProjects { cursor -> creations(status = "ACTIVE", cursor = cursor) }
 
     suspend fun creationProject(projectId: String): CreationProjectDto =
         authorized { token -> api.getCreationProject(token, projectId) }
@@ -485,18 +491,6 @@ class LuggageRepository(
 
     suspend fun communityFeed(cursor: String? = null): PublicationFeedPageDto =
         authorized { token -> api.getCommunityFeed(token, cursor) }
-
-    suspend fun publicationInbox(cursor: String? = null): PublicationFeedPageDto =
-        authorized { token -> api.getPublicationInbox(token, cursor) }
-
-    suspend fun classrooms(): List<ClassroomDto> =
-        authorized { token -> api.getClassrooms(token).items }
-
-    suspend fun createClassroom(name: String): ClassroomCreatedDto =
-        authorized { token -> api.createClassroom(token, name) }
-
-    suspend fun joinClassroom(joinCode: String): ClassroomDto =
-        authorized { token -> api.joinClassroom(token, joinCode) }
 
     suspend fun conferenceFeed(
         cursor: String? = null,

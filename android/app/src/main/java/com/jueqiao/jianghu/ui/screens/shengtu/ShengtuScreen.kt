@@ -43,6 +43,8 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -97,6 +99,7 @@ fun ShengtuScreen(
     onSaveWork: () -> Unit = {},
     onRetryGeneration: (ImageGenerationJobDto) -> Unit = {},
     onOpenChuangzuodangan: () -> Unit = {},
+    onPublishToConference: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -112,6 +115,7 @@ fun ShengtuScreen(
     var input by rememberSaveable(projectId) { mutableStateOf(draftStore.read(draftKey)) }
     var submittedText by rememberSaveable(projectId) { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
+    val inputFocusRequester = remember { FocusRequester() }
     val messages = conversation?.messages.orEmpty()
     val resultReady = conversation?.status == "RESULT_READY" || conversation?.status == "SAVED"
     val generating = generationBusy || conversation?.status == "GENERATING"
@@ -231,6 +235,10 @@ fun ShengtuScreen(
                                     message = message,
                                     showAccept = message.id == latestPendingSuggestion?.id &&
                                         canChat && !busy && !generating,
+                                    onRevise = {
+                                        inputFocusRequester.requestFocus()
+                                        keyboardController?.show()
+                                    },
                                     onAccept = { onAcceptSuggestion(message) },
                                 )
                             }
@@ -306,6 +314,7 @@ fun ShengtuScreen(
                                     onSendMessage(outgoing)
                                 }
                             },
+                            focusRequester = inputFocusRequester,
                         )
                     }
                 }
@@ -321,12 +330,14 @@ fun ShengtuScreen(
                 )
             }
 
-            PrimaryCreationAction(
+            PrimaryCreationActions(
                 status = conversation?.status,
                 enabled = conversation != null && !busy && !generating,
                 onSaveDraftAndGenerate = onSaveDraftAndGenerate,
                 onSaveWork = onSaveWork,
                 onOpenArchive = onOpenChuangzuodangan,
+                onPublishToConference = onPublishToConference,
+                onPauseAndExit = onBack,
             )
         }
     }
@@ -370,6 +381,7 @@ private fun PendingStudentBubble(text: String) {
 private fun ConversationBubble(
     message: CreationConversationMessageDto,
     showAccept: Boolean,
+    onRevise: () -> Unit,
     onAccept: () -> Unit,
 ) {
     val fromStudent = message.role == "STUDENT"
@@ -400,19 +412,31 @@ private fun ConversationBubble(
                     lineHeight = 23.sp,
                 )
                 if (showAccept) {
-                    TextButton(
-                        onClick = onAccept,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .height(48.dp)
-                            .semantics { contentDescription = "采纳教练建议并继续" },
+                    Row(
+                        modifier = Modifier.align(Alignment.End),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Text(
-                            text = "采纳并继续",
-                            color = ActionDarkGreen,
-                            fontFamily = YaHei,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        TextButton(
+                            onClick = onRevise,
+                            modifier = Modifier
+                                .height(48.dp)
+                                .semantics { contentDescription = "继续修改创作想法" },
+                        ) {
+                            Text("继续修改", color = MutedInk, fontFamily = YaHei)
+                        }
+                        TextButton(
+                            onClick = onAccept,
+                            modifier = Modifier
+                                .height(48.dp)
+                                .semantics { contentDescription = "采纳教练建议" },
+                        ) {
+                            Text(
+                                text = "采纳建议",
+                                color = ActionDarkGreen,
+                                fontFamily = YaHei,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 } else if (message.decision == "ACCEPTED") {
                     Text(
@@ -530,6 +554,7 @@ private fun ConversationInput(
     placeholder: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
+    focusRequester: FocusRequester,
 ) {
     Row(
         modifier = Modifier
@@ -561,9 +586,10 @@ private fun ConversationInput(
                 ),
                 textStyle = TextStyle(color = Ink, fontFamily = YaHei, fontSize = 15.sp),
                 cursorBrush = SolidColor(ActionGreen),
-                modifier = Modifier.fillMaxWidth().semantics {
-                    contentDescription = "给熊猫教练发送修改想法"
-                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .semantics { contentDescription = "给熊猫教练发送修改想法" },
             )
         }
         Box(
@@ -584,42 +610,71 @@ private fun ConversationInput(
 }
 
 @Composable
-private fun PrimaryCreationAction(
+private fun PrimaryCreationActions(
     status: String?,
     enabled: Boolean,
     onSaveDraftAndGenerate: () -> Unit,
     onSaveWork: () -> Unit,
     onOpenArchive: () -> Unit,
+    onPublishToConference: () -> Unit,
+    onPauseAndExit: () -> Unit,
 ) {
     val (label, action) = when (status) {
         "RESULT_READY" -> "保存作品" to onSaveWork
-        "SAVED" -> "查看创作档案" to onOpenArchive
+        "SAVED" -> "发布到大会" to onPublishToConference
         "GENERATING" -> "正在创作……" to {}
-        "GENERATION_FAILED" -> "保存草稿并重新创作" to onSaveDraftAndGenerate
-        else -> "保存上传草稿" to onSaveDraftAndGenerate
+        "GENERATION_FAILED" -> "重新生成作品" to onSaveDraftAndGenerate
+        else -> "按当前方案生成作品" to onSaveDraftAndGenerate
     }
-    Button(
-        onClick = action,
-        enabled = enabled && status != "GENERATING",
-        colors = ButtonDefaults.buttonColors(
-            containerColor = ActionGreen,
-            contentColor = Color.White,
-            disabledContainerColor = Color(0xFFAABCA3),
-            disabledContentColor = Color.White.copy(alpha = .82f),
-        ),
-        shape = RoundedCornerShape(28.dp),
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 26.dp, end = 26.dp, top = 14.dp, bottom = 16.dp)
-            .height(56.dp)
-            .semantics { contentDescription = label },
+            .padding(start = 26.dp, end = 26.dp, top = 10.dp, bottom = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = label,
-            fontFamily = YaHei,
-            fontWeight = FontWeight.Bold,
-            fontSize = 17.sp,
-            textAlign = TextAlign.Center,
-        )
+        Button(
+            onClick = action,
+            enabled = enabled && status != "GENERATING",
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ActionGreen,
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFAABCA3),
+                disabledContentColor = Color.White.copy(alpha = .82f),
+            ),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .semantics { contentDescription = label },
+        ) {
+            Text(
+                text = label,
+                fontFamily = YaHei,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (status == "DIALOGUE" || status == "GENERATION_FAILED") {
+            TextButton(
+                onClick = onPauseAndExit,
+                enabled = enabled,
+                modifier = Modifier
+                    .height(48.dp)
+                    .semantics { contentDescription = "暂存当前对话并退出" },
+            ) {
+                Text("暂存并退出", color = ActionDarkGreen, fontFamily = YaHei)
+            }
+        } else if (status == "SAVED") {
+            TextButton(
+                onClick = onOpenArchive,
+                enabled = enabled,
+                modifier = Modifier
+                    .height(48.dp)
+                    .semantics { contentDescription = "查看创作档案" },
+            ) {
+                Text("查看创作档案", color = ActionDarkGreen, fontFamily = YaHei)
+            }
+        }
     }
 }

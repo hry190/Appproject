@@ -41,6 +41,7 @@ from app.domains.learning.grading import (
     grade_attempt,
     has_meaningful_value,
 )
+from app.domains.learning.creation_growth import growth_evidence_filter
 from app.domains.learning.models import (
     LearningEvent,
     LearningEvidence,
@@ -868,6 +869,23 @@ class LearningService:
         now = reference or utcnow()
         week = shanghai_week_window(now)
         stats = self.db.get(UserLearningStats, user.id)
+        work_counts = {
+            category: (count, latest_at)
+            for category, count, latest_at in self.db.execute(
+                select(
+                    LearningEvidence.category,
+                    func.count(LearningEvidence.id),
+                    func.max(LearningEvidence.created_at),
+                ).where(
+                    LearningEvidence.user_id == user.id,
+                    LearningEvidence.category.in_({EvidenceCategory.CRAFT, EvidenceCategory.CHIVALRY}),
+                    LearningEvidence.validation_status == EvidenceValidationStatus.VALID,
+                    growth_evidence_filter(),
+                ).group_by(LearningEvidence.category)
+            )
+        }
+        craft_count, craft_latest_at = work_counts.get(EvidenceCategory.CRAFT, (0, None))
+        chivalry_count, chivalry_latest_at = work_counts.get(EvidenceCategory.CHIVALRY, (0, None))
         weekly_count = self.db.scalar(
             select(func.count(PracticeSession.id)).where(
                 PracticeSession.user_id == user.id,
@@ -894,19 +912,19 @@ class LearningService:
                     ),
                 ),
                 craft=EvidenceCounterPublic(
-                    count=stats.craft_count if stats else 0,
-                    latest_at=stats.craft_latest_at if stats else None,
+                    count=craft_count,
+                    latest_at=self._as_utc(craft_latest_at) if craft_latest_at else None,
                     display_summary=_evidence_display_summary(
                         EvidenceCategory.CRAFT,
-                        stats.craft_count if stats else 0,
+                        craft_count,
                     ),
                 ),
                 chivalry=EvidenceCounterPublic(
-                    count=stats.chivalry_count if stats else 0,
-                    latest_at=stats.chivalry_latest_at if stats else None,
+                    count=chivalry_count,
+                    latest_at=self._as_utc(chivalry_latest_at) if chivalry_latest_at else None,
                     display_summary=_evidence_display_summary(
                         EvidenceCategory.CHIVALRY,
-                        stats.chivalry_count if stats else 0,
+                        chivalry_count,
                     ),
                 ),
             ),
@@ -922,7 +940,7 @@ class LearningService:
         limit: int,
         reference: datetime | None = None,
     ) -> EvidenceListPublic:
-        filters = [LearningEvidence.user_id == user.id]
+        filters = [LearningEvidence.user_id == user.id, growth_evidence_filter()]
         if category is not None:
             filters.append(LearningEvidence.category == category)
         if week_only:

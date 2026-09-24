@@ -227,7 +227,10 @@ class LuggageApi(
     ): TrialAttemptResultDto = requestJson(
         requestBuilder("/v1/trials/$trialId/attempts")
             .authorized(accessToken)
-            .header("Idempotency-Key", "android-retry-${UUID.randomUUID()}")
+            .header(
+                "Idempotency-Key",
+                request.clientRequestId ?: "android-trial-${UUID.randomUUID()}",
+            )
             .post(gson.toJson(request).toRequestBody(jsonMediaType))
             .build(),
         TrialAttemptResultDto::class.java,
@@ -865,44 +868,6 @@ class LuggageApi(
         "/v1/community/feed",
         PublicationFeedPageDto::class.java,
         mapOf("cursor" to cursor, "limit" to "20"),
-    )
-
-    suspend fun getPublicationInbox(
-        accessToken: String,
-        cursor: String? = null,
-    ): PublicationFeedPageDto = get(
-        accessToken,
-        "/v1/me/publication-inbox",
-        PublicationFeedPageDto::class.java,
-        mapOf("cursor" to cursor, "limit" to "20"),
-    )
-
-    suspend fun getClassrooms(accessToken: String): ClassroomListDto = get(
-        accessToken,
-        "/v1/me/classrooms",
-        ClassroomListDto::class.java,
-    )
-
-    suspend fun createClassroom(
-        accessToken: String,
-        name: String,
-    ): ClassroomCreatedDto = requestJson(
-        requestBuilder("/v1/classrooms")
-            .authorized(accessToken)
-            .post(gson.toJson(mapOf("name" to name)).toRequestBody(jsonMediaType))
-            .build(),
-        ClassroomCreatedDto::class.java,
-    )
-
-    suspend fun joinClassroom(
-        accessToken: String,
-        joinCode: String,
-    ): ClassroomDto = requestJson(
-        requestBuilder("/v1/classrooms:join")
-            .authorized(accessToken)
-            .post(gson.toJson(mapOf("join_code" to joinCode)).toRequestBody(jsonMediaType))
-            .build(),
-        ClassroomDto::class.java,
     )
 
     suspend fun getConferenceFeed(

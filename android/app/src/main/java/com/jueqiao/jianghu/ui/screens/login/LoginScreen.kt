@@ -70,7 +70,7 @@ fun LoginScreen(
     onBack: () -> Unit,
     isSubmitting: Boolean = false,
     isTransitioning: Boolean = false,
-    contentAlpha: Float = 1f,
+    contentAlpha: () -> Float = { 1f },
     errorMessage: String? = null,
     onClearError: () -> Unit = {},
 ) {
@@ -115,7 +115,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .offset(y = contentOffsetY)
-                        .alpha(contentAlpha.coerceIn(0f, 1f)),
+                        .graphicsLayer { alpha = contentAlpha().coerceIn(0f, 1f) },
                 ) {
                 Text(
                     text = "欢迎来到机巧江湖",

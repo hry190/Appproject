@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.pow
@@ -112,19 +113,19 @@ private val MistBands = listOf(
  */
 @Composable
 internal fun LoginMistTransition(
-    phase: Float,
+    phase: () -> Float,
     modifier: Modifier = Modifier,
 ) {
-    if (phase <= 0f || phase >= 2f) return
-
-    val coverage = if (phase <= 1f) phase else 2f - phase
-    val softenedCoverage = coverage.coerceIn(0f, 1f).pow(0.58f)
-
+    val density = LocalDensity.current
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer(alpha = softenedCoverage)
+                .graphicsLayer {
+                    val value = phase()
+                    val coverage = if (value <= 1f) value else 2f - value
+                    alpha = coverage.coerceIn(0f, 1f).pow(0.58f)
+                }
                 .background(
                     Brush.verticalGradient(
                         listOf(
@@ -137,35 +138,37 @@ internal fun LoginMistTransition(
         )
 
         MistBands.forEachIndexed { index, spec ->
-            val bandCoverage = if (phase <= 1f) {
-                ((phase - spec.delay) / (1f - spec.delay)).coerceIn(0f, 1f)
-            } else {
-                (2f - phase).coerceIn(0f, 1f)
-            }.pow(0.74f)
-
-            val localPhase = phase.coerceIn(0f, 2f)
-            val horizontalFraction = if (localPhase <= 1f) {
-                lerp(spec.startXFraction, spec.coveredXFraction, localPhase)
-            } else {
-                lerp(spec.coveredXFraction, spec.endXFraction, localPhase - 1f)
-            }
-            val verticalOffset = if (localPhase <= 1f) {
-                lerp(spec.startY, spec.coveredY, localPhase)
-            } else {
-                lerp(spec.coveredY, spec.endY, localPhase - 1f)
-            }
-
+            val screenWidthPx = with(density) { maxWidth.toPx() }
             MistBand(
                 tone = spec.tone,
                 blur = spec.blur,
                 modifier = Modifier
-                    .offset(
-                        x = maxWidth * (-0.42f + horizontalFraction),
-                        y = maxHeight * spec.topFraction + verticalOffset,
-                    )
+                    .offset(y = maxHeight * spec.topFraction)
                     .width(maxWidth * 1.84f)
                     .height(maxHeight * spec.heightFraction)
-                    .graphicsLayer(alpha = (0.96f + index * 0.008f) * bandCoverage),
+                    .graphicsLayer {
+                        // Keep blurred band content cached while only its layer
+                        // position and opacity change with the animation clock.
+                        val value = phase().coerceIn(0f, 2f)
+                        val bandCoverage = if (value <= 1f) {
+                            ((value - spec.delay) / (1f - spec.delay)).coerceIn(0f, 1f)
+                        } else {
+                            (2f - value).coerceIn(0f, 1f)
+                        }.pow(0.74f)
+                        val horizontalFraction = if (value <= 1f) {
+                            lerp(spec.startXFraction, spec.coveredXFraction, value)
+                        } else {
+                            lerp(spec.coveredXFraction, spec.endXFraction, value - 1f)
+                        }
+                        val verticalOffset = if (value <= 1f) {
+                            lerp(spec.startY, spec.coveredY, value)
+                        } else {
+                            lerp(spec.coveredY, spec.endY, value - 1f)
+                        }
+                        translationX = screenWidthPx * (-0.42f + horizontalFraction)
+                        translationY = with(density) { verticalOffset.toPx() }
+                        alpha = (0.96f + index * 0.008f) * bandCoverage
+                    },
             )
         }
     }

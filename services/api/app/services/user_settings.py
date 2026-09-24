@@ -45,15 +45,12 @@ from app.domains.moderation.models import DomainAuditEvent, ModerationAppeal
 from app.domains.privacy.models import PrivacySetting
 from app.domains.profiles.models import ProfileVisibility, UserProfile
 from app.models import (
-    AgeBand,
     AuthSession,
     BlacklistEntry,
     ConsentRecord,
-    ContentLevel,
     DataRequestStatus,
     DataRightsRequest,
     FeedbackTicket,
-    GuardianControl,
     TicketStatus,
     User,
     UserPreference,
@@ -67,8 +64,6 @@ from app.schemas import (
     DataRightsRequestPublic,
     FeedbackCreate,
     FeedbackPublic,
-    GuardianControlsPatch,
-    GuardianControlsPublic,
     SessionPublic,
     UserPreferencesPatch,
     UserPreferencesPublic,
@@ -110,39 +105,6 @@ class UserSettingsService:
         self.db.commit()
         self.db.refresh(preferences)
         return preferences
-
-    def get_guardian_controls(self, user: User) -> GuardianControl:
-        self._require_minor(user)
-        controls = self.db.get(GuardianControl, user.id)
-        if controls is None:
-            controls = GuardianControl(
-                child_user_id=user.id,
-                content_level=(
-                    ContentLevel.CHILD
-                    if user.age_band == AgeBand.UNDER_14
-                    else ContentLevel.TEEN
-                ),
-            )
-            self.db.add(controls)
-            self.db.commit()
-            self.db.refresh(controls)
-        return controls
-
-    def update_guardian_controls(
-        self,
-        user: User,
-        payload: GuardianControlsPatch,
-    ) -> GuardianControl:
-        controls = self.get_guardian_controls(user)
-        updates = payload.model_dump(exclude_unset=True, exclude_none=True)
-        if not updates:
-            raise ApiError(422, "VALIDATION_ERROR", "请至少提交一项有效监护设置")
-        for name, value in updates.items():
-            setattr(controls, name, value)
-        controls.updated_at = utcnow()
-        self.db.commit()
-        self.db.refresh(controls)
-        return controls
 
     def create_feedback(self, user: User, payload: FeedbackCreate) -> FeedbackTicket:
         ticket = FeedbackTicket(
@@ -334,11 +296,6 @@ class UserSettingsService:
 
     def export_account(self, user: User) -> AccountExport:
         normalized_phone = self.phone.decrypt(user.phone_ciphertext)
-        controls = None
-        if user.age_band != AgeBand.ADULT:
-            controls = GuardianControlsPublic.model_validate(
-                self.get_guardian_controls(user)
-            )
         consents = self.db.scalars(
             select(ConsentRecord)
             .where(ConsentRecord.user_id == user.id)
@@ -358,7 +315,6 @@ class UserSettingsService:
             preferences=UserPreferencesPublic.model_validate(
                 self.get_preferences(user)
             ),
-            guardian_controls=controls,
             consents=[
                 ConsentRecordPublic(
                     consent_type=record.consent_type.value,
@@ -1036,12 +992,3 @@ class UserSettingsService:
             last_seen_at=session.last_seen_at,
             expires_at=session.expires_at,
         )
-
-    @staticmethod
-    def _require_minor(user: User) -> None:
-        if user.age_band == AgeBand.ADULT:
-            raise ApiError(
-                409,
-                "GUARDIAN_CONTROLS_NOT_APPLICABLE",
-                "成年人账号不适用监护设置",
-            )

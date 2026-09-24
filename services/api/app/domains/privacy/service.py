@@ -12,7 +12,8 @@ from app.domains.privacy.contracts import (
     PrivacySettingsPublic,
 )
 from app.domains.privacy.models import PrivacySetting
-from app.models import AgeBand, User
+from app.domains.creations.models import CreationVisibility
+from app.models import User
 
 
 class PrivacyService:
@@ -31,6 +32,17 @@ class PrivacyService:
         if settings.row_version != payload.row_version:
             raise ApiError(409, "VERSION_CONFLICT", "隐私设置已更新，请刷新后重试")
         updates = payload.model_dump(exclude_unset=True, exclude={"row_version"})
+        default_visibility = updates.get("default_work_visibility")
+        if default_visibility not in {
+            None,
+            CreationVisibility.PRIVATE,
+            CreationVisibility.COMMUNITY,
+        }:
+            raise ApiError(
+                422,
+                "VISIBILITY_UNSUPPORTED",
+                "默认可见范围仅支持私密保存或发布到社区",
+            )
         for name, value in updates.items():
             setattr(settings, name, value)
         settings.row_version += 1
@@ -59,6 +71,15 @@ class PrivacyService:
             self.db.add(settings)
             self.db.commit()
             self.db.refresh(settings)
+        elif settings.default_work_visibility not in {
+            CreationVisibility.PRIVATE,
+            CreationVisibility.COMMUNITY,
+        }:
+            settings.default_work_visibility = CreationVisibility.PRIVATE
+            settings.row_version += 1
+            settings.updated_at = utcnow()
+            self.db.commit()
+            self.db.refresh(settings)
         return settings
 
     @staticmethod
@@ -68,7 +89,7 @@ class PrivacyService:
             learning_card_public=settings.learning_card_public,
             aigc_export_mark_enabled=settings.aigc_export_mark_enabled,
             profile_discovery_enabled=settings.profile_discovery_enabled,
-            guardian_controls_active=user.age_band != AgeBand.ADULT,
+            guardian_controls_active=False,
             row_version=settings.row_version,
             created_at=settings.created_at,
             updated_at=settings.updated_at,

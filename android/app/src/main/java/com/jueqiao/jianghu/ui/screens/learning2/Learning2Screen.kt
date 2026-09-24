@@ -19,6 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,14 +76,19 @@ fun Learning2Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 30.dp, y = 60.dp)
-                    .size(width = 18.dp, height = 18.dp)
+                    .offset(x = 15.dp, y = 45.dp)
+                    .size(48.dp)
+                    .semantics {
+                        contentDescription = "返回上一步"
+                        role = Role.Button
+                    }
                     .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.FillBounds,
                 )
             }
@@ -117,31 +126,29 @@ fun Learning2Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = 501.dp)
-                    .size(width = 267.dp, height = 42.dp)
+                    .offset(y = 498.dp)
+                    .size(width = 267.dp, height = 48.dp)
+                    .semantics {
+                        contentDescription = "尝试回答"
+                        role = Role.Button
+                    }
                     .clickable(onClick = onOpenLearning3),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_learning_group_196),
-                    contentDescription = "尝试回答标签",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
+                Text(
+                    text = "尝试回答",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontFamily = YaHei,
+                    textAlign = TextAlign.Center,
+                )
             }
-
-            // 标签内文本"尝试回答"(字号 16,白色,X 轴居中, Y=511, W=67, H=21)— 点击也跳学习3。
-            Text(
-                text = "尝试回答",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontFamily = YaHei,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 511.dp)
-                    .size(width = 67.dp, height = 21.dp)
-                    .clickable(onClick = onOpenLearning3),
-            )
 
             // TODO:与上一组"尝试回答"标签组合(image + text)100% 重复 — 见
             // docs/CODE-AUDIT-2026-09-09.md §"Massive duplication across gunlun1-12 screens"
@@ -152,31 +159,29 @@ fun Learning2Screen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = 557.dp)
-                    .size(width = 267.dp, height = 42.dp)
+                    .offset(y = 554.dp)
+                    .size(width = 267.dp, height = 48.dp)
+                    .semantics {
+                        contentDescription = "查看秘籍"
+                        role = Role.Button
+                    }
                     .clickable(onClick = onOpenLearning4),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_learning_group_196),
-                    contentDescription = "查看秘籍标签",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
+                Text(
+                    text = "查看秘籍",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontFamily = YaHei,
+                    textAlign = TextAlign.Center,
+                )
             }
-
-            // 标签内文本"查看秘籍"(字号 16,白色,X 轴居中, Y=567, W=67, H=21)— 点击也跳学习4。
-            Text(
-                text = "查看秘籍",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontFamily = YaHei,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 567.dp)
-                    .size(width = 67.dp, height = 21.dp)
-                    .clickable(onClick = onOpenLearning4),
-            )
         }
     }
 }

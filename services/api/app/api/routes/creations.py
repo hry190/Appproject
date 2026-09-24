@@ -62,7 +62,7 @@ from app.domains.creations.contracts import (
 from app.domains.creations.image_generation_service import ImageGenerationService
 from app.domains.creations.export_service import CreationExportService
 from app.domains.creations.models import CreationProjectStatus
-from app.domains.creations.service import CreationService
+from app.domains.creations.service import CreationService, derived_idempotency_key
 from app.models import User
 
 
@@ -273,7 +273,7 @@ def generate_from_creation_conversation(
                     expected_project_revision=project.row_version,
                     user_confirmed_generation=True,
                 ),
-                f"conversation:{idempotency_key}",
+                derived_idempotency_key("conversation-image", idempotency_key),
             )
             conversation = service.attach_conversation_generation(
                 user, project_id, job.id

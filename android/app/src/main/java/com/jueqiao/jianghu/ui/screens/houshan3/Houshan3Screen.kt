@@ -5,10 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
@@ -18,7 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +33,7 @@ import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 /**
- * 后山3 页 — 后山2 页 → 点击"返回"按钮回到后山2;点击标签2-4 之外的空白区域跳转未完待续页。
+ * 识机真诀剧情收束步骤。不会用“未完待续”冒充学习结果，也不会发放秘籍。
  *
  * 布局:
  *   - 全屏背景图(后山3 转换.png)
@@ -40,7 +47,7 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun Houshan3Screen(
     onBack: () -> Unit = {},
-    onOpenUnfinished: () -> Unit = {},
+    onFinish: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -58,16 +65,21 @@ fun Houshan3Screen(
         )
 
         // 内容层(避开系统导航条)— 标签2/3/4 区域不消费点击(让父 Box 接收,触发跳未完待续)
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .clickable(onClick = onOpenUnfinished),
+                .testTag("houshan_story_finish")
+                .semantics {
+                    contentDescription = "识机真诀剧情结束，轻触返回山峰"
+                    role = Role.Button
+                }
+                .clickable(onClick = onFinish),
         ) {
             // 云朵(Ellipse 58.png,X=-46, Y=476, W=331, H=92)— 在熊猫上层
             Image(
                 painter = painterResource(R.drawable.img_shilian3_cloud),
-                contentDescription = "云朵",
+                contentDescription = null,
                 modifier = Modifier
                     .offset(x = (-46).dp, y = 476.dp)
                     .size(width = 331.dp, height = 92.dp),
@@ -77,7 +89,7 @@ fun Houshan3Screen(
             // 熊猫图像(未标题-1-恢复的 8.png,X=118, Y=405, W=181, H=96)— 在云朵下层
             Image(
                 painter = painterResource(R.drawable.img_shilian2_recovered_8),
-                contentDescription = "熊猫",
+                contentDescription = null,
                 modifier = Modifier
                     .offset(x = 118.dp, y = 405.dp)
                     .size(width = 181.dp, height = 96.dp),
@@ -92,7 +104,7 @@ fun Houshan3Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签3",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -116,6 +128,27 @@ fun Houshan3Screen(
                 )
             }
 
+            Box(
+                modifier = Modifier
+                    .offset(x = (maxWidth - 190.dp).coerceAtLeast(0.dp), y = 365.dp)
+                    .size(width = 190.dp, height = 112.dp),
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_shilian_rect156),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+                Text(
+                    text = "你已经找到观察方向。这一峰的互动试炼还在准备中，本次不会记录结果。\n轻触返回山峰",
+                    color = Color.Black,
+                    style = TextStyle(fontFamily = YaHei, fontSize = 14.sp, lineHeight = 19.sp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 11.dp, vertical = 10.dp),
+                )
+            }
+
             // "标签4" 图像(未标题-1-恢复的-恢复的 4.png,X=105, Y=295, W=30, H=53.5)
             Box(
                 modifier = Modifier
@@ -124,7 +157,7 @@ fun Houshan3Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签4",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -156,7 +189,7 @@ fun Houshan3Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_recovered_4),
-                    contentDescription = "标签2",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds,
                 )
@@ -180,18 +213,24 @@ fun Houshan3Screen(
                 )
             }
 
-            // 左上角返回按钮(Return.png,X=30, Y=60, W=18, H=18,复制自后山2 页)— 点击回到后山2 页
+            // 图标仍在原坐标，外层触控区扩为 48dp。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 30.dp, y = 60.dp)
-                    .size(width = 18.dp, height = 18.dp)
+                    .offset(x = 15.dp, y = 45.dp)
+                    .size(48.dp)
+                    .testTag("houshan_story_back")
+                    .semantics {
+                        contentDescription = "返回上一步"
+                        role = Role.Button
+                    }
                     .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.FillBounds,
                 )
             }

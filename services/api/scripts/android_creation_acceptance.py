@@ -58,20 +58,16 @@ class AcceptanceApi:
                 "verification_code": "123456",
                 "password": "AcceptancePass8!",
                 "age_band": age_band,
-                "terms_version": "2026-08",
+                "terms_version": "2026-09-r2",
                 "privacy_version": "2026-08",
             },
         )
         return {"Authorization": f"Bearer {result['tokens']['access_token']}"}
 
     def bootstrap(self, student_phone: str, teacher_phone: str) -> tuple[dict[str, str], dict]:
-        teacher = self.register(teacher_phone, "ADULT")
         student = self.register(student_phone, "AGE_14_TO_17")
-        classroom = self.call(
-            "POST", "/v1/classrooms", headers=teacher,
-            body={"name": "机巧江湖 UI 验收班"}, expected=201,
-        )
-        return student, classroom
+        # Conference submissions no longer depend on the retired classroom API.
+        return student, {}
 
     def projects(self, student: dict[str, str]) -> list[dict]:
         return self.call("GET", "/v1/me/creation-projects?limit=50", headers=student)["items"]
@@ -300,7 +296,7 @@ class DeviceFlow:
 def open_home(flow: DeviceFlow) -> None:
     for _ in range(6):
         tree, _ = flow.snapshot("current")
-        if flow.find(tree, description="作品创作") is not None:
+        if flow.find(tree, description="进入工坊") is not None:
             return
         flow.run_adb("shell", "input", "keyevent", "4")
         time.sleep(0.7)
@@ -308,11 +304,11 @@ def open_home(flow: DeviceFlow) -> None:
 
 
 def open_workshop(flow: DeviceFlow, *, first_visit: bool) -> None:
-    flow.tap_description("打开作品创作入口", "作品创作")
+    flow.tap_description("打开作品创作入口", "进入工坊")
     if first_visit:
         for _ in range(5):
             tree, _ = flow.snapshot("creation-entry-guide")
-            workshop = flow.find(tree, description="工坊")
+            workshop = flow.find(tree, description="进入创作台")
             if workshop is not None and workshop.get("enabled") == "true":
                 break
             flow.tap_xy(540, 1200)
@@ -320,7 +316,7 @@ def open_workshop(flow: DeviceFlow, *, first_visit: bool) -> None:
         else:
             raise AssertionError("首次创作引导没有显示工坊入口")
     else:
-        workshop = flow.wait_find("创作引导完成后直接显示工坊", timeout=3, description="工坊")
+        workshop = flow.wait_find("创作引导完成后直接显示工坊", timeout=3, description="进入创作台")
         _, raw = flow.snapshot("creation-entry-revisit")
         assert "快去工坊里头看看吧" not in raw.decode("utf-8", "replace")
         flow.check("创作入口引导每个账号只播放一次")
@@ -365,16 +361,14 @@ def create_conversation_work(flow: DeviceFlow, title: str) -> None:
 
 def open_archive_and_select(flow: DeviceFlow, title: str) -> None:
     flow.tap_text("打开创作档案", "查看创作档案")
-    for _ in range(6):
-        tree, _ = flow.snapshot("current")
-        picker = flow.find_tappable(tree, description="选择作品")
-        if picker is not None:
-            flow.tap(picker)
-            break
-        flow.tap_xy(540, 1200)
-        time.sleep(0.55)
-    else:
-        raise AssertionError("创作档案选择作品入口未出现")
+    flow.wait_tappable("首次进入即可打开图文荷花", description="浏览图文作品")
+    tree, raw = flow.snapshot("09-archive-categories")
+    for category in ("图文", "视频", "游戏小程序"):
+        assert flow.find_tappable(tree, description=f"浏览{category}作品") is not None
+    assert "选择作品查看" not in raw.decode("utf-8")
+    assert flow.find(tree, description="选择作品") is None
+    flow.check("三个分类同时可用，旧全局入口已移除")
+    flow.tap_description("打开图文荷花", "浏览图文作品")
     select_archive_work(flow, title)
 
 
@@ -388,17 +382,39 @@ def select_archive_work(flow: DeviceFlow, title: str) -> None:
     flow.wait_find("档案主动作显示继续创作", text="继续创作", timeout=20)
 
 
-def inspect_archive_lotus(flow: DeviceFlow) -> None:
-    entries = [
-        ("查看原创记录", "09-archive-original", "我的最初想法"),
-        ("查看修改版本记录", "10-archive-versions", "确认作品"),
-        ("查看创作教练记录", "11-archive-coach", "教练"),
-    ]
-    for description, screenshot, expected_text in entries:
-        flow.tap_description(f"打开{description}", description)
-        flow.wait_find(f"{description}显示真实内容", text=expected_text, contains=True, timeout=20)
-        flow.capture(screenshot, f"{description}内容与新流程一致", text=expected_text, contains=True)
-        flow.tap_description(f"关闭{description}", "关闭当前档案记录")
+def inspect_archive_lotus(flow: DeviceFlow, title: str) -> None:
+    flow.capture("10-archive-selected", "所选作品操作面板", text="查看更多")
+    flow.tap_text("查看当前作品操作", "查看更多")
+    flow.tap_text("打开作品历史长对话", "查看历史长对话")
+    flow.capture("11-archive-history", "显示所选作品历史", text="历史长对话")
+    for _ in range(24):
+        tree, _ = flow.snapshot("11-archive-history-scroll")
+        if flow.find(tree, text="已展示全部历史对话") is not None:
+            flow.check("历史长对话可滚动至最后一条")
+            break
+        flow.swipe_up(short=True)
+    else:
+        raise AssertionError("历史对话无法滚动到底部")
+    flow.tap_text("从历史返回操作", "返回作品操作")
+    flow.tap_text("检查删除确认", "删除作品")
+    flow.wait_find("显示删除二次确认", text="确认删除")
+    flow.tap_text("取消删除保留作品", "取消")
+    flow.tap_text("打开补充投稿流程", "发布到大会")
+    flow.wait_find("进入现有大会投稿页", text="选择大会分类", timeout=25)
+    flow.capture("11-archive-publish", "补充发布使用现有投稿表单", text="选择大会分类")
+    flow.run_adb("shell", "input", "keyevent", "4")
+    flow.tap_text("返回当前分类列表", "返回图文作品列表")
+    flow.capture("11-archive-list", "显示分类作品列表", text="选择一幅图文作品")
+    flow.tap_text("返回分类入口", "返回荷塘")
+    for category, name in (("视频", "video"), ("游戏小程序", "game")):
+        flow.tap_description(f"打开{category}分类", f"浏览{category}作品")
+        flow.wait_find(f"{category}显示空状态", text="暂无相关作品")
+        tree, _ = flow.snapshot(f"11-archive-{name}-empty")
+        assert flow.find(tree, text=title) is None
+        assert flow.find(tree, text="继续创作") is None
+        flow.tap_text(f"从{category}空状态返回", "返回荷塘")
+    flow.tap_description("重新打开图文分类", "浏览图文作品")
+    select_archive_work(flow, title)
 
 
 def main() -> None:
@@ -431,13 +447,16 @@ def main() -> None:
         fields = [node for node in flow.app_nodes(tree) if node.get("class") == "android.widget.EditText"]
         assert len(fields) >= 2
         flow.enter(fields[0], args.student_phone)
-        flow.enter(fields[1], args.password)
+        # Focusing the first field can resize the login surface for the IME.
+        password_field = flow.wait_find("密码输入框可用", description="请输入密码",
+                                        class_name="android.widget.EditText")
+        flow.enter(password_field, args.password)
         flow.tap_description("勾选用户协议", "同意用户协议与隐私条款")
         flow.tap_text("提交登录", "登 录")
 
         for _ in range(24):
             tree, _ = flow.snapshot("02-home-onboarding")
-            if flow.find(tree, description="作品创作") is not None:
+            if flow.find(tree, description="进入工坊") is not None:
                 break
             flow.tap_xy(540, 1200)
             time.sleep(0.5)
@@ -472,7 +491,7 @@ def main() -> None:
         versions_before_continue = len(api.versions(student, project["id"]))
         messages_before_continue = len(conversation["messages"])
         open_archive_and_select(flow, title)
-        inspect_archive_lotus(flow)
+        inspect_archive_lotus(flow, title)
         flow.tap_text("从档案继续创作", "继续创作")
         flow.wait_find("恢复保存后的结果预览", description="本次创作的作品预览", timeout=30)
         flow.capture("12-archive-continue", "继续创作恢复原对话与结果", description="本次创作的作品预览")
@@ -490,12 +509,21 @@ def main() -> None:
             timeout=60,
         )
         flow.tap_description("重启后进入应用", "点击进入登录页")
-        flow.wait_find("重启后会话仍有效", description="作品创作", timeout=25)
+        flow.wait_find("重启后会话仍有效", description="进入工坊", timeout=25)
         open_workshop(flow, first_visit=False)
         flow.wait_find("重启后最近作品仍存在", text=title, timeout=20)
         flow.tap_text("重启后继续作品", "继续")
         flow.wait_find("重启后恢复生成结果", description="本次创作的作品预览", timeout=30)
         flow.capture("13-restart-resume", "重启后创作状态保持一致", description="本次创作的作品预览")
+
+        open_archive_and_select(flow, title)
+        flow.tap_text("打开待删除作品操作", "查看更多")
+        flow.tap_text("请求删除测试作品", "删除作品")
+        flow.tap_text("确认删除测试作品", "确认删除")
+        flow.wait_find("删除最后一件作品后显示空状态", text="暂无相关作品", timeout=25)
+        flow.capture("14-archive-deleted", "删除后停留在图文列表", text="选择一幅图文作品")
+        assert all(item["id"] != project["id"] for item in api.projects(student))
+        flow.check("删除成功后清除选中作品并同步后端列表")
 
         package_info = flow.run_adb(
             "shell", "cmd", "package", "list", "packages", "-U", args.package

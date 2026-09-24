@@ -79,51 +79,44 @@ class RoutesTest {
     }
 
     @Test
-    fun learningDestinationsIncludeWheelTrialAndBackMountainFlow() {
+    fun learningDestinationsUseOneReaderAndOneRealTrialFlow() {
         assertEquals("xiulian", Routes.Xiulian)
         assertEquals("gunlun1", Routes.Gunlun1)
+        assertEquals("wushuhuan", Routes.Wushuhuan)
         assertEquals("shilian", Routes.Shilian)
         assertEquals("shilian2", Routes.Shilian2)
         assertEquals("shilian3", Routes.Shilian3)
-        assertEquals("houshan", Routes.Houshan)
-        assertEquals("learning2", Routes.Learning2)
-        assertEquals("learning3", Routes.Learning3)
-        assertEquals("learning4", Routes.Learning4)
         assertEquals("unfinished", Routes.Unfinished)
-        assertEquals("pending-unlock", Routes.PendingUnlock)
         assertEquals("gunlun12", Routes.Gunlun12)
         assertEquals("gunlun13", Routes.Gunlun13)
-        assertEquals("volume1", Routes.Volume1)
-        assertEquals("volume1-2", Routes.Volume1Part2)
-        assertEquals("volume1-3", Routes.Volume1Part3)
-        assertEquals("volume1-4", Routes.Volume1Part4)
-        assertEquals("volume1-5", Routes.Volume1Part5)
-        assertEquals("volume1-6", Routes.Volume1Part6)
-        assertEquals("volume1-7", Routes.Volume1Part7)
-        assertEquals("volume1-8", Routes.Volume1Part8)
-        assertEquals("volume1-9", Routes.Volume1Part9)
-        assertEquals("volume1-10", Routes.Volume1Part10)
-        assertEquals("volume1-11", Routes.Volume1Part11)
-        assertEquals("volume1-12", Routes.Volume1Part12)
-        assertEquals("volume1-13", Routes.Volume1Part13)
-        assertEquals("volume1-14", Routes.Volume1Part14)
-        assertEquals("volume2-1", Routes.Volume2Part1)
-        assertEquals("volume2-2", Routes.Volume2Part2)
-        assertEquals("volume2-3", Routes.Volume2Part3)
-        assertEquals("volume2-4", Routes.Volume2Part4)
-        assertEquals("volume2-5", Routes.Volume2Part5)
-        assertEquals("volume2-6", Routes.Volume2Part6)
-        assertEquals("volume2-7", Routes.Volume2Part7)
-        assertEquals("volume2-8", Routes.Volume2Part8)
-        assertEquals("volume2-9", Routes.Volume2Part9)
-        assertEquals("volume2-10", Routes.Volume2Part10)
-        assertEquals("volume2-11", Routes.Volume2Part11)
-        assertEquals("volume2-12", Routes.Volume2Part12)
-        assertEquals("volume2-13", Routes.Volume2Part13)
-        assertEquals("volume2-14", Routes.Volume2Part14)
-        assertEquals("volume2-15", Routes.Volume2Part15)
-        assertEquals("volume3-1", Routes.Volume3Part1)
+        assertEquals(
+            "manual-reader/1/lesson%2F1?continueToTrial=true",
+            Routes.manualReader(1, "lesson/1", continueToTrial = true),
+        )
+        assertEquals(
+            "luggage/learning-trial/trial-1?returnToWushuhuan=true",
+            Routes.learningTrial("trial-1", returnToWushuhuan = true),
+        )
+        assertEquals(
+            "gongfang?sourceManualId=manual%2F1",
+            Routes.gongfang("manual/1"),
+        )
         assertEquals("gunlun14", Routes.Gunlun14)
         assertEquals("gunlun15", Routes.Gunlun15)
+    }
+
+    @Test
+    fun backMountainRouteCarriesAnOptionalTargetLesson() {
+        assertEquals("shilian", Routes.shilian(null))
+        assertEquals("shilian", Routes.shilian(""))
+        assertEquals("shilian?lessonId=lesson%2F1", Routes.shilian("lesson/1"))
+    }
+
+    @Test
+    fun conferencePublishRouteKeepsTheCreationProjectId() {
+        assertEquals(
+            "creation/publish/project-123",
+            Routes.conferencePublish("project-123"),
+        )
     }
 }

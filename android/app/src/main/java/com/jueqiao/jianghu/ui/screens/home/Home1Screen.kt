@@ -6,9 +6,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,14 +50,21 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
+import com.jueqiao.jianghu.luggage.LearningOverviewDto
+import com.jueqiao.jianghu.luggage.LuggageResponseDto
 import com.jueqiao.jianghu.ui.components.EdgeToEdgeScreen
 import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.components.HomeQuickActionsLayout
+import com.jueqiao.jianghu.ui.components.rememberSystemAnimationsEnabled
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -79,7 +85,7 @@ private const val PrimaryEntranceStaggerMillis = 280L
 private const val DecorButtonSheenDurationMillis = 440
 private enum class PrimaryHomeAction {
     Luggage,
-    Xiulian,
+    Wushuhuan,
     Dahui,
     Zaowu,
 }
@@ -122,21 +128,26 @@ private val DecorButtonGoldOutlineOffsets = listOf(
 @Composable
 fun Home1Screen(
     onOpenXiulian: () -> Unit = {},
+    onOpenWendao: () -> Unit = {},
     onOpenLuggage: () -> Unit = {},
     onOpenZaowu: () -> Unit = {},
     onOpenDahui: () -> Unit = {},
     dahuiEnabled: Boolean = true,
     onOpenSettings: () -> Unit = {},
-    onOpenChallenge: () -> Unit = {},
+    onOpenLetters: () -> Unit = {},
     hasUnreadLetters: Boolean = false,
     animateQuickActionsEntrance: Boolean = false,
     quickActionsEntranceReady: Boolean = true,
     onQuickActionsEntranceConsumed: () -> Unit = {},
+    progressSnapshot: LuggageResponseDto? = null,
+    learningOverview: LearningOverviewDto? = null,
+    progressLoading: Boolean = false,
+    progressMessage: String? = null,
+    onRefreshProgress: () -> Unit = {},
+    onOpenRecommendedManual: (String) -> Unit = {},
 ) {
-    // 进度弹窗相关状态
     var progressOpen by remember { mutableStateOf(false) }
-    var dailyOpen by remember { mutableStateOf(false) }
-    var dailyStep by remember { androidx.compose.runtime.mutableIntStateOf(1) }
+    val animationsEnabled = rememberSystemAnimationsEnabled()
     val density = LocalDensity.current
     val statusBarTop = with(density) {
         WindowInsets.statusBars.getTop(density).toDp()
@@ -157,51 +168,60 @@ fun Home1Screen(
         }
     }
 
-    LaunchedEffect(shouldAnimateQuickActions, quickActionsEntranceReady) {
+    LaunchedEffect(shouldAnimateQuickActions, quickActionsEntranceReady, animationsEnabled) {
         if (shouldAnimateQuickActions && quickActionsEntranceReady) {
             onQuickActionsEntranceConsumed()
-            delay(QuickActionsEntranceDelayMillis)
-            coroutineScope {
-                launch {
-                    quickActionsAlpha.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = QuickActionsEntranceDurationMillis,
-                            easing = LinearEasing,
-                        ),
-                    )
+            if (!animationsEnabled) {
+                quickActionsAlpha.snapTo(1f)
+                quickActionsMovement.snapTo(1f)
+                primaryActionEntrances.forEach { entrance ->
+                    entrance.alpha.snapTo(1f)
+                    entrance.movement.snapTo(1f)
                 }
-                launch {
-                    quickActionsMovement.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = QuickActionsEntranceDurationMillis,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                }
-                primaryEntranceOrder.forEachIndexed { sequenceIndex, action ->
-                    val entrance = primaryActionEntrances[action.ordinal]
+            } else {
+                delay(QuickActionsEntranceDelayMillis)
+                coroutineScope {
                     launch {
-                        delay(sequenceIndex * PrimaryEntranceStaggerMillis)
-                        coroutineScope {
-                            launch {
-                                entrance.alpha.animateTo(
-                                    targetValue = 1f,
-                                    animationSpec = tween(
-                                        durationMillis = PrimaryEntranceDurationMillis,
-                                        easing = LinearEasing,
-                                    ),
-                                )
-                            }
-                            launch {
-                                entrance.movement.animateTo(
-                                    targetValue = 1f,
-                                    animationSpec = tween(
-                                        durationMillis = PrimaryEntranceDurationMillis,
-                                        easing = FastOutSlowInEasing,
-                                    ),
-                                )
+                        quickActionsAlpha.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(
+                                durationMillis = QuickActionsEntranceDurationMillis,
+                                easing = LinearEasing,
+                            ),
+                        )
+                    }
+                    launch {
+                        quickActionsMovement.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(
+                                durationMillis = QuickActionsEntranceDurationMillis,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        )
+                    }
+                    primaryEntranceOrder.forEachIndexed { sequenceIndex, action ->
+                        val entrance = primaryActionEntrances[action.ordinal]
+                        launch {
+                            delay(sequenceIndex * PrimaryEntranceStaggerMillis)
+                            coroutineScope {
+                                launch {
+                                    entrance.alpha.animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = tween(
+                                            durationMillis = PrimaryEntranceDurationMillis,
+                                            easing = LinearEasing,
+                                        ),
+                                    )
+                                }
+                                launch {
+                                    entrance.movement.animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = tween(
+                                            durationMillis = PrimaryEntranceDurationMillis,
+                                            easing = FastOutSlowInEasing,
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -219,7 +239,7 @@ fun Home1Screen(
     val homeEntrancesTranslationY =
         (1f - quickActionsMovement.value) * quickActionsOffsetPx
     val luggageEntrance = primaryActionEntrances[PrimaryHomeAction.Luggage.ordinal]
-    val xiulianEntrance = primaryActionEntrances[PrimaryHomeAction.Xiulian.ordinal]
+    val wushuhuanEntrance = primaryActionEntrances[PrimaryHomeAction.Wushuhuan.ordinal]
     val dahuiEntrance = primaryActionEntrances[PrimaryHomeAction.Dahui.ordinal]
     val zaowuEntrance = primaryActionEntrances[PrimaryHomeAction.Zaowu.ordinal]
 
@@ -230,16 +250,19 @@ fun Home1Screen(
             )
         },
     ) {
-        // 与三个引导状态共用同一个快捷入口组件；抵消父容器已经添加的状态栏顶部内边距。
+        // 首页专属快捷入口面板；抵消父容器已经添加的状态栏顶部内边距。
         HomeQuickActions(
             onOpenWendao = {
-                if (homeEntrancesInteractive) onOpenXiulian()
+                if (homeEntrancesInteractive) onOpenWendao()
             },
             onOpenCultivation = {
-                if (homeEntrancesInteractive) progressOpen = true
+                if (homeEntrancesInteractive) {
+                    progressOpen = true
+                    onRefreshProgress()
+                }
             },
             onOpenLetters = {
-                if (homeEntrancesInteractive) onOpenChallenge()
+                if (homeEntrancesInteractive) onOpenLetters()
             },
             onOpenSettings = {
                 if (homeEntrancesInteractive) onOpenSettings()
@@ -289,11 +312,12 @@ fun Home1Screen(
         DecorButton(
             imageRes = R.drawable.img_home1_btn2,
             text = "修炼",
+            accessibilityLabel = "进入修炼引导页",
             x = 83.dp, y = 234.dp,
             width = 55.dp, height = 90.dp,
-            entranceAlpha = xiulianEntrance.alpha.value,
-            entranceTranslationY = xiulianEntrance.translationY(quickActionsOffsetPx),
-            entranceEnabled = xiulianEntrance.isInteractive(),
+            entranceAlpha = wushuhuanEntrance.alpha.value,
+            entranceTranslationY = wushuhuanEntrance.translationY(quickActionsOffsetPx),
+            entranceEnabled = wushuhuanEntrance.isInteractive(),
             onClick = onOpenXiulian,
         )
 
@@ -309,10 +333,11 @@ fun Home1Screen(
             onClick = onOpenDahui,
         )
 
-        // 作品创作 (4.png)
+        // 工坊 (4.png)
         DecorButton(
             imageRes = R.drawable.img_home1_btn4,
-            text = "作品创作",
+            text = "工坊",
+            accessibilityLabel = "进入工坊",
             x = 300.dp, y = 350.dp,
             width = 55.dp, height = 90.dp,
             entranceAlpha = zaowuEntrance.alpha.value,
@@ -324,34 +349,24 @@ fun Home1Screen(
 
     // 修为弹窗由顶部“修为”入口触发。
     if (progressOpen) {
-        ProgressModal(
-            onClose      = { progressOpen = false },
-            onOpenDaily  = { dailyOpen = true; progressOpen = false },
-            onOpenLuggage = onOpenLuggage, // 跳转新 Luggage 页
-        )
-    }
-    // 每日问题气泡(支持 2 步切换,第3 次点击关闭)
-    if (dailyOpen) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .clickable {
-                    if (dailyStep == 1) dailyStep = 2 else dailyOpen = false
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = if (dailyStep == 1)
-                    "...去找找秘籍，看看有没有答案"
-                else
-                    "生活问题推荐:\n机器人为什么会认错物体?",
-                color = Color.Black,
-                modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .padding(20.dp),
-            )
+        val recommendation = learningOverview?.books?.firstOrNull {
+            it.manualPageId == learningOverview.recommendedLessonId
         }
+        ProgressModal(
+            onClose = { progressOpen = false },
+            onOpenLuggage = {
+                progressOpen = false
+                onOpenLuggage()
+            },
+            onOpenRecommendedManual = { id ->
+                progressOpen = false
+                onOpenRecommendedManual(id)
+            },
+            snapshot = progressSnapshot,
+            recommendation = recommendation,
+            loading = progressLoading,
+            message = progressMessage,
+        )
     }
 }
 
@@ -363,6 +378,7 @@ fun Home1Screen(
 fun DecorButton(
     imageRes: Int,
     text: String,
+    accessibilityLabel: String = text,
     x: androidx.compose.ui.unit.Dp,
     y: androidx.compose.ui.unit.Dp,
     width: androidx.compose.ui.unit.Dp,
@@ -372,13 +388,14 @@ fun DecorButton(
     entranceEnabled: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val animationsEnabled = rememberSystemAnimationsEnabled()
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
     var isClickSelected by remember { mutableStateOf(false) }
     val sheenProgress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    val isActive = isHovered || isPressed || isClickSelected
+    val isActive = animationsEnabled && (isHovered || isPressed || isClickSelected)
 
     val scale by animateFloatAsState(
         targetValue = when {
@@ -387,7 +404,11 @@ fun DecorButton(
             isHovered -> 1.025f
             else -> 1f
         },
-        animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing),
+        animationSpec = if (animationsEnabled) {
+            tween(durationMillis = 140, easing = FastOutSlowInEasing)
+        } else {
+            snap()
+        },
         label = "decorButtonScale",
     )
     val lift by animateDpAsState(
@@ -396,7 +417,11 @@ fun DecorButton(
             isHovered -> 1.dp
             else -> 0.dp
         },
-        animationSpec = tween(durationMillis = 160, easing = FastOutSlowInEasing),
+        animationSpec = if (animationsEnabled) {
+            tween(durationMillis = 160, easing = FastOutSlowInEasing)
+        } else {
+            snap()
+        },
         label = "decorButtonLift",
     )
     val outlineAlpha by animateFloatAsState(
@@ -406,17 +431,29 @@ fun DecorButton(
             isHovered -> 0.12f
             else -> 0f
         },
-        animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing),
+        animationSpec = if (animationsEnabled) {
+            tween(durationMillis = 140, easing = FastOutSlowInEasing)
+        } else {
+            snap()
+        },
         label = "decorButtonOutline",
     )
     val highlightAlpha by animateFloatAsState(
         targetValue = if (isActive) 0.07f else 0f,
-        animationSpec = tween(durationMillis = 160, easing = FastOutSlowInEasing),
+        animationSpec = if (animationsEnabled) {
+            tween(durationMillis = 160, easing = FastOutSlowInEasing)
+        } else {
+            snap()
+        },
         label = "decorButtonHighlight",
     )
     val textColor by animateColorAsState(
         targetValue = if (isActive) Color(0xFFFFF7DC) else Color(0xFFF4E6CF),
-        animationSpec = tween(durationMillis = 160, easing = FastOutSlowInEasing),
+        animationSpec = if (animationsEnabled) {
+            tween(durationMillis = 160, easing = FastOutSlowInEasing)
+        } else {
+            snap()
+        },
         label = "decorButtonTextColor",
     )
     val density = LocalDensity.current
@@ -430,6 +467,10 @@ fun DecorButton(
                 alpha = entranceAlpha
                 translationY = entranceTranslationY
             }
+            .semantics {
+                contentDescription = accessibilityLabel
+                role = Role.Button
+            }
             .hoverable(
                 interactionSource = interactionSource,
                 enabled = entranceEnabled,
@@ -441,18 +482,24 @@ fun DecorButton(
                 onClick = {
                     if (entranceEnabled && !isClickSelected) {
                         isClickSelected = true
-                        scope.launch {
-                            sheenProgress.snapTo(0f)
-                            sheenProgress.animateTo(
-                                targetValue = 1f,
-                                animationSpec = tween(
-                                    durationMillis = DecorButtonSheenDurationMillis,
-                                    easing = FastOutSlowInEasing,
-                                ),
-                            )
+                        if (!animationsEnabled) {
                             onClick()
                             isClickSelected = false
-                            sheenProgress.snapTo(0f)
+                        } else {
+                            scope.launch {
+                                sheenProgress.snapTo(0f)
+                                sheenProgress.animateTo(
+                                    targetValue = 1f,
+                                    animationSpec = tween(
+                                        durationMillis = DecorButtonSheenDurationMillis,
+                                        easing = FastOutSlowInEasing,
+                                    ),
+                                )
+                                // 保留各引导页原有节奏：流光完整播放后再切换页面。
+                                onClick()
+                                isClickSelected = false
+                                sheenProgress.snapTo(0f)
+                            }
                         }
                     }
                 },
@@ -498,7 +545,7 @@ fun DecorButton(
             // 原图与斜向流光在独立离屏层合成，SrcAtop 将流光限制在图标 Alpha 内。
             Image(
                 painter = painterResource(imageRes),
-                contentDescription = text,
+                contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
@@ -506,7 +553,7 @@ fun DecorButton(
                     }
                     .drawWithContent {
                         drawContent()
-                        if (isClickSelected) {
+                        if (animationsEnabled && isClickSelected) {
                             val centerX = size.width * (-0.45f + 1.9f * sheenProgress.value)
                             val bandHalfWidth = size.width * 0.22f
                             drawRect(

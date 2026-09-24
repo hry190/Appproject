@@ -30,12 +30,11 @@ import com.jueqiao.jianghu.auth.AuthViewModelFactory
 import com.jueqiao.jianghu.auth.VerificationPurpose
 import com.jueqiao.jianghu.creation.CreationViewModel
 import com.jueqiao.jianghu.creation.CreationViewModelFactory
-import com.jueqiao.jianghu.distribution.DistributionViewModel
-import com.jueqiao.jianghu.distribution.DistributionViewModelFactory
 import com.jueqiao.jianghu.conference.ConferenceViewModel
 import com.jueqiao.jianghu.conference.ConferenceViewModelFactory
 import com.jueqiao.jianghu.luggage.LuggageViewModel
 import com.jueqiao.jianghu.luggage.LuggageViewModelFactory
+import com.jueqiao.jianghu.luggage.LuggageUiState
 import com.jueqiao.jianghu.luggage.PrivacySettingsPatchDto
 import com.jueqiao.jianghu.luggage.RetrySessionDto
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
@@ -48,13 +47,13 @@ import com.jueqiao.jianghu.ui.screens.dahui.ConferenceMatchRecordsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceRequestsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceWorkScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
-import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
 import com.jueqiao.jianghu.ui.screens.home.HomeScreen
 import com.jueqiao.jianghu.ui.screens.home.LuggageScreen
 import com.jueqiao.jianghu.ui.screens.home.SettingsScreen
 import com.jueqiao.jianghu.ui.screens.luggage.BadgesScreen
 import com.jueqiao.jianghu.ui.screens.luggage.CreationDetailScreen
+import com.jueqiao.jianghu.ui.screens.luggage.ConferencePublishScreen
 import com.jueqiao.jianghu.ui.screens.luggage.CreationsScreen
 import com.jueqiao.jianghu.ui.screens.luggage.EvidenceScreen
 import com.jueqiao.jianghu.ui.screens.luggage.ManualDetailScreen
@@ -77,63 +76,16 @@ import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
-import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
-import com.jueqiao.jianghu.ui.screens.gunlun3.Gunlun3Screen
-import com.jueqiao.jianghu.ui.screens.gunlun4.Gunlun4Screen
-import com.jueqiao.jianghu.ui.screens.gunlun5.Gunlun5Screen
-import com.jueqiao.jianghu.ui.screens.gunlun6.Gunlun6Screen
-import com.jueqiao.jianghu.ui.screens.gunlun7.Gunlun7Screen
 import com.jueqiao.jianghu.ui.screens.houshan1.Houshan1Screen
 import com.jueqiao.jianghu.ui.screens.houshan2.Houshan2Screen
 import com.jueqiao.jianghu.ui.screens.houshan3.Houshan3Screen
-import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
-import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
-import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
-import com.jueqiao.jianghu.ui.screens.learning4.Learning4Screen
-import com.jueqiao.jianghu.ui.screens.pendingunlock.PendingUnlockScreen
-import com.jueqiao.jianghu.ui.screens.gunlun8.Gunlun8Screen
-import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
-import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
-import com.jueqiao.jianghu.ui.screens.gunlun11.Gunlun11Screen
-import com.jueqiao.jianghu.ui.screens.gunlun12.Gunlun12Screen
-import com.jueqiao.jianghu.ui.screens.gunlun13.Gunlun13Screen
-import com.jueqiao.jianghu.ui.screens.gunlun14.Gunlun14Screen
-import com.jueqiao.jianghu.ui.screens.gunlun15.Gunlun15Screen
+import com.jueqiao.jianghu.ui.screens.manualreader.ManualReaderScreen
+import com.jueqiao.jianghu.ui.screens.wushuhuan.WushuhuanScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
 import com.jueqiao.jianghu.ui.screens.shengtu.ShengtuScreen
 import com.jueqiao.jianghu.ui.screens.unfinished.UnfinishedScreen
-import com.jueqiao.jianghu.ui.screens.volume1.Volume1Screen
-import com.jueqiao.jianghu.ui.screens.volume1part2.Volume1Part2Screen
-import com.jueqiao.jianghu.ui.screens.volume1part3.Volume1Part3Screen
-import com.jueqiao.jianghu.ui.screens.volume1part4.Volume1Part4Screen
-import com.jueqiao.jianghu.ui.screens.volume1part5.Volume1Part5Screen
-import com.jueqiao.jianghu.ui.screens.volume1part6.Volume1Part6Screen
-import com.jueqiao.jianghu.ui.screens.volume1part7.Volume1Part7Screen
-import com.jueqiao.jianghu.ui.screens.volume1part8.Volume1Part8Screen
-import com.jueqiao.jianghu.ui.screens.volume1part9.Volume1Part9Screen
-import com.jueqiao.jianghu.ui.screens.volume1part10.Volume1Part10Screen
-import com.jueqiao.jianghu.ui.screens.volume1part11.Volume1Part11Screen
-import com.jueqiao.jianghu.ui.screens.volume1part12.Volume1Part12Screen
-import com.jueqiao.jianghu.ui.screens.volume1part13.Volume1Part13Screen
-import com.jueqiao.jianghu.ui.screens.volume1part14.Volume1Part14Screen
-import com.jueqiao.jianghu.ui.screens.volume2part1.Volume2Part1Screen
-import com.jueqiao.jianghu.ui.screens.volume2part2.Volume2Part2Screen
-import com.jueqiao.jianghu.ui.screens.volume2part3.Volume2Part3Screen
-import com.jueqiao.jianghu.ui.screens.volume2part4.Volume2Part4Screen
-import com.jueqiao.jianghu.ui.screens.volume2part5.Volume2Part5Screen
-import com.jueqiao.jianghu.ui.screens.volume2part6.Volume2Part6Screen
-import com.jueqiao.jianghu.ui.screens.volume2part7.Volume2Part7Screen
-import com.jueqiao.jianghu.ui.screens.volume2part8.Volume2Part8Screen
-import com.jueqiao.jianghu.ui.screens.volume2part9.Volume2Part9Screen
-import com.jueqiao.jianghu.ui.screens.volume2part10.Volume2Part10Screen
-import com.jueqiao.jianghu.ui.screens.volume2part11.Volume2Part11Screen
-import com.jueqiao.jianghu.ui.screens.volume2part12.Volume2Part12Screen
-import com.jueqiao.jianghu.ui.screens.volume2part13.Volume2Part13Screen
-import com.jueqiao.jianghu.ui.screens.volume2part14.Volume2Part14Screen
-import com.jueqiao.jianghu.ui.screens.volume2part15.Volume2Part15Screen
-import com.jueqiao.jianghu.ui.screens.volume3part1.Volume3Part1Screen
 import com.jueqiao.jianghu.ui.screens.picture.CreationEditorScreen
 import com.jueqiao.jianghu.ui.screens.chuangzuodangan.ChuangzuodanganScreen
 import com.jueqiao.jianghu.ui.screens.yanwuchang.YanwuchangScreen
@@ -144,6 +96,14 @@ import com.jueqiao.jianghu.ui.screens.yanwuchangvideocomment.YanwuchangVideoComm
 import com.jueqiao.jianghu.ui.screens.yanwuchangvideomy.YanwuchangVideoMyScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private fun NavHostController.navigateSingleTop(route: String) {
+    navigate(route) { launchSingleTop = true }
+}
+
+private fun NavHostController.openBackMountainWendao(targetLessonId: String? = null) {
+    navigateSingleTop(Routes.shilian(targetLessonId))
+}
 
 @Composable
 fun JianghuNavHost(
@@ -162,16 +122,24 @@ fun JianghuNavHost(
     val luggageViewModel: LuggageViewModel = viewModel(factory = luggageFactory)
     val luggageState by luggageViewModel.uiState.collectAsStateWithLifecycle()
     val luggageDetailState by luggageViewModel.detailState.collectAsStateWithLifecycle()
+    val progressSnapshot = (luggageState as? LuggageUiState.Content)?.snapshot
+    val progressLoading = luggageState is LuggageUiState.Loading ||
+        (luggageState as? LuggageUiState.Content)?.refreshing == true ||
+        luggageDetailState.loading
+    val progressMessage = when (val state = luggageState) {
+        is LuggageUiState.Content -> state.notice
+        is LuggageUiState.Error -> state.message
+        LuggageUiState.Loading -> null
+    } ?: luggageDetailState.learningOverviewMessage
+        ?: authState.errorMessage?.takeIf {
+            authState.errorCode == "NETWORK_UNAVAILABLE" ||
+                authState.errorCode == "LOCAL_AUTH_FAILURE"
+        }
     val creationFactory = remember(application) {
         CreationViewModelFactory(application, application.luggageRepository)
     }
     val creationViewModel: CreationViewModel = viewModel(factory = creationFactory)
     val creationState by creationViewModel.state.collectAsStateWithLifecycle()
-    val distributionFactory = remember(application) {
-        DistributionViewModelFactory(application.luggageRepository)
-    }
-    val distributionViewModel: DistributionViewModel = viewModel(factory = distributionFactory)
-    val distributionState by distributionViewModel.state.collectAsStateWithLifecycle()
     val conferenceFactory = remember(application) {
         ConferenceViewModelFactory(application.luggageRepository)
     }
@@ -182,7 +150,6 @@ fun JianghuNavHost(
     val mistPhase = remember { Animatable(0f) }
     var loginTransitionRunning by remember { mutableStateOf(false) }
     var animateHomeQuickActionsOnNextEntry by remember { mutableStateOf(false) }
-
     LaunchedEffect(currentUser?.id) {
         conferenceViewModel.reset()
         creationViewModel.clearDerivative()
@@ -275,7 +242,7 @@ fun JianghuNavHost(
                 },
                 isSubmitting    = authState.operation == AuthOperation.Login,
                 isTransitioning = loginTransitionRunning,
-                contentAlpha    = loginContentAlpha.value,
+                contentAlpha    = { loginContentAlpha.value },
                 errorMessage    = authState.errorMessage,
                 onClearError    = authViewModel::clearFeedback,
             )
@@ -286,21 +253,12 @@ fun JianghuNavHost(
                 onRequestCode   = { phone, purpose, onCooldown ->
                     authViewModel.requestCode(phone, purpose, onCooldown)
                 },
-                onVerifyGuardian = { childPhone, guardianPhone, code, onVerified ->
-                    authViewModel.verifyGuardianConsent(
-                        childPhone,
-                        guardianPhone,
-                        code,
-                        onVerified,
-                    )
-                },
-                onRegister      = { phone, code, password, ageBand, guardianToken ->
+                onRegister      = { phone, code, password, ageBand ->
                     authViewModel.register(
                         phone,
                         code,
                         password,
                         ageBand,
-                        guardianToken,
                     ) {
                         animateHomeQuickActionsOnNextEntry = true
                         navController.navigate(Routes.Home) {
@@ -387,53 +345,74 @@ fun JianghuNavHost(
                 onQuickActionsEntranceConsumed = {
                     animateHomeQuickActionsOnNextEntry = false
                 },
-                onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
-                onOpenLuggage   = { navController.navigate(Routes.Luggage) },
-                // 每次从首页进入作品创作都创建新的引导页实例，确保气泡与工坊入口重置。
-                onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
-                onOpenSettings  = { navController.navigate(Routes.Settings) },
-                onOpenChallenge = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) {
-                            Routes.Challenge
-                        } else {
-                            Routes.DahuiLetters
-                        },
-                    )
+                onOpenXiulian   = { navController.navigateSingleTop(Routes.Gunlun1) },
+                onOpenWendao    = { navController.openBackMountainWendao() },
+                onOpenLuggage   = { navController.navigateSingleTop(Routes.Luggage) },
+                // 每次从首页进入工坊都创建新的引导页实例，确保气泡与入口状态正确。
+                onOpenZaowu     = { navController.navigateSingleTop(Routes.Zaowu) },
+                onOpenSettings  = { navController.navigateSingleTop(Routes.Settings) },
+                onOpenLetters = {
+                    navController.navigateSingleTop(Routes.DahuiLetters)
                 },
-                onOpenDahui     = { navController.navigate(Routes.Dahui) },
+                // 首页“大会”先进入演武场选择页，再由“作品 / 比武”组件继续分流。
+                onOpenDahui     = { navController.navigateSingleTop(Routes.Yanwuchang) },
                 dahuiEnabled = conferenceState.conferenceEnabled != false,
                 hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+                progressSnapshot = progressSnapshot,
+                learningOverview = luggageDetailState.learningOverview,
+                progressLoading = progressLoading,
+                progressMessage = progressMessage,
+                onRefreshProgress = {
+                    authViewModel.clearFeedback()
+                    luggageViewModel.loadProgressOverview()
+                },
+                onOpenRecommendedManual = { id ->
+                    navController.navigateSingleTop(Routes.luggageManualDetail(id))
+                },
             )
         }
 
         composable(Routes.Xiulian)  {
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
             XiulianScreen(
                 onBack         = { navController.popBackStack() },
-                onOpenLuggage  = { navController.navigate(Routes.Luggage) },
-                onOpenManuals  = { navController.navigate(Routes.luggageManuals(null)) },
-                onOpenLearning = { navController.navigate(Routes.LuggageGrowth) },
-                onOpenTrials   = { navController.navigate(Routes.Shilian) },
-                onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
-                onOpenRecommendedManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
-                learningOverview = luggageDetailState.learningOverview,
-                onOpenWendao   = { navController.navigate(Routes.Home1) },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenLetters  = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
+                onOpenGunlun1 = {
+                    navController.navigate(Routes.Gunlun1) {
+                        popUpTo(Routes.Xiulian) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+                learningOverview = luggageDetailState.learningOverview,
             )
         }
-        composable(Routes.Shilian) {
+        composable(
+            route = Routes.ShilianPattern,
+            arguments = listOf(
+                navArgument("lessonId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { backStackEntry ->
+            LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
+            val targetLessonId = backStackEntry.arguments?.getString("lessonId")
             Houshan1Screen(
                 onBack = { navController.popBackStack() },
-                onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
+                targetLessonId = targetLessonId,
+                targetVolumeNo = luggageDetailState.learningOverview?.books
+                    ?.firstOrNull { it.manualPageId == targetLessonId }
+                    ?.volumeNo,
+                recommendation = luggageDetailState.learningOverview?.backMountain,
+                onOpenFirstTrial = { manualId ->
+                    val volumeNo = luggageDetailState.learningOverview?.books
+                        ?.firstOrNull { it.manualPageId == manualId }
+                        ?.volumeNo
+                        ?: 1
+                    navController.navigateSingleTop(
+                        Routes.manualReader(volumeNo, manualId, continueToTrial = true)
+                    )
+                },
             )
         }
         composable(Routes.Shilian2) {
@@ -445,323 +424,132 @@ fun JianghuNavHost(
         composable(Routes.Shilian3) {
             Houshan3Screen(
                 onBack = { navController.popBackStack() },
-                onOpenUnfinished = { navController.navigate(Routes.Unfinished) },
+                onFinish = {
+                    if (!navController.popBackStack(Routes.ShilianPattern, inclusive = false)) {
+                        navController.popBackStack()
+                    }
+                },
             )
         }
         composable(Routes.Unfinished) {
             UnfinishedScreen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun1 = {
-                    navController.navigate(Routes.Gunlun1) {
-                        popUpTo(Routes.Gunlun1) { inclusive = true }
+                    navController.navigate(Routes.Wushuhuan) {
+                        popUpTo(Routes.Gunlun1) { inclusive = false }
+                        launchSingleTop = true
                     }
                 },
             )
         }
-        composable(Routes.Houshan) {
-            LearningScreen(
-                onBack = { navController.popBackStack() },
-                onOpenLearning2 = { navController.navigate(Routes.Learning2) },
-            )
-        }
-        composable(Routes.Learning2) {
-            Learning2Screen(
-                onBack = { navController.popBackStack() },
-                onOpenLearning3 = { navController.navigate(Routes.Learning3) },
-                onOpenLearning4 = { navController.navigate(Routes.Learning4) },
-            )
-        }
-        composable(Routes.Learning3) {
-            Learning3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
-            )
-        }
-        composable(Routes.Learning4) {
-            Learning4Screen(onBack = { navController.popBackStack() })
-        }
-        composable(Routes.Learning3) {
-            Learning3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
-            )
-        }
-        composable(Routes.PendingUnlock) {
-            PendingUnlockScreen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun1 = { navController.navigate(Routes.Gunlun1) },
-            )
-        }
+        // 旧 Learning/PendingUnlock 静态分支已从导航图移除。
+        // 预测、作答、服务端判分统一复用 LearningTrialScreen，避免自动判对与伪奖励。
         composable(Routes.Gunlun1) {
+            // 首页会直接进入本页；概览尚未载入时在此补充请求。
+            LaunchedEffect(Unit) {
+                if (luggageDetailState.learningOverview == null && !luggageDetailState.loading) {
+                    luggageViewModel.loadLearningOverview()
+                }
+            }
             Gunlun1Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
-                // 滚轮1 的"修\n炼"按钮 → 学习1 页 (LearningScreen)
-                onOpenLearning1 = { navController.navigate(Routes.Houshan) },
-                // 滚轮1 的"后\n山"按钮 → 后山1 页 (Houshan1Screen, 原 ShilianScreen)
-                onOpenHoushan1 = { navController.navigate(Routes.Shilian) },
+                onOpenWushuhuan = {
+                    navController.navigateSingleTop(Routes.Wushuhuan)
+                },
+                onOpenHoushan1 = {
+                    navController.openBackMountainWendao()
+                },
+                learningOverview = luggageDetailState.learningOverview,
             )
         }
-        composable(Routes.Gunlun2) {
-            Gunlun2Screen(
+        // Gunlun2—15 仅保留为旧深链兼容别名；正常书环交互使用独立 Wushuhuan 路由。
+        listOf(
+            Routes.Wushuhuan,
+            Routes.Gunlun2,
+            Routes.Gunlun3,
+            Routes.Gunlun4,
+            Routes.Gunlun5,
+            Routes.Gunlun6,
+            Routes.Gunlun7,
+            Routes.Gunlun8,
+            Routes.Gunlun9,
+            Routes.Gunlun10,
+            Routes.Gunlun11,
+            Routes.Gunlun12,
+            Routes.Gunlun13,
+            Routes.Gunlun14,
+            Routes.Gunlun15,
+        ).forEach { route ->
+            composable(route) {
+                LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
+                WushuhuanScreen(
+                    onBack = { navController.popBackStack() },
+                    learningOverview = luggageDetailState.learningOverview,
+                    manualDetail = luggageDetailState.manualDetail,
+                    isLoading = luggageDetailState.loading,
+                    loadMessage = luggageDetailState.message,
+                    onOpenHoushan = { lessonId ->
+                        navController.openBackMountainWendao(lessonId)
+                    },
+                    onLoadManualDetail = luggageViewModel::loadManualDetail,
+                    onOpenReader = { volumeNo, manualId, continueToTrial ->
+                        navController.navigateSingleTop(
+                            Routes.manualReader(volumeNo, manualId, continueToTrial)
+                        )
+                    },
+                    onOpenTrial = { trialId ->
+                        navController.navigateSingleTop(
+                            Routes.learningTrial(trialId, returnToWushuhuan = true)
+                        )
+                    },
+                    onUseInCreation = { manualId ->
+                        navController.navigateSingleTop(Routes.gongfang(manualId))
+                    },
+                )
+            }
+        }
+        composable(
+            route = Routes.ManualReaderPattern,
+            arguments = listOf(
+                navArgument("volumeNo") { type = NavType.IntType },
+                navArgument("manualId") { type = NavType.StringType },
+                navArgument("continueToTrial") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
+            val volumeNo = entry.arguments?.getInt("volumeNo") ?: 1
+            val manualId = entry.arguments?.getString("manualId").orEmpty()
+            val continueToTrial = entry.arguments?.getBoolean("continueToTrial") ?: false
+            LaunchedEffect(manualId) {
+                if (manualId.isNotBlank()) luggageViewModel.loadManualDetail(manualId)
+            }
+            val detail = luggageDetailState.manualDetail
+                ?.takeIf { it.manual.id == manualId }
+            ManualReaderScreen(
+                volumeNo = volumeNo,
+                lessonPageNo = detail?.manual?.pageNo,
+                isCompleting = luggageDetailState.loading,
+                message = luggageDetailState.message,
                 onBack = { navController.popBackStack() },
-                onOpenGunlun3 = { navController.navigate(Routes.Gunlun3) },
+                onComplete = {
+                    if (manualId.isBlank()) return@ManualReaderScreen
+                    luggageViewModel.completeManualReading(manualId) {
+                        val trialId = detail?.manual?.trialId
+                        if (continueToTrial && trialId != null) {
+                            navController.navigate(
+                                Routes.learningTrial(trialId, returnToWushuhuan = true)
+                            ) {
+                                popUpTo(entry.destination.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
+                },
             )
-        }
-        composable(Routes.Gunlun3) {
-            Gunlun3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun4 = { navController.navigate(Routes.Gunlun4) },
-            )
-        }
-        composable(Routes.Gunlun4) {
-            Gunlun4Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun5 = { navController.navigate(Routes.Gunlun5) },
-            )
-        }
-        composable(Routes.Gunlun5) {
-            Gunlun5Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun6 = { navController.navigate(Routes.Gunlun6) },
-            )
-        }
-        composable(Routes.Gunlun6) {
-            Gunlun6Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun7 = { navController.navigate(Routes.Gunlun7) },
-                onOpenVolume1 = { navController.navigate(Routes.Volume1) },
-            )
-        }
-        composable(Routes.Volume1) {
-            Volume1Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part2 = { navController.navigate(Routes.Volume1Part2) },
-            )
-        }
-        composable(Routes.Volume1Part2) {
-            Volume1Part2Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part3 = { navController.navigate(Routes.Volume1Part3) },
-            )
-        }
-        composable(Routes.Volume1Part3) {
-            Volume1Part3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part4 = { navController.navigate(Routes.Volume1Part4) },
-            )
-        }
-        composable(Routes.Volume1Part4) {
-            Volume1Part4Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part5 = { navController.navigate(Routes.Volume1Part5) },
-            )
-        }
-        composable(Routes.Volume1Part5) {
-            Volume1Part5Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part6 = { navController.navigate(Routes.Volume1Part6) },
-            )
-        }
-        composable(Routes.Volume1Part6) {
-            Volume1Part6Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part7 = { navController.navigate(Routes.Volume1Part7) },
-            )
-        }
-        composable(Routes.Volume1Part7) {
-            Volume1Part7Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part8 = { navController.navigate(Routes.Volume1Part8) },
-            )
-        }
-        composable(Routes.Volume1Part8) {
-            Volume1Part8Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part9 = { navController.navigate(Routes.Volume1Part9) },
-            )
-        }
-        composable(Routes.Volume1Part9) {
-            Volume1Part9Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part10 = { navController.navigate(Routes.Volume1Part10) },
-            )
-        }
-        composable(Routes.Volume1Part10) {
-            Volume1Part10Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part11 = { navController.navigate(Routes.Volume1Part11) },
-            )
-        }
-        composable(Routes.Volume1Part11) {
-            Volume1Part11Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part12 = { navController.navigate(Routes.Volume1Part12) },
-            )
-        }
-        composable(Routes.Volume1Part12) {
-            Volume1Part12Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part13 = { navController.navigate(Routes.Volume1Part13) },
-            )
-        }
-        composable(Routes.Volume1Part13) {
-            Volume1Part13Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume1Part14 = { navController.navigate(Routes.Volume1Part14) },
-            )
-        }
-        composable(Routes.Volume1Part14) {
-            Volume1Part14Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun6 = { navController.navigate(Routes.Gunlun6) },
-            )
-        }
-        composable(Routes.Volume2Part1) {
-            Volume2Part1Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part2 = { navController.navigate(Routes.Volume2Part2) },
-            )
-        }
-        composable(Routes.Volume2Part2) {
-            Volume2Part2Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part3 = { navController.navigate(Routes.Volume2Part3) },
-            )
-        }
-        composable(Routes.Volume2Part3) {
-            Volume2Part3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part4 = { navController.navigate(Routes.Volume2Part4) },
-            )
-        }
-        composable(Routes.Volume2Part4) {
-            Volume2Part4Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part5 = { navController.navigate(Routes.Volume2Part5) },
-            )
-        }
-        composable(Routes.Volume2Part5) {
-            Volume2Part5Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part6 = { navController.navigate(Routes.Volume2Part6) },
-            )
-        }
-        composable(Routes.Volume2Part6) {
-            Volume2Part6Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part7 = { navController.navigate(Routes.Volume2Part7) },
-            )
-        }
-        composable(Routes.Volume2Part7) {
-            Volume2Part7Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part8 = { navController.navigate(Routes.Volume2Part8) },
-            )
-        }
-        composable(Routes.Volume2Part8) {
-            Volume2Part8Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part9 = { navController.navigate(Routes.Volume2Part9) },
-            )
-        }
-        composable(Routes.Volume2Part9) {
-            Volume2Part9Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part10 = { navController.navigate(Routes.Volume2Part10) },
-            )
-        }
-        composable(Routes.Volume2Part10) {
-            Volume2Part10Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part11 = { navController.navigate(Routes.Volume2Part11) },
-            )
-        }
-        composable(Routes.Volume2Part11) {
-            Volume2Part11Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part12 = { navController.navigate(Routes.Volume2Part12) },
-            )
-        }
-        composable(Routes.Volume2Part12) {
-            Volume2Part12Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part13 = { navController.navigate(Routes.Volume2Part13) },
-            )
-        }
-        composable(Routes.Volume2Part13) {
-            Volume2Part13Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part14 = { navController.navigate(Routes.Volume2Part14) },
-            )
-        }
-        composable(Routes.Volume2Part14) {
-            Volume2Part14Screen(
-                onBack = { navController.popBackStack() },
-                onOpenVolume2Part15 = { navController.navigate(Routes.Volume2Part15) },
-            )
-        }
-        composable(Routes.Volume2Part15) {
-            Volume2Part15Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun10 = { navController.navigate(Routes.Gunlun10) },
-            )
-        }
-        composable(Routes.Volume3Part1) {
-            Volume3Part1Screen(onBack = { navController.popBackStack() })
-        }
-        composable(Routes.Gunlun7) {
-            Gunlun7Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun8 = { navController.navigate(Routes.Gunlun8) },
-                onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
-            )
-        }
-        composable(Routes.Gunlun8) {
-            Gunlun8Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) },
-            )
-        }
-        composable(Routes.Gunlun9) {
-            Gunlun9Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun10 = { navController.navigate(Routes.Gunlun10) },
-            )
-        }
-        composable(Routes.Gunlun10) {
-            Gunlun10Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun11 = { navController.navigate(Routes.Gunlun11) },
-                onOpenVolume2Part1 = { navController.navigate(Routes.Volume2Part1) },
-            )
-        }
-        composable(Routes.Gunlun11) {
-            Gunlun11Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun12 = { navController.navigate(Routes.Gunlun12) },
-            )
-        }
-        composable(Routes.Gunlun12) {
-            Gunlun12Screen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) },
-            )
-        }
-        composable(Routes.Gunlun13) {
-            Gunlun13Screen(
-                onBack = { navController.popBackStack() },
-                onPandaClick = { navController.navigate(Routes.Gunlun14) },
-            )
-        }
-        composable(Routes.Gunlun14) {
-            Gunlun14Screen(
-                onBack = { navController.popBackStack() },
-                onPandaClick = { navController.navigate(Routes.Gunlun15) },
-            )
-        }
-        composable(Routes.Gunlun15) {
-            Gunlun15Screen(onBack = { navController.popBackStack() })
         }
         composable(Routes.Zaowu)    {
             ZaowuScreen(
@@ -773,10 +561,14 @@ fun JianghuNavHost(
                         launchSingleTop = true
                     }
                 },
-                onOpenGongfang = {
-                    // 进入创作台时移除引导页，保证任何返回路径都不会重新露出引导页。
+                onOpenCreationDesk = {
                     navController.navigate(Routes.Gongfang) {
-                        popUpTo(Routes.Zaowu) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onOpenCreationArchive = {
+                    navController.navigate(Routes.Chuangzuodangan) {
+                        launchSingleTop = true
                     }
                 },
             )
@@ -826,7 +618,6 @@ fun JianghuNavHost(
                 onOpenBrowseRecord = {
                     navController.navigate(Routes.YanwuchangVideoBrowseRecord)
                 },
-                onOpenMyClass = { navController.navigate(Routes.Challenge) },
             )
         }
         composable(Routes.YanwuchangVideoBrowseRecord) {
@@ -981,11 +772,20 @@ fun JianghuNavHost(
                 },
                 onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
                 onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
-                onOpenPublicationInbox = { navController.navigate(Routes.Challenge) },
                 onMessageShown = conferenceViewModel::clearMessage,
             )
         }
-        composable(Routes.Gongfang) {
+        composable(
+            route = Routes.GongfangPattern,
+            arguments = listOf(
+                navArgument("sourceManualId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            val sourceManualId = entry.arguments?.getString("sourceManualId")
             val recentWorks = creationState.recentProjects
                 .asSequence()
                 .mapNotNull { it.toCreationResumeItem() }
@@ -1000,12 +800,21 @@ fun JianghuNavHost(
             GongfangScreen(
                 onBack   = {
                     creationViewModel.clearDerivative()
-                    // 创作台的页面返回与系统返回都直接回首页，同时移除引导页与创作台。
-                    navController.navigate(Routes.Home1) {
-                        popUpTo(Routes.Home1) { inclusive = false }
-                        launchSingleTop = true
+                    if (!sourceManualId.isNullOrBlank()) {
+                        navController.popBackStack()
+                    } else if (
+                        navController.previousBackStackEntry?.destination?.route == Routes.Zaowu
+                    ) {
+                        navController.popBackStack()
+                    } else {
+                        // 非工坊入口继续沿用原逻辑，避免改变其他创作来源的返回路径。
+                        navController.navigate(Routes.Home1) {
+                            popUpTo(Routes.Home1) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                 },
+                initialManualId = sourceManualId,
                 onStartConversation = { idea, assets, manuals ->
                     creationViewModel.startConversation(idea, assets, manuals) { conversation ->
                         navController.navigate(Routes.shengtuProject(conversation.project.id))
@@ -1014,7 +823,6 @@ fun JianghuNavHost(
                 onContinueWork = { workId ->
                     navController.navigate(Routes.shengtuProject(workId))
                 },
-                onOpenChuangzuodangan = openCreationArchive,
                 onOpenAllWorks = openCreationArchive,
                 recentWorks = recentWorks,
                 recentWorksLoading = creationState.loadingRecent,
@@ -1043,7 +851,6 @@ fun JianghuNavHost(
             LaunchedEffect(projectId) {
                 luggageViewModel.loadCreationDetail(projectId)
                 creationViewModel.loadCreationSources()
-                distributionViewModel.loadClassrooms()
             }
             val bundle = luggageDetailState.creationDetail
                 ?.takeIf { it.project.id == projectId }
@@ -1121,6 +928,9 @@ fun JianghuNavHost(
                 },
                 onBack = { navController.popBackStack() },
                 onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+                onPublishToConference = {
+                    navController.navigateSingleTop(Routes.conferencePublish(projectId))
+                },
             )
         }
 
@@ -1137,22 +947,13 @@ fun JianghuNavHost(
                         navController.navigate(Routes.shengtuProject(projectId))
                     }
                 },
-                onWithdrawWork = { projectId ->
-                    luggageViewModel.withdrawPublication(projectId) {
-                        creationViewModel.loadRecentProjects()
-                    }
+                onPublishWork = { projectId ->
+                    navController.navigateSingleTop(Routes.conferencePublish(projectId))
                 },
                 onDeleteWork = { projectId ->
                     luggageViewModel.deleteCreationProject(projectId) {
-                        creationViewModel.loadRecentProjects()
-                        navController.navigate(Routes.Gongfang) {
-                            popUpTo(Routes.Chuangzuodangan) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                        creationViewModel.removeDeletedProject(projectId)
                     }
-                },
-                onAppealWork = { projectId, caseId, reason ->
-                    luggageViewModel.createAppeal(projectId, caseId, reason)
                 },
                 recentWorks = creationState.recentProjects,
                 recentWorksLoading = creationState.loadingRecent,
@@ -1165,20 +966,6 @@ fun JianghuNavHost(
                 archiveDetailLoading = luggageDetailState.loading,
                 archiveDetailMessage = luggageDetailState.message,
                 onArchiveWorkSelected = luggageViewModel::loadCreationDetail,
-                onRetryArchiveDetail = {
-                    luggageDetailState.creationDetailProjectId?.let(luggageViewModel::loadCreationDetail)
-                },
-                onOpenCreationDesk = {
-                    val returnedToDesk = navController.popBackStack(
-                        route = Routes.Gongfang,
-                        inclusive = false,
-                    )
-                    if (!returnedToDesk) {
-                        navController.navigate(Routes.Gongfang) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
             )
         }
 
@@ -1186,7 +973,6 @@ fun JianghuNavHost(
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {
             LaunchedEffect(Unit) { luggageViewModel.refresh() }
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             LuggageScreen(
                 uiState = luggageState,
                 onBack = { navController.popBackStack() },
@@ -1214,14 +1000,6 @@ fun JianghuNavHost(
                 onContinueCreation = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
                 onOpenEvidence = { navController.navigate(Routes.LuggageEvidence) },
                 onOpenPrivacy = { navController.navigate(Routes.LuggagePrivacySafety) },
-                onOpenLetters = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
-                },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
             )
         }
 
@@ -1338,18 +1116,47 @@ fun JianghuNavHost(
 
         composable(
             Routes.LearningTrialPattern,
-            arguments = listOf(navArgument("trialId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("trialId") { type = NavType.StringType },
+                navArgument("returnToWushuhuan") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
         ) { entry ->
             val trialId = entry.arguments?.getString("trialId").orEmpty()
+            val returnToWushuhuan =
+                entry.arguments?.getBoolean("returnToWushuhuan") ?: false
+            val completeTrial: () -> Unit = {
+                luggageViewModel.loadLearningOverview()
+                if (returnToWushuhuan) {
+                    if (!navController.popBackStack(Routes.Wushuhuan, inclusive = false)) {
+                        navController.navigate(Routes.Wushuhuan) {
+                            popUpTo(entry.destination.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                } else {
+                    navController.popBackStack()
+                }
+            }
             LearningTrialScreen(
                 trialId = trialId,
                 state = luggageDetailState,
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    if (returnToWushuhuan && luggageDetailState.trialResult?.passed == true) {
+                        completeTrial()
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
                 onLoad = luggageViewModel::loadLearningTrial,
                 onSubmit = { prediction, answer, explanation ->
                     luggageViewModel.submitLearningTrial(trialId, prediction, answer, explanation)
                 },
-                onComplete = { navController.popBackStack() },
+                onRetry = luggageViewModel::retryLearningTrial,
+                onComplete = completeTrial,
+                completeLabel = if (returnToWushuhuan) "返回悟书环查看状态" else "返回秘籍",
             )
         }
 
@@ -1424,11 +1231,41 @@ fun JianghuNavHost(
                 onContinue = {
                     navController.navigate(Routes.shengtuProject(it))
                 },
+                onPublish = { id ->
+                    navController.navigateSingleTop(Routes.conferencePublish(id))
+                },
                 onWithdraw = luggageViewModel::withdrawPublication,
                 onAppeal = luggageViewModel::createAppeal,
                 onDelete = { id ->
                     luggageViewModel.deleteCreationProject(id) {
                         navController.popBackStack()
+                    }
+                },
+            )
+        }
+
+        composable(
+            Routes.ConferencePublishPattern,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            ConferencePublishScreen(
+                projectId = projectId,
+                state = luggageDetailState,
+                publishBusy = creationState.workflowBusy &&
+                    creationState.workflowMessageProjectId == projectId,
+                publishMessage = creationState.workflowMessage
+                    ?.takeIf { creationState.workflowMessageProjectId == projectId },
+                publishFailed = creationState.workflowFailed &&
+                    creationState.workflowMessageProjectId == projectId,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadCreationDetail,
+                onSubmit = { bundle, draft ->
+                    creationViewModel.publishToConference(bundle, draft) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        luggageViewModel.refresh(force = true)
+                        creationViewModel.loadRecentProjects()
+                        conferenceViewModel.invalidateFeed()
                     }
                 },
             )
@@ -1504,18 +1341,8 @@ fun JianghuNavHost(
 
         // 设置页(Figma 设计) — 点击首页1的"设置"图标跳转
         composable(Routes.Settings) {
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             SettingsScreen(
                 onBack             = { navController.popBackStack() },
-                onOpenWendao       = { navController.navigate(Routes.Home1) },
-                onOpenLetters      = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
-                },
-                onOpenLuggage      = { navController.navigate(Routes.Luggage) },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
                 onOpenAccount      = { navController.navigate(Routes.SettingsAccount) },
                 onOpenMessage      = { navController.navigate(Routes.SettingsMessage) },
                 onOpenGeneral      = { navController.navigate(Routes.SettingsGeneral) },
@@ -1587,35 +1414,13 @@ fun JianghuNavHost(
             SettingsDetailScreen(SettingsPage.DataRecovery, onBack = { navController.popBackStack() })
         }
 
-        // 书信中的切磋来信可进入挑战页。
-        composable(Routes.Challenge) {
-            LaunchedEffect(Unit) { distributionViewModel.refreshInboxAndClassrooms() }
-            ChallengeScreen(
-                inbox = distributionState.inbox,
-                inboxLoading = distributionState.inboxLoading,
-                inboxError = distributionState.inboxError,
-                canLoadMore = distributionState.inboxCursor != null,
-                classrooms = distributionState.classrooms,
-                classroomLoading = distributionState.classroomLoading,
-                classroomMessage = distributionState.classroomMessage,
-                oneTimeJoinCode = distributionState.oneTimeJoinCode,
-                isAdult = currentUser?.ageBand == "ADULT",
-                onRefresh = distributionViewModel::refreshInboxAndClassrooms,
-                onLoadMore = { distributionViewModel.loadInbox(loadMore = true) },
-                onCreateClassroom = distributionViewModel::createClassroom,
-                onJoinClassroom = distributionViewModel::joinClassroom,
-                onDismissJoinCode = distributionViewModel::clearOneTimeJoinCode,
-                onBack = { navController.popBackStack() },
-                onOpenWendao = { navController.navigate(Routes.Xiulian) },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenProgress = { /* TODO:进度弹窗或页面 */ },
+    }
+        if (loginTransitionRunning) {
+            LoginMistTransition(
+                phase = { mistPhase.value },
+                modifier = Modifier.fillMaxSize(),
             )
         }
-    }
-        LoginMistTransition(
-            phase = mistPhase.value,
-            modifier = Modifier.fillMaxSize(),
-        )
     }
 }
 

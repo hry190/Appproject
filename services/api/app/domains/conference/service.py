@@ -1202,7 +1202,7 @@ class ConferenceService:
             recipient_user_id=payload.subject_user_id,
             category=ConferenceLetterCategory.MATCH,
             title="收到切磋师评",
-            body="老师已经为本局留下评价，可以在结果页查看。",
+            body="本局评审意见已经生成，可以在结果页查看。",
             action_type="CONFERENCE_MATCH",
             action_id=match.id,
         )

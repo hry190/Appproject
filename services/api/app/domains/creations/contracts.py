@@ -661,9 +661,11 @@ class CreationSealCheckPut(ContractModel):
     work_description: str = Field(max_length=3000)
     learning_reflection: str = Field(max_length=3000)
     next_improvement: str = Field(max_length=3000)
-    identity_privacy_confirmed: bool
-    contact_privacy_confirmed: bool
-    portrait_rights_confirmed: bool
+    # 旧客户端仍可传入这些字段；新流程已把相关承诺统一放入用户协议，
+    # 不再要求用户对每件作品重复确认。
+    identity_privacy_confirmed: bool | None = None
+    contact_privacy_confirmed: bool | None = None
+    portrait_rights_confirmed: bool | None = None
     row_version: int | None = Field(default=None, ge=1)
 
 

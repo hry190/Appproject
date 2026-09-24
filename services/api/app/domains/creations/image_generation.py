@@ -301,11 +301,11 @@ class VolcengineImageGenerator:
                 retryable = False
             elif quota_exhausted:
                 code = "IMAGE_PROVIDER_QUOTA_EXHAUSTED"
-                summary = "图片创作额度不足，请联系老师"
+                summary = "图片创作额度不足，请稍后再试"
                 retryable = False
             elif authentication_failed:
                 code = "IMAGE_PROVIDER_NOT_READY"
-                summary = "图片创作服务尚未准备好，请联系老师"
+                summary = "图片创作服务尚未准备好，请稍后再试"
                 retryable = False
             elif exc.code == 429:
                 code = "IMAGE_PROVIDER_BUSY"

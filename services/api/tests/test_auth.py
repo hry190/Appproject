@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 
-TERMS_VERSION = "2026-08"
+TERMS_VERSION = "2026-09-r2"
 PRIVACY_VERSION = "2026-08"
 OTP = "123456"
 
@@ -22,7 +22,6 @@ def register(
     *,
     password: str = "StrongPass!8",
     age_band: str = "AGE_14_TO_17",
-    guardian_consent_token: str | None = None,
 ):
     request_code(client, phone, "REGISTER")
     payload = {
@@ -34,8 +33,6 @@ def register(
         "privacy_version": PRIVACY_VERSION,
         "device_name": "pytest",
     }
-    if guardian_consent_token:
-        payload["guardian_consent_token"] = guardian_consent_token
     return client.post("/v1/auth/register", json=payload)
 
 
@@ -188,9 +185,8 @@ def test_password_reset_revokes_sessions_and_changes_password(client: TestClient
     ).status_code == 200
 
 
-def test_under_14_registration_requires_verified_guardian(client: TestClient) -> None:
+def test_under_14_registration_uses_the_standard_account_flow(client: TestClient) -> None:
     child_phone = "13400134001"
-    guardian_phone = "13300133001"
     request_code(client, child_phone, "REGISTER")
 
     child_payload = {
@@ -201,27 +197,17 @@ def test_under_14_registration_requires_verified_guardian(client: TestClient) ->
         "terms_version": TERMS_VERSION,
         "privacy_version": PRIVACY_VERSION,
     }
-    blocked = client.post("/v1/auth/register", json=child_payload)
-    assert blocked.status_code == 403
-    assert blocked.json()["error"]["code"] == "GUARDIAN_CONSENT_REQUIRED"
-
-    request_code(client, guardian_phone, "GUARDIAN_CONSENT")
-    consent = client.post(
-        "/v1/auth/guardian-consents/verify",
-        json={
-            "child_phone": child_phone,
-            "guardian_phone": guardian_phone,
-            "verification_code": OTP,
-            "terms_version": TERMS_VERSION,
-            "privacy_version": PRIVACY_VERSION,
-        },
-    )
-    assert consent.status_code == 200, consent.text
-
-    child_payload["guardian_consent_token"] = consent.json()["guardian_consent_token"]
     created = client.post("/v1/auth/register", json=child_payload)
     assert created.status_code == 201, created.text
-    assert created.json()["user"]["guardian_status"] == "VERIFIED"
+    assert created.json()["user"]["guardian_status"] == "NOT_REQUIRED"
+    assert client.post(
+        "/v1/auth/guardian-consents/verify",
+        json={},
+    ).status_code == 404
+    assert client.post(
+        "/v1/auth/verification-codes",
+        json={"phone": "13400134002", "purpose": "GUARDIAN_CONSENT"},
+    ).status_code == 422
 
 
 def test_registration_rejects_outdated_consent_versions(client: TestClient) -> None:

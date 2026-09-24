@@ -459,7 +459,6 @@ internal fun ConferenceArenaMatchContent(
                         onChangeManual = { selectedManualId = null },
                         onStartMatch = { onJoin(selectedManual.id) },
                         onFriendInvite = { unavailable("好友邀请") },
-                        onClassmateInvite = { unavailable("班级同门") },
                         onPasscode = { unavailable("输入口令") },
                     )
                 }
@@ -801,7 +800,6 @@ internal fun ConferenceArenaLettersContent(
     onOpenTarget: (ConferenceLetterDto) -> Boolean,
     onOpenArena: () -> Unit,
     onOpenRecords: () -> Unit,
-    onOpenPublicationInbox: () -> Unit,
     snackbarHost: SnackbarHostState,
 ) {
     val scope = rememberCoroutineScope()
@@ -874,15 +872,6 @@ internal fun ConferenceArenaLettersContent(
             }
             if (!state.loading && visibleLetters.isEmpty() && state.error == null) {
                 item { ArenaEmptyLetters(onRefresh) }
-            }
-            item {
-                TextButton(
-                    onClick = onOpenPublicationInbox,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.textButtonColors(contentColor = ArenaPaperLight),
-                ) {
-                    Text("前往全部书信  ›", fontSize = 16.sp)
-                }
             }
         }
     }
@@ -1084,7 +1073,6 @@ private fun ArenaEntryChoiceCard(
     onChangeManual: () -> Unit,
     onStartMatch: () -> Unit,
     onFriendInvite: () -> Unit,
-    onClassmateInvite: () -> Unit,
     onPasscode: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -1157,21 +1145,7 @@ private fun ArenaEntryChoiceCard(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ArenaQuickAction("好友邀请", "从好友中选择", Modifier.weight(1f), onFriendInvite)
-                ArenaQuickAction("班级同门", "从已加入班级选择", Modifier.weight(1f), onClassmateInvite)
                 ArenaQuickAction("输入口令", "加入已有房间", Modifier.weight(1f), onPasscode)
-            }
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = ArenaJade300.copy(alpha = 0.62f),
-            ) {
-                Text(
-                    "ⓘ  班级同门属于定向邀请，与随机同门匹配不重复。",
-                    modifier = Modifier.padding(13.dp),
-                    color = ArenaInkSoft,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                )
             }
         }
     }

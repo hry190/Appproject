@@ -35,7 +35,7 @@ def register(client: TestClient, phone: str) -> dict[str, str]:
             "verification_code": OTP,
             "password": "StrongPass!8",
             "age_band": "AGE_14_TO_17",
-            "terms_version": "2026-08",
+            "terms_version": "2026-09-r2",
             "privacy_version": "2026-08",
         },
     )
@@ -495,7 +495,7 @@ def test_moderation_return_appeal_publish_and_withdraw_flow(
     publication = client.post(
         f"/v1/creation-projects/{project['id']}/submissions",
         headers={**headers, "Idempotency-Key": "moderation-submit-01"},
-        json={"creation_version_id": version["id"], "visibility": "CLASSROOM"},
+        json={"creation_version_id": version["id"], "visibility": "PRIVATE"},
     )
     assert publication.status_code == 201, publication.text
     assert publication.json()["status"] == "PENDING_CHECK"
@@ -586,12 +586,12 @@ def test_privacy_settings_use_optimistic_lock_and_project_delete_hides_work(
     initial = client.get("/v1/me/privacy-settings", headers=headers)
     assert initial.status_code == 200
     assert initial.json()["default_work_visibility"] == "PRIVATE"
-    assert initial.json()["guardian_controls_active"] is True
+    assert initial.json()["guardian_controls_active"] is False
     updated = client.patch(
         "/v1/me/privacy-settings",
         headers=headers,
         json={
-            "default_work_visibility": "CLASSROOM",
+            "default_work_visibility": "COMMUNITY",
             "aigc_export_mark_enabled": True,
             "row_version": initial.json()["row_version"],
         },
@@ -612,7 +612,7 @@ def test_privacy_settings_use_optimistic_lock_and_project_delete_hides_work(
         headers=headers,
         json={"title": "待删除作品", "media_type": "ILLUSTRATION"},
     ).json()
-    assert project["default_visibility"] == "CLASSROOM"
+    assert project["default_visibility"] == "COMMUNITY"
     removed = client.delete(
         f"/v1/creation-projects/{project['id']}", headers=headers
     )

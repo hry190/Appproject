@@ -51,7 +51,7 @@ class Settings(BaseSettings):
         default=SecretStr(DEV_CODE_KEY), min_length=32
     )
 
-    current_terms_version: str = Field(default="2026-08", min_length=1, max_length=32)
+    current_terms_version: str = Field(default="2026-09-r2", min_length=1, max_length=32)
     current_privacy_version: str = Field(default="2026-08", min_length=1, max_length=32)
 
     verification_code_ttl_seconds: int = Field(default=300, ge=120, le=900)

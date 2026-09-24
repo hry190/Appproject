@@ -10,23 +10,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,14 +51,12 @@ import com.jueqiao.jianghu.luggage.LuggageMistakeSectionDto
 import com.jueqiao.jianghu.luggage.LuggageProfileDto
 import com.jueqiao.jianghu.luggage.LuggageResponseDto
 import com.jueqiao.jianghu.luggage.LuggageUiState
-import com.jueqiao.jianghu.ui.components.HomeQuickActions
-import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
+import com.jueqiao.jianghu.ui.components.LuggagePageScaffold
 import com.jueqiao.jianghu.ui.theme.YaHei
 import coil.compose.AsyncImage
 
 private val Ink = Color(0xFF27251F)
 private val MutedInk = Color(0xFF625E53)
-private val Paper = Color(0xFFF4EAD6)
 private val PaperPanel = Color(0xFFF7F0E2)
 private val PaperPanelStrong = Color(0xFFEFE3CC)
 private val Sage = Color(0xFF65775E)
@@ -83,10 +74,10 @@ private val BodyStyle = TextStyle(fontFamily = YaHei, fontSize = 12.sp, color = 
 private val CaptionStyle = TextStyle(fontFamily = YaHei, fontSize = 11.sp, color = MutedInk)
 
 /**
- * 行囊页。
+ * 与修炼、作品、大会同级的行囊页面。
  *
- * 页面使用纵向内容流而不是固定坐标；当内容高于可视区域时，整张纸卡可以滚动。
- * 主纸面与设置页共用同一套浅色古籍纸张纹理和轻毛边轮廓。
+ * 古籍纸纹铺满整个页面，顶部导航固定，资料与各内容分区在下方独立滚动。
+ * 继续复用原有行囊数据和详情入口，系统返回与页面返回使用同一回调。
  */
 @Composable
 fun LuggageScreen(
@@ -105,95 +96,45 @@ fun LuggageScreen(
     onContinueCreation: (String) -> Unit = {},
     onOpenEvidence: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
-    onOpenLetters: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
-    hasUnreadLetters: Boolean = false,
 ) {
-    val scrollState = rememberScrollState()
     var manualFilter by rememberSaveable { mutableStateOf<String?>(null) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        Image(
-            painter = painterResource(R.drawable.img_home_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.navigationBars),
-        ) {
-            HomeQuickActions(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-12).dp, y = 71.dp),
-                onOpenWendao = onBack,
-                onOpenCultivation = onOpenGrowth,
-                onOpenLetters = onOpenLetters,
-                onOpenSettings = onOpenSettings,
-                hasUnreadLetters = hasUnreadLetters,
+    LuggagePageScaffold(title = "行   囊", onBack = onBack) {
+        when (uiState) {
+            LuggageUiState.Loading -> LuggageLoading()
+            is LuggageUiState.Error -> LuggageError(
+                message = uiState.message,
+                requestId = uiState.requestId,
+                onRetry = onRefresh,
             )
-
-            SettingsPaperSurface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 70.dp, bottom = 12.dp)
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .padding(horizontal = 20.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    LuggageHeader(onBack)
-                    when (uiState) {
-                        LuggageUiState.Loading -> LuggageLoading()
-                        is LuggageUiState.Error -> LuggageError(
-                            message = uiState.message,
-                            requestId = uiState.requestId,
-                            onRetry = onRefresh,
-                        )
-                        is LuggageUiState.Content -> {
-                            LuggageContent(
-                                snapshot = uiState.snapshot,
-                                manualFilter = manualFilter,
-                                onManualFilterChange = { manualFilter = it },
-                                onOpenBadges = onOpenBadges,
-                                onOpenGrowth = onOpenGrowth,
-                                onOpenManuals = onOpenManuals,
-                                onOpenManual = onOpenManual,
-                                onOpenMistakes = onOpenMistakes,
-                                onRetryMistake = onRetryMistake,
-                                onOpenCreations = onOpenCreations,
-                                onOpenCreation = onOpenCreation,
-                                onContinueCreation = onContinueCreation,
-                                onOpenZaowu = onOpenZaowu,
-                                onOpenEvidence = onOpenEvidence,
-                                onOpenPrivacy = onOpenPrivacy,
-                            )
-                            if (uiState.refreshing) Text("正在更新行囊…", style = CaptionStyle)
-                            uiState.notice?.let {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(it, style = CaptionStyle, modifier = Modifier.weight(1f))
-                                    SmallActionButton("重试", onRefresh)
-                                }
-                            }
-                        }
+            is LuggageUiState.Content -> {
+                LuggageContent(
+                    snapshot = uiState.snapshot,
+                    manualFilter = manualFilter,
+                    onManualFilterChange = { manualFilter = it },
+                    onOpenBadges = onOpenBadges,
+                    onOpenGrowth = onOpenGrowth,
+                    onOpenManuals = onOpenManuals,
+                    onOpenManual = onOpenManual,
+                    onOpenMistakes = onOpenMistakes,
+                    onRetryMistake = onRetryMistake,
+                    onOpenCreations = onOpenCreations,
+                    onOpenCreation = onOpenCreation,
+                    onContinueCreation = onContinueCreation,
+                    onOpenZaowu = onOpenZaowu,
+                    onOpenEvidence = onOpenEvidence,
+                    onOpenPrivacy = onOpenPrivacy,
+                )
+                if (uiState.refreshing) Text("正在更新行囊…", style = CaptionStyle)
+                uiState.notice?.let {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(it, style = CaptionStyle, modifier = Modifier.weight(1f))
+                        SmallActionButton("重试", onRefresh)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }
+        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
@@ -262,33 +203,6 @@ private fun LuggageError(message: String, requestId: String?, onRetry: () -> Uni
         Text(message, style = BodyStyle, textAlign = TextAlign.Center)
         requestId?.let { Text("请求编号：$it", style = CaptionStyle) }
         SmallActionButton("重新加载", onRetry)
-    }
-}
-
-@Composable
-private fun LuggageHeader(onBack: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().height(38.dp)) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .size(30.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_close),
-                contentDescription = "关闭",
-                modifier = Modifier.size(17.dp),
-            )
-        }
-        Text(
-            text = "行   囊",
-            fontFamily = YaHei,
-            fontSize = 25.sp,
-            color = Ink,
-            modifier = Modifier.align(Alignment.Center),
-        )
     }
 }
 

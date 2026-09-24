@@ -359,12 +359,40 @@ data class LessonReadEventAcceptedDto(
     @SerializedName("processed_at") val processedAt: String,
 )
 
+data class TrialProgressChangeDto(
+    @SerializedName("manual_page_id") val manualPageId: String,
+    @SerializedName("previous_state") val previousState: String,
+    @SerializedName("current_state") val currentState: String,
+    val changed: Boolean,
+    @SerializedName("evidence_id") val evidenceId: String?,
+)
+
+data class TrialMistakeDto(
+    val id: String,
+    @SerializedName("knowledge_point_code") val knowledgePointCode: String,
+    @SerializedName("reason_code") val reasonCode: String,
+    val status: String,
+)
+
 data class TrialAttemptResultDto(
     @SerializedName("attempt_id") val attemptId: String,
+    @SerializedName("trial_id") val trialId: String,
+    @SerializedName("trial_version_id") val trialVersionId: String,
+    val result: String,
     val passed: Boolean,
     val score: Double,
     @SerializedName("max_score") val maxScore: Double,
     @SerializedName("feedback_codes") val feedbackCodes: List<String>,
+    @SerializedName("progress_changes") val progressChanges: List<TrialProgressChangeDto>,
+    @SerializedName("evidence_awards") val evidenceAwards: List<EvidenceItemDto>,
+    val mistake: TrialMistakeDto?,
+    @SerializedName("processed_at") val processedAt: String,
+)
+
+data class LearningTrialSubmission(
+    val prediction: String,
+    val answer: String,
+    val explanation: String,
 )
 
 data class PublicationDto(
@@ -1213,10 +1241,12 @@ data class ProvenanceItemDto(
     @SerializedName("license_type") val licenseType: String,
     @SerializedName("source_url") val sourceUrl: String?,
     @SerializedName("source_author") val sourceAuthor: String?,
+    @SerializedName("authorization_asset_id") val authorizationAssetId: String? = null,
     @SerializedName("ai_provider") val aiProvider: String?,
     @SerializedName("ai_model") val aiModel: String?,
     @SerializedName("ai_tool_action") val aiToolAction: String?,
     @SerializedName("prompt_summary") val promptSummary: String?,
+    @SerializedName("output_asset_id") val outputAssetId: String? = null,
     @SerializedName("user_modified") val userModified: Boolean?,
 )
 
@@ -1227,10 +1257,12 @@ data class ProvenanceItemInputDto(
     @SerializedName("source_url") val sourceUrl: String? = null,
     @SerializedName("source_author") val sourceAuthor: String? = null,
     @SerializedName("license_type") val licenseType: String,
+    @SerializedName("authorization_asset_id") val authorizationAssetId: String? = null,
     @SerializedName("ai_provider") val aiProvider: String? = null,
     @SerializedName("ai_model") val aiModel: String? = null,
     @SerializedName("ai_tool_action") val aiToolAction: String? = null,
     @SerializedName("prompt_summary") val promptSummary: String? = null,
+    @SerializedName("output_asset_id") val outputAssetId: String? = null,
     @SerializedName("user_modified") val userModified: Boolean? = null,
 )
 
@@ -1274,9 +1306,9 @@ data class CreationSealCheckPutDto(
     @SerializedName("work_description") val workDescription: String,
     @SerializedName("learning_reflection") val learningReflection: String,
     @SerializedName("next_improvement") val nextImprovement: String,
-    @SerializedName("identity_privacy_confirmed") val identityPrivacyConfirmed: Boolean,
-    @SerializedName("contact_privacy_confirmed") val contactPrivacyConfirmed: Boolean,
-    @SerializedName("portrait_rights_confirmed") val portraitRightsConfirmed: Boolean,
+    @SerializedName("identity_privacy_confirmed") val identityPrivacyConfirmed: Boolean? = null,
+    @SerializedName("contact_privacy_confirmed") val contactPrivacyConfirmed: Boolean? = null,
+    @SerializedName("portrait_rights_confirmed") val portraitRightsConfirmed: Boolean? = null,
     @SerializedName("row_version") val rowVersion: Int? = null,
 )
 
@@ -1295,28 +1327,6 @@ data class ConferenceCategorySuggestionDto(
 
 data class ConferenceCategorySuggestionListDto(
     val items: List<ConferenceCategorySuggestionDto>,
-)
-
-data class ClassroomDto(
-    val id: String,
-    val name: String,
-    val role: String,
-    @SerializedName("teacher_nickname") val teacherNickname: String,
-    @SerializedName("member_count") val memberCount: Int,
-    @SerializedName("can_submit") val canSubmit: Boolean,
-    @SerializedName("joined_at") val joinedAt: String?,
-    @SerializedName("created_at") val createdAt: String,
-)
-
-data class ClassroomListDto(val items: List<ClassroomDto>)
-
-data class ClassroomCreatedDto(
-    val id: String,
-    val name: String,
-    @SerializedName("join_code") val joinCode: String,
-    val role: String,
-    @SerializedName("member_count") val memberCount: Int,
-    @SerializedName("created_at") val createdAt: String,
 )
 
 data class PublicationFeedItemDto(

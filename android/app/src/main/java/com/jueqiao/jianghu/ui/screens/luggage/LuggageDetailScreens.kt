@@ -1,6 +1,5 @@
 package com.jueqiao.jianghu.ui.screens.luggage
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -28,21 +25,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.luggage.CreationDetailBundle
 import com.jueqiao.jianghu.luggage.CreationProjectDto
 import com.jueqiao.jianghu.luggage.EvidenceItemDto
@@ -53,7 +50,7 @@ import com.jueqiao.jianghu.luggage.MistakeDetailDto
 import com.jueqiao.jianghu.luggage.MistakeItemDto
 import com.jueqiao.jianghu.luggage.PrivacySettingsDto
 import com.jueqiao.jianghu.luggage.RetrySessionDto
-import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
+import com.jueqiao.jianghu.ui.components.LuggagePageScaffold
 import com.jueqiao.jianghu.ui.theme.YaHei
 
 private val DetailInk = Color(0xFF29261F)
@@ -61,55 +58,6 @@ private val DetailMuted = Color(0xFF6A655A)
 private val DetailSage = Color(0xFF65775E)
 private val DetailPanel = Color(0xFFF7F0E2)
 private val DetailSelected = Color(0xFFD6DDC9)
-
-@Composable
-private fun LuggagePaperScreen(
-    title: String,
-    onBack: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(R.drawable.img_home_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
-        SettingsPaperSurface(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 18.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_back_arrow),
-                        contentDescription = "返回",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clickable(onClick = onBack)
-                            .padding(8.dp),
-                    )
-                    Text(
-                        text = title,
-                        fontFamily = YaHei,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = DetailInk,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f).padding(end = 32.dp),
-                    )
-                }
-                content()
-                Spacer(Modifier.height(18.dp))
-            }
-        }
-    }
-}
 
 @Composable
 private fun DetailStateBanner(
@@ -148,7 +96,12 @@ private fun DetailStateBanner(
 }
 
 @Composable
-private fun PaperButton(text: String, selected: Boolean = false, onClick: () -> Unit) {
+private fun PaperButton(
+    text: String,
+    selected: Boolean = false,
+    fontSize: TextUnit = 12.sp,
+    onClick: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(7.dp))
@@ -163,7 +116,7 @@ private fun PaperButton(text: String, selected: Boolean = false, onClick: () -> 
             text = text,
             color = DetailInk,
             fontFamily = YaHei,
-            fontSize = 12.sp,
+            fontSize = fontSize,
         )
     }
 }
@@ -184,7 +137,7 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 fun BadgesScreen(state: LuggageDetailState, onBack: () -> Unit, onLoad: () -> Unit) {
     LaunchedEffect(Unit) { onLoad() }
-    LuggagePaperScreen("我的勋章", onBack) {
+    LuggagePageScaffold("我的勋章", onBack) {
         DetailStateBanner(state, onLoad)
         if (!state.loading && state.badges.isEmpty()) {
             EmptyMessage("完成试炼和创作任务后，勋章会出现在这里")
@@ -211,7 +164,7 @@ fun EvidenceScreen(
 ) {
     var category by remember { mutableStateOf(initialCategory) }
     LaunchedEffect(category, weekOnly) { onLoad(category) }
-    LuggagePaperScreen(title, onBack) {
+    LuggagePageScaffold(title, onBack) {
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -220,6 +173,14 @@ fun EvidenceScreen(
                 .forEach { (value, label) ->
                     PaperButton(label, category == value) { category = value }
                 }
+        }
+        val growthRule = when (category) {
+            "CRAFT" -> "运用已学秘籍完成作品，即可积累匠心；每件作品记录一次。"
+            "CHIVALRY" -> "将完成的作品成功发布到大会作品页，即可积累侠义；每件作品记录一次。"
+            else -> null
+        }
+        growthRule?.let {
+            Text(it, color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
         }
         DetailStateBanner(state) { onLoad(category) }
         val items = state.evidence?.items.orEmpty()
@@ -264,7 +225,7 @@ fun ManualsScreen(
     var favoritesOnly by remember { mutableStateOf(false) }
     val reload = { onLoad(volume, query, selectedState, favoritesOnly) }
     LaunchedEffect(selectedState, volume, favoritesOnly) { reload() }
-    LuggagePaperScreen("全部秘籍", onBack) {
+    LuggagePageScaffold("全部秘籍", onBack) {
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
@@ -322,7 +283,7 @@ fun ManualDetailScreen(
     onOpenTrial: (String) -> Unit,
 ) {
     LaunchedEffect(manualId) { onLoad(manualId) }
-    LuggagePaperScreen("秘籍详情", onBack) {
+    LuggagePageScaffold("秘籍详情", onBack) {
         DetailStateBanner(state) { onLoad(manualId) }
         state.manualDetail?.let { ManualDetailContent(it, onOpenTrial) }
     }
@@ -415,7 +376,7 @@ fun MistakesScreen(
     onRetry: (String) -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
-    LuggagePaperScreen("我的错题", onBack) {
+    LuggagePageScaffold("我的错题", onBack) {
         DetailStateBanner(state, onLoad)
         val items = state.mistakes?.items.orEmpty()
         if (!state.loading && items.isEmpty()) EmptyMessage("暂时没有待巩固的错题")
@@ -433,7 +394,7 @@ fun MistakeDetailScreen(
     onRetry: (String) -> Unit,
 ) {
     LaunchedEffect(mistakeId) { onLoad(mistakeId) }
-    LuggagePaperScreen("错题详情", onBack) {
+    LuggagePageScaffold("错题详情", onBack) {
         DetailStateBanner(state) { onLoad(mistakeId) }
         state.mistakeDetail?.let { mistake ->
             SectionCard {
@@ -488,9 +449,9 @@ fun RetryTrialScreen(
     var answer by remember { mutableStateOf<String?>(null) }
     var explanation by remember { mutableStateOf("") }
     LaunchedEffect(session.trialId) { onLoad(session.trialId) }
-    LuggagePaperScreen("错题重练", onBack) {
+    LuggagePageScaffold("错题重练", onBack) {
         DetailStateBanner(state) { onLoad(session.trialId) }
-        val trial = state.trial
+        val trial = state.trial?.takeIf { it.id == session.trialId }
         if (trial != null) {
             val version = trial.currentVersion
             val property = version.answerSchema.getAsJsonObject("properties")
@@ -522,10 +483,10 @@ fun RetryTrialScreen(
                 val ready = answer != null &&
                     (!version.predictionRequired || prediction != null) &&
                     (!version.explanationRequired || explanation.trim().length >= version.minExplanationLength)
-                PaperButton("提交重练") {
-                    if (ready) onSubmit(prediction, answer.orEmpty(), explanation)
+                PaperButton("提交重练", fontSize = 15.sp) {
+                    if (ready && !state.loading) onSubmit(prediction, answer.orEmpty(), explanation)
                 }
-                if (!ready) Text("请完成预测、答案和解释后再提交", color = DetailMuted, fontFamily = YaHei, fontSize = 11.sp)
+                if (!ready) Text("请完成预测、答案和解释后再提交", color = DetailMuted, fontFamily = YaHei, fontSize = 14.sp)
             }
         }
         state.trialResult?.let { result ->
@@ -537,7 +498,10 @@ fun RetryTrialScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Text("得分 ${result.score.toInt()}/${result.maxScore.toInt()}", color = DetailMuted, fontFamily = YaHei)
-                PaperButton(if (result.passed) "返回错题" else "查看结果") { onComplete() }
+                PaperButton(
+                    if (result.passed) "返回错题" else "查看结果",
+                    fontSize = 15.sp,
+                ) { onComplete() }
             }
         }
     }
@@ -550,16 +514,20 @@ fun LearningTrialScreen(
     onBack: () -> Unit,
     onLoad: (String) -> Unit,
     onSubmit: (String?, String, String) -> Unit,
+    onRetry: () -> Unit,
     onComplete: () -> Unit,
+    completeLabel: String = "返回秘籍",
 ) {
-    var prediction by remember { mutableStateOf<String?>(null) }
-    var answer by remember { mutableStateOf<String?>(null) }
-    var explanation by remember { mutableStateOf("") }
+    var prediction by rememberSaveable(trialId) { mutableStateOf<String?>(null) }
+    var answer by rememberSaveable(trialId) { mutableStateOf<String?>(null) }
+    var explanation by rememberSaveable(trialId) { mutableStateOf("") }
+    var step by rememberSaveable(trialId) { mutableIntStateOf(0) }
     LaunchedEffect(trialId) { onLoad(trialId) }
-    LuggagePaperScreen("本页试炼", onBack) {
+    LuggagePageScaffold("本页试炼", onBack) {
         DetailStateBanner(state) { onLoad(trialId) }
-        val trial = state.trial
-        if (trial != null) {
+        val trial = state.trial?.takeIf { it.id == trialId }
+        val result = state.trialResult
+        if (trial != null && result == null) {
             val version = trial.currentVersion
             val property = version.answerSchema.getAsJsonObject("properties")
                 ?.entrySet()?.firstOrNull()
@@ -567,45 +535,152 @@ fun LearningTrialScreen(
                 ?.map { it.asString }.orEmpty()
             SectionCard {
                 Text(trial.title, color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
-                Text(version.prompt, color = DetailInk, fontFamily = YaHei, fontSize = 14.sp)
+                Text(
+                    if (step == 0) "先写下你的预测，结果还不会揭示。" else version.prompt,
+                    color = DetailInk,
+                    fontFamily = YaHei,
+                    fontSize = 14.sp,
+                )
             }
-            if (version.predictionRequired) {
+            if (step == 0) {
                 SectionCard {
-                    Text(version.predictionPrompt, color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (version.predictionRequired) version.predictionPrompt else "先想一想你会怎样判断。",
+                        color = DetailInk,
+                        fontFamily = YaHei,
+                        fontWeight = FontWeight.Bold,
+                    )
                     AnswerOptions(options, prediction) { prediction = it }
+                    val predictionReady = !version.predictionRequired || prediction != null
+                    PaperButton("记下预测，开始试炼", fontSize = 15.sp) {
+                        if (predictionReady && !state.loading) step = 1
+                    }
+                    if (!predictionReady) {
+                        Text("先选一个最接近你现在想法的答案。", color = DetailMuted, fontFamily = YaHei, fontSize = 14.sp)
+                    }
                 }
-            }
-            SectionCard {
-                Text("正式答案", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
-                AnswerOptions(options, answer) { answer = it }
-                if (version.explanationRequired) {
-                    OutlinedTextField(
-                        value = explanation,
-                        onValueChange = { explanation = it },
-                        label = { Text("说明你的判断依据") },
-                        supportingText = { Text("至少 ${version.minExplanationLength} 个字") },
-                        modifier = Modifier.fillMaxWidth(),
+            } else {
+                SectionCard {
+                    Text("我原来的想法", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                    Text(
+                        trialChoiceLabel(prediction.orEmpty()),
+                        color = DetailMuted,
+                        fontFamily = YaHei,
+                        fontSize = 14.sp,
+                    )
+                    Text(
+                        "修改预测",
+                        color = DetailSage,
+                        fontFamily = YaHei,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .clickable(enabled = !state.loading) { step = 0 }
+                            .padding(vertical = 14.dp),
                     )
                 }
-                val ready = answer != null &&
-                    (!version.predictionRequired || prediction != null) &&
-                    (!version.explanationRequired || explanation.trim().length >= version.minExplanationLength)
-                PaperButton("提交试炼") {
-                    if (ready) onSubmit(prediction, answer.orEmpty(), explanation)
+                SectionCard {
+                    Text("做试炼", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                    Text(version.prompt, color = DetailInk, fontFamily = YaHei, fontSize = 14.sp)
+                    AnswerOptions(options, answer) { answer = it }
+                    if (version.explanationRequired) {
+                        OutlinedTextField(
+                            value = explanation,
+                            onValueChange = { explanation = it },
+                            label = { Text("说说你为什么这样选") },
+                            supportingText = { Text("至少 ${version.minExplanationLength} 个字") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    val ready = answer != null &&
+                        (!version.predictionRequired || prediction != null) &&
+                        (!version.explanationRequired || explanation.trim().length >= version.minExplanationLength)
+                    PaperButton(
+                        if (state.loading) "正在提交……" else "提交试炼",
+                        fontSize = 15.sp,
+                    ) {
+                        if (ready && !state.loading) onSubmit(prediction, answer.orEmpty(), explanation)
+                    }
+                    if (!ready) {
+                        Text("完成选择和理由后再提交。", color = DetailMuted, fontFamily = YaHei, fontSize = 14.sp)
+                    }
                 }
-                if (!ready) Text("请完成预测、答案和解释后再提交", color = DetailMuted, fontFamily = YaHei, fontSize = 11.sp)
             }
         }
-        state.trialResult?.let { result ->
+        if (trial != null && result != null) {
+            val submitted = state.learningTrialSubmission
+            SectionCard {
+                Text("我的回答", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+                Text(
+                    "原来的想法：${trialChoiceLabel(submitted?.prediction.orEmpty())}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 14.sp,
+                )
+                Text(
+                    "提交的答案：${trialChoiceLabel(submitted?.answer.orEmpty())}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 14.sp,
+                )
+                submitted?.explanation?.takeIf { it.isNotBlank() }?.let {
+                    Text("我的理由：$it", color = DetailMuted, fontFamily = YaHei, fontSize = 14.sp)
+                }
+            }
             SectionCard {
                 Text(
-                    if (result.passed) "试炼通过" else "还需要再巩固",
+                    if (result.passed) "实际结果：试炼通过" else "实际结果：这次还可以再调整",
                     color = if (result.passed) DetailSage else Color(0xFF8C4D3D),
                     fontFamily = YaHei,
                     fontWeight = FontWeight.Bold,
                 )
                 Text("得分 ${result.score.toInt()}/${result.maxScore.toInt()}", color = DetailMuted, fontFamily = YaHei)
-                PaperButton("返回秘籍") { onComplete() }
+                Text(
+                    "理解正确：${trialUnderstanding(result.feedbackCodes, result.passed)}",
+                    color = DetailInk,
+                    fontFamily = YaHei,
+                    fontSize = 14.sp,
+                )
+                Text(
+                    "可以调整：${trialAdjustment(result.feedbackCodes, result.passed)}",
+                    color = DetailMuted,
+                    fontFamily = YaHei,
+                    fontSize = 14.sp,
+                )
+                val finalState = result.progressChanges.lastOrNull()?.currentState
+                if (finalState != null) {
+                    Text(
+                        "学习进度已由服务端确认：${manualStateLabel(finalState)}",
+                        color = DetailSage,
+                        fontFamily = YaHei,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                if (result.passed) {
+                    if (result.evidenceAwards.isNotEmpty()) {
+                        Text(
+                            "本次新增 ${result.evidenceAwards.size} 条服务端学习证据。",
+                            color = DetailSage,
+                            fontFamily = YaHei,
+                            fontSize = 14.sp,
+                        )
+                    } else {
+                        Text("本次是再次练习，没有重复发放学习证据。", color = DetailMuted, fontFamily = YaHei, fontSize = 14.sp)
+                    }
+                }
+                if (result.passed) {
+                    PaperButton(completeLabel, fontSize = 15.sp) { onComplete() }
+                } else {
+                    PaperButton("再试一次", fontSize = 15.sp) {
+                        prediction = null
+                        answer = null
+                        explanation = ""
+                        step = 0
+                        onRetry()
+                    }
+                }
             }
         }
     }
@@ -615,9 +690,63 @@ fun LearningTrialScreen(
 private fun AnswerOptions(options: List<String>, selected: String?, onSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         options.forEach { option ->
-            PaperButton(option, selected == option) { onSelect(option) }
+            PaperButton(
+                trialChoiceLabel(option),
+                selected = selected == option,
+                fontSize = 15.sp,
+            ) { onSelect(option) }
         }
     }
+}
+
+private fun trialChoiceLabel(value: String): String = when (value) {
+    "FOLLOWS_FIXED_RULES" -> "只按预先写好的固定规则执行"
+    "LEARNS_FROM_DATA" -> "能从数据中学习并改进判断"
+    "MOVES_AUTOMATICALLY" -> "只要能自动运动就是机器学习"
+    "AUTO_ACCEPT" -> "直接采用系统结果"
+    "LOWER_THRESHOLD" -> "降低判断门槛"
+    "HUMAN_REVIEW" -> "交给人再次确认"
+    "REUSE_TEST_SET" -> "训练时反复查看测试集"
+    "UNSEEN_TEST_SET" -> "把测试集留到最后再看"
+    "TRAINING_ONLY" -> "只使用训练集，不再测试"
+    "HIGH_PRECISION" -> "优先减少误报"
+    "HIGH_RECALL" -> "优先减少漏报"
+    "NO_TRADEOFF" -> "两种错误都不用考虑"
+    "TRUST_FLUENCY" -> "说得流畅就直接相信"
+    "VERIFY_SOURCES" -> "核对来源和证据"
+    "SHARE_FIRST" -> "先转发，再慢慢核对"
+    "" -> "尚未填写"
+    else -> value
+}
+
+private fun trialUnderstanding(feedbackCodes: List<String>, passed: Boolean): String = when {
+    passed -> "你抓住了题目的关键选项，答案已由服务端判定通过。"
+    "CONFUSED_AUTOMATION_WITH_LEARNING" in feedbackCodes ->
+        "你注意到了系统会自动完成任务，这是观察它行为的第一步。"
+    "IGNORED_HIGH_RISK_UNCERTAINTY" in feedbackCodes ->
+        "你已经看见系统并不总是确定，接下来要把风险也放进判断。"
+    "LEAKED_TEST_SET" in feedbackCodes ->
+        "你注意到了训练和测试是两个不同阶段。"
+    "MISSED_HIGH_RISK_TRADEOFF" in feedbackCodes ->
+        "你已经在比较不同错误带来的影响。"
+    "TRUSTED_UNVERIFIED_GENERATION" in feedbackCodes ->
+        "你注意到了内容是否可信需要作出判断。"
+    else -> "你完成了先预测、再作答和说明理由的过程。"
+}
+
+private fun trialAdjustment(feedbackCodes: List<String>, passed: Boolean): String = when {
+    passed -> "还可以把理由说得更具体：指出证据与结论之间的联系。"
+    "CONFUSED_AUTOMATION_WITH_LEARNING" in feedbackCodes ->
+        "对照“是否会从数据中改进”这个关键点，再区分自动执行和机器学习。"
+    "IGNORED_HIGH_RISK_UNCERTAINTY" in feedbackCodes ->
+        "风险越高，越要让人复核不确定的结果。"
+    "LEAKED_TEST_SET" in feedbackCodes ->
+        "测试集要保留到最后，才能公平检查模型是否真的学会。"
+    "MISSED_HIGH_RISK_TRADEOFF" in feedbackCodes ->
+        "先判断哪一种错误会造成更严重的后果，再选择重点。"
+    "TRUSTED_UNVERIFIED_GENERATION" in feedbackCodes ->
+        "流畅不等于正确，先核对可靠来源和证据。"
+    else -> "回看题目里的关键变量，换一个答案并说明理由。"
 }
 
 @Composable
@@ -650,7 +779,7 @@ fun CreationsScreen(
     onContinue: (String) -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
-    LuggagePaperScreen("我的作品", onBack) {
+    LuggagePageScaffold("我的作品", onBack) {
         DetailStateBanner(state, onLoad)
         val items = state.creations?.items.orEmpty()
         if (!state.loading && items.isEmpty()) EmptyMessage("还没有作品，去造物坊试试吧")
@@ -693,14 +822,17 @@ fun CreationDetailScreen(
     onBack: () -> Unit,
     onLoad: (String) -> Unit,
     onContinue: (String) -> Unit,
+    onPublish: (String) -> Unit,
     onWithdraw: (String) -> Unit,
     onAppeal: (String, String, String) -> Unit,
     onDelete: (String) -> Unit,
 ) {
     LaunchedEffect(projectId) { onLoad(projectId) }
-    LuggagePaperScreen("作品档案", onBack) {
+    LuggagePageScaffold("作品档案", onBack) {
         DetailStateBanner(state) { onLoad(projectId) }
-        state.creationDetail?.let { CreationDetailContent(it, onContinue, onWithdraw, onAppeal, onDelete) }
+        state.creationDetail?.let {
+            CreationDetailContent(it, onContinue, onPublish, onWithdraw, onAppeal, onDelete)
+        }
     }
 }
 
@@ -708,12 +840,17 @@ fun CreationDetailScreen(
 private fun CreationDetailContent(
     bundle: CreationDetailBundle,
     onContinue: (String) -> Unit,
+    onPublish: (String) -> Unit,
     onWithdraw: (String) -> Unit,
     onAppeal: (String, String, String) -> Unit,
     onDelete: (String) -> Unit,
 ) {
     var appealReason by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
+    val currentVersionId = bundle.versions.firstOrNull {
+        it.versionNumber == bundle.project.currentVersionNumber
+    }?.id
+    val currentVersionSubmitted = bundle.project.latestPublication?.creationVersionId == currentVersionId
     SectionCard {
         Text(bundle.project.title, color = DetailInk, fontFamily = YaHei, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("状态：${creationStatusLabel(bundle.project.displayStatus)}", color = DetailSage, fontFamily = YaHei)
@@ -727,6 +864,15 @@ private fun CreationDetailContent(
             )
         }
         bundle.project.latestPublication?.returnReasonSummary?.let { Text("退回原因：$it", color = Color(0xFF8C4D3D), fontFamily = YaHei) }
+        if (bundle.project.currentStage == "SEAL" && !currentVersionSubmitted) {
+            PaperButton("发布到大会") { onPublish(bundle.project.id) }
+            Text(
+                "选择分类并完整填写投稿说明后提交审核；审核通过才会公开展示。",
+                color = DetailMuted,
+                fontFamily = YaHei,
+                fontSize = 12.sp,
+            )
+        }
         PaperButton("继续创作/修订") { onContinue(bundle.project.id) }
         if (bundle.project.latestPublication?.status == "PUBLISHED") {
             PaperButton("撤回已发布作品") { onWithdraw(bundle.project.id) }
@@ -786,7 +932,7 @@ private fun CreationDetailContent(
         }
     }
     SectionCard {
-        Text("作品说明与隐私自查", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
+        Text("作品说明与学习复盘", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
         val seal = bundle.sealCheck
         if (seal == null) {
             Text("尚未完成封卷说明", color = DetailMuted)
@@ -794,12 +940,6 @@ private fun CreationDetailContent(
             Text("作品说明：${seal.workDescription}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
             Text("学习复盘：${seal.learningReflection}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
             Text("下次改进：${seal.nextImprovement}", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
-            Text(
-                "隐私自查：身份 ${checkLabel(seal.identityPrivacyConfirmed)} · 联系方式 ${checkLabel(seal.contactPrivacyConfirmed)} · 肖像权限 ${checkLabel(seal.portraitRightsConfirmed)}",
-                color = DetailMuted,
-                fontFamily = YaHei,
-                fontSize = 12.sp,
-            )
             Text(
                 if (seal.status == "LOCKED") "已随提交版本锁定" else "状态：${seal.status}",
                 color = DetailSage,
@@ -865,7 +1005,7 @@ fun PrivacySafetyScreen(
     onRequestDeletion: (String) -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
-    LuggagePaperScreen("隐私与安全", onBack) {
+    LuggagePageScaffold("隐私与安全", onBack) {
         DetailStateBanner(state, onLoad)
         state.privacy?.let { settings ->
             PrivacyContent(
@@ -896,17 +1036,13 @@ private fun PrivacyContent(
     SectionCard {
         Text("作品默认可见范围", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
         Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            listOf("PRIVATE" to "仅自己", "GUARDIAN_ONLY" to "监护人", "CLASSROOM" to "班级", "COMMUNITY" to "社区")
+            listOf("PRIVATE" to "仅自己", "COMMUNITY" to "社区")
                 .forEach { (value, label) -> PaperButton(label, settings.defaultWorkVisibility == value) { onVisibility(value) } }
         }
     }
     PrivacySwitch("公开学习卡", settings.learningCardPublic) { onToggle("learning_card_public", it) }
     PrivacySwitch("导出作品保留智能工具参与说明", settings.aigcExportMarkEnabled) { onToggle("aigc_export_mark_enabled", it) }
     PrivacySwitch("允许通过资料发现我", settings.profileDiscoveryEnabled) { onToggle("profile_discovery_enabled", it) }
-    SectionCard {
-        Text("监护设置", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
-        Text(if (settings.guardianControlsActive) "监护设置已启用，受限选项不可由学生绕过" else "当前未启用监护限制", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
-    }
     SectionCard {
         Text("数据权利", color = DetailInk, fontFamily = YaHei, fontWeight = FontWeight.Bold)
         Text("作品撤回在作品档案中操作；账号数据导出和删除申请会留下审计记录。", color = DetailMuted, fontFamily = YaHei, fontSize = 13.sp)
@@ -915,7 +1051,7 @@ private fun PrivacyContent(
         if (!confirmDeletion) {
             PaperButton("申请删除账号数据") { confirmDeletion = true }
         } else {
-            Text("删除申请不会立即抹除数据，后台将先核验身份与监护要求。", color = Color(0xFF8C4D3D), fontFamily = YaHei, fontSize = 12.sp)
+            Text("删除申请不会立即抹除数据，后台将先核验账号身份。", color = Color(0xFF8C4D3D), fontFamily = YaHei, fontSize = 12.sp)
             OutlinedTextField(
                 value = deletionReason,
                 onValueChange = { deletionReason = it },
@@ -1006,5 +1142,3 @@ private fun publicationVisibilityLabel(value: String): String = when (value) {
     "COMMUNITY" -> "知行流/社区"
     else -> value
 }
-
-private fun checkLabel(checked: Boolean): String = if (checked) "已确认" else "未确认"

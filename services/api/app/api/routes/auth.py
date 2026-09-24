@@ -6,8 +6,6 @@ from app.api.dependencies import get_auth_service, get_current_user
 from app.models import User
 from app.schemas import (
     AuthResponse,
-    GuardianConsentRequest,
-    GuardianConsentResponse,
     LogoutRequest,
     PasswordLoginRequest,
     PasswordResetRequest,
@@ -45,19 +43,6 @@ def request_verification_code(
     service: AuthService = Depends(get_auth_service),
 ) -> VerificationCodeAccepted:
     return service.request_verification_code(
-        payload, request_id=_request_id(request), client_ip=_client_ip(request)
-    )
-
-
-@router.post(
-    "/guardian-consents/verify", response_model=GuardianConsentResponse
-)
-def verify_guardian_consent(
-    payload: GuardianConsentRequest,
-    request: Request,
-    service: AuthService = Depends(get_auth_service),
-) -> GuardianConsentResponse:
-    return service.verify_guardian_consent(
         payload, request_id=_request_id(request), client_ip=_client_ip(request)
     )
 

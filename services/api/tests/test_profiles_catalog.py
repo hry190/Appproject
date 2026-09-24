@@ -10,7 +10,7 @@ from app.domains.catalog.seed import seed_catalog_data
 
 
 OTP = "123456"
-TERMS_VERSION = "2026-08"
+TERMS_VERSION = "2026-09-r2"
 PRIVACY_VERSION = "2026-08"
 
 

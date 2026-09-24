@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
+from app.domains.learning.creation_growth import award_creation_growth
 from app.core.security import utcnow
 from app.domains.catalog.models import ManualPage, ManualVolume
 from app.domains.learning.contracts import ManualProgressState
@@ -130,12 +131,6 @@ from app.domains.media.references import (
     is_asset_referenced_by_live_data,
 )
 from app.domains.media.storage import ObjectNotFoundError, ObjectStore
-from app.domains.distribution.models import (
-    Classroom,
-    ClassroomMembership,
-    ClassroomMembershipStatus,
-    ClassroomStatus,
-)
 from app.domains.distribution.service import revoke_publication_deliveries
 from app.domains.conference.models import (
     ConferenceDerivativeAuthorization,
@@ -144,7 +139,7 @@ from app.domains.conference.models import (
 from app.domains.moderation.audit import add_audit_event
 from app.domains.moderation.service import queue_moderation_case
 from app.domains.privacy.models import PrivacySetting
-from app.models import AgeBand, GuardianControl, GuardianLink, User
+from app.models import User
 
 
 def _encode_cursor(offset: int) -> str:
@@ -181,6 +176,15 @@ def _fingerprint(
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+def derived_idempotency_key(namespace: str, idempotency_key: str) -> str:
+    """Build a stable namespaced key that always fits the shared 64-char columns."""
+    prefix = f"{namespace}:"
+    if len(prefix) >= 64:
+        raise ValueError("idempotency namespace must leave room for a digest")
+    digest = hashlib.sha256(idempotency_key.encode()).hexdigest()
+    return prefix + digest[: 64 - len(prefix)]
+
+
 def _as_utc(value: datetime | None) -> datetime | None:
     if value is None or value.tzinfo is not None:
         return value
@@ -207,7 +211,6 @@ class CreationService:
         payload: CreationProjectCreate,
         idempotency_key: str | None = None,
     ) -> CreationProjectPublic:
-        self._require_creation_allowed(user)
         request_fingerprint = _fingerprint(payload)
         if idempotency_key is not None:
             existing = self.db.scalar(
@@ -267,6 +270,17 @@ class CreationService:
         default_visibility = payload.default_visibility
         if "default_visibility" not in payload.model_fields_set and privacy is not None:
             default_visibility = privacy.default_work_visibility
+        if default_visibility not in {
+            CreationVisibility.PRIVATE,
+            CreationVisibility.COMMUNITY,
+        }:
+            if "default_visibility" in payload.model_fields_set:
+                raise ApiError(
+                    422,
+                    "VISIBILITY_UNSUPPORTED",
+                    "作品可见范围仅支持私密保存或发布到社区",
+                )
+            default_visibility = CreationVisibility.PRIVATE
         project = CreationProject(
             owner_user_id=user.id,
             title=payload.title,
@@ -335,7 +349,6 @@ class CreationService:
         user: User,
         payload: CreationIntentAnalyze,
     ) -> CreationIntentAnalysisPublic:
-        self._require_creation_allowed(user)
         self._validate_source_assets(user, payload.attachment_asset_ids)
         self._validate_learned_manuals(user, payload.manual_page_ids)
         text = " ".join(payload.text.split())
@@ -363,7 +376,7 @@ class CreationService:
         draft = CreationMethodDraft(
             name=method_name,
             goal=text[:200],
-            audience=["同学与老师"],
+            audience=["其他创作者"],
             format=format_name,
             steps=["明确主题与受众", "完成草图或脚本", "制作并保存版本", "测试并补充说明"],
             resource_links=payload.resource_links,
@@ -413,7 +426,6 @@ class CreationService:
         idempotency_key: str,
     ) -> CreationConversationPublic:
         """Create the project, its internal method, and the first coach turn atomically."""
-        self._require_creation_allowed(user)
         fingerprint = _fingerprint(payload)
         replay = self.db.scalar(
             select(CreationProject).where(
@@ -461,7 +473,7 @@ class CreationService:
                     "method_draft": {
                         "name": method_name,
                         "goal": idea,
-                        "audience": ["同学与老师"],
+                        "audience": ["其他创作者"],
                         "format": format_name,
                         "steps": steps,
                         "resource_links": payload.resource_links,
@@ -489,6 +501,8 @@ class CreationService:
             default_visibility=(
                 privacy.default_work_visibility
                 if privacy is not None
+                and privacy.default_work_visibility
+                in {CreationVisibility.PRIVATE, CreationVisibility.COMMUNITY}
                 else CreationVisibility.PRIVATE
             ),
             current_stage=CreationStage.DRAFT,
@@ -520,7 +534,7 @@ class CreationService:
             created_by_user_id=user.id,
             name=method_name,
             goal=idea,
-            audience=["同学与老师"],
+            audience=["其他创作者"],
             format=format_name,
             steps=steps,
             resource_links=payload.resource_links,
@@ -732,22 +746,8 @@ class CreationService:
         if suggestion.decision != CreationSuggestionDecision.PENDING:
             raise ApiError(409, "SUGGESTION_NOT_PENDING", "这条建议已经被新的想法替代")
         suggestion.decision = CreationSuggestionDecision.ACCEPTED
-        next_message = CreationConversationMessage(
-            project_id=project.id,
-            owner_user_id=user.id,
-            role=CreationConversationRole.COACH,
-            kind=CreationConversationMessageKind.SUGGESTION,
-            content=self._conversation_coach_reply(
-                project,
-                conversation,
-                action="suggestion_accepted",
-            ),
-            decision=CreationSuggestionDecision.PENDING,
-            in_reply_to_id=suggestion.id,
-        )
-        self.db.add(next_message)
         self.db.flush()
-        conversation.active_suggestion_id = next_message.id
+        conversation.active_suggestion_id = None
         conversation.plan_summary = self._build_conversation_plan(conversation)
         conversation.updated_at = utcnow()
         conversation.row_version += 1
@@ -756,7 +756,7 @@ class CreationService:
             project,
             user,
             CreationChangeAction.CONVERSATION_SUGGESTION_ACCEPTED,
-            "学生采纳教练建议并继续完善",
+            "学生采纳教练建议并结束本轮沟通",
             {"suggestion_id": str(suggestion.id)},
         )
         self.db.commit()
@@ -824,6 +824,7 @@ class CreationService:
         conversation.updated_at = utcnow()
         conversation.row_version += 1
         project.updated_at = conversation.updated_at
+        award_creation_growth(self.db, project, version)
         self._log(
             project,
             user,
@@ -899,7 +900,9 @@ class CreationService:
                 change_summary="保存对话整理出的创作草稿",
                 modification_reason="学生确认当前交流内容并开始创作",
             ),
-            idempotency_key=f"conversation-draft:{idempotency_key}",
+            idempotency_key=derived_idempotency_key(
+                "conversation-draft", idempotency_key
+            ),
         )
         project = self._require_project(user, project.id, for_update=True)
         if project.current_stage != CreationStage.PRODUCTION:
@@ -1160,6 +1163,8 @@ class CreationService:
         project.stage_updated_at = utcnow()
         project.updated_at = project.stage_updated_at
         project.row_version += 1
+        if payload.to_stage == CreationStage.SEAL:
+            award_creation_growth(self.db, project, current_version)
         self._log(
             project,
             user,
@@ -1735,6 +1740,7 @@ class CreationService:
         )
         project.row_version += 1
         project.updated_at = now
+        award_creation_growth(self.db, project, version)
         self.db.commit()
         return self._learning_card_public(card)
 
@@ -1771,29 +1777,35 @@ class CreationService:
         else:
             if payload.row_version is not None:
                 raise ApiError(409, "VERSION_CONFLICT", "封卷检查尚未创建，请刷新后重试")
-            check = CreationSealCheck(creation_version_id=version.id, row_version=1)
+            check = CreationSealCheck(
+                creation_version_id=version.id,
+                identity_privacy_confirmed=False,
+                contact_privacy_confirmed=False,
+                portrait_rights_confirmed=False,
+                row_version=1,
+            )
             self.db.add(check)
         check.work_description = payload.work_description.strip()
         check.learning_reflection = payload.learning_reflection.strip()
         check.next_improvement = payload.next_improvement.strip()
-        check.identity_privacy_confirmed = payload.identity_privacy_confirmed
-        check.contact_privacy_confirmed = payload.contact_privacy_confirmed
-        check.portrait_rights_confirmed = payload.portrait_rights_confirmed
+        if payload.identity_privacy_confirmed is not None:
+            check.identity_privacy_confirmed = payload.identity_privacy_confirmed
+        if payload.contact_privacy_confirmed is not None:
+            check.contact_privacy_confirmed = payload.contact_privacy_confirmed
+        if payload.portrait_rights_confirmed is not None:
+            check.portrait_rights_confirmed = payload.portrait_rights_confirmed
         check.status = (
             CreationSealStatus.COMPLETE
             if check.work_description
             and check.learning_reflection
             and check.next_improvement
-            and check.identity_privacy_confirmed
-            and check.contact_privacy_confirmed
-            and check.portrait_rights_confirmed
             else CreationSealStatus.DRAFT
         )
         self._log(
             project,
             user,
             CreationChangeAction.SEAL_CHECK_UPDATED,
-            "更新作品说明与隐私自查",
+            "更新作品说明与学习复盘",
             {"status": check.status.value},
             version=version,
         )
@@ -1938,50 +1950,18 @@ class CreationService:
 
         now = utcnow()
         visibility = payload.visibility or project.default_visibility
-        guardian_controls = self.db.get(GuardianControl, user.id)
-        # Missing settings must use the same minor-mode default as the settings API.
-        # Publication permissions cannot depend on whether a user has opened that page.
-        minor_mode = (
-            guardian_controls.minor_mode
-            if guardian_controls is not None
-            else user.age_band != AgeBand.ADULT
-        )
-        if (
-            minor_mode
-            and visibility.value == "COMMUNITY"
-        ):
-            raise ApiError(
-                403,
-                "GUARDIAN_VISIBILITY_RESTRICTED",
-                "当前监护设置不允许发布到社区",
-            )
         target_classroom_id = payload.target_classroom_id
         conference_category = payload.conference_category
-        if visibility == CreationVisibility.GUARDIAN_ONLY:
-            if target_classroom_id is not None:
-                raise ApiError(422, "CLASSROOM_TARGET_INVALID", "家长可见作品不能指定班级")
-            guardian_link = self.db.scalar(
-                select(GuardianLink).where(GuardianLink.child_user_id == user.id)
+        if visibility not in {
+            CreationVisibility.PRIVATE,
+            CreationVisibility.COMMUNITY,
+        }:
+            raise ApiError(
+                422,
+                "VISIBILITY_UNSUPPORTED",
+                "作品可见范围仅支持私密保存或发布到社区",
             )
-            if guardian_link is None:
-                raise ApiError(409, "GUARDIAN_LINK_REQUIRED", "请先完成监护人验证再提交")
-        elif visibility == CreationVisibility.CLASSROOM:
-            # Legacy clients may still submit an unassigned classroom publication.
-            # New clients always send a target, which is strictly membership-checked.
-            if target_classroom_id is not None:
-                membership = self.db.scalar(
-                    select(ClassroomMembership)
-                    .join(Classroom, Classroom.id == ClassroomMembership.classroom_id)
-                    .where(
-                        ClassroomMembership.student_user_id == user.id,
-                        ClassroomMembership.classroom_id == target_classroom_id,
-                        ClassroomMembership.status == ClassroomMembershipStatus.ACTIVE,
-                        Classroom.status == ClassroomStatus.ACTIVE,
-                    )
-                )
-                if membership is None:
-                    raise ApiError(409, "CLASSROOM_MEMBERSHIP_REQUIRED", "请先加入目标班级再提交")
-        elif target_classroom_id is not None:
+        if target_classroom_id is not None:
             raise ApiError(422, "CLASSROOM_TARGET_INVALID", "当前可见范围不能指定班级")
         if visibility == CreationVisibility.COMMUNITY and conference_category is None:
             raise ApiError(422, "CONFERENCE_CATEGORY_REQUIRED", "发布到作品页前请选择作品分类")
@@ -2263,7 +2243,7 @@ class CreationService:
                     created_by_user_id=user.id,
                     name="创作对话整理",
                     goal=idea,
-                    audience=["同学与老师"],
+                    audience=["其他创作者"],
                     format=(
                         "漫画分镜"
                         if project.media_type == CreationMediaType.COMIC
@@ -2680,15 +2660,6 @@ class CreationService:
         if project.status != CreationProjectStatus.ACTIVE:
             raise ApiError(409, "CREATION_NOT_EDITABLE", "归档作品不可修改")
 
-    def _require_creation_allowed(self, user: User) -> None:
-        controls = self.db.get(GuardianControl, user.id)
-        if controls is not None and not controls.creation_allowed:
-            raise ApiError(
-                403,
-                "CREATION_DISABLED_BY_GUARDIAN",
-                "监护设置暂未允许创作",
-            )
-
     def _validate_manuals(self, manual_page_ids: list[uuid.UUID]) -> None:
         if not manual_page_ids:
             return
@@ -2970,7 +2941,7 @@ class CreationService:
             if not card.questions_confirmed:
                 issues.append({"code": "QUESTIONS_NOT_CONFIRMED", "field": "learning_card.questions_confirmed", "message": "请确认未解决问题已经如实记录"})
         if seal_check is None:
-            issues.append({"code": "SEAL_CHECK_REQUIRED", "field": "seal_check", "message": "请先填写作品说明、学习复盘与隐私自查"})
+            issues.append({"code": "SEAL_CHECK_REQUIRED", "field": "seal_check", "message": "请先填写作品说明与学习复盘"})
         elif seal_check.status != CreationSealStatus.COMPLETE:
             if not seal_check.work_description.strip():
                 issues.append({"code": "WORK_DESCRIPTION_REQUIRED", "field": "seal_check.work_description", "message": "请填写作品说明"})
@@ -2978,12 +2949,6 @@ class CreationService:
                 issues.append({"code": "LEARNING_REFLECTION_REQUIRED", "field": "seal_check.learning_reflection", "message": "请填写学习复盘"})
             if not seal_check.next_improvement.strip():
                 issues.append({"code": "NEXT_IMPROVEMENT_REQUIRED", "field": "seal_check.next_improvement", "message": "请写下下一次想改什么"})
-            if not (
-                seal_check.identity_privacy_confirmed
-                and seal_check.contact_privacy_confirmed
-                and seal_check.portrait_rights_confirmed
-            ):
-                issues.append({"code": "PRIVACY_SELF_CHECK_REQUIRED", "field": "seal_check.privacy", "message": "请完成身份、联系方式和肖像权限自查"})
         if manifest is None:
             issues.append({"code": "PROVENANCE_REQUIRED", "field": "provenance", "message": "请先填写人机分工与来源谱"})
         else:

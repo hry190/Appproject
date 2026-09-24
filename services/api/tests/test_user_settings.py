@@ -9,7 +9,7 @@ from app.models import DataRequestStatus, DataRightsRequest, User, UserStatus
 from app.services.user_settings import UserSettingsService
 
 
-TERMS_VERSION = "2026-08"
+TERMS_VERSION = "2026-09-r2"
 PRIVACY_VERSION = "2026-08"
 OTP = "123456"
 
@@ -72,27 +72,16 @@ def test_preferences_have_defaults_and_accept_partial_updates(client: TestClient
     assert invalid.status_code == 422
 
 
-def test_guardian_controls_are_available_only_for_minor_accounts(client: TestClient) -> None:
+def test_guardian_control_endpoints_are_removed(client: TestClient) -> None:
     minor = register(client, "13910000002")
-    controls = client.patch(
+    update = client.patch(
         "/v1/settings/guardian-controls",
         headers=bearer(minor),
-        json={
-            "daily_limit_minutes": 90,
-            "creation_allowed": False,
-            "content_level": "TEEN",
-        },
+        json={"creation_allowed": False},
     )
-    assert controls.status_code == 200, controls.text
-    assert controls.json()["daily_limit_minutes"] == 90
-    assert controls.json()["creation_allowed"] is False
-
-    adult = register(client, "13910000003", age_band="ADULT")
-    unavailable = client.get(
-        "/v1/settings/guardian-controls", headers=bearer(adult)
-    )
-    assert unavailable.status_code == 409
-    assert unavailable.json()["error"]["code"] == "GUARDIAN_CONTROLS_NOT_APPLICABLE"
+    read = client.get("/v1/settings/guardian-controls", headers=bearer(minor))
+    assert update.status_code == 404
+    assert read.status_code == 404
 
 
 def test_feedback_blacklist_and_removal(client: TestClient) -> None:

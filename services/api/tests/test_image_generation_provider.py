@@ -158,5 +158,5 @@ def test_volcengine_image_generator_maps_exhausted_balance_to_student_safe_error
         )
 
     assert captured.value.code == "IMAGE_PROVIDER_QUOTA_EXHAUSTED"
-    assert captured.value.summary == "图片创作额度不足，请联系老师"
+    assert captured.value.summary == "图片创作额度不足，请稍后再试"
     assert captured.value.retryable is False

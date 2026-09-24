@@ -18,22 +18,18 @@ from app.core.security import (
     utcnow,
 )
 from app.models import (
-    AgeBand,
     AuthAuditEvent,
     AuthSession,
     ConsentRecord,
     ConsentSubject,
     ConsentType,
     Credential,
-    GuardianLink,
     GuardianStatus,
     User,
     UserStatus,
 )
 from app.schemas import (
     AuthResponse,
-    GuardianConsentRequest,
-    GuardianConsentResponse,
     PasswordLoginRequest,
     PasswordResetRequest,
     PasswordResetResponse,
@@ -142,43 +138,6 @@ class AuthService:
             request_id=request_id,
         )
 
-    def verify_guardian_consent(
-        self,
-        payload: GuardianConsentRequest,
-        *,
-        request_id: str,
-        client_ip: str,
-    ) -> GuardianConsentResponse:
-        self._require_current_consent_versions(
-            payload.terms_version, payload.privacy_version
-        )
-        child_phone = self.phone.normalize(payload.child_phone)
-        guardian_phone = self.phone.normalize(payload.guardian_phone)
-        child_hash = self.phone.lookup_hash(child_phone)
-        guardian_hash = self.phone.lookup_hash(guardian_phone)
-        self._consume_verification_code(
-            phone_hash=guardian_hash,
-            purpose=VerificationPurpose.GUARDIAN_CONSENT,
-            code=payload.verification_code,
-        )
-        token, expires_in = self.tokens.create_guardian_consent_token(
-            child_phone_hash=child_hash,
-            guardian_phone_hash=guardian_hash,
-            terms_version=payload.terms_version,
-            privacy_version=payload.privacy_version,
-        )
-        self._audit(
-            event_type="GUARDIAN_CONSENT_VERIFIED",
-            result="SUCCESS",
-            request_id=request_id,
-            phone_hash=child_hash,
-            network_key=self.phone.opaque_network_key(client_ip),
-        )
-        self.db.commit()
-        return GuardianConsentResponse(
-            guardian_consent_token=token, expires_in=expires_in
-        )
-
     def register(
         self,
         payload: RegisterRequest,
@@ -191,33 +150,6 @@ class AuthService:
         )
         normalized = self.phone.normalize(payload.phone)
         phone_hash = self.phone.lookup_hash(normalized)
-
-        guardian_hash: str | None = None
-        guardian_evidence_id: str | None = None
-        consent_subject = ConsentSubject.SELF
-        if payload.age_band == AgeBand.UNDER_14:
-            if not payload.guardian_consent_token:
-                raise ApiError(
-                    403,
-                    "GUARDIAN_CONSENT_REQUIRED",
-                    "不满十四周岁的用户需要先完成监护人同意",
-                )
-            guardian_payload = self.tokens.decode_guardian_consent_token(
-                payload.guardian_consent_token
-            )
-            if guardian_payload.get("sub") != phone_hash:
-                raise ApiError(403, "GUARDIAN_CONSENT_MISMATCH", "监护人同意与当前账号不匹配")
-            if guardian_payload.get("terms") != payload.terms_version or guardian_payload.get(
-                "privacy"
-            ) != payload.privacy_version:
-                raise ApiError(403, "CONSENT_VERSION_MISMATCH", "协议版本已更新，请重新确认")
-            guardian_hash = str(guardian_payload.get("guardian", ""))
-            guardian_evidence_id = str(guardian_payload.get("jti", ""))
-            if len(guardian_hash) != 64 or not guardian_evidence_id:
-                raise ApiError(403, "INVALID_GUARDIAN_CONSENT", "监护人同意凭证无效")
-            consent_subject = ConsentSubject.GUARDIAN
-        elif payload.guardian_consent_token is not None:
-            raise ApiError(422, "UNEXPECTED_GUARDIAN_CONSENT", "当前年龄段不需要监护人凭证")
 
         self._consume_verification_code(
             phone_hash=phone_hash,
@@ -234,54 +166,31 @@ class AuthService:
             phone_lookup_hash=phone_hash,
             nickname=f"少侠{secrets.randbelow(10000):04d}",
             age_band=payload.age_band,
-            guardian_status=(
-                GuardianStatus.VERIFIED
-                if payload.age_band == AgeBand.UNDER_14
-                else GuardianStatus.NOT_REQUIRED
-            ),
+            guardian_status=GuardianStatus.NOT_REQUIRED,
             status=UserStatus.ACTIVE,
         )
         user.credential = Credential(password_hash=self.passwords.hash(payload.password))
         self.db.add(user)
         self.db.flush()
 
-        consent_evidence = guardian_evidence_id or request_id
         self.db.add_all(
             [
                 ConsentRecord(
                     user_id=user.id,
                     consent_type=ConsentType.TERMS,
                     document_version=payload.terms_version,
-                    subject=consent_subject,
-                    evidence_id=consent_evidence,
+                    subject=ConsentSubject.SELF,
+                    evidence_id=request_id,
                 ),
                 ConsentRecord(
                     user_id=user.id,
                     consent_type=ConsentType.PRIVACY,
                     document_version=payload.privacy_version,
-                    subject=consent_subject,
-                    evidence_id=consent_evidence,
+                    subject=ConsentSubject.SELF,
+                    evidence_id=request_id,
                 ),
             ]
         )
-        if guardian_hash and guardian_evidence_id:
-            self.db.add(
-                GuardianLink(
-                    child_user_id=user.id,
-                    guardian_phone_hash=guardian_hash,
-                    consent_evidence_id=guardian_evidence_id,
-                )
-            )
-            self.db.add(
-                ConsentRecord(
-                    user_id=user.id,
-                    consent_type=ConsentType.GUARDIAN,
-                    document_version=payload.privacy_version,
-                    subject=ConsentSubject.GUARDIAN,
-                    evidence_id=guardian_evidence_id,
-                )
-            )
-
         tokens = self._new_session(user, device_name=payload.device_name)
         self._audit(
             event_type="REGISTER",
@@ -344,9 +253,6 @@ class AuthService:
             self._audit_failed_login(request_id, phone_hash, network_key, user.id)
             self.db.commit()
             raise GENERIC_LOGIN_ERROR
-        if user.age_band == AgeBand.UNDER_14 and user.guardian_status != GuardianStatus.VERIFIED:
-            raise ApiError(403, "GUARDIAN_CONSENT_REQUIRED", "账号需要先完成监护人同意")
-
         has_entered_app = self.db.scalar(
             select(AuthAuditEvent.id)
             .where(

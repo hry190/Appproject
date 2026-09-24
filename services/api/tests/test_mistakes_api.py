@@ -14,7 +14,7 @@ from app.domains.mistakes.models import MistakeItem
 
 
 OTP = "123456"
-TERMS_VERSION = "2026-08"
+TERMS_VERSION = "2026-09-r2"
 PRIVACY_VERSION = "2026-08"
 TRIAL_ID = stable_id("trial", "manual-01-ai-boundary")
 
