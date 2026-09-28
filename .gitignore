@@ -21,6 +21,7 @@ app/build/
 **/.coverage
 **/*.db
 services/api/.env
+**/uvicorn.*.log
 
 # Generated local acceptance evidence and scratch output
 artifacts/
