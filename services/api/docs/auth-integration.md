@@ -50,32 +50,13 @@
   "verification_code": "123456",
   "password": "用户输入的原始密码",
   "age_band": "AGE_14_TO_17",
-  "terms_version": "2026-08",
+  "terms_version": "2026-09-r2",
   "privacy_version": "2026-08",
   "device_name": "Android"
 }
 ```
 
-`age_band` 只允许 `UNDER_14`、`AGE_14_TO_17`、`ADULT`。不得依据年级或设备信息偷偷推断年龄；注册流程必须让用户明确选择。不满 14 周岁时，客户端必须先进入监护人同意分支，获取 `guardian_consent_token` 后再提交注册。
-
-监护人同意分支：
-
-1. 使用监护人手机号请求验证码，`purpose` 为 `GUARDIAN_CONSENT`。
-2. 调用 `POST /v1/auth/guardian-consents/verify`：
-
-   ```json
-   {
-     "child_phone": "13800138000",
-     "guardian_phone": "13900139000",
-     "verification_code": "123456",
-     "terms_version": "2026-08",
-     "privacy_version": "2026-08"
-   }
-   ```
-
-3. 将响应中的 `guardian_consent_token` 放入注册请求。
-
-当前注册设计图尚无年龄选择与监护人分支，这是 Android 接入注册接口前必须补齐的产品项。
+`age_band` 只允许 `UNDER_14`、`AGE_14_TO_17`、`ADULT`。不得依据年级或设备信息推断年龄；注册流程必须让用户明确选择。所有年龄段均使用相同的本人注册流程，不再提供监护人同意分支或监护令牌。
 
 ### 忘记密码页
 

@@ -1,5 +1,8 @@
 package com.jueqiao.jianghu.nav
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+
 /**
  * Route constants for Navigation Compose.
  *
@@ -19,6 +22,12 @@ object Routes {
     const val Home1     = "home1"
     const val Xiulian   = "xiulian"
     const val Shilian   = "shilian"
+    const val ShilianPattern = "shilian?lessonId={lessonId}"
+    fun shilian(lessonId: String?): String = if (lessonId.isNullOrBlank()) {
+        Shilian
+    } else {
+        "$Shilian?lessonId=${URLEncoder.encode(lessonId, StandardCharsets.UTF_8.name())}"
+    }
     const val Shilian2  = "shilian2"
     const val Shilian3  = "shilian3"
     const val Shilian4  = "shilian4"          // §24 新增,后山 4 页(用户新建;复用后山 2 素材)
@@ -30,8 +39,8 @@ object Routes {
     const val Shilian10 = "shilian10"         // 2026-09-19 §2 新增,后山 10 页(用户新建;复用后山 8 素材)
     const val Shilian11 = "shilian11"         // 2026-09-19 §3 新增,后山 11 页(用户新建;复用后山 9 素材)
     const val Unfinished = "unfinished"
-    const val PendingUnlock = "pending-unlock"
     const val Gunlun1  = "gunlun1"
+    const val Wushuhuan = "wushuhuan"
     const val Gunlun2  = "gunlun2"
     const val Gunlun3  = "gunlun3"
     const val Gunlun4  = "gunlun4"
@@ -39,16 +48,12 @@ object Routes {
     const val Gunlun6  = "gunlun6"
     const val Gunlun7  = "gunlun7"
     const val Gunlun8  = "gunlun8"
-    const val Houshan  = "houshan"
-    const val Learning2 = "learning2"
-    const val Learning3 = "learning3"
-    const val Learning4 = "learning4"
     const val Gunlun9  = "gunlun9"
     const val Gunlun10 = "gunlun10"
     const val Gunlun11 = "gunlun11"
     const val Gunlun12 = "gunlun12"
     const val Gunlun13 = "gunlun13"
-    const val Volume1 = "volume1"
+const val Volume1 = "volume1"
     const val Volume1Part2 = "volume1-2"
     const val Volume1Part3 = "volume1-3"
     const val Volume1Part4 = "volume1-4"
@@ -201,14 +206,23 @@ object Routes {
     fun luggageManuals(state: String?): String = "luggage/manuals/${state ?: "ALL"}"
     const val LuggageManualDetailPattern = "luggage/manual/{manualId}"
     fun luggageManualDetail(manualId: String): String = "luggage/manual/$manualId"
-    const val LearningTrialPattern = "luggage/learning-trial/{trialId}"
-    fun learningTrial(trialId: String): String = "luggage/learning-trial/$trialId"
+    const val ManualReaderPattern =
+        "manual-reader/{volumeNo}/{manualId}?continueToTrial={continueToTrial}"
+    fun manualReader(volumeNo: Int, manualId: String, continueToTrial: Boolean): String =
+        "manual-reader/$volumeNo/${URLEncoder.encode(manualId, StandardCharsets.UTF_8.name())}" +
+            "?continueToTrial=$continueToTrial"
+    const val LearningTrialPattern =
+        "luggage/learning-trial/{trialId}?returnToWushuhuan={returnToWushuhuan}"
+    fun learningTrial(trialId: String, returnToWushuhuan: Boolean = false): String =
+        "luggage/learning-trial/$trialId?returnToWushuhuan=$returnToWushuhuan"
     const val LuggageMistakes = "luggage/mistakes"
     const val LuggageMistakeDetailPattern = "luggage/mistake/{mistakeId}"
     fun luggageMistakeDetail(mistakeId: String): String = "luggage/mistake/$mistakeId"
     const val LuggageCreations = "luggage/creations"
     const val LuggageCreationDetailPattern = "luggage/creation/{projectId}"
     fun luggageCreationDetail(projectId: String): String = "luggage/creation/$projectId"
+    const val ConferencePublishPattern = "creation/publish/{projectId}"
+    fun conferencePublish(projectId: String): String = "creation/publish/$projectId"
     const val LuggagePrivacySafety = "luggage/privacy_safety"
     const val RetryTrialPattern = "luggage/retry/{mistakeId}/{trialId}/{versionId}/{sessionId}"
     fun retryTrial(mistakeId: String, trialId: String, versionId: String, sessionId: String): String =
@@ -224,7 +238,6 @@ object Routes {
     const val SettingsHelp = "settings/help"
     const val SettingsAbout = "settings/about"
     const val SettingsDataRecovery = "settings/data_recovery"
-    const val Challenge = "challenge"
     const val Zaowu     = "zaowu"
     const val Dahui     = "dahui"
     const val Yanwuchang = "yanwuchang"
@@ -260,6 +273,12 @@ object Routes {
         }
     }
     const val Gongfang  = "gongfang"
+    const val GongfangPattern = "gongfang?sourceManualId={sourceManualId}"
+    fun gongfang(sourceManualId: String?): String = if (sourceManualId.isNullOrBlank()) {
+        Gongfang
+    } else {
+        "$Gongfang?sourceManualId=${URLEncoder.encode(sourceManualId, StandardCharsets.UTF_8.name())}"
+    }
     const val ShengtuProjectPattern = "shengtu/project/{projectId}"
     fun shengtuProject(projectId: String): String = "shengtu/project/$projectId"
     const val CreationEditorProjectPattern = "creation/editor/{projectId}"

@@ -52,7 +52,7 @@ def register(client: TestClient, phone: str, age_band: str = "AGE_14_TO_17") -> 
             "verification_code": OTP,
             "password": "StrongPass!8",
             "age_band": age_band,
-            "terms_version": "2026-08",
+            "terms_version": "2026-09-r2",
             "privacy_version": "2026-08",
         },
     )

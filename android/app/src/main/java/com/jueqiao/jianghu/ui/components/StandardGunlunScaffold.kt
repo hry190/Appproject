@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
@@ -24,8 +25,8 @@ import com.jueqiao.jianghu.R
 /**
  * 滚轮1-5 页面共用的脚手架:
  * - 全屏背景(img_gunlun1_bg)
- * - 熊猫打坐图像(X=70, Y=330, 257x457)— onPandaClick 非空时变为可点击
- * - 左上角返回按钮(X=20, Y=77, 18x13)
+ * - 熊猫打坐图像(X=70, Y=354, 257x457)— 下移以消化素材底部透明留白并贴近石台
+ * - 左上角返回按钮与修炼页一致（24x24 图标位置不变，点击框扩为 48x48）
  *
  * 调用方只负责在 `content` 槽里放各页独有的元素(书本、介绍、气泡等)。
  *
@@ -55,18 +56,23 @@ fun StandardGunlunScaffold(
         )
 
         // 内容层(避开系统导航条)
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
+            val pandaScale = minOf(
+                maxWidth.value / 400f,
+                maxHeight.value / 820f,
+                1f,
+            )
             // 熊猫打坐图像
             Image(
                 painter = painterResource(R.drawable.img_gunlun1_untitled_1_recovered_5),
                 contentDescription = null,
                 modifier = Modifier
-                    .offset(x = 70.dp, y = 330.dp)
-                    .size(width = 257.dp, height = 457.dp)
+                    .offset(x = 70.dp * pandaScale, y = 354.dp * pandaScale)
+                    .size(width = 257.dp * pandaScale, height = 457.dp * pandaScale)
                     .let { if (onPandaClick != null) it.clickable(onClick = onPandaClick) else it },
                 contentScale = ContentScale.FillBounds,
             )
@@ -74,19 +80,20 @@ fun StandardGunlunScaffold(
             // 各页独有的元素(书本、介绍、气泡等)— 由调用方提供
             content()
 
-            // 左上角返回按钮(X=20, Y=77, 18x13)— img_gunlun1_vector 来源
+            // 保留用户已调整的图标视觉中心，只将外层点击区扩为 48dp。
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 20.dp, y = 77.dp)
-                    .size(width = 18.dp, height = 13.dp)
+                    .offset(x = 8.dp, y = 42.dp)
+                    .size(48.dp)
                     .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_gunlun1_vector),
+                    painter = painterResource(R.drawable.img_xiulian_return),
                     contentDescription = "返回",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.size(24.dp),
+                    contentScale = ContentScale.Fit,
                 )
             }
         }

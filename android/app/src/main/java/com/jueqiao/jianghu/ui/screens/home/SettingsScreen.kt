@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,7 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.HomeQuickActions
 import com.jueqiao.jianghu.ui.components.SettingsPaperSurface
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -59,11 +57,6 @@ import com.jueqiao.jianghu.ui.theme.YaHei
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit = {},
-    // 顶部 4 个快捷键
-    onOpenWendao: () -> Unit = {},
-    onOpenLetters: () -> Unit = {},
-    onOpenLuggage: () -> Unit = {},
-    hasUnreadLetters: Boolean = false,
     // 菜单项
     onOpenAccount: () -> Unit = {},
     onOpenMessage: () -> Unit = {},
@@ -81,7 +74,6 @@ fun SettingsScreen(
     onSwitchAccount: () -> Unit = {},
     onLogout: () -> Unit = {},
 ) {
-    var progressOpen by rememberSaveable { mutableStateOf(false) }
     var pendingSessionAction by rememberSaveable { mutableStateOf<SessionAction?>(null) }
 
     Box(
@@ -103,18 +95,6 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-
-        // 顶部右侧统一快捷入口
-        HomeQuickActions(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = (-12).dp, y = 71.dp),
-            onOpenWendao = onOpenWendao,
-            onOpenCultivation = { progressOpen = true },
-            onOpenLetters = onOpenLetters,
-            onOpenSettings = { /* 当前页 */ },
-            hasUnreadLetters = hasUnreadLetters,
-        )
 
         // 主卡片（仿古纸张纹理,顶部圆角,内容可滚动）
         SettingsPaperSurface(
@@ -211,20 +191,6 @@ fun SettingsScreen(
             }
         }
         }
-    }
-
-    if (progressOpen) {
-        ProgressModal(
-            onClose = { progressOpen = false },
-            onOpenDaily = {
-                progressOpen = false
-                onOpenWendao()
-            },
-            onOpenLuggage = {
-                progressOpen = false
-                onOpenLuggage()
-            },
-        )
     }
 
     pendingSessionAction?.let { action ->

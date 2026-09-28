@@ -4,40 +4,41 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.luggage.LearningOverviewDto
-import com.jueqiao.jianghu.ui.components.HomeQuickActions
+import com.jueqiao.jianghu.ui.components.rememberSystemAnimationsEnabled
 import com.jueqiao.jianghu.ui.screens.home.DecorButton
 import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
-import com.jueqiao.jianghu.ui.screens.home.ProgressModal
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,28 +57,18 @@ private enum class XiulianGuideStage {
 
 /**
  * 修炼页 — 基于 Figma 节点 301-1242。
- * 布局:xiulian.png 全屏背景 + Group 17.png 左侧装饰(35.84, 501, 138.16×245) +
- *      顶部 4 个快捷图标。
+ * 布局:xiulian.png 全屏背景 + Group 17.png 左侧装饰(35.84, 501, 138.16×245)。
  */
 @Composable
 fun XiulianScreen(
     onBack: () -> Unit = {},
-    onOpenLuggage: () -> Unit = {},
-    onOpenManuals: () -> Unit = onOpenLuggage,
-    onOpenLearning: () -> Unit = onOpenLuggage,
-    onOpenTrials: () -> Unit = onOpenLuggage,
     onOpenGunlun1: () -> Unit = {},
-    onOpenRecommendedManual: (String) -> Unit = {},
     learningOverview: LearningOverviewDto? = null,
-    onOpenWendao: () -> Unit = onBack,
-    onOpenSettings: () -> Unit = {},
-    onOpenLetters: () -> Unit = {},
-    hasUnreadLetters: Boolean = false,
 ) {
-    var progressOpen by remember { mutableStateOf(false) }
-    var dailyOpen    by remember { mutableStateOf(false) }
-    var dailyStep    by remember { androidx.compose.runtime.mutableIntStateOf(1) }
-    var guideStage by remember { mutableStateOf(XiulianGuideStage.AwaitingFirstTap) }
+    var guideStage by rememberSaveable {
+        mutableStateOf(XiulianGuideStage.AwaitingFirstTap)
+    }
+    val animationsEnabled = rememberSystemAnimationsEnabled()
     val bubbleAlpha = remember { Animatable(0f) }
     val bubbleMovement = remember { Animatable(0f) }
     val xiulianAlpha = remember { Animatable(0f) }
@@ -86,71 +77,90 @@ fun XiulianScreen(
         it.manualPageId == learningOverview.recommendedLessonId
     }
 
-    LaunchedEffect(guideStage) {
+    LaunchedEffect(guideStage, animationsEnabled) {
         when (guideStage) {
-            XiulianGuideStage.AwaitingFirstTap -> Unit
+            XiulianGuideStage.AwaitingFirstTap -> {
+                bubbleAlpha.snapTo(0f)
+                bubbleMovement.snapTo(0f)
+                xiulianAlpha.snapTo(0f)
+                xiulianMovement.snapTo(0f)
+            }
 
-            XiulianGuideStage.ShowingBubble -> coroutineScope {
-                launch {
-                    bubbleAlpha.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = GuideBubbleEnterDurationMillis,
-                            easing = LinearEasing,
-                        ),
-                    )
-                }
-                launch {
-                    bubbleMovement.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = GuideBubbleEnterDurationMillis,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
+            XiulianGuideStage.ShowingBubble -> {
+                if (!animationsEnabled) {
+                    bubbleAlpha.snapTo(1f)
+                    bubbleMovement.snapTo(1f)
+                } else {
+                    coroutineScope {
+                        launch {
+                            bubbleAlpha.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = GuideBubbleEnterDurationMillis,
+                                    easing = LinearEasing,
+                                ),
+                            )
+                        }
+                        launch {
+                            bubbleMovement.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = GuideBubbleEnterDurationMillis,
+                                    easing = FastOutSlowInEasing,
+                                ),
+                            )
+                        }
+                    }
                 }
             }
 
             XiulianGuideStage.ShowingEntrance -> {
-                coroutineScope {
-                    launch {
-                        bubbleAlpha.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween(
-                                durationMillis = GuideBubbleExitDurationMillis,
-                                easing = LinearEasing,
-                            ),
-                        )
+                if (!animationsEnabled) {
+                    bubbleAlpha.snapTo(0f)
+                    bubbleMovement.snapTo(0f)
+                    xiulianAlpha.snapTo(1f)
+                    xiulianMovement.snapTo(1f)
+                } else {
+                    coroutineScope {
+                        launch {
+                            bubbleAlpha.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(
+                                    durationMillis = GuideBubbleExitDurationMillis,
+                                    easing = LinearEasing,
+                                ),
+                            )
+                        }
+                        launch {
+                            bubbleMovement.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(
+                                    durationMillis = GuideBubbleExitDurationMillis,
+                                    easing = FastOutSlowInEasing,
+                                ),
+                            )
+                        }
                     }
-                    launch {
-                        bubbleMovement.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween(
-                                durationMillis = GuideBubbleExitDurationMillis,
-                                easing = FastOutSlowInEasing,
-                            ),
-                        )
-                    }
-                }
-                delay(XiulianEntranceDelayMillis)
-                coroutineScope {
-                    launch {
-                        xiulianAlpha.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(
-                                durationMillis = XiulianEntranceDurationMillis,
-                                easing = LinearEasing,
-                            ),
-                        )
-                    }
-                    launch {
-                        xiulianMovement.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(
-                                durationMillis = XiulianEntranceDurationMillis,
-                                easing = FastOutSlowInEasing,
-                            ),
-                        )
+                    delay(XiulianEntranceDelayMillis)
+                    coroutineScope {
+                        launch {
+                            xiulianAlpha.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = XiulianEntranceDurationMillis,
+                                    easing = LinearEasing,
+                                ),
+                            )
+                        }
+                        launch {
+                            xiulianMovement.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = XiulianEntranceDurationMillis,
+                                    easing = FastOutSlowInEasing,
+                                ),
+                            )
+                        }
                     }
                 }
             }
@@ -166,11 +176,16 @@ fun XiulianScreen(
         XiulianWindBackground(modifier = Modifier.fillMaxSize())
 
         // 内容层(避开系统导航条)
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
+            val guideBubbleWidth = minOf(280.dp, (maxWidth - 32.dp).coerceAtLeast(180.dp))
+            val guideBubbleX = minOf(
+                118.dp,
+                (maxWidth - guideBubbleWidth - 16.dp).coerceAtLeast(16.dp),
+            )
             // Group 17.png(左侧装饰,135.84, 501, 138.16×245)
         Image(
             painter = painterResource(R.drawable.img_xiulian_group17),
@@ -181,18 +196,28 @@ fun XiulianScreen(
             contentScale = ContentScale.Fit,
         )
 
-        // 第一次点击显示气泡，第二次点击关闭气泡并进入修炼入口阶段。
+        // 第一次点击显示气泡，第二次点击关闭气泡并展示原修炼入口。
         if (guideStage != XiulianGuideStage.ShowingEntrance) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .semantics {
+                        contentDescription = if (
+                            guideStage == XiulianGuideStage.AwaitingFirstTap
+                        ) {
+                            "显示修炼引导"
+                        } else {
+                            "关闭引导并显示修炼入口"
+                        }
+                        role = Role.Button
+                    }
                     .clickable {
                         when (guideStage) {
                             XiulianGuideStage.AwaitingFirstTap -> {
                                 guideStage = XiulianGuideStage.ShowingBubble
                             }
                             XiulianGuideStage.ShowingBubble -> {
-                                if (bubbleAlpha.value >= 0.99f) {
+                                if (!animationsEnabled || bubbleAlpha.value >= 0.99f) {
                                     guideStage = XiulianGuideStage.ShowingEntrance
                                 }
                             }
@@ -205,8 +230,8 @@ fun XiulianScreen(
         // 与首页引导页统一使用小笺气泡样式。
         Box(
             modifier = Modifier
-                .offset(x = 118.dp, y = 453.dp)
-                .size(width = 280.dp, height = 118.dp),
+                .offset(x = guideBubbleX, y = 453.dp)
+                .size(width = guideBubbleWidth, height = 118.dp),
         ) {
             HomeGuideBubble(
                 text = recommendation?.let {
@@ -221,10 +246,11 @@ fun XiulianScreen(
             )
         }
 
-        // 气泡退场后，修炼入口复刻首页四个一级入口的入场与点击效果。
+        // 气泡退场后恢复原“修炼”组件；点击组件后才进入Gunlun1分流页。
         DecorButton(
             imageRes = R.drawable.img_xiulian_group128,
             text = "修炼",
+            accessibilityLabel = "进入修炼页",
             x = 131.dp,
             y = 358.dp,
             width = 55.dp,
@@ -243,62 +269,22 @@ fun XiulianScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(x = 16.dp, y = 50.dp)
-                .size(32.dp)
+                .offset(x = 8.dp, y = 42.dp)
+                .size(48.dp)
+                .semantics {
+                    contentDescription = "返回首页"
+                    role = Role.Button
+                }
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(R.drawable.img_xiulian_return),
-                contentDescription = "返回",
+                contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
         }
 
-        // 所有页面共用的顶部快捷入口：问道、修为、书信、设置。
-        HomeQuickActions(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = (-12).dp, y = 71.dp),
-            onOpenWendao = onOpenWendao,
-            onOpenCultivation = { progressOpen = true },
-            onOpenLetters = onOpenLetters,
-            onOpenSettings = onOpenSettings,
-            hasUnreadLetters = hasUnreadLetters,
-        )
-        }
-    }
-
-    // 学习进度弹窗由顶部“修为”入口触发。
-    if (progressOpen) {
-        ProgressModal(
-            onClose       = { progressOpen = false },
-            onOpenDaily   = { dailyOpen = true; progressOpen = false },
-            onOpenLuggage = onOpenLuggage,
-        )
-    }
-
-    // 每日问题气泡(支持 2 步切换,第3 次点击关闭)
-    if (dailyOpen) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .clickable {
-                    if (dailyStep == 1) dailyStep = 2 else dailyOpen = false
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = if (dailyStep == 1)
-                    "...去找找秘籍，看看有没有答案"
-                else
-                    "生活问题推荐:\n机器人为什么会认错物体?",
-                color = Color.Black,
-                modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .padding(20.dp),
-            )
         }
     }
 }

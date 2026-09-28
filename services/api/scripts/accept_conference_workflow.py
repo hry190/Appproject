@@ -35,7 +35,7 @@ class ConferenceAcceptance:
             "phone": phone, "purpose": "REGISTER"}, expected=202)
         data = self.call("POST", "/v1/auth/register", body={
             "phone": phone, "verification_code": "123456", "password": "AcceptancePass8!",
-            "age_band": age_band, "terms_version": "2026-08", "privacy_version": "2026-08",
+            "age_band": age_band, "terms_version": "2026-09-r2", "privacy_version": "2026-08",
         }, expected=201)
         return {"Authorization": f"Bearer {data['tokens']['access_token']}"}
 
@@ -181,12 +181,6 @@ class ConferenceAcceptance:
             "learning_reflection": "学会结合结构拆解和光影表现" if self.video_path else "学会拆分结构",
             "next_improvement": "根据反馈改善稳定性", "identity_privacy_confirmed": True,
             "contact_privacy_confirmed": True, "portrait_rights_confirmed": True})
-        if age_band != "ADULT":
-            if initialize_controls:
-                self.call("GET", "/v1/settings/guardian-controls", author)
-            self.call("POST", submission_path, submit_headers, submission_body, 403,
-                      "GUARDIAN_VISIBILITY_RESTRICTED")
-            return {"minor_restricted": True}
         publication = self.call("POST", submission_path, submit_headers, submission_body, 201)
         assert self.call("POST", submission_path, submit_headers, submission_body, 201) == publication
         pub = publication["id"]

@@ -9,8 +9,6 @@ from app.models import User
 from app.schemas import (
     BlacklistCreate,
     BlacklistEntryPublic,
-    GuardianControlsPatch,
-    GuardianControlsPublic,
     UserPreferencesPatch,
     UserPreferencesPublic,
 )
@@ -36,25 +34,6 @@ def update_preferences(
 ) -> UserPreferencesPublic:
     return UserPreferencesPublic.model_validate(
         service.update_preferences(user, payload)
-    )
-
-
-@router.get("/guardian-controls", response_model=GuardianControlsPublic)
-def get_guardian_controls(
-    user: User = Depends(get_current_user),
-    service: UserSettingsService = Depends(get_user_settings_service),
-) -> GuardianControlsPublic:
-    return GuardianControlsPublic.model_validate(service.get_guardian_controls(user))
-
-
-@router.patch("/guardian-controls", response_model=GuardianControlsPublic)
-def update_guardian_controls(
-    payload: GuardianControlsPatch,
-    user: User = Depends(get_current_user),
-    service: UserSettingsService = Depends(get_user_settings_service),
-) -> GuardianControlsPublic:
-    return GuardianControlsPublic.model_validate(
-        service.update_guardian_controls(user, payload)
     )
 
 

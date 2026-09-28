@@ -23,7 +23,7 @@ fun CreationProjectDto.toCreationResumeItem(): CreationResumeItem? {
 
     val (stageLabel, stageIndex) = when (displayStatus) {
         "PUBLISHED" -> "已经展示" to 1
-        "PENDING_CHECK", "PENDING_HUMAN_REVIEW" -> "等待老师" to 1
+        "PENDING_CHECK", "PENDING_HUMAN_REVIEW" -> "等待审核" to 1
         else -> "继续沟通" to 0
     }
     return CreationResumeItem(
@@ -32,7 +32,7 @@ fun CreationProjectDto.toCreationResumeItem(): CreationResumeItem? {
         stageLabel = stageLabel,
         stageIndex = stageIndex,
         statusLabel = when (displayStatus) {
-            "PENDING_CHECK", "PENDING_HUMAN_REVIEW" -> "老师正在看"
+            "PENDING_CHECK", "PENDING_HUMAN_REVIEW" -> "系统审核中"
             "PUBLISHED" -> "已展示"
             "RETURNED" -> "再改一改"
             "WITHDRAWN" -> "已撤回"

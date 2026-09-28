@@ -29,6 +29,7 @@ from app.domains.creations.image_generation import (
 )
 from app.domains.creations.image_generation_service import ImageGenerationService
 from app.domains.creations.export_service import CreationExportService
+from app.domains.creations.models import CreationVersion, ImageGenerationJob
 from app.domains.media.service import MediaService
 from app.models import User
 
@@ -56,7 +57,7 @@ def register(client: TestClient, phone: str) -> dict[str, str]:
             "verification_code": OTP,
             "password": "StrongPass!8",
             "age_band": "AGE_14_TO_17",
-            "terms_version": "2026-08",
+            "terms_version": "2026-09-r2",
             "privacy_version": "2026-08",
         },
     )
@@ -689,14 +690,13 @@ def test_submission_requires_learning_card_and_provenance_then_locks_them(
     incomplete_seal = seeded_client.post(
         f"/v1/creation-projects/{project['id']}/submissions",
         headers={**headers, "Idempotency-Key": "creation-submit-partial"},
-        json={"creation_version_id": version["id"], "visibility": "CLASSROOM"},
+        json={"creation_version_id": version["id"], "visibility": "PRIVATE"},
     )
     assert incomplete_seal.status_code == 409
     assert {item["code"] for item in incomplete_seal.json()["error"]["details"]} == {
         "WORK_DESCRIPTION_REQUIRED",
         "LEARNING_REFLECTION_REQUIRED",
         "NEXT_IMPROVEMENT_REQUIRED",
-        "PRIVACY_SELF_CHECK_REQUIRED",
     }
     seal_check = seeded_client.put(
         f"/v1/creation-versions/{version['id']}/seal-check",
@@ -705,9 +705,6 @@ def test_submission_requires_learning_card_and_provenance_then_locks_them(
             "work_description": "一幅帮助同学辨认竹林机关结构的图文作品。",
             "learning_reflection": "我学会了用明度差突出关键结构。",
             "next_improvement": "下一版会增加更简洁的操作提示。",
-            "identity_privacy_confirmed": True,
-            "contact_privacy_confirmed": True,
-            "portrait_rights_confirmed": True,
             "row_version": seal_draft.json()["row_version"],
         },
     )
@@ -718,12 +715,12 @@ def test_submission_requires_learning_card_and_provenance_then_locks_them(
     submitted = seeded_client.post(
         f"/v1/creation-projects/{project['id']}/submissions",
         headers=submit_headers,
-        json={"creation_version_id": version["id"], "visibility": "CLASSROOM"},
+        json={"creation_version_id": version["id"], "visibility": "PRIVATE"},
     )
     replay = seeded_client.post(
         f"/v1/creation-projects/{project['id']}/submissions",
         headers=submit_headers,
-        json={"creation_version_id": version["id"], "visibility": "CLASSROOM"},
+        json={"creation_version_id": version["id"], "visibility": "PRIVATE"},
     )
     assert submitted.status_code == replay.status_code == 201
     assert submitted.json() == replay.json()
@@ -1086,17 +1083,10 @@ def test_creation_sources_reject_unlearned_manuals_and_foreign_assets(
     assert manual_only.json()["error"]["code"] == "MANUAL_NOT_LEARNED"
 
 
-def test_guardian_creation_control_blocks_analysis_and_project_creation(
+def test_minor_creation_does_not_require_guardian_controls(
     seeded_client: TestClient,
 ) -> None:
     headers = register(seeded_client, "13940000011")
-    controls = seeded_client.patch(
-        "/v1/settings/guardian-controls",
-        headers=headers,
-        json={"creation_allowed": False},
-    )
-    assert controls.status_code == 200, controls.text
-
     analysis = seeded_client.post(
         "/v1/creation-intents:analyze",
         headers=headers,
@@ -1108,9 +1098,8 @@ def test_guardian_creation_control_blocks_analysis_and_project_creation(
         json={"title": "竹林机关图", "media_type": "ILLUSTRATION"},
     )
 
-    assert analysis.status_code == project.status_code == 403
-    assert analysis.json()["error"]["code"] == "CREATION_DISABLED_BY_GUARDIAN"
-    assert project.json()["error"]["code"] == "CREATION_DISABLED_BY_GUARDIAN"
+    assert analysis.status_code == 201, analysis.text
+    assert project.status_code == 201, project.text
 
 
 def test_project_creation_is_idempotent_and_rejects_key_reuse(
@@ -1708,13 +1697,19 @@ def test_conversation_driven_creation_can_revise_generate_and_save(
         item for item in conversation["messages"] if item["id"] == suggestion["id"]
     )
     assert accepted_message["decision"] == "ACCEPTED"
+    assert len(conversation["messages"]) == len(revised.json()["messages"])
+    assert not any(
+        item["role"] == "COACH" and item["decision"] == "PENDING"
+        for item in conversation["messages"]
+    )
     assert conversation["plan_summary"]
 
+    android_generation_key = f"android-convgen-{uuid.uuid4()}"
     queued = seeded_client.post(
         f"/v1/creation-projects/{project_id}/conversation:generate",
         headers={
             **headers,
-            "Idempotency-Key": f"android-convgen-{uuid.uuid4()}",
+            "Idempotency-Key": android_generation_key,
         },
         json={
             "expected_revision": conversation["row_version"],
@@ -1725,6 +1720,21 @@ def test_conversation_driven_creation_can_revise_generate_and_save(
     generation = queued.json()["generation"]
     assert generation["prompt_summary"] == "创作方案已由教练整理"
     assert "荷塘" not in generation["prompt_summary"]
+    before_growth = seeded_client.get("/v1/me/luggage", headers=headers).json()
+    assert before_growth["data"]["stats"]["evidence"]["craft"]["count"] == 0
+    with seeded_client.app.state.session_factory() as db:
+        draft = db.get(
+            CreationVersion,
+            uuid.UUID(queued.json()["conversation"]["draft_version_ids"][-1]),
+        )
+        job = db.get(ImageGenerationJob, uuid.UUID(generation["id"]))
+        assert draft is not None
+        assert job is not None
+        assert draft.create_idempotency_key is not None
+        assert len(draft.create_idempotency_key) == 64
+        assert draft.create_idempotency_key.startswith("conversation-draft:")
+        assert len(job.idempotency_key) == 64
+        assert job.idempotency_key.startswith("conversation-image:")
 
     process_image_generation(seeded_client, generation["id"])
     ready = seeded_client.get(
@@ -1734,6 +1744,8 @@ def test_conversation_driven_creation_can_revise_generate_and_save(
     conversation = ready.json()
     assert conversation["status"] == "RESULT_READY"
     assert conversation["result_version_id"]
+    growth = seeded_client.get("/v1/me/luggage", headers=headers).json()
+    assert growth["data"]["stats"]["evidence"]["craft"]["count"] == 1
     project_after_checks = seeded_client.get(
         f"/v1/creation-projects/{project_id}", headers=headers
     ).json()
@@ -1775,3 +1787,7 @@ def test_conversation_driven_creation_can_revise_generate_and_save(
     assert saved.status_code == 200, saved.text
     assert saved.json()["status"] == "SAVED"
     assert saved.json()["result_version_id"] in saved.json()["saved_version_ids"]
+    growth = seeded_client.get("/v1/me/learning-stats", headers=headers).json()
+    assert growth["evidence"]["craft"]["count"] == 1
+    assert growth["evidence"]["chivalry"]["count"] == 0
+    assert growth["lifetime_practice_count"] == 0

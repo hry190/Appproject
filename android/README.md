@@ -88,7 +88,7 @@ cd android
 ```properties
 # Android 模拟器访问电脑本机 FastAPI
 AUTH_BASE_URL=http://10.0.2.2:8010/
-TERMS_VERSION=2026-08
+TERMS_VERSION=2026-09-r2
 PRIVACY_VERSION=2026-08
 ```
 

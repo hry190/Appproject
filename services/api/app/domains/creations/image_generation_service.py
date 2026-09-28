@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.core.errors import ApiError
+from app.domains.learning.creation_growth import award_creation_growth
 from app.core.security import utcnow
 from app.domains.creations.contracts import (
     CreationStageTransition,
@@ -52,7 +53,7 @@ from app.domains.creations.models import (
 from app.domains.creations.service import CreationService
 from app.domains.media.models import MediaAssetStatus, OutboxEvent, OutboxStatus
 from app.domains.media.service import MediaService
-from app.models import GuardianControl, User
+from app.models import User
 
 
 ACTIVE_STATUSES = {
@@ -118,7 +119,6 @@ class ImageGenerationService:
             return self._job_public(user, replay)
         if self.generator is None:
             raise ApiError(503, "IMAGE_GENERATION_DISABLED", "图片生成功能暂未开放")
-        self._require_creation_allowed(user)
         project = self._require_project(user, project_id, for_update=True)
         if project.status != CreationProjectStatus.ACTIVE:
             raise ApiError(409, "CREATION_NOT_EDITABLE", "归档作品不可生成图片")
@@ -517,6 +517,9 @@ class ImageGenerationService:
             version_id=version.id,
         )
         self._complete_outbox(job.id)
+        output_version = self.db.get(CreationVersion, version.id)
+        assert output_version is not None
+        award_creation_growth(self.db, project, output_version)
         self.db.commit()
 
     def _complete_conversation_quality_gates(
@@ -686,11 +689,6 @@ class ImageGenerationService:
         if job is None:
             raise ApiError(404, "IMAGE_GENERATION_NOT_FOUND", "图片生成任务不存在")
         return job
-
-    def _require_creation_allowed(self, user: User) -> None:
-        controls = self.db.get(GuardianControl, user.id)
-        if controls is not None and not controls.creation_allowed:
-            raise ApiError(403, "CREATION_DISABLED_BY_GUARDIAN", "监护设置暂未允许创作")
 
     def _day_start(self) -> datetime:
         now = utcnow()

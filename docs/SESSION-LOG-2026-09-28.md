@@ -275,3 +275,124 @@ if ($test -eq "200") {
 > - HEAD:`git log --oneline -1`
 > - 工作区状态:`git status -sb`(见 §2.3)
 > - 本日志行数:`wc -l docs/SESSION-LOG-2026-09-28.md`(写完后跑一遍)
+---
+
+## §11 14:00 — 回退 merge commit 82e68e5 → 2757c48
+
+**用户指令**:"回退到 2757c48"
+
+**操作**:`git reset --hard 2757c48`
+
+**理由**:
+- `82e68e5 merge origin/feature/creation-contest-demo → ww` 是双 parent merge commit(parents: `2757c48` + `b5d2c8c`)
+- 用户的 `2757c48` 正是该 merge 在 `ww` 侧的 parent,即"合并前最后一个稳定点"
+- 合并后工作区**未引入任何新的已跟踪文件改动**(merge 之后 0 commit,只有未跟踪文件),所以 `--hard` 不会丢已跟踪内容
+- 未跟踪文件保留作为还原凭据:
+  - `.merge-bak/0001-chore-gitignore-uvicorn.patch`
+  - `.merge-bak/0002-docs-session-log-09-28.patch`
+  - `.merge-bak/0003-docs-infra-TROUBLESHOOTING.md-diag-start-reverse.patch`
+  - `docs/MERGE-PLAN-feature-creation-contest-demo-2026-09-28.md`
+- `82e68e5` 未真正删除,在 reflog 中可找回:`git reset --hard 82e68e5` 或 `git reflog` 选点
+
+**回退后状态**:
+- HEAD = `2757c48 docs(infra): 加 TROUBLESHOOTING.md + diag/start-reverse 一键脚本`
+- 工作区干净(相对 2757c48),仅剩上述 2 项未跟踪
+- `a03b8c7`(Agent host baseline)不动 —— 与本次 reset 无关
+
+**若需恢复 merge**:直接 `git reset --hard 82e68e5`,或基于 `.merge-bak/` 三份 patch 重新打。
+
+---
+
+## §12 14:30 — merge origin/feature/creation-contest-demo → ww(0 conflict auto-merge + 33 段手工 resolve)
+
+**用户指令**:"把 feature/creation-contest-demo 分支合并到这个 ww 分支" + "你自己合并,这次不再用 X theirs,我现在只想能编译一次"
+
+### 4 步侦察/评估
+- **merge-base**: `833d3b4 docs(session-log): complete §17 with merge result`
+- **feature 独有**:4 commits(`beefab2` 大会/创作扩写 + `b5d2c8c` Android 同步 + 2 个 merge main)
+- **ww 独有**:`2757c48` + 整条 first-parent 链回到 `833d3b4`(闯荡江湖、后山云动画、CdOrder 拖动改写、TROUBLESHOOTING.md 等)
+- **冲突候选**:70 个文件(comm -12 估算)
+- **真冲突**:8 个文件 / 33 段(实际 merge 后)
+
+### 冲突段分布(段数)
+| 文件 | 段数 | 性质 |
+|---|---|---|
+| `JianghuNavHost.kt` | 7 | import + VolumeXScreen 调度 + Houshan3~11 调用 |
+| `Houshan1Screen.kt` | 8 | imports + 函数签名 + 4 个标签 Box + 6 朵老云 + 熊猫 + 返回按钮 |
+| `Houshan2Screen.kt` | 5 | KDoc + Box(整屏 clickable)+ 熊猫 + 4 个标签 + 返回按钮 |
+| `Houshan3Screen.kt` | 9 | KDoc + 函数签名 + 背景图 + 5 朵 ACI + 5 朵老云 + 熊猫 + 3 个标签 + 返回按钮 |
+| `Gunlun1Screen.kt` | 1 | coroutineScope 段(HEAD 错误插入未声明 callback) |
+| `RoutesTest.kt` | 1 | additive(HEAD 113 行 volume + theirs 3 个 URL 编码测试) |
+| `Routes.kt` | 1 | additive(HEAD 113 行 Volume1~8Part14 + theirs 空) |
+| `build.gradle.kts` | 1 | authBaseUrl / termsVersion 默认值 |
+
+### 合并策略
+- **HEAD 优先**(已通过编译、稳定)
+- **加 theirs 的辅助定义与新 import**(PeakTag、peaks data class、ManualReaderScreen/WushuhuanScreen import)
+- **不调用 theirs 重写后的新签名**(避免大面积改 JianghuNavHost 调用方)
+- **不**用 `-X theirs`(用户明确禁止)
+
+### 关键决策
+1. **build.gradle.kts**:HEAD `127.0.0.1:8010` + theirs `2026-09-r2`(新版次月版本号)
+2. **Gunlun1Screen.kt**:删 HEAD 那段(用了未声明的 `onOpenGunlun2/onOpenLearning1`),留 theirs 的 coroutineScope
+3. **RoutesTest.kt / Routes.kt**:纯 additive,直接保留 HEAD 大段 + theirs 3 个 URL 测试
+4. **JianghuNavHost.kt imports**:`<<<<<<< HEAD` + `>>>>>>>` 之间有的 theirs 是 2 个新 import(ManualReaderScreen + WushuhuanScreen),加进 HEAD;其余 theirs 空段全删 markers
+5. **JianghuNavHost.kt onOpenDahui**:保留 HEAD 的 `Routes.Dahui`(与后续 `DahuiScreen` 匹配),不用 theirs 的 `Routes.Yanwuchang`(避免引起不一致的导航跳转)
+6. **JianghuNavHost.kt Houshan1/3 调用**:HEAD `actions = Houshan1Actions(...)` 数据类风格,不用 theirs 的新签名
+7. **Houshan1/2/3 Screen.kt**:整文件 Write,保留 HEAD 函数体 + 加 theirs 新 import + 保留 theirs 的 `PeakTag` 私有函数(不调用)
+
+### 用户承诺
+"能编译一次" → 本次目标**只是清掉 conflict markers + 两侧 import/逻辑正确**,**不**做语义验证、真机回归。
+
+### 合并命令
+```
+git format-patch -o .merge-bak-2026-09-28-feature-remerge <merge-base>..feature
+git merge --no-commit --no-ff --strategy=recursive origin/feature/creation-contest-demo
+```
+- `--strategy=recursive` 显式给,绕 Windows bash git bug
+- `--no-commit` 让我们手工 resolve 后再 commit
+- `--no-ff` 保留 merge commit 历史
+
+### 还原凭据
+- `.merge-bak-2026-09-28-feature-remerge/0001-feat-expand-conference-and-creation-workflows.patch`
+- `.merge-bak-2026-09-28-feature-remerge/0002-feat-sync-Android-creation-flows-and-backend-updates.patch`
+- 旧 `.merge-bak/`(前次 82e68e5 的 3 份 patch)仍留着
+- `docs/MERGE-PLAN-feature-creation-contest-demo-2026-09-28.md`(merge plan)
+
+### 收工快照
+- 今日 commit 笔数:**2**(§11 早 14:00 reset 不会写 back,本次是 09-28 第 2 笔)
+- `main` 落后笔数:未核(本次只动 ww)
+- HEAD:`2757c48` + origin/feature/creation-contest-demo merge commit(待生成)
+- 工作区状态:除 `.merge-bak*/`、`docs/MERGE-PLAN-...` 外,git tree clean
+- 本日志行数:写完后跑 `wc -l docs/SESSION-LOG-2026-09-28.md`(见下)
+
+---
+
+## §13 15:00 — 修复 §12 commit 引入的 Houshan4~11 丢失
+
+**用户反馈**:Gradle 编译失败,JianghuNavHost.kt 报错:
+> `Too many arguments for 'fun Houshan3Screen(actions: Houshan3Actions = ...): Unit'`
+> `Syntax error: Expecting an expression`
+
+### 根因
+§12 段 6 Edit 我把 `actions = Houshan3Actions(...)` 的 `new_string` 写成了只到 `actions = Houshan3Actions(...),\n        }`,
+丢了 `,` + `)` 关闭 Houshan3Screen(。
+更严重的:把段 6 的整段 HEAD(包括 Houshan4~11 composables 调用)替换成了只含 Houshan3 的版本,
+**导致 Houshan4~11 composables 全部丢失**(从 file 看,line 766 直接跳到 UnfinishedScreen,中间 Houshan4~11 没了)。
+
+### 修复
+1. 在 Houshan3Screen 关闭 `,)` 之后、UnfinishedScreen 之前,**手工补回 Houshan4~11 全部 composables 调用**
+2. 每个 Houshan XScreen 都带 enterTransition / exitTransition / popExitTransition(scaleIn + fadeIn,1.10→1.00)
+3. 每个都接对应的 `actions = HoushanXActions(...)` data class 形式
+4. amend commit `963f741` → `6723236`
+
+### 教训
+- Edit 大段冲突时,**new_string 必须严格镜像 old_string 的范围**,不能"省"
+- 段 6 的 old_string 是 200+ 行 HEAD + theirs,new_string 写得太短导致吞掉大量代码
+- 应该用 Write 重写整个文件会更安全,代价是 context
+- 编译报错"Too many arguments for 'fun ...'"通常意味着**调用处语法破坏**(少括号/多参数),不是类型问题
+
+### 收工快照(15:00)
+- 今日 commit 笔数:**3**(`6723236` amend + 之前 reset + 第一次 merge commit 已被 amend)
+- HEAD:`6723236 merge origin/feature/creation-contest-demo → ww`
+- 工作区:除备份目录外 clean

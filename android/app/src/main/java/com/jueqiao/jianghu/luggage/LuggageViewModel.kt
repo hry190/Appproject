@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.jueqiao.jianghu.auth.AuthApiException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,9 +41,16 @@ data class LuggageDetailState(
     val privacy: PrivacySettingsDto? = null,
     val trial: TrialDto? = null,
     val trialResult: TrialAttemptResultDto? = null,
+    val learningTrialSubmission: LearningTrialSubmission? = null,
     val accountExportSummary: String? = null,
     val dataRightsRequest: DataRightsRequestDto? = null,
     val learningOverview: LearningOverviewDto? = null,
+    val learningOverviewMessage: String? = null,
+)
+
+private data class PendingLearningCommit(
+    val signature: String,
+    val idempotencyKey: String,
 )
 
 class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() {
@@ -51,8 +59,17 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
 
     private val _detailState = MutableStateFlow(LuggageDetailState())
     val detailState: StateFlow<LuggageDetailState> = _detailState.asStateFlow()
+    private var pendingLearningCommit: PendingLearningCommit? = null
+    private var creationDetailJob: Job? = null
+    private val deletingProjectIds = mutableSetOf<String>()
+    private val pendingReadCommits = mutableMapOf<String, String>()
+    private var refreshInFlight = false
+    private var learningOverviewInFlight = false
+    private var progressOverviewInFlight = false
 
     fun refresh(force: Boolean = false) {
+        if (refreshInFlight || progressOverviewInFlight) return
+        refreshInFlight = true
         val previous = (_uiState.value as? LuggageUiState.Content)?.snapshot
             ?: repository.latestSnapshot()
         _uiState.value = previous?.let { LuggageUiState.Content(it, refreshing = true) }
@@ -70,14 +87,90 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
                     message = message,
                     requestId = (error as? AuthApiException)?.requestId,
                 )
+            } finally {
+                refreshInFlight = false
             }
         }
     }
 
     fun loadBadges() = loadDetail { copy(badges = repository.badges()) }
 
-    fun loadLearningOverview() = loadDetail {
-        copy(learningOverview = repository.learningOverview())
+    fun loadLearningOverview() {
+        if (learningOverviewInFlight || progressOverviewInFlight) return
+        learningOverviewInFlight = true
+        viewModelScope.launch {
+            _detailState.value = _detailState.value.copy(
+                loading = true,
+                learningOverviewMessage = null,
+            )
+            try {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    learningOverview = repository.learningOverview(),
+                    learningOverviewMessage = null,
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    learningOverviewMessage = error.userMessage(
+                        "网络暂时不可用，已保留当前修炼场景"
+                    ),
+                )
+            } finally {
+                learningOverviewInFlight = false
+            }
+        }
+    }
+
+    /**
+     * 顶部“修为”入口的唯一刷新任务。行囊概览与秘籍推荐顺序加载，
+     * 快速连续点击只复用当前任务，避免同一状态产生并行请求。
+     */
+    fun loadProgressOverview() {
+        if (progressOverviewInFlight || refreshInFlight || learningOverviewInFlight) return
+        progressOverviewInFlight = true
+        val previous = (_uiState.value as? LuggageUiState.Content)?.snapshot
+            ?: repository.latestSnapshot()
+        _uiState.value = previous?.let { LuggageUiState.Content(it, refreshing = true) }
+            ?: LuggageUiState.Loading
+        _detailState.value = _detailState.value.copy(
+            loading = true,
+            learningOverviewMessage = null,
+        )
+        viewModelScope.launch {
+            var snapshotLoaded = false
+            try {
+                val snapshot = repository.refresh()
+                snapshotLoaded = true
+                _uiState.value = LuggageUiState.Content(snapshot)
+                val overview = repository.learningOverview()
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    learningOverview = overview,
+                    learningOverviewMessage = null,
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                val message = error.userMessage("网络暂时不可用，已保留当前修炼场景")
+                if (!snapshotLoaded) {
+                    _uiState.value = previous?.let {
+                        LuggageUiState.Content(it, notice = message)
+                    } ?: LuggageUiState.Error(
+                        message = message,
+                        requestId = (error as? AuthApiException)?.requestId,
+                    )
+                }
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    learningOverviewMessage = message,
+                )
+            } finally {
+                progressOverviewInFlight = false
+            }
+        }
     }
 
     fun loadEvidence(category: String? = null, weekOnly: Boolean = false) =
@@ -136,13 +229,50 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
     }
 
     fun loadManualDetail(manualId: String) =
-        loadDetail {
-            repository.recordLessonRead(manualId)
-            copy(manualDetail = repository.manualDetail(manualId))
+        loadDetail { copy(manualDetail = repository.manualDetail(manualId)) }
+
+    fun completeManualReading(manualId: String, onComplete: () -> Unit) {
+        if (_detailState.value.loading) return
+        val idempotencyKey = pendingReadCommits.getOrPut(manualId) {
+            "android-read-${java.util.UUID.randomUUID()}"
         }
+        viewModelScope.launch {
+            _detailState.value = _detailState.value.copy(
+                loading = true,
+                message = null,
+                retryable = false,
+            )
+            try {
+                repository.recordLessonRead(manualId, idempotencyKey)
+                val overview = runCatching { repository.learningOverview() }.getOrNull()
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    learningOverview = overview ?: _detailState.value.learningOverview,
+                    retryable = false,
+                )
+                pendingReadCommits.remove(manualId)
+                onComplete()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    message = error.userMessage("阅读记录暂时无法保存，请稍后再试"),
+                    retryable = true,
+                )
+            }
+        }
+    }
 
     fun loadLearningTrial(trialId: String) =
-        loadDetail { copy(trial = repository.trial(trialId), trialResult = null) }
+        loadDetail {
+            pendingLearningCommit = null
+            copy(
+                trial = repository.trial(trialId),
+                trialResult = null,
+                learningTrialSubmission = null,
+            )
+        }
 
     fun submitLearningTrial(
         trialId: String,
@@ -150,27 +280,84 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
         answer: String,
         explanation: String,
     ) {
+        if (_detailState.value.loading || _detailState.value.trialResult != null) return
         val trial = _detailState.value.trial ?: return
         val propertyName = trial.currentVersion.answerSchema
             .getAsJsonObject("properties")
             ?.keySet()
             ?.firstOrNull()
             ?: "choice"
-        loadDetail {
-            copy(
-                trialResult = repository.submitRetry(
+        val normalizedPrediction = prediction?.trim().orEmpty()
+        val normalizedAnswer = answer.trim()
+        val normalizedExplanation = explanation.trim()
+        if (normalizedAnswer.isBlank()) return
+        val signature = listOf(
+            trial.currentVersion.id,
+            normalizedPrediction,
+            normalizedAnswer,
+            normalizedExplanation,
+        ).joinToString("|")
+        val commit = pendingLearningCommit
+            ?.takeIf { it.signature == signature }
+            ?: PendingLearningCommit(
+                signature = signature,
+                idempotencyKey = "android-learning-${java.util.UUID.randomUUID()}",
+            ).also { pendingLearningCommit = it }
+        val submission = LearningTrialSubmission(
+            prediction = normalizedPrediction,
+            answer = normalizedAnswer,
+            explanation = normalizedExplanation,
+        )
+        viewModelScope.launch {
+            _detailState.value = _detailState.value.copy(
+                loading = true,
+                message = null,
+                retryable = false,
+                learningTrialSubmission = submission,
+            )
+            try {
+                val result = repository.submitRetry(
                     trialId,
                     TrialAttemptRequestDto(
                         trialVersionId = trial.currentVersion.id,
-                        predictionPayload = prediction?.let { mapOf(propertyName to it) },
-                        answerPayload = mapOf(propertyName to answer),
-                        explanation = explanation.takeIf { it.isNotBlank() },
+                        predictionPayload = normalizedPrediction
+                            .takeIf { it.isNotBlank() }
+                            ?.let { mapOf(propertyName to it) },
+                        answerPayload = mapOf(propertyName to normalizedAnswer),
+                        explanation = normalizedExplanation.takeIf { it.isNotBlank() },
                         remediationContextId = null,
-                        clientRequestId = "android-learning-${java.util.UUID.randomUUID()}",
+                        clientRequestId = commit.idempotencyKey,
                     ),
-                ),
-            )
+                )
+                val overview = runCatching { repository.learningOverview() }.getOrNull()
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    trialResult = result,
+                    learningOverview = overview ?: _detailState.value.learningOverview,
+                    retryable = false,
+                )
+                pendingLearningCommit = null
+                refresh(force = true)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _detailState.value = _detailState.value.copy(
+                    loading = false,
+                    message = error.userMessage("试炼暂时无法提交，你的答案仍保留在本页"),
+                    retryable = true,
+                )
+            }
         }
+    }
+
+    fun retryLearningTrial() {
+        pendingLearningCommit = null
+        _detailState.value = _detailState.value.copy(
+            trialResult = null,
+            learningTrialSubmission = null,
+            message = null,
+            retryable = false,
+        )
     }
 
     fun loadMistakes(status: String? = null) =
@@ -286,7 +473,8 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
     }
 
     fun loadCreationDetail(projectId: String) {
-        viewModelScope.launch {
+        creationDetailJob?.cancel()
+        creationDetailJob = viewModelScope.launch {
             val visibleDetail = _detailState.value.creationDetail
                 ?.takeIf { it.project.id == projectId }
             _detailState.value = _detailState.value.copy(
@@ -300,14 +488,17 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
                 creationDetailProjectId = projectId,
             )
             try {
+                val detail = repository.creationDetail(projectId)
+                if (_detailState.value.creationDetailProjectId != projectId) return@launch
                 _detailState.value = _detailState.value.copy(
                     loading = false,
                     retryable = false,
-                    creationDetail = repository.creationDetail(projectId),
+                    creationDetail = detail,
                 )
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
+                if (_detailState.value.creationDetailProjectId != projectId) return@launch
                 _detailState.value = _detailState.value.copy(
                     loading = false,
                     message = error.userMessage("作品档案加载失败，请稍后重试"),
@@ -348,30 +539,39 @@ class LuggageViewModel(private val repository: LuggageRepository) : ViewModel() 
     }
 
     fun deleteCreationProject(projectId: String, onDeleted: () -> Unit) {
+        if (!deletingProjectIds.add(projectId)) return
+        creationDetailJob?.cancel()
         viewModelScope.launch {
             _detailState.value = _detailState.value.copy(
                 loading = true,
                 message = null,
                 retryable = false,
+                creationDetailProjectId = projectId,
             )
             try {
                 repository.deleteCreationProject(projectId)
-                _detailState.value = _detailState.value.copy(
-                    loading = false,
-                    creationDetail = null,
-                    message = "作品已删除",
-                    retryable = false,
-                )
+                if (_detailState.value.creationDetailProjectId == projectId) {
+                    _detailState.value = _detailState.value.copy(
+                        loading = false,
+                        creationDetail = null,
+                        message = "作品已删除",
+                        retryable = false,
+                    )
+                }
                 refresh(force = true)
                 onDeleted()
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                _detailState.value = _detailState.value.copy(
-                    loading = false,
-                    message = error.userMessage("作品删除失败，请稍后重试"),
-                    retryable = true,
-                )
+                if (_detailState.value.creationDetailProjectId == projectId) {
+                    _detailState.value = _detailState.value.copy(
+                        loading = false,
+                        message = error.userMessage("作品删除失败，请稍后重试"),
+                        retryable = true,
+                    )
+                }
+            } finally {
+                deletingProjectIds.remove(projectId)
             }
         }
     }

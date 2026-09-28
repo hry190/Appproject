@@ -445,7 +445,7 @@ private fun BlacklistEntryRow(
 private fun CollectionContent() {
     PageIntro(Icons.Default.Security, "收集范围说明", "仅在提供对应功能时处理必要信息；具体规则以隐私政策为准。")
     InformationEntry("手机号", "用于注册、登录、安全验证与找回密码", "用户主动提供")
-    InformationEntry("年龄段", "用于未成年人保护和监护人同意流程", "注册时选择")
+    InformationEntry("年龄段", "用于提供适龄内容与交互", "注册时选择")
     InformationEntry("创作描述与作品", "用于完成用户主动发起的智能创作", "使用创作功能时产生")
     InformationEntry("设备与错误日志", "用于保障服务安全、定位崩溃和异常", "应用运行时产生")
 }

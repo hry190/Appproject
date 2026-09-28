@@ -41,46 +41,8 @@ def register(client: TestClient, phone: str, age_band: str = "AGE_14_TO_17") -> 
             "verification_code": OTP,
             "password": "StrongPass!8",
             "age_band": age_band,
-            "terms_version": "2026-08",
+            "terms_version": "2026-09-r2",
             "privacy_version": "2026-08",
-        },
-    )
-    assert response.status_code == 201, response.text
-    body = response.json()
-    return body, {"Authorization": f"Bearer {body['tokens']['access_token']}"}
-
-
-def register_child_with_guardian(
-    client: TestClient, child_phone: str, guardian_phone: str
-) -> tuple[dict, dict[str, str]]:
-    assert client.post(
-        "/v1/auth/verification-codes",
-        json={"phone": guardian_phone, "purpose": "GUARDIAN_CONSENT"},
-    ).status_code == 202
-    consent = client.post(
-        "/v1/auth/guardian-consents/verify",
-        json={
-            "child_phone": child_phone,
-            "guardian_phone": guardian_phone,
-            "verification_code": OTP,
-            "terms_version": "2026-08",
-            "privacy_version": "2026-08",
-        },
-    )
-    assert consent.status_code == 200, consent.text
-    assert client.post(
-        "/v1/auth/verification-codes", json={"phone": child_phone, "purpose": "REGISTER"}
-    ).status_code == 202
-    response = client.post(
-        "/v1/auth/register",
-        json={
-            "phone": child_phone,
-            "verification_code": OTP,
-            "password": "StrongPass!8",
-            "age_band": "UNDER_14",
-            "terms_version": "2026-08",
-            "privacy_version": "2026-08",
-            "guardian_consent_token": consent.json()["guardian_consent_token"],
         },
     )
     assert response.status_code == 201, response.text
@@ -254,68 +216,20 @@ def attach_public_learning_and_provenance(
         return str(page.id)
 
 
-def test_classroom_publish_delivers_only_to_owner_and_withdraw_revokes(
-    client: TestClient, app: FastAPI
+def test_classroom_and_supervisor_inbox_endpoints_are_removed(
+    client: TestClient,
 ) -> None:
-    teacher, teacher_headers = register(client, "13961000001", "ADULT")
-    student, student_headers = register(client, "13961000002")
-    _, stranger_headers = register(client, "13961000003", "ADULT")
-
-    created = client.post(
-        "/v1/classrooms", headers=teacher_headers, json={"name": "墨竹一班"}
-    )
-    assert created.status_code == 201, created.text
-    classroom = created.json()
-    assert len(classroom["join_code"]) == 8
-    joined = client.post(
+    _, headers = register(client, "13961000001", "ADULT")
+    assert client.post(
+        "/v1/classrooms", headers=headers, json={"name": "墨竹一班"}
+    ).status_code == 404
+    assert client.post(
         "/v1/classrooms:join",
-        headers=student_headers,
-        json={"join_code": classroom["join_code"].lower()},
-    )
-    assert joined.status_code == 200, joined.text
-    assert joined.json()["role"] == "MEMBER"
-    assert joined.json()["teacher_nickname"] == teacher["user"]["nickname"]
-
-    publication_id, case_id = create_review_case(
-        app,
-        student["user"]["id"],
-        CreationVisibility.CLASSROOM,
-        classroom["id"],
-    )
-    decision = publish(client, case_id)
-    teacher_inbox = client.get("/v1/me/publication-inbox", headers=teacher_headers)
-    assert teacher_inbox.status_code == 200, teacher_inbox.text
-    assert [item["publication_id"] for item in teacher_inbox.json()["items"]] == [publication_id]
-    assert teacher_inbox.json()["items"][0]["channel"] == "CLASSROOM"
-    assert teacher_inbox.json()["items"][0]["classroom_name"] == "墨竹一班"
-    assert client.get("/v1/me/publication-inbox", headers=stranger_headers).json()["items"] == []
-
-    withdrawn = client.post(
-        f"/v1/publications/{publication_id}/withdraw",
-        headers=student_headers,
-        json={"row_version": decision["row_version"]},
-    )
-    assert withdrawn.status_code == 200, withdrawn.text
-    assert client.get("/v1/me/publication-inbox", headers=teacher_headers).json()["items"] == []
-
-
-def test_verified_guardian_receives_child_publication(
-    client: TestClient, app: FastAPI
-) -> None:
-    guardian_phone = "13962000001"
-    _, guardian_headers = register(client, guardian_phone, "ADULT")
-    child, _ = register_child_with_guardian(client, "13962000002", guardian_phone)
-    _, other_headers = register(client, "13962000003", "ADULT")
-    publication_id, case_id = create_review_case(
-        app, child["user"]["id"], CreationVisibility.GUARDIAN_ONLY, title="给家长的机关画"
-    )
-    publish(client, case_id)
-
-    inbox = client.get("/v1/me/publication-inbox", headers=guardian_headers)
-    assert inbox.status_code == 200, inbox.text
-    assert inbox.json()["items"][0]["publication_id"] == publication_id
-    assert inbox.json()["items"][0]["channel"] == "GUARDIAN"
-    assert client.get("/v1/me/publication-inbox", headers=other_headers).json()["items"] == []
+        headers=headers,
+        json={"join_code": "ABCDEFGH"},
+    ).status_code == 404
+    assert client.get("/v1/me/classrooms", headers=headers).status_code == 404
+    assert client.get("/v1/me/publication-inbox", headers=headers).status_code == 404
 
 
 def test_community_feed_contains_only_live_community_publications(
@@ -368,18 +282,3 @@ def test_community_feed_contains_only_live_community_publications(
         json={"row_version": decision["row_version"]},
     ).status_code == 200
     assert client.get("/v1/community/feed", headers=viewer_headers).json()["items"] == []
-
-
-def test_only_adults_create_classrooms_and_join_code_is_not_listed(
-    client: TestClient,
-) -> None:
-    _, minor_headers = register(client, "13964000001")
-    _, adult_headers = register(client, "13964000002", "ADULT")
-    denied = client.post("/v1/classrooms", headers=minor_headers, json={"name": "不应创建"})
-    assert denied.status_code == 403
-    created = client.post("/v1/classrooms", headers=adult_headers, json={"name": "成人班级"})
-    listing = client.get("/v1/me/classrooms", headers=adult_headers)
-    assert listing.status_code == 200
-    assert listing.json()["items"][0]["role"] == "OWNER"
-    assert "join_code" not in listing.json()["items"][0]
-    assert created.json()["join_code"]

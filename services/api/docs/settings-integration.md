@@ -78,29 +78,13 @@ Android 端当前行为：
 
 当前“数据恢复”只恢复偏好设置默认值，并同步云端；不会删除账号、作品、进度或创作草稿。若后续要做云端作品恢复，应另建恢复任务接口，不要复用偏好设置接口。
 
-## 已准备、待前端页面接入
+## 已下线能力
 
-### 家长控制与青少年模式
-
-- `GET /v1/settings/guardian-controls`
-- `PATCH /v1/settings/guardian-controls`
-
-可更新字段：
-
-```json
-{
-  "daily_limit_minutes": 60,
-  "creation_allowed": true,
-  "content_level": "TEEN",
-  "minor_mode": true
-}
-```
-
-`daily_limit_minutes` 范围为 15 至 240；`content_level` 可选值以 OpenAPI 文档为准。成年人请求此能力时服务端会拒绝。
+监护控制和教师管理功能已取消，不再提供监护设置接口、监护验证流程或班级管理入口。年龄段仅用于提供适龄内容、安全提示与审核规则，不限制社区投稿。
 
 ### 数据导出与权利请求
 
-- `GET /v1/account/export`：返回账号资料、设置、监护设置、同意记录和有效会话的结构化导出。
+- `GET /v1/account/export`：返回账号资料、设置、同意记录和有效会话的结构化导出。
 - `POST /v1/account/data-rights-requests`：创建数据权利请求。
 - `GET /v1/account/data-rights-requests`：查询当前账号提交过的请求及处理状态。
 

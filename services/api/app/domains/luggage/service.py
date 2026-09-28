@@ -55,7 +55,7 @@ from app.domains.media.storage import ObjectNotFoundError, ObjectStore
 from app.domains.mistakes.models import MistakeItem
 from app.domains.moderation.models import AppealStatus, ModerationAppeal
 from app.domains.profiles.service import ProfileService
-from app.models import AgeBand, User
+from app.models import User
 
 
 logger = logging.getLogger(__name__)
@@ -342,7 +342,7 @@ class LuggageService:
                 detail_url="/v1/me/creation-projects",
             ),
             privacy=LuggagePrivacyPublic(
-                guardian_controls_active=user.age_band != AgeBand.ADULT,
+                guardian_controls_active=False,
                 pending_appeal_count=pending_appeals,
                 privacy_settings_url="/v1/me/privacy-settings",
             ),

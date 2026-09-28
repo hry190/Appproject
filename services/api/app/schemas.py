@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.models import (
     AgeBand,
-    ContentLevel,
     DataRequestStatus,
     DataRequestType,
     FeedbackCategory,
@@ -32,7 +31,6 @@ class StrictModel(BaseModel):
 class VerificationPurpose(str, Enum):
     REGISTER = "REGISTER"
     RESET_PASSWORD = "RESET_PASSWORD"
-    GUARDIAN_CONSENT = "GUARDIAN_CONSENT"
 
 
 def validate_phone_input(value: str) -> str:
@@ -57,30 +55,6 @@ class VerificationCodeAccepted(StrictModel):
     request_id: str
 
 
-class GuardianConsentRequest(StrictModel):
-    child_phone: str = Field(min_length=11, max_length=16)
-    guardian_phone: str = Field(min_length=11, max_length=16)
-    verification_code: str = Field(pattern=r"^\d{6}$")
-    terms_version: str = Field(min_length=1, max_length=32)
-    privacy_version: str = Field(min_length=1, max_length=32)
-
-    _validate_child_phone = field_validator("child_phone")(validate_phone_input)
-    _validate_guardian_phone = field_validator("guardian_phone")(validate_phone_input)
-
-    @model_validator(mode="after")
-    def phones_must_differ(self) -> "GuardianConsentRequest":
-        if re.sub(r"\D", "", self.child_phone)[-11:] == re.sub(
-            r"\D", "", self.guardian_phone
-        )[-11:]:
-            raise ValueError("监护人手机号不能与学生手机号相同")
-        return self
-
-
-class GuardianConsentResponse(StrictModel):
-    guardian_consent_token: str
-    expires_in: int
-
-
 class RegisterRequest(StrictModel):
     phone: str = Field(min_length=11, max_length=16)
     verification_code: str = Field(pattern=r"^\d{6}$")
@@ -88,7 +62,6 @@ class RegisterRequest(StrictModel):
     age_band: AgeBand
     terms_version: str = Field(min_length=1, max_length=32)
     privacy_version: str = Field(min_length=1, max_length=32)
-    guardian_consent_token: str | None = Field(default=None, min_length=32, max_length=2048)
     device_name: str | None = Field(default=None, min_length=1, max_length=80)
     client_request_id: str | None = Field(default=None, min_length=8, max_length=64)
 
@@ -200,29 +173,6 @@ class UserPreferencesPatch(StrictModel):
         return self
 
 
-class GuardianControlsPublic(StrictModel):
-    daily_limit_minutes: int
-    creation_allowed: bool
-    content_level: ContentLevel
-    minor_mode: bool
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True, extra="forbid")
-
-
-class GuardianControlsPatch(StrictModel):
-    daily_limit_minutes: int | None = Field(default=None, ge=15, le=240)
-    creation_allowed: bool | None = None
-    content_level: ContentLevel | None = None
-    minor_mode: bool | None = None
-
-    @model_validator(mode="after")
-    def at_least_one_field(self) -> "GuardianControlsPatch":
-        if not self.model_fields_set:
-            raise ValueError("请至少提交一项监护设置")
-        return self
-
-
 class FeedbackCreate(StrictModel):
     category: FeedbackCategory = FeedbackCategory.GENERAL
     message: str = Field(min_length=10, max_length=1000)
@@ -298,7 +248,6 @@ class AccountExport(StrictModel):
     generated_at: datetime
     user: UserPublic
     preferences: UserPreferencesPublic
-    guardian_controls: GuardianControlsPublic | None
     consents: list[ConsentRecordPublic]
     active_sessions: list[SessionPublic]
     creation_intents: list[dict[str, Any]]

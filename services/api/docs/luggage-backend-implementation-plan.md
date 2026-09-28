@@ -331,13 +331,11 @@ Android 客户端调用 FastAPI。路由只负责认证、参数校验和响应�
 - `GET /v1/media-assets/{asset_id}`：读取处理状态和短时私有 URL；只有资源所有者或授权角色可用。
 - `DELETE /v1/media-assets/{asset_id}`：仅未被锁定版本引用时可直接删除；否则走引用检查和延迟删除。
 
-### 6.6 隐私、监护和数据权利
+### 6.6 隐私和数据权利
 
-- `GET /v1/me/privacy-settings`：本人可见范围、AIGC 导出设置和监护状态。
+- `GET /v1/me/privacy-settings`：本人可见范围和 AIGC 导出设置。
 - `PATCH /v1/me/privacy-settings`：本人可修改的隐私选项。
-- `GET /v1/guardian/children/{child_id}/controls`：监护角色读取。
-- `PATCH /v1/guardian/children/{child_id}/controls`：仅已验证监护角色可写。
-- 现有 `/v1/settings/guardian-controls` 可暂时保留兼容读取，但应停止让学生令牌写入。
+- 监护控制、监护验证与教师管理接口已经取消；历史字段仅用于旧数据兼容。
 - 现有 `/v1/account/data-rights-requests` 扩展作品撤回、数据删除和同意撤回的处理进度。
 - 现有 `/v1/account/export` 改为小数据同步、大数据异步导出，并包含学习、作品和来源谱。
 

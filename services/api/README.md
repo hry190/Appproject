@@ -50,7 +50,6 @@
 ## 主要路由
 
 - `POST /v1/auth/verification-codes`
-- `POST /v1/auth/guardian-consents/verify`
 - `POST /v1/auth/register`
 - `POST /v1/auth/login/password`
 - `POST /v1/auth/token/refresh`
@@ -59,7 +58,6 @@
 - `POST /v1/auth/logout-all`
 - `GET /v1/auth/me`
 - `GET|PATCH /v1/settings/preferences`
-- `GET|PATCH /v1/settings/guardian-controls`
 - `GET|POST|DELETE /v1/settings/blacklist`
 - `POST /v1/support/feedback`
 - `GET|DELETE /v1/account/sessions`
@@ -122,10 +120,6 @@
 - `POST /v1/moderation-cases/{case_id}/appeals`
 - `GET /v1/me/moderation-appeals`
 - `GET|PATCH /v1/me/privacy-settings`
-- `POST /v1/classrooms`
-- `POST /v1/classrooms:join`
-- `GET /v1/me/classrooms`
-- `GET /v1/me/publication-inbox`
 - `GET /v1/community/feed`
 - `GET /v1/conference/feed`
 - `GET /v1/conference/publications/{publication_id}`

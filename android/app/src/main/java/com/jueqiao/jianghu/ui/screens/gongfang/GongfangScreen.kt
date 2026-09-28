@@ -85,7 +85,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
-import com.jueqiao.jianghu.ui.components.CreationWorkspaceTopBar
+import com.jueqiao.jianghu.ui.components.CreationSectionHeader
 import com.jueqiao.jianghu.ui.screens.home.HomeGuideBubble
 import com.jueqiao.jianghu.ui.theme.YaHei
 
@@ -100,14 +100,14 @@ private val LivingBamboo = Color(0xFF6F963F)
 
 /**
  * 作品创作入口。这里只收集最初想法和参考内容，开始后直接进入教练对话。
- * 背景、熊猫、顶部叶签与气泡均直接复用原资源。
+ * 背景、熊猫与气泡均直接复用原资源。
  */
 @Composable
 fun GongfangScreen(
     onBack: () -> Unit = {},
+    initialManualId: String? = null,
     onStartConversation: (String, List<String>, List<String>) -> Unit = { _, _, _ -> },
     onContinueWork: (String) -> Unit = {},
-    onOpenChuangzuodangan: () -> Unit = {},
     onOpenAllWorks: () -> Unit = {},
     recentWorks: List<CreationResumeItem> = emptyList(),
     recentWorksLoading: Boolean = false,
@@ -148,6 +148,16 @@ fun GongfangScreen(
         onLoadRecentWorks()
         onLoadCreationSources()
     }
+    LaunchedEffect(initialManualId, manualSources) {
+        if (
+            selectedManualId == null &&
+            initialManualId != null &&
+            manualSources.any { it.id == initialManualId }
+        ) {
+            selectedManualId = initialManualId
+            selectedSource = "带入秘籍"
+        }
+    }
 
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     BackHandler {
@@ -176,7 +186,7 @@ fun GongfangScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
-            CreationWorkspaceTopBar(onBack, onOpenChuangzuodangan)
+            CreationSectionHeader(title = "创作台", onBack = onBack)
 
             StartCreationContent(
                     inputText = inputText,

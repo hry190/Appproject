@@ -14,15 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TransformOrigin
@@ -55,12 +54,12 @@ internal fun HomeWindBackground(
     @DrawableRes backgroundRes: Int = R.drawable.img_home_bg,
     @DrawableRes windMaskRes: Int = R.drawable.img_home_wind_mask,
 ) {
-    var timeSeconds by remember { mutableFloatStateOf(0f) }
+    val animationTime = remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
         val startedAtNanos = withFrameNanos { it }
         while (currentCoroutineContext().isActive) {
             withFrameNanos { frameNanos ->
-                timeSeconds = ((frameNanos - startedAtNanos) / 1_000_000_000f) % 600f
+                animationTime.floatValue = ((frameNanos - startedAtNanos) / 1_000_000_000f) % 600f
             }
         }
     }
@@ -68,12 +67,16 @@ internal fun HomeWindBackground(
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ShaderWindBackground(
-                timeSeconds = timeSeconds,
+                timeSeconds = { animationTime.floatValue },
                 backgroundRes = backgroundRes,
                 windMaskRes = windMaskRes,
                 modifier = Modifier
                     .fillMaxSize(0.5f)
                     .graphicsLayer {
+                        // Rasterize the wind shader at the layer's measured size.
+                        // Without Offscreen, scaling the layer still shades every
+                        // display pixel. Foreground controls retain native resolution.
+                        compositingStrategy = CompositingStrategy.Offscreen
                         scaleX = 2f
                         scaleY = 2f
                         transformOrigin = TransformOrigin(0f, 0f)
@@ -87,7 +90,7 @@ internal fun HomeWindBackground(
         }
 
         WindAtmosphereLayer(
-            timeSeconds = timeSeconds,
+            timeSeconds = { animationTime.floatValue },
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -109,7 +112,7 @@ private fun StaticWindBackground(
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun ShaderWindBackground(
-    timeSeconds: Float,
+    timeSeconds: () -> Float,
     @DrawableRes backgroundRes: Int,
     @DrawableRes windMaskRes: Int,
     modifier: Modifier = Modifier,
@@ -166,6 +169,8 @@ private fun ShaderWindBackground(
     val shaderBrush = remember(shader) { ShaderBrush(shader) }
 
     Canvas(modifier = modifier) {
+        // Read the clock only during drawing; wind must not recompose the screen.
+        val timeSeconds = timeSeconds()
         val width = size.width.coerceAtLeast(1f)
         val height = size.height.coerceAtLeast(1f)
         val imageScale = maxOf(
@@ -231,10 +236,11 @@ private val LeafColors = listOf(
 
 @Composable
 private fun WindAtmosphereLayer(
-    timeSeconds: Float,
+    timeSeconds: () -> Float,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier) {
+        val timeSeconds = timeSeconds()
         val lightCenter = Offset(
             x = size.width * 0.68f + sin(timeSeconds * 0.19f) * size.width * 0.018f,
             y = size.height * 0.18f + cos(timeSeconds * 0.13f) * size.height * 0.004f,
