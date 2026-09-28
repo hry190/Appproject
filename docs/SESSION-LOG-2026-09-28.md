@@ -761,3 +761,35 @@ IDE 删了 12 行 import,分布在 12 个文件:
 - HEAD(ww):`97fa8f6`
 - origin/main:push 后同步
 - working tree:clean
+
+---
+
+## §23 23:10 — sync ww 到 main(用户直接在 main 上改 1 笔)
+
+**用户指令**:"和 main 分支同步"
+
+### 拓扑
+- main HEAD:`47eee1b fix(wushuhuan): 调整状态气泡位置和大小`
+- ww HEAD:`1257776`(上次 ff 同步状态)
+- merge-base:`1257776`(= ww HEAD)
+- 结论:main 在 ww 基础上加 1 commit,ww 可 `--ff-only` 到 main
+
+### 用户在 main 上直接做的改动(`47eee1b`)
+文件:`WushuhuanScreen.kt`
+
+| 行 | 旧 | 新 | 含义 |
+|---|---|---|---|
+| 356 | `.offset(x = maxWidth - 166.dp, y = 374.dp)` | `.offset(x = maxWidth - 216.dp, y = 324.dp)` | 气泡位置上移 + 加大 |
+| 356 | `.size(width = 166.dp, height = 122.dp)` | `.size(width = 216.dp, height = 176.dp)` | 气泡尺寸加大 |
+| 492 | `第X卷Y · 未闻` | `第X卷Y·未闻` | 文案去空格 |
+
+### 操作
+```bash
+git merge --ff-only main   # ww 指针跳到 47eee1b
+```
+
+### 收工快照(预计)
+- HEAD(ww):`47eee1b`
+- HEAD(main):`47eee1b`
+- origin/main:`47eee1b`
+- origin/ww:不变(用户没要求推)
