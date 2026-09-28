@@ -793,3 +793,31 @@ git merge --ff-only main   # ww 指针跳到 47eee1b
 - HEAD(main):`47eee1b`
 - origin/main:`47eee1b`
 - origin/ww:不变(用户没要求推)
+
+---
+
+## §24 23:30 — fast-forward main 到 ww(同步 §23 + 47eee1b 到 main)
+
+**用户指令**:"推到 main"
+
+### 拓扑
+- main HEAD:`47eee1b fix(wushuhuan): 调整气泡位置和大小`
+- ww HEAD:`400508a docs(session-log): §23 sync ww 到 main`
+- merge-base:`47eee1b`(= main HEAD)
+- 结论:ww 是 main 的直接延续,可 `--ff-only`
+
+### 同步的 1 笔
+- `400508a` docs(session-log): 09-28 §23 sync ww 到 main
+
+### 操作
+```bash
+git checkout main
+git merge --ff-only ww    # main 跳到 400508a
+git push origin main
+```
+
+### 收工快照(预计)
+- HEAD(main):`400508a`
+- HEAD(ww):`400508a`
+- origin/main:push 后同步
+- working tree:clean
