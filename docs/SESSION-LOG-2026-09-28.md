@@ -482,3 +482,32 @@ git checkout ww
 - origin/main:`237fa44`(已同步)
 - 今日 commit 笔数:**5**(§11 reset 1 + §12 1 + §13 amend 1 + §14 commit 1 + merge commit 1;按"合并时 reset 不算 commit"算 4)
 - 工作区:clean(已切回 ww 后再 revert 任何残留)
+
+---
+
+## §15 17:00 — 修首页1 闯荡江湖按钮坐标 + 注释同步
+
+**用户反馈**:改了 `Home1Screen.kt` 闯荡江湖按钮的 x/y 数值,提示"注意首页1 的代码与注释"。
+
+### 改动(2 处,同文件)
+| 行 | 类型 | 旧 | 新 |
+|---|---|---|---|
+| 370 | 代码 | `x = 286.dp, y = 227.dp` | `x = 285.dp, y = 150.dp` |
+| 361 | 注释 | `X286 Y227` | `X285 Y150` |
+
+### 检查流程
+1. `git status` → 发现 Home1Screen.kt modified(1 行)
+2. `git diff` → 看到代码改了 286/227 → 285/150
+3. `Read` 第 340-385 行 → 注释第 361 行仍是 X286 Y227(代码注释脱节)
+4. 用户确认 → 同步改注释
+
+### 备注
+- 改动语义:仅 1 个 DecorButton 坐标微调(286→285, 227→150)
+- 注释同步策略:用户原话"X286 Y227"是 §5 时代的指令凭据,本次调试改坐标后同步,免得未来回看时"代码与文档打架"
+- 未 commit,等用户说 commit
+
+### 收工快照(预计)
+- 今日 commit 笔数:**+1 → 6**(本笔 fix home1)
+- HEAD(ww):本笔 fix(home1) commit(amend 后 SHA 见 git log;**日志不再硬编码 SHA 以避免 amend 循环**)
+- 工作区:本笔 commit 后 clean
+- origin/ww:落后 1(之前 push 后本笔未 push)

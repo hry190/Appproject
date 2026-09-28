@@ -358,7 +358,7 @@ fun Home1Screen(
         )
 
         // 闯荡江湖 (未标题-151.png → img_home1_btn5.png)— 2026-09-19 §5 第五个主入口
-        //   用户指令:图像放 X286 Y227;尺寸与其它四个入口一致(55×90);文字"闯荡江湖"字号 14。
+        //   用户指令:图像放 X285 Y150;尺寸与其它四个入口一致(55×90);文字"闯荡江湖"字号 14。
         //   字重与颜色:按后续指令"与其它四个入口统一" —— **两者都不再覆盖**,
         //         沿用 DecorButton 默认值,与另外四个入口同源,不会再出现偏差。
         //         · 字重 SemiBold —— 家族只注册 400/500/700,按 Compose 的 FontMatcher 规则
@@ -367,7 +367,7 @@ fun Home1Screen(
         DecorButton(
             imageRes = R.drawable.img_home1_btn5,
             text = "闯荡江湖",
-            x = 286.dp, y = 227.dp,
+            x = 285.dp, y = 150.dp,
             width = 55.dp, height = 90.dp,
             entranceAlpha = chuangdangEntrance.alpha.value,
             entranceTranslationY = chuangdangEntrance.translationY(quickActionsOffsetPx),
