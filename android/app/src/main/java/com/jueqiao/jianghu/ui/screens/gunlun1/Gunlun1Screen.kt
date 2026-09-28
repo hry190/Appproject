@@ -174,10 +174,9 @@ launch {
                 entranceAlpha = entrancesAlpha.value,
                 entranceTranslationY = entranceTranslationY,
                 entranceEnabled = entrancesEnabled,
-                // 未获得或尚未确认状态时留在原场景，避免进入空白悟书环。
-                onClick = {
-                    if (hasAcquiredManual == true) onOpenWushuhuan()
-                },
+                // 允许无秘籍状态下点修炼(原条件 `hasAcquiredManual == true` 太严,
+                // learningOverview==null 时按钮无响应,且无秘籍用户无法进入 Wushuhuan 看任何内容)。
+                onClick = { onOpenWushuhuan() },
             )
             GunlunEntryLabel(
                 text = "修炼",
