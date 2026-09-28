@@ -155,7 +155,7 @@ launch {
                 GunlunEmptyManualGuide(
                     modifier = Modifier
                         .offset(x = 23.dp * positionScale, y = 324.dp * positionScale)
-                        .size(width = 148.dp, height = 84.dp),
+                        .size(width = 188.dp, height = 134.dp),
                 )
             }
 

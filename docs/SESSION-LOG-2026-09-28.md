@@ -511,3 +511,36 @@ git checkout ww
 - HEAD(ww):本笔 fix(home1) commit(amend 后 SHA 见 git log;**日志不再硬编码 SHA 以避免 amend 循环**)
 - 工作区:本笔 commit 后 clean
 - origin/ww:落后 1(之前 push 后本笔未 push)
+
+---
+
+## §16 19:00 — 滚轮1 气泡尺寸 148×84 → 188×134(用户改后未 commit)
+
+**用户反馈**:"似乎没有更改成功" — 滚轮1 页面气泡尺寸改动在 working tree 没 commit,所以 Android App 看不到。
+
+### 改动(单文件,1 行)
+- 文件:`android/app/src/main/java/com/jueqiao/jianghu/ui/screens/gunlun1/Gunlun1Screen.kt`
+- 行 158:`.size(width = 148.dp, height = 84.dp)` → `.size(width = 188.dp, height = 134.dp)`
+
+### 根因
+3 个环节都断了(用户只做了第 1 步):
+| 步骤 | 状态 |
+|---|---|
+| 文件改动保存到 working tree | ✅ |
+| git commit | ❌ |
+| push origin/ww | ❌ |
+| rebuild & install APK | ❌(Android 必须重新编译安装才能看到) |
+
+### 检查流程
+1. `git status` → 发现 `Gunlun1Screen.kt` modified + `docs/screenshots/` untracked
+2. `git diff` → 看到 line 158 的 size 改动
+3. Read line 153-160 → 上下文一致,只改 size,没动 offset
+
+### 备注
+- `docs/screenshots/`(4 张诊断截图)untracked,本笔不一起入 commit(纯诊断产物,不入历史)
+- 后续必须 rebuild & install 才能在手机看到效果
+
+### 收工快照(预计)
+- 今日 commit 笔数:**+1 → 7**
+- HEAD(ww):本笔 commit(见 git log)
+- origin/ww:本笔 push 后同步
