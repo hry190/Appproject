@@ -733,3 +733,31 @@ IDE 删了 12 行 import,分布在 12 个文件:
 - 今日 commit 笔数:**+1 → 11**
 - HEAD(ww):本笔 chore commit(见 git log)
 - working tree:commit 后 clean
+
+---
+
+## §22 22:00 — fast-forward main 到 ww(2 笔代码 cleanup + fix)
+
+**用户指令**:"推到 main"
+
+### 拓扑
+- main HEAD:`57a6bea`
+- ww HEAD:`97fa8f6`
+- merge-base:`57a6bea`(= main HEAD)
+- 结论:可 `--ff-only`
+
+### 同步的 2 笔
+| SHA | 说明 |
+|---|---|
+| `97fa8f6` | chore(android): IDE Optimize Imports 二次清理 12 行 unused |
+| `b32660b` | fix(android): 恢复 §19 cleanup 误删的 5 个 import + KDoc 漂移修复 |
+
+### 待办(留给用户)
+- `Houshan2Screen.kt:206` 的 `startDollyIn` —— IDE 标 unused,但代码注释(§13)说明是"模板,保留未调用",等用户决定删除/保留/下划线
+- Android Studio Inspect Code 还有 1836 项警告(常规 12 错误 / Kotlin 466 等),未逐项处理
+
+### 收工快照(预计)
+- HEAD(main):`97fa8f6`
+- HEAD(ww):`97fa8f6`
+- origin/main:push 后同步
+- working tree:clean
