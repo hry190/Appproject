@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
 import com.jueqiao.jianghu.auth.AuthOperation
-import com.jueqiao.jianghu.auth.VerificationPurpose
 import com.jueqiao.jianghu.data.Validators
 import com.jueqiao.jianghu.ui.components.AuthAssetIcon
 import com.jueqiao.jianghu.ui.components.AuthFeedbackKind

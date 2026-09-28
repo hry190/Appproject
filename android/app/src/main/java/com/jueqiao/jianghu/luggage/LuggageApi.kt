@@ -7,7 +7,6 @@ import com.jueqiao.jianghu.auth.ApiErrorEnvelope
 import com.jueqiao.jianghu.auth.AuthApiException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import okhttp3.ConnectionPool
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

@@ -43,7 +43,6 @@ import com.jueqiao.jianghu.ui.components.AnimatedCloudImage
 import com.jueqiao.jianghu.ui.components.CloudMotion
 import com.jueqiao.jianghu.ui.components.CloudTintCool
 import com.jueqiao.jianghu.ui.components.FocusCloudBand
-import com.jueqiao.jianghu.ui.components.HoushanMistLayer
 import com.jueqiao.jianghu.ui.components.rememberCloudProgress
 import com.jueqiao.jianghu.ui.theme.YaHei
 import kotlinx.coroutines.delay

@@ -81,7 +81,6 @@ import com.jueqiao.jianghu.ui.screens.register.RegisterScreen
 import com.jueqiao.jianghu.ui.screens.splash.SplashScreen
 import com.jueqiao.jianghu.ui.screens.xiulian.XiulianScreen
 import com.jueqiao.jianghu.ui.screens.gunlun1.Gunlun1Screen
-import com.jueqiao.jianghu.ui.screens.gunlun2.Gunlun2Screen
 import com.jueqiao.jianghu.ui.screens.gunlun3.Gunlun3Screen
 import com.jueqiao.jianghu.ui.screens.gunlun4.Gunlun4Screen
 import com.jueqiao.jianghu.ui.screens.gunlun5.Gunlun5Screen
@@ -109,11 +108,6 @@ import com.jueqiao.jianghu.ui.screens.houshan10.Houshan10Actions          // 202
 import com.jueqiao.jianghu.ui.screens.houshan10.Houshan10Screen           // 2026-09-19 §2 新增
 import com.jueqiao.jianghu.ui.screens.houshan11.Houshan11Actions          // 2026-09-19 §3 新增
 import com.jueqiao.jianghu.ui.screens.houshan11.Houshan11Screen           // 2026-09-19 §3 新增
-import com.jueqiao.jianghu.ui.screens.learning.LearningScreen
-import com.jueqiao.jianghu.ui.screens.learning2.Learning2Screen
-import com.jueqiao.jianghu.ui.screens.learning3.Learning3Screen
-import com.jueqiao.jianghu.ui.screens.learning4.Learning4Screen
-import com.jueqiao.jianghu.ui.screens.pendingunlock.PendingUnlockScreen
 import com.jueqiao.jianghu.ui.screens.gunlun8.Gunlun8Screen
 import com.jueqiao.jianghu.ui.screens.gunlun9.Gunlun9Screen
 import com.jueqiao.jianghu.ui.screens.gunlun10.Gunlun10Screen
