@@ -14,10 +14,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +36,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -100,7 +107,7 @@ private const val FOCAL_Y = 0.48f
  *    → `Houshan2Actions` 的 4 个 `onOpenVolume*` 字段**保留**(等用户给新映射表后重设;届时只需恢复
  *      本文件的 `onClick` + `JianghuNavHost` 的回调两处)。
  *    → **取消前的映射(留档,供重设参考)**:识机真决 → 卷1 · 拆招心法 → 卷2 · 万象谱 → 卷3 · 寻径迷踪步 → 卷4
- *    → 4 个标签写法统一为:`​.clickable(enabled = !isTransitioning, onClick = {})`
+ *    → 4 个标签写法统一为:`.clickable(enabled = !isTransitioning, onClick = {})`
  *   - 左上角返回按钮 (Return.png, X=30, Y=60, W=18, H=18)
  *
  * 删除元素(§18,部分保留):
@@ -160,6 +167,7 @@ fun Houshan2Screen(
     //   目标 = 竖排栈 6 个的平均速度 **75.9 dp/s**(栈内 52~114);
     //   摆动模式 平均速度 = 4A/T,单向模式 = (屏宽+元素宽)/T。
     //   结果:58 4.7s→76.6、61 9.7s→77.1、56 3.7s→75.7、57 8.2s→75.4、60 4.9s→73.5、60b 10.3s→72.6 dp/s
+    //   —— 全部落在 76±5% 内;且 47/97/37/82/49/103(×10ms)两两互质,不会规律性同步。
     // 白色脉冲关闭(老云是画好的水彩云,不再叠白光)。
     val o58Progress = rememberCloudProgress(4_700, "old58")
     val o61Progress = rememberCloudProgress(9_700, "old61")
@@ -604,8 +612,8 @@ fun Houshan2Screen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.img_shilian_return),
-                    contentDescription = "返回",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.FillBounds,
                 )
             }

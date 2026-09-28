@@ -15,6 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jueqiao.jianghu.R
@@ -82,7 +87,7 @@ fun PendingUnlockScreen(
         // 熊猫图像 image 307.png(X=-7, Y=563, W=250, H=330)
         Image(
             painter = painterResource(R.drawable.img_unfinished_image307),
-            contentDescription = "熊猫",
+            contentDescription = null,
             modifier = Modifier
                 .offset(x = (-7).dp, y = 560.dp)
                 .size(width = 250.dp, height = 330.dp),
@@ -97,8 +102,7 @@ fun PendingUnlockScreen(
             contentDescription = "待解锁",
             modifier = Modifier
                 .offset(x = 158.dp, y = 150.dp)
-                .size(width = 96.dp, height = 338.dp)
-                .clickable(onClick = onOpenGunlun1),
+                .size(width = 96.dp, height = 338.dp),
             contentScale = ContentScale.FillBounds,
         )
 
@@ -106,28 +110,29 @@ fun PendingUnlockScreen(
         // Y=725–783 在书框 Y=40–824 范围内;与熊猫(Y=560–890)在 X=222–243 范围 Y=725–783 重叠,
         // 写在熊猫之后 → 视觉上覆盖熊猫右下角。
         // 图像 + 文本各自 clickable,两个目标区域都触发 onOpenGunlun1。
-        Image(
-            painter = painterResource(R.drawable.img_pendingunlock_button),
-            contentDescription = "前往解锁按钮",
+        Box(
             modifier = Modifier
                 .offset(x = 222.dp, y = 725.dp)
                 .size(width = 160.dp, height = 58.dp)
+                .semantics {
+                    contentDescription = "前往后山解锁秘籍"
+                    role = Role.Button
+                }
                 .clickable(onClick = onOpenGunlun1),
-            contentScale = ContentScale.FillBounds,
-        )
-
-        // "前往解锁"文本(字号 16,色 #605718,X=265, Y=738, W=81, H=21)— 点击也跳滚轮1。
-        // Y=738–759 在按钮(Y=725–783)Y 范围内 → 视觉上叠在按钮上;
-        // X=265–346 在按钮(X=222–382)X 范围内 → 居中。
-        Text(
-            text = "前往解锁",
-            color = Color(0xFF605718),
-            fontSize = 16.sp,
-            fontFamily = YaHei,
-            modifier = Modifier
-                .offset(x = 265.dp, y = 738.dp)
-                .size(width = 81.dp, height = 21.dp)
-                .clickable(onClick = onOpenGunlun1),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_pendingunlock_button),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+            Text(
+                text = "前往解锁",
+                color = Color(0xFF605718),
+                fontSize = 16.sp,
+                fontFamily = YaHei,
+            )
+        }
     }
 }

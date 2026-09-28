@@ -39,7 +39,7 @@ def register(client: TestClient, phone: str) -> tuple[dict[str, str], str]:
             "verification_code": "123456",
             "password": "StrongPass!8",
             "age_band": "AGE_14_TO_17",
-            "terms_version": "2026-08",
+            "terms_version": "2026-09-r2",
             "privacy_version": "2026-08",
         },
     )

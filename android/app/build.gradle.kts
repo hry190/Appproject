@@ -12,7 +12,7 @@ val localProps = Properties().apply {
     if (f.exists()) load(f.inputStream())
 }
 val authBaseUrl: String = localProps.getProperty("AUTH_BASE_URL", "http://127.0.0.1:8010/")
-val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-08")
+val termsVersion: String = localProps.getProperty("TERMS_VERSION", "2026-09-r2")
 val privacyVersion: String = localProps.getProperty("PRIVACY_VERSION", "2026-08")
 
 fun String.asBuildConfigString(): String = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""

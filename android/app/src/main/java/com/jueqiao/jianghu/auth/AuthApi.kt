@@ -53,14 +53,6 @@ class AuthApi(
         responseType = AuthResponseDto::class.java,
     )
 
-    suspend fun verifyGuardianConsent(
-        request: GuardianConsentRequest,
-    ): GuardianConsentResponse = post(
-        path = "/v1/auth/guardian-consents/verify",
-        payload = request,
-        responseType = GuardianConsentResponse::class.java,
-    )
-
     suspend fun resetPassword(request: PasswordResetRequest): PasswordResetResponse = post(
         path = "/v1/auth/password/reset",
         payload = request,

@@ -52,16 +52,6 @@
             "title": "Generated At",
             "type": "string"
           },
-          "guardian_controls": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/GuardianControlsPublic"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "media_assets": {
             "items": {
               "additionalProperties": true,
@@ -94,7 +84,6 @@
           "generated_at",
           "user",
           "preferences",
-          "guardian_controls",
           "consents",
           "active_sessions",
           "creation_intents",
@@ -336,84 +325,22 @@
         "title": "CapabilitiesPublic",
         "type": "object"
       },
-      "ClassroomCreate": {
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "maxLength": 80,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
+      "ConferenceCategory": {
+        "enum": [
+          "ART",
+          "SCIENCE",
+          "MATH",
+          "LANGUAGE"
         ],
-        "title": "ClassroomCreate",
-        "type": "object"
+        "title": "ConferenceCategory",
+        "type": "string"
       },
-      "ClassroomCreatedPublic": {
-        "additionalProperties": false,
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "join_code": {
-            "title": "Join Code",
-            "type": "string"
-          },
-          "member_count": {
-            "default": 0,
-            "title": "Member Count",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "role": {
-            "$ref": "#/components/schemas/ClassroomRole",
-            "default": "OWNER"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "join_code",
-          "created_at"
-        ],
-        "title": "ClassroomCreatedPublic",
-        "type": "object"
-      },
-      "ClassroomJoin": {
-        "additionalProperties": false,
-        "properties": {
-          "join_code": {
-            "maxLength": 12,
-            "minLength": 6,
-            "title": "Join Code",
-            "type": "string"
-          }
-        },
-        "required": [
-          "join_code"
-        ],
-        "title": "ClassroomJoin",
-        "type": "object"
-      },
-      "ClassroomListPublic": {
+      "ConferenceCategorySuggestionListPublic": {
         "additionalProperties": false,
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ClassroomPublic"
+              "$ref": "#/components/schemas/ConferenceCategorySuggestionPublic"
             },
             "title": "Items",
             "type": "array"
@@ -422,74 +349,33 @@
         "required": [
           "items"
         ],
-        "title": "ClassroomListPublic",
+        "title": "ConferenceCategorySuggestionListPublic",
         "type": "object"
       },
-      "ClassroomPublic": {
+      "ConferenceCategorySuggestionPublic": {
         "additionalProperties": false,
         "properties": {
-          "can_submit": {
-            "title": "Can Submit",
-            "type": "boolean"
+          "category": {
+            "$ref": "#/components/schemas/ConferenceCategory"
           },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "joined_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Joined At"
-          },
-          "member_count": {
+          "confidence": {
+            "maximum": 1.0,
             "minimum": 0.0,
-            "title": "Member Count",
-            "type": "integer"
+            "title": "Confidence",
+            "type": "number"
           },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "role": {
-            "$ref": "#/components/schemas/ClassroomRole"
-          },
-          "teacher_nickname": {
-            "title": "Teacher Nickname",
+          "reason": {
+            "title": "Reason",
             "type": "string"
           }
         },
         "required": [
-          "id",
-          "name",
-          "role",
-          "teacher_nickname",
-          "member_count",
-          "can_submit",
-          "created_at"
+          "category",
+          "confidence",
+          "reason"
         ],
-        "title": "ClassroomPublic",
+        "title": "ConferenceCategorySuggestionPublic",
         "type": "object"
-      },
-      "ClassroomRole": {
-        "enum": [
-          "OWNER",
-          "MEMBER"
-        ],
-        "title": "ClassroomRole",
-        "type": "string"
       },
       "ConferenceCollectionListPublic": {
         "additionalProperties": false,
@@ -882,6 +768,27 @@
         "title": "ConferenceLetterPublic",
         "type": "object"
       },
+      "ConferenceLikePublic": {
+        "additionalProperties": false,
+        "properties": {
+          "liked_at": {
+            "format": "date-time",
+            "title": "Liked At",
+            "type": "string"
+          },
+          "publication_id": {
+            "format": "uuid",
+            "title": "Publication Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "publication_id",
+          "liked_at"
+        ],
+        "title": "ConferenceLikePublic",
+        "type": "object"
+      },
       "ConferenceMatchAnswerCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1213,6 +1120,15 @@
         "title": "ConferenceMatchEvaluationPublic",
         "type": "object"
       },
+      "ConferenceMatchHistoryOutcome": {
+        "enum": [
+          "WIN",
+          "LOSE",
+          "TIE"
+        ],
+        "title": "ConferenceMatchHistoryOutcome",
+        "type": "string"
+      },
       "ConferenceMatchJoin": {
         "additionalProperties": false,
         "properties": {
@@ -1415,6 +1331,44 @@
         "title": "ConferenceMatchJudgmentQueuePublic",
         "type": "object"
       },
+      "ConferenceMatchJudgmentStatus": {
+        "enum": [
+          "PENDING",
+          "COMPLETED",
+          "NOT_REQUIRED"
+        ],
+        "title": "ConferenceMatchJudgmentStatus",
+        "type": "string"
+      },
+      "ConferenceMatchOpponentPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "age_band_label": {
+            "title": "Age Band Label",
+            "type": "string"
+          },
+          "alias": {
+            "title": "Alias",
+            "type": "string"
+          },
+          "avatar_key": {
+            "title": "Avatar Key",
+            "type": "string"
+          },
+          "stage_label": {
+            "title": "Stage Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alias",
+          "avatar_key",
+          "age_band_label",
+          "stage_label"
+        ],
+        "title": "ConferenceMatchOpponentPublic",
+        "type": "object"
+      },
       "ConferenceMatchOutcome": {
         "enum": [
           "PENDING",
@@ -1534,9 +1488,29 @@
         "title": "ConferenceMatchQuestionPublic",
         "type": "object"
       },
+      "ConferenceMatchQueuePhase": {
+        "enum": [
+          "IDLE",
+          "JOINED",
+          "FILTERING",
+          "LOCKED"
+        ],
+        "title": "ConferenceMatchQueuePhase",
+        "type": "string"
+      },
       "ConferenceMatchQueuePublic": {
         "additionalProperties": false,
         "properties": {
+          "anonymous_opponent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConferenceMatchOpponentPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "expires_at": {
             "anyOf": [
               {
@@ -1573,6 +1547,39 @@
             ],
             "title": "Manual Page Id"
           },
+          "manual_page_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Page No"
+          },
+          "manual_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Title"
+          },
+          "match_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Code"
+          },
           "match_id": {
             "anyOf": [
               {
@@ -1585,6 +1592,14 @@
             ],
             "title": "Match Id"
           },
+          "phase": {
+            "$ref": "#/components/schemas/ConferenceMatchQueuePhase"
+          },
+          "pool_size": {
+            "minimum": 0.0,
+            "title": "Pool Size",
+            "type": "integer"
+          },
           "queue_id": {
             "anyOf": [
               {
@@ -1596,6 +1611,11 @@
               }
             ],
             "title": "Queue Id"
+          },
+          "server_time": {
+            "format": "date-time",
+            "title": "Server Time",
+            "type": "string"
           },
           "status": {
             "$ref": "#/components/schemas/ConferenceMatchQueueState"
@@ -1611,13 +1631,26 @@
               }
             ],
             "title": "Updated At"
+          },
+          "wait_seconds": {
+            "minimum": 0.0,
+            "title": "Wait Seconds",
+            "type": "integer"
           }
         },
         "required": [
           "queue_id",
           "status",
+          "phase",
           "manual_page_id",
+          "manual_title",
+          "manual_page_no",
           "match_id",
+          "match_code",
+          "pool_size",
+          "wait_seconds",
+          "server_time",
+          "anonymous_opponent",
           "joined_at",
           "expires_at",
           "updated_at"
@@ -1634,6 +1667,178 @@
         ],
         "title": "ConferenceMatchQueueState",
         "type": "string"
+      },
+      "ConferenceMatchRecordListPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConferenceMatchRecordPublic"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ConferenceMatchRecordSummaryPublic"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "summary",
+          "page",
+          "limit",
+          "total",
+          "has_more"
+        ],
+        "title": "ConferenceMatchRecordListPublic",
+        "type": "object"
+      },
+      "ConferenceMatchRecordPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "anonymous_opponent": {
+            "$ref": "#/components/schemas/ConferenceMatchOpponentPublic"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "judgment_status": {
+            "$ref": "#/components/schemas/ConferenceMatchJudgmentStatus"
+          },
+          "manual_id": {
+            "format": "uuid",
+            "title": "Manual Id",
+            "type": "string"
+          },
+          "manual_page_no": {
+            "title": "Manual Page No",
+            "type": "integer"
+          },
+          "manual_title": {
+            "title": "Manual Title",
+            "type": "string"
+          },
+          "match_id": {
+            "format": "uuid",
+            "title": "Match Id",
+            "type": "string"
+          },
+          "my_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Score"
+          },
+          "opponent_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opponent Score"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ConferenceMatchOutcome"
+          },
+          "reflection_status": {
+            "$ref": "#/components/schemas/ConferenceMatchReflectionStatus"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConferenceMatchStatus"
+          }
+        },
+        "required": [
+          "match_id",
+          "manual_id",
+          "manual_title",
+          "manual_page_no",
+          "status",
+          "outcome",
+          "my_score",
+          "opponent_score",
+          "anonymous_opponent",
+          "judgment_status",
+          "reflection_status",
+          "created_at",
+          "ended_at"
+        ],
+        "title": "ConferenceMatchRecordPublic",
+        "type": "object"
+      },
+      "ConferenceMatchRecordSummaryPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "pending_reflections": {
+            "minimum": 0.0,
+            "title": "Pending Reflections",
+            "type": "integer"
+          },
+          "ties": {
+            "minimum": 0.0,
+            "title": "Ties",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "wins": {
+            "minimum": 0.0,
+            "title": "Wins",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "wins",
+          "ties",
+          "pending_reflections"
+        ],
+        "title": "ConferenceMatchRecordSummaryPublic",
+        "type": "object"
       },
       "ConferenceMatchReflectionCreate": {
         "additionalProperties": false,
@@ -1694,6 +1899,14 @@
         ],
         "title": "ConferenceMatchReflectionPublic",
         "type": "object"
+      },
+      "ConferenceMatchReflectionStatus": {
+        "enum": [
+          "PENDING",
+          "COMPLETED"
+        ],
+        "title": "ConferenceMatchReflectionStatus",
+        "type": "string"
       },
       "ConferenceMatchReportCreate": {
         "additionalProperties": false,
@@ -2619,15 +2832,6 @@
         "title": "ConsentRecordPublic",
         "type": "object"
       },
-      "ContentLevel": {
-        "enum": [
-          "CHILD",
-          "TEEN",
-          "STANDARD"
-        ],
-        "title": "ContentLevel",
-        "type": "string"
-      },
       "CreationChangeAction": {
         "enum": [
           "PROJECT_CREATED",
@@ -2647,7 +2851,11 @@
           "IMAGE_GENERATION_FAILED",
           "EXPORT_REQUESTED",
           "EXPORT_COMPLETED",
-          "EXPORT_FAILED"
+          "EXPORT_FAILED",
+          "CONVERSATION_STARTED",
+          "CONVERSATION_MESSAGE_ADDED",
+          "CONVERSATION_SUGGESTION_ACCEPTED",
+          "CONVERSATION_RESULT_SAVED"
         ],
         "title": "CreationChangeAction",
         "type": "string"
@@ -2717,6 +2925,375 @@
         ],
         "title": "CreationChangeLogPublic",
         "type": "object"
+      },
+      "CreationConversationGenerate": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "user_confirmed_generation": {
+            "title": "User Confirmed Generation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "user_confirmed_generation"
+        ],
+        "title": "CreationConversationGenerate",
+        "type": "object"
+      },
+      "CreationConversationGenerationPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/CreationConversationPublic"
+          },
+          "generation": {
+            "$ref": "#/components/schemas/ImageGenerationJobPublic"
+          }
+        },
+        "required": [
+          "conversation",
+          "generation"
+        ],
+        "title": "CreationConversationGenerationPublic",
+        "type": "object"
+      },
+      "CreationConversationMessageCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 1000,
+            "minLength": 2,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "CreationConversationMessageCreate",
+        "type": "object"
+      },
+      "CreationConversationMessageKind": {
+        "enum": [
+          "IDEA",
+          "MESSAGE",
+          "SUGGESTION"
+        ],
+        "title": "CreationConversationMessageKind",
+        "type": "string"
+      },
+      "CreationConversationMessagePublic": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/CreationSuggestionDecision"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "in_reply_to_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Reply To Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CreationConversationMessageKind"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/CreationConversationRole"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "role",
+          "kind",
+          "content",
+          "decision",
+          "in_reply_to_id",
+          "created_at"
+        ],
+        "title": "CreationConversationMessagePublic",
+        "type": "object"
+      },
+      "CreationConversationPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "active_generation_job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Generation Job Id"
+          },
+          "attachment_asset_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Attachment Asset Ids",
+            "type": "array"
+          },
+          "attachment_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attachment Names",
+            "type": "array"
+          },
+          "derivative_source_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derivative Source Title"
+          },
+          "draft_version_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Draft Version Ids",
+            "type": "array"
+          },
+          "initial_idea": {
+            "title": "Initial Idea",
+            "type": "string"
+          },
+          "manual_page_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Manual Page Ids",
+            "type": "array"
+          },
+          "manual_titles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Manual Titles",
+            "type": "array"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/CreationConversationMessagePublic"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "plan_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Summary"
+          },
+          "project": {
+            "$ref": "#/components/schemas/CreationProjectPublic"
+          },
+          "result_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Version Id"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "saved_version_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Saved Version Ids",
+            "type": "array"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreationConversationStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project",
+          "status",
+          "initial_idea",
+          "attachment_asset_ids",
+          "attachment_names",
+          "manual_page_ids",
+          "manual_titles",
+          "derivative_source_title",
+          "plan_summary",
+          "messages",
+          "draft_version_ids",
+          "saved_version_ids",
+          "active_generation_job_id",
+          "result_version_id",
+          "row_version",
+          "started_at",
+          "updated_at"
+        ],
+        "title": "CreationConversationPublic",
+        "type": "object"
+      },
+      "CreationConversationResultAction": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "CreationConversationResultAction",
+        "type": "object"
+      },
+      "CreationConversationRole": {
+        "enum": [
+          "STUDENT",
+          "COACH"
+        ],
+        "title": "CreationConversationRole",
+        "type": "string"
+      },
+      "CreationConversationStart": {
+        "additionalProperties": false,
+        "properties": {
+          "attachment_asset_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Attachment Asset Ids",
+            "type": "array"
+          },
+          "derivative_authorization_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derivative Authorization Id"
+          },
+          "idea": {
+            "maxLength": 500,
+            "minLength": 2,
+            "title": "Idea",
+            "type": "string"
+          },
+          "manual_page_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Manual Page Ids",
+            "type": "array"
+          },
+          "resource_links": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Resource Links",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "idea"
+        ],
+        "title": "CreationConversationStart",
+        "type": "object"
+      },
+      "CreationConversationStatus": {
+        "enum": [
+          "DIALOGUE",
+          "GENERATING",
+          "RESULT_READY",
+          "SAVED",
+          "GENERATION_FAILED"
+        ],
+        "title": "CreationConversationStatus",
+        "type": "string"
       },
       "CreationDisplayStatus": {
         "enum": [
@@ -3086,7 +3663,8 @@
         "enum": [
           "ILLUSTRATION",
           "COMIC",
-          "MIXED_MEDIA"
+          "MIXED_MEDIA",
+          "VIDEO"
         ],
         "title": "CreationMediaType",
         "type": "string"
@@ -3696,12 +4274,26 @@
         "additionalProperties": false,
         "properties": {
           "contact_privacy_confirmed": {
-            "title": "Contact Privacy Confirmed",
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Privacy Confirmed"
           },
           "identity_privacy_confirmed": {
-            "title": "Identity Privacy Confirmed",
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Privacy Confirmed"
           },
           "learning_reflection": {
             "maxLength": 3000,
@@ -3714,8 +4306,15 @@
             "type": "string"
           },
           "portrait_rights_confirmed": {
-            "title": "Portrait Rights Confirmed",
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portrait Rights Confirmed"
           },
           "row_version": {
             "anyOf": [
@@ -3738,10 +4337,7 @@
         "required": [
           "work_description",
           "learning_reflection",
-          "next_improvement",
-          "identity_privacy_confirmed",
-          "contact_privacy_confirmed",
-          "portrait_rights_confirmed"
+          "next_improvement"
         ],
         "title": "CreationSealCheckPut",
         "type": "object"
@@ -3885,6 +4481,16 @@
       "CreationSubmissionCreate": {
         "additionalProperties": false,
         "properties": {
+          "conference_category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConferenceCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "creation_version_id": {
             "format": "uuid",
             "title": "Creation Version Id",
@@ -3918,6 +4524,16 @@
         ],
         "title": "CreationSubmissionCreate",
         "type": "object"
+      },
+      "CreationSuggestionDecision": {
+        "enum": [
+          "NONE",
+          "PENDING",
+          "ACCEPTED",
+          "REPLACED"
+        ],
+        "title": "CreationSuggestionDecision",
+        "type": "string"
       },
       "CreationTestFindingInput": {
         "additionalProperties": false,
@@ -5054,154 +5670,6 @@
           "created_at"
         ],
         "title": "FeedbackPublic",
-        "type": "object"
-      },
-      "GuardianConsentRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "child_phone": {
-            "maxLength": 16,
-            "minLength": 11,
-            "title": "Child Phone",
-            "type": "string"
-          },
-          "guardian_phone": {
-            "maxLength": 16,
-            "minLength": 11,
-            "title": "Guardian Phone",
-            "type": "string"
-          },
-          "privacy_version": {
-            "maxLength": 32,
-            "minLength": 1,
-            "title": "Privacy Version",
-            "type": "string"
-          },
-          "terms_version": {
-            "maxLength": 32,
-            "minLength": 1,
-            "title": "Terms Version",
-            "type": "string"
-          },
-          "verification_code": {
-            "pattern": "^\\d{6}$",
-            "title": "Verification Code",
-            "type": "string"
-          }
-        },
-        "required": [
-          "child_phone",
-          "guardian_phone",
-          "verification_code",
-          "terms_version",
-          "privacy_version"
-        ],
-        "title": "GuardianConsentRequest",
-        "type": "object"
-      },
-      "GuardianConsentResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "expires_in": {
-            "title": "Expires In",
-            "type": "integer"
-          },
-          "guardian_consent_token": {
-            "title": "Guardian Consent Token",
-            "type": "string"
-          }
-        },
-        "required": [
-          "guardian_consent_token",
-          "expires_in"
-        ],
-        "title": "GuardianConsentResponse",
-        "type": "object"
-      },
-      "GuardianControlsPatch": {
-        "additionalProperties": false,
-        "properties": {
-          "content_level": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ContentLevel"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "creation_allowed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Creation Allowed"
-          },
-          "daily_limit_minutes": {
-            "anyOf": [
-              {
-                "maximum": 240.0,
-                "minimum": 15.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Daily Limit Minutes"
-          },
-          "minor_mode": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Minor Mode"
-          }
-        },
-        "title": "GuardianControlsPatch",
-        "type": "object"
-      },
-      "GuardianControlsPublic": {
-        "additionalProperties": false,
-        "properties": {
-          "content_level": {
-            "$ref": "#/components/schemas/ContentLevel"
-          },
-          "creation_allowed": {
-            "title": "Creation Allowed",
-            "type": "boolean"
-          },
-          "daily_limit_minutes": {
-            "title": "Daily Limit Minutes",
-            "type": "integer"
-          },
-          "minor_mode": {
-            "title": "Minor Mode",
-            "type": "boolean"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "daily_limit_minutes",
-          "creation_allowed",
-          "content_level",
-          "minor_mode",
-          "updated_at"
-        ],
-        "title": "GuardianControlsPublic",
         "type": "object"
       },
       "GuardianStatus": {
@@ -7210,6 +7678,17 @@
             "title": "Derivatives",
             "type": "array"
           },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
           "height": {
             "anyOf": [
               {
@@ -7328,6 +7807,7 @@
           "sha256",
           "width",
           "height",
+          "duration_ms",
           "metadata_stripped",
           "aigc_detected",
           "rejection_code",
@@ -8976,6 +9456,33 @@
             ],
             "title": "Classroom Name"
           },
+          "co_create_request_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Co Create Request Status"
+          },
+          "collection_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Collection Count",
+            "type": "integer"
+          },
+          "conference_category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConferenceCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "creation_version_id": {
             "format": "uuid",
             "title": "Creation Version Id",
@@ -8991,6 +9498,16 @@
               }
             ],
             "title": "Description"
+          },
+          "is_collected": {
+            "default": false,
+            "title": "Is Collected",
+            "type": "boolean"
+          },
+          "is_liked": {
+            "default": false,
+            "title": "Is Liked",
+            "type": "boolean"
           },
           "is_owner": {
             "title": "Is Owner",
@@ -9017,8 +9534,25 @@
             ],
             "title": "Learning Summary"
           },
+          "like_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Like Count",
+            "type": "integer"
+          },
           "media_type": {
             "$ref": "#/components/schemas/CreationMediaType"
+          },
+          "preview_duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Duration Ms"
           },
           "preview_height": {
             "anyOf": [
@@ -9108,6 +9642,12 @@
             "title": "Related Manuals",
             "type": "array"
           },
+          "review_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Review Count",
+            "type": "integer"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -9129,6 +9669,7 @@
           "description",
           "media_type",
           "visibility",
+          "conference_category",
           "channel",
           "classroom_id",
           "classroom_name",
@@ -9140,6 +9681,7 @@
           "preview_mime_type",
           "preview_width",
           "preview_height",
+          "preview_duration_ms",
           "preview_url_expires_at",
           "ai_assisted",
           "learning_summary",
@@ -9258,6 +9800,16 @@
             ],
             "title": "Classroom Id"
           },
+          "conference_category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConferenceCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "creation_version_id": {
             "format": "uuid",
             "title": "Creation Version Id",
@@ -9359,6 +9911,7 @@
           "creation_version_id",
           "status",
           "visibility",
+          "conference_category",
           "return_reason_code",
           "return_reason_summary",
           "submitted_at",
@@ -9470,19 +10023,6 @@
               }
             ],
             "title": "Device Name"
-          },
-          "guardian_consent_token": {
-            "anyOf": [
-              {
-                "maxLength": 2048,
-                "minLength": 32,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Guardian Consent Token"
           },
           "password": {
             "maxLength": 64,
@@ -10736,8 +11276,7 @@
       "VerificationPurpose": {
         "enum": [
           "REGISTER",
-          "RESET_PASSWORD",
-          "GUARDIAN_CONSENT"
+          "RESET_PASSWORD"
         ],
         "title": "VerificationPurpose",
         "type": "string"
@@ -10964,47 +11503,6 @@
         "summary": "Revoke Session",
         "tags": [
           "account"
-        ]
-      }
-    },
-    "/v1/auth/guardian-consents/verify": {
-      "post": {
-        "operationId": "verify_guardian_consent_v1_auth_guardian_consents_verify_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuardianConsentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuardianConsentResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Verify Guardian Consent",
-        "tags": [
-          "auth"
         ]
       }
     },
@@ -11296,98 +11794,6 @@
         "summary": "Request Verification Code",
         "tags": [
           "auth"
-        ]
-      }
-    },
-    "/v1/classrooms": {
-      "post": {
-        "operationId": "create_classroom_v1_classrooms_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassroomCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassroomCreatedPublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Create Classroom",
-        "tags": [
-          "distribution"
-        ]
-      }
-    },
-    "/v1/classrooms:join": {
-      "post": {
-        "operationId": "join_classroom_v1_classrooms_join_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassroomJoin"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassroomPublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Join Classroom",
-        "tags": [
-          "distribution"
         ]
       }
     },
@@ -11717,6 +12123,22 @@
               ],
               "title": "Cursor"
             }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConferenceCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
           }
         ],
         "responses": {
@@ -11850,6 +12272,93 @@
         ]
       }
     },
+    "/v1/conference/likes/{publication_id}": {
+      "delete": {
+        "operationId": "remove_conference_like_v1_conference_likes__publication_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Conference Like",
+        "tags": [
+          "conference"
+        ]
+      },
+      "put": {
+        "operationId": "add_conference_like_v1_conference_likes__publication_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConferenceLikePublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Conference Like",
+        "tags": [
+          "conference"
+        ]
+      }
+    },
     "/v1/conference/match-queue": {
       "delete": {
         "operationId": "exit_conference_match_queue_v1_conference_match_queue_delete",
@@ -11939,6 +12448,99 @@
           }
         ],
         "summary": "Join Conference Match Queue",
+        "tags": [
+          "conference"
+        ]
+      }
+    },
+    "/v1/conference/matches": {
+      "get": {
+        "operationId": "list_conference_match_records_v1_conference_matches_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConferenceMatchHistoryOutcome"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reflection_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConferenceMatchReflectionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reflection Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConferenceMatchRecordListPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Conference Match Records",
         "tags": [
           "conference"
         ]
@@ -12369,6 +12971,56 @@
         ]
       }
     },
+    "/v1/conference/me/works": {
+      "get": {
+        "operationId": "list_my_conference_works_v1_conference_me_works_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationFeedPagePublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List My Conference Works",
+        "tags": [
+          "conference"
+        ]
+      }
+    },
     "/v1/conference/publications/{publication_id}": {
       "get": {
         "operationId": "get_conference_work_v1_conference_publications__publication_id__get",
@@ -12704,6 +13356,66 @@
         "summary": "Report Conference Review",
         "tags": [
           "conference"
+        ]
+      }
+    },
+    "/v1/creation-conversations:start": {
+      "post": {
+        "operationId": "start_creation_conversation_v1_creation_conversations_start_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Creation Conversation",
+        "tags": [
+          "creations"
         ]
       }
     },
@@ -13066,6 +13778,474 @@
           }
         ],
         "summary": "List Change Logs",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conference-category-suggestions": {
+      "get": {
+        "operationId": "suggest_conference_categories_v1_creation_projects__project_id__conference_category_suggestions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConferenceCategorySuggestionListPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suggest Conference Categories",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation": {
+      "get": {
+        "operationId": "get_creation_conversation_v1_creation_projects__project_id__conversation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Creation Conversation",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation/messages": {
+      "post": {
+        "operationId": "add_creation_conversation_message_v1_creation_projects__project_id__conversation_messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationMessageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Creation Conversation Message",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation/suggestions/{message_id}:accept": {
+      "post": {
+        "operationId": "accept_creation_conversation_suggestion_v1_creation_projects__project_id__conversation_suggestions__message_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationResultAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accept Creation Conversation Suggestion",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation:generate": {
+      "post": {
+        "operationId": "generate_from_creation_conversation_v1_creation_projects__project_id__conversation_generate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 8,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationGenerate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationGenerationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate From Creation Conversation",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation:resume": {
+      "post": {
+        "operationId": "resume_creation_conversation_v1_creation_projects__project_id__conversation_resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Resume Creation Conversation",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation:return": {
+      "post": {
+        "operationId": "return_creation_conversation_v1_creation_projects__project_id__conversation_return_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationResultAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Return Creation Conversation",
+        "tags": [
+          "creations"
+        ]
+      }
+    },
+    "/v1/creation-projects/{project_id}/conversation:save-result": {
+      "post": {
+        "operationId": "save_creation_conversation_result_v1_creation_projects__project_id__conversation_save_result_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreationConversationResultAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreationConversationPublic"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Creation Conversation Result",
         "tags": [
           "creations"
         ]
@@ -16142,32 +17322,6 @@
         ]
       }
     },
-    "/v1/me/classrooms": {
-      "get": {
-        "operationId": "list_classrooms_v1_me_classrooms_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassroomListPublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "List Classrooms",
-        "tags": [
-          "distribution"
-        ]
-      }
-    },
     "/v1/me/creation-projects": {
       "get": {
         "operationId": "list_projects_v1_me_creation_projects_get",
@@ -16493,73 +17647,6 @@
         "summary": "Update Privacy Settings",
         "tags": [
           "privacy"
-        ]
-      }
-    },
-    "/v1/me/publication-inbox": {
-      "get": {
-        "operationId": "publication_inbox_v1_me_publication_inbox_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 300,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Cursor"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "maximum": 30,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublicationFeedPagePublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Publication Inbox",
-        "tags": [
-          "distribution"
         ]
       }
     },
@@ -17326,76 +18413,6 @@
           }
         ],
         "summary": "Remove From Blacklist",
-        "tags": [
-          "settings"
-        ]
-      }
-    },
-    "/v1/settings/guardian-controls": {
-      "get": {
-        "operationId": "get_guardian_controls_v1_settings_guardian_controls_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuardianControlsPublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get Guardian Controls",
-        "tags": [
-          "settings"
-        ]
-      },
-      "patch": {
-        "operationId": "update_guardian_controls_v1_settings_guardian_controls_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuardianControlsPatch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuardianControlsPublic"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Update Guardian Controls",
         "tags": [
           "settings"
         ]

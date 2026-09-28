@@ -13,6 +13,7 @@ import com.jueqiao.jianghu.luggage.CreationIntentAnalyzeDto
 import com.jueqiao.jianghu.luggage.CreationConversationDto
 import com.jueqiao.jianghu.luggage.CreationConversationMessageDto
 import com.jueqiao.jianghu.luggage.CreationConversationStartDto
+import com.jueqiao.jianghu.luggage.CreationDetailBundle
 import com.jueqiao.jianghu.luggage.CreationExportCreateDto
 import com.jueqiao.jianghu.luggage.CreationExportJobDto
 import com.jueqiao.jianghu.luggage.CreationLayerDto
@@ -49,6 +50,7 @@ import java.security.MessageDigest
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -62,6 +64,14 @@ import kotlinx.coroutines.withContext
 data class CreationSketchSource(
     val assetId: String,
     val filename: String,
+)
+
+data class ConferencePublishDraft(
+    val category: String,
+    val workDescription: String,
+    val learningReflection: String,
+    val nextImprovement: String,
+    val humanContributionSummary: String,
 )
 
 data class CreationDeskState(
@@ -93,6 +103,7 @@ data class CreationDeskState(
     val draftMessageProjectId: String? = null,
     val workflowBusy: Boolean = false,
     val workflowMessage: String? = null,
+    val workflowFailed: Boolean = false,
     val workflowMessageProjectId: String? = null,
     val generationBusy: Boolean = false,
     val generationJob: ImageGenerationJobDto? = null,
@@ -145,6 +156,7 @@ class CreationViewModel(
     private var pendingEditorCommit: PendingCommit? = null
     private var pendingExportCommit: PendingCommit? = null
     private var pendingContinueCommit: PendingCommit? = null
+    private var recentProjectsJob: Job? = null
     private var pendingConversationCommit: PendingCommit? = null
 
     fun loadEditor(projectId: String) {
@@ -434,13 +446,13 @@ class CreationViewModel(
     }
 
     fun loadRecentProjects() {
-        if (_state.value.loadingRecent) return
-        viewModelScope.launch {
-            _state.value = _state.value.copy(loadingRecent = true, recentError = null)
+        recentProjectsJob?.cancel()
+        _state.value = _state.value.copy(loadingRecent = true, recentError = null)
+        recentProjectsJob = viewModelScope.launch {
             try {
-                val result = repository.creations()
+                val projects = repository.allCreationProjects()
                 _state.value = _state.value.copy(
-                    recentProjects = result.items.distinctBy { it.id },
+                    recentProjects = projects,
                     loadingRecent = false,
                 )
             } catch (error: CancellationException) {
@@ -448,10 +460,20 @@ class CreationViewModel(
             } catch (error: Exception) {
                 _state.value = _state.value.copy(
                     loadingRecent = false,
-                    recentError = error.userMessage("最近作品暂时无法载入，请稍后重试"),
+                    recentError = error.userMessage("作品列表暂时无法载入，请稍后重试"),
                 )
             }
         }
+    }
+
+    /** Remove only after the DELETE request succeeds, before refreshing the server list. */
+    fun removeDeletedProject(projectId: String) {
+        recentProjectsJob?.cancel()
+        _state.value = _state.value.copy(
+            recentProjects = _state.value.recentProjects.filterNot { it.id == projectId },
+            loadingRecent = false,
+        )
+        loadRecentProjects()
     }
 
     fun continueProject(
@@ -580,7 +602,7 @@ class CreationViewModel(
                 expectedRevision = expectedRevision,
             )
             onComplete()
-            "已采纳，教练继续帮你完善"
+            "已采纳当前建议，可以继续修改或按当前方案生成作品"
         }
     }
 
@@ -1357,6 +1379,192 @@ class CreationViewModel(
         }
     }
 
+    /**
+     * 简约创作流的大会投稿入口。生成任务已经完成真实媒体与完整性检查；
+     * 这里把仍需学生填写的说明、学习收获与来源保存后再提交审核。
+     * 投稿规范已经在用户协议中统一约定，不再要求每件作品重复勾选。
+     */
+    fun publishToConference(
+        bundle: CreationDetailBundle,
+        draft: ConferencePublishDraft,
+        onComplete: (PublicationDto) -> Unit,
+    ) {
+        if (_state.value.workflowBusy) return
+        val project = bundle.project
+        val version = bundle.versions.firstOrNull {
+            it.versionNumber == project.currentVersionNumber
+        } ?: bundle.versions.maxByOrNull { it.versionNumber }
+        if (version == null) {
+            showWorkflowMessage(project.id, "作品版本还没有准备好，请先保存作品")
+            return
+        }
+        if (project.currentStage != "SEAL") {
+            showWorkflowMessage(project.id, "作品仍在完成安全与完整性检查，请稍后刷新再投稿")
+            return
+        }
+        val existingPublication = project.latestPublication
+            ?.takeIf { it.creationVersionId == version.id }
+        if (existingPublication != null) {
+            val message = when (existingPublication.status) {
+                "PENDING_CHECK" -> "这版作品已经提交，正在等待审核"
+                "PUBLISHED" -> "这版作品已经发布到大会"
+                else -> "这版作品已经提交过；请继续修订并保存新版本后再投稿"
+            }
+            showWorkflowMessage(project.id, message)
+            return
+        }
+        val normalizedCategory = draft.category.trim().uppercase()
+        if (normalizedCategory !in setOf("ART", "SCIENCE", "MATH", "LANGUAGE")) {
+            showWorkflowMessage(project.id, "请先选择作品分类")
+            return
+        }
+        if (
+            draft.workDescription.trim().length < 2 ||
+            draft.learningReflection.trim().length < 2 ||
+            draft.nextImprovement.trim().length < 2 ||
+            draft.humanContributionSummary.trim().length < 2
+        ) {
+            showWorkflowMessage(project.id, "请完整填写作品说明、学习收获、下次改进和本人贡献")
+            return
+        }
+        val manifest = bundle.provenance
+        val layerUsesAi = version.layers.any { it.aigc || it.kind == "AI_GENERATED" }
+        val aiAssisted = manifest?.aiAssistanceUsed == true || layerUsesAi
+        val generation = bundle.imageGenerations.items.firstOrNull {
+            it.outputVersionId == version.id
+        }
+        val preservedItems = manifest?.items.orEmpty()
+            .filterNot { it.itemType == "HUMAN_CONTRIBUTION" }
+            .map { item ->
+                ProvenanceItemInputDto(
+                    itemType = item.itemType,
+                    contributionType = item.contributionType,
+                    description = item.description,
+                    sourceUrl = item.sourceUrl,
+                    sourceAuthor = item.sourceAuthor,
+                    licenseType = item.licenseType,
+                    authorizationAssetId = item.authorizationAssetId,
+                    aiProvider = item.aiProvider,
+                    aiModel = item.aiModel,
+                    aiToolAction = item.aiToolAction,
+                    promptSummary = item.promptSummary,
+                    outputAssetId = item.outputAssetId,
+                    userModified = item.userModified,
+                )
+            }
+            .toMutableList()
+        if (aiAssisted && preservedItems.none { it.itemType == "AI_CONTRIBUTION" }) {
+            if (generation == null) {
+                showWorkflowMessage(project.id, "智能工具来源记录尚未准备好，请刷新作品档案后再试")
+                return
+            }
+            preservedItems += ProvenanceItemInputDto(
+                itemType = "AI_CONTRIBUTION",
+                contributionType = "图片生成",
+                description = "经本人确认创作要求后生成，并通过媒体安全检查。",
+                licenseType = "NOT_APPLICABLE",
+                aiProvider = generation.providerRef,
+                aiModel = generation.modelRef,
+                aiToolAction = "IMAGE_GENERATION",
+                promptSummary = generation.promptSummary,
+                outputAssetId = generation.outputAsset?.id,
+                userModified = false,
+            )
+        }
+        val provenanceItems = listOf(
+            ProvenanceItemInputDto(
+                itemType = "HUMAN_CONTRIBUTION",
+                contributionType = "构思与确认",
+                description = draft.humanContributionSummary.trim(),
+                licenseType = "ORIGINAL",
+            )
+        ) + preservedItems
+        val signature = listOf(
+            "conference",
+            project.id,
+            version.id,
+            normalizedCategory,
+            draft.hashCode().toString(),
+        ).joinToString("|")
+        val commit = pendingWorkflowCommit
+            ?.takeIf { it.signature == signature }
+            ?: PendingCommit(signature, "android-submission-${UUID.randomUUID()}")
+                .also { pendingWorkflowCommit = it }
+
+        runWorkflow(project.id, "正在保存投稿信息并提交审核…") {
+            // 投稿可能在网络超时后已经由服务端受理。先读取最新状态，避免重试时
+            // 再次改写已锁定的封卷资料，也让幂等提交能恢复为明确的用户结果。
+            val latestBundle = repository.creationDetail(project.id)
+            val acceptedPublication = latestBundle.project.latestPublication
+                ?.takeIf { it.creationVersionId == version.id }
+            if (acceptedPublication != null) {
+                pendingWorkflowCommit = null
+                onComplete(acceptedPublication)
+                return@runWorkflow when (acceptedPublication.status) {
+                    "PUBLISHED" -> "作品已经发布到大会"
+                    "PENDING_CHECK" -> "投稿已提交审核；审核通过后会出现在大会作品页"
+                    else -> "这版作品已经提交过，请保存新版本后再投稿"
+                }
+            }
+            repository.putCreationSealCheck(
+                versionId = version.id,
+                payload = CreationSealCheckPutDto(
+                    workDescription = draft.workDescription.trim(),
+                    learningReflection = draft.learningReflection.trim(),
+                    nextImprovement = draft.nextImprovement.trim(),
+                    rowVersion = latestBundle.sealCheck?.rowVersion,
+                ),
+            )
+            repository.putLearningCard(
+                versionId = version.id,
+                payload = LearningCardPutDto(
+                    manualPageIds = bundle.conversation.manualPageIds.distinct(),
+                    methodSummary = bundle.learningCard?.methodSummary
+                        ?.takeIf { it.isNotBlank() }
+                        ?: draft.learningReflection.trim(),
+                    unresolvedQuestions = bundle.learningCard?.unresolvedQuestions.orEmpty(),
+                    questionsConfirmed = true,
+                    rowVersion = latestBundle.learningCard?.rowVersion,
+                ),
+            )
+            repository.putProvenance(
+                versionId = version.id,
+                payload = ProvenanceManifestPutDto(
+                    humanContributionSummary = draft.humanContributionSummary.trim(),
+                    aiAssistanceUsed = aiAssisted,
+                    aiContributionSummary = manifest?.aiContributionSummary
+                        ?.takeIf { it.isNotBlank() }
+                        ?: generation?.let { "使用图片生成工具辅助形成画面。" },
+                    aigcLabelDeclared = aiAssisted,
+                    unresolvedRights = manifest?.unresolvedRights ?: false,
+                    items = provenanceItems,
+                    rowVersion = latestBundle.provenance?.rowVersion,
+                ),
+            )
+            val publication = repository.submitCreation(
+                projectId = project.id,
+                payload = CreationSubmissionCreateDto(
+                    creationVersionId = version.id,
+                    visibility = "COMMUNITY",
+                    conferenceCategory = normalizedCategory,
+                ),
+                idempotencyKey = commit.idempotencyKey,
+            )
+            pendingWorkflowCommit = null
+            onComplete(publication)
+            "投稿已提交审核；审核通过后会出现在大会作品页"
+        }
+    }
+
+    private fun showWorkflowMessage(projectId: String, message: String) {
+        _state.value = _state.value.copy(
+            workflowBusy = false,
+            workflowMessage = message,
+            workflowFailed = true,
+            workflowMessageProjectId = projectId,
+        )
+    }
+
     private fun runWorkflow(
         projectId: String,
         pendingMessage: String,
@@ -1366,6 +1574,7 @@ class CreationViewModel(
             _state.value = _state.value.copy(
                 workflowBusy = true,
                 workflowMessage = pendingMessage,
+                workflowFailed = false,
                 workflowMessageProjectId = projectId,
             )
             try {
@@ -1373,6 +1582,7 @@ class CreationViewModel(
                 _state.value = _state.value.copy(
                     workflowBusy = false,
                     workflowMessage = message,
+                    workflowFailed = false,
                     workflowMessageProjectId = projectId,
                 )
             } catch (error: CancellationException) {
@@ -1381,6 +1591,7 @@ class CreationViewModel(
                 _state.value = _state.value.copy(
                     workflowBusy = false,
                     workflowMessage = error.userMessage("创作流程暂时无法更新，请稍后重试"),
+                    workflowFailed = true,
                     workflowMessageProjectId = projectId,
                 )
             }

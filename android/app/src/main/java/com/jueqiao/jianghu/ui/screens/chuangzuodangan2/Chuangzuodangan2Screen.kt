@@ -73,7 +73,7 @@ fun Chuangzuodangan2Screen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // 全屏背景(设计稿 创作档案.png → img_chuangzuodangan_bg,与 ChuangzuodanganScreen 同款)
+        // 全屏背景(D:\图\创作档案.png,与 ChuangzuodanganScreen 同款)
         Image(
             painter = painterResource(R.drawable.img_chuangzuodangan_bg),
             contentDescription = null,
@@ -294,7 +294,7 @@ Box(
         .clickable(onClick = onOpenChuangzuodangan3),
 )
 
-// 未标题-1 72.png(X=201, Y=584, W=212, H=245)
+// 未标题-1 72.png(X=201, Y=614, W=212, H=245)
 Image(
     painter = painterResource(R.drawable.img_chuangzuodangan_untitled172),
     contentDescription = null,

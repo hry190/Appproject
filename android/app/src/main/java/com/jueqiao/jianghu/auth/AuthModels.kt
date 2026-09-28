@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName
 enum class VerificationPurpose {
     REGISTER,
     RESET_PASSWORD,
-    GUARDIAN_CONSENT,
 }
 
 enum class AgeBand(val apiValue: String, val label: String) {
@@ -40,22 +39,8 @@ data class RegisterRequest(
     @SerializedName("age_band") val ageBand: String,
     @SerializedName("terms_version") val termsVersion: String,
     @SerializedName("privacy_version") val privacyVersion: String,
-    @SerializedName("guardian_consent_token") val guardianConsentToken: String? = null,
     @SerializedName("device_name") val deviceName: String = "Android",
     @SerializedName("client_request_id") val clientRequestId: String,
-)
-
-data class GuardianConsentRequest(
-    @SerializedName("child_phone") val childPhone: String,
-    @SerializedName("guardian_phone") val guardianPhone: String,
-    @SerializedName("verification_code") val verificationCode: String,
-    @SerializedName("terms_version") val termsVersion: String,
-    @SerializedName("privacy_version") val privacyVersion: String,
-)
-
-data class GuardianConsentResponse(
-    @SerializedName("guardian_consent_token") val guardianConsentToken: String,
-    @SerializedName("expires_in") val expiresIn: Int,
 )
 
 data class PasswordResetRequest(

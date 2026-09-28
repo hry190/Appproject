@@ -35,12 +35,11 @@ import com.jueqiao.jianghu.auth.AuthViewModelFactory
 import com.jueqiao.jianghu.auth.VerificationPurpose
 import com.jueqiao.jianghu.creation.CreationViewModel
 import com.jueqiao.jianghu.creation.CreationViewModelFactory
-import com.jueqiao.jianghu.distribution.DistributionViewModel
-import com.jueqiao.jianghu.distribution.DistributionViewModelFactory
 import com.jueqiao.jianghu.conference.ConferenceViewModel
 import com.jueqiao.jianghu.conference.ConferenceViewModelFactory
 import com.jueqiao.jianghu.luggage.LuggageViewModel
 import com.jueqiao.jianghu.luggage.LuggageViewModelFactory
+import com.jueqiao.jianghu.luggage.LuggageUiState
 import com.jueqiao.jianghu.luggage.PrivacySettingsPatchDto
 import com.jueqiao.jianghu.luggage.RetrySessionDto
 import com.jueqiao.jianghu.ui.screens.agreement.AgreementScreen
@@ -53,13 +52,13 @@ import com.jueqiao.jianghu.ui.screens.dahui.ConferenceMatchRecordsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceRequestsScreen
 import com.jueqiao.jianghu.ui.screens.dahui.ConferenceWorkScreen
 import com.jueqiao.jianghu.ui.screens.forgot.ForgotScreen
-import com.jueqiao.jianghu.ui.screens.home.ChallengeScreen
 import com.jueqiao.jianghu.ui.screens.home.Home1Screen
 import com.jueqiao.jianghu.ui.screens.home.HomeScreen
 import com.jueqiao.jianghu.ui.screens.home.LuggageScreen
 import com.jueqiao.jianghu.ui.screens.home.SettingsScreen
 import com.jueqiao.jianghu.ui.screens.luggage.BadgesScreen
 import com.jueqiao.jianghu.ui.screens.luggage.CreationDetailScreen
+import com.jueqiao.jianghu.ui.screens.luggage.ConferencePublishScreen
 import com.jueqiao.jianghu.ui.screens.luggage.CreationsScreen
 import com.jueqiao.jianghu.ui.screens.luggage.EvidenceScreen
 import com.jueqiao.jianghu.ui.screens.luggage.ManualDetailScreen
@@ -124,6 +123,8 @@ import com.jueqiao.jianghu.ui.screens.gunlun13.Gunlun13Screen
 import com.jueqiao.jianghu.ui.screens.gunlun14.Gunlun14Screen
 import com.jueqiao.jianghu.ui.screens.gunlun15.Gunlun15Screen
 import com.jueqiao.jianghu.ui.screens.gunlun16.Gunlun16Screen
+import com.jueqiao.jianghu.ui.screens.manualreader.ManualReaderScreen
+import com.jueqiao.jianghu.ui.screens.wushuhuan.WushuhuanScreen
 import com.jueqiao.jianghu.ui.screens.zaowu.ZaowuScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.GongfangScreen
 import com.jueqiao.jianghu.ui.screens.gongfang.toCreationResumeItem
@@ -289,6 +290,14 @@ import com.jueqiao.jianghu.ui.screens.yanwuchangvideomy.YanwuchangVideoMyScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private fun NavHostController.navigateSingleTop(route: String) {
+    navigate(route) { launchSingleTop = true }
+}
+
+private fun NavHostController.openBackMountainWendao(targetLessonId: String? = null) {
+    navigateSingleTop(Routes.shilian(targetLessonId))
+}
+
 @Composable
 fun JianghuNavHost(
     navController: NavHostController = rememberNavController(),
@@ -306,16 +315,24 @@ fun JianghuNavHost(
     val luggageViewModel: LuggageViewModel = viewModel(factory = luggageFactory)
     val luggageState by luggageViewModel.uiState.collectAsStateWithLifecycle()
     val luggageDetailState by luggageViewModel.detailState.collectAsStateWithLifecycle()
+    val progressSnapshot = (luggageState as? LuggageUiState.Content)?.snapshot
+    val progressLoading = luggageState is LuggageUiState.Loading ||
+        (luggageState as? LuggageUiState.Content)?.refreshing == true ||
+        luggageDetailState.loading
+    val progressMessage = when (val state = luggageState) {
+        is LuggageUiState.Content -> state.notice
+        is LuggageUiState.Error -> state.message
+        LuggageUiState.Loading -> null
+    } ?: luggageDetailState.learningOverviewMessage
+        ?: authState.errorMessage?.takeIf {
+            authState.errorCode == "NETWORK_UNAVAILABLE" ||
+                authState.errorCode == "LOCAL_AUTH_FAILURE"
+        }
     val creationFactory = remember(application) {
         CreationViewModelFactory(application, application.luggageRepository)
     }
     val creationViewModel: CreationViewModel = viewModel(factory = creationFactory)
     val creationState by creationViewModel.state.collectAsStateWithLifecycle()
-    val distributionFactory = remember(application) {
-        DistributionViewModelFactory(application.luggageRepository)
-    }
-    val distributionViewModel: DistributionViewModel = viewModel(factory = distributionFactory)
-    val distributionState by distributionViewModel.state.collectAsStateWithLifecycle()
     val conferenceFactory = remember(application) {
         ConferenceViewModelFactory(application.luggageRepository)
     }
@@ -326,7 +343,6 @@ fun JianghuNavHost(
     val mistPhase = remember { Animatable(0f) }
     var loginTransitionRunning by remember { mutableStateOf(false) }
     var animateHomeQuickActionsOnNextEntry by remember { mutableStateOf(false) }
-
     LaunchedEffect(currentUser?.id) {
         conferenceViewModel.reset()
         creationViewModel.clearDerivative()
@@ -419,7 +435,7 @@ fun JianghuNavHost(
                 },
                 isSubmitting    = authState.operation == AuthOperation.Login,
                 isTransitioning = loginTransitionRunning,
-                contentAlpha    = loginContentAlpha.value,
+                contentAlpha    = { loginContentAlpha.value },
                 errorMessage    = authState.errorMessage,
                 onClearError    = authViewModel::clearFeedback,
             )
@@ -430,21 +446,12 @@ fun JianghuNavHost(
                 onRequestCode   = { phone, purpose, onCooldown ->
                     authViewModel.requestCode(phone, purpose, onCooldown)
                 },
-                onVerifyGuardian = { childPhone, guardianPhone, code, onVerified ->
-                    authViewModel.verifyGuardianConsent(
-                        childPhone,
-                        guardianPhone,
-                        code,
-                        onVerified,
-                    )
-                },
-                onRegister      = { phone, code, password, ageBand, guardianToken ->
+                onRegister      = { phone, code, password, ageBand ->
                     authViewModel.register(
                         phone,
                         code,
                         password,
                         ageBand,
-                        guardianToken,
                     ) {
                         animateHomeQuickActionsOnNextEntry = true
                         navController.navigate(Routes.Home) {
@@ -531,25 +538,31 @@ fun JianghuNavHost(
                 onQuickActionsEntranceConsumed = {
                     animateHomeQuickActionsOnNextEntry = false
                 },
-                onOpenXiulian   = { navController.navigate(Routes.Xiulian) },
-                onOpenLuggage   = { navController.navigate(Routes.Luggage) },
-                // 每次从首页进入作品创作都创建新的引导页实例，确保气泡与工坊入口重置。
-                onOpenZaowu     = { navController.navigate(Routes.Zaowu) },
-                onOpenSettings  = { navController.navigate(Routes.Settings) },
-                onOpenChallenge = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) {
-                            Routes.Challenge
-                        } else {
-                            Routes.DahuiLetters
-                        },
-                    )
+                onOpenXiulian   = { navController.navigateSingleTop(Routes.Gunlun1) },
+                onOpenWendao    = { navController.openBackMountainWendao() },
+                onOpenLuggage   = { navController.navigateSingleTop(Routes.Luggage) },
+                // 每次从首页进入工坊都创建新的引导页实例，确保气泡与入口状态正确。
+                onOpenZaowu     = { navController.navigateSingleTop(Routes.Zaowu) },
+                onOpenSettings  = { navController.navigateSingleTop(Routes.Settings) },
+                onOpenLetters = {
+                    navController.navigateSingleTop(Routes.DahuiLetters)
                 },
-                onOpenDahui     = { navController.navigate(Routes.Dahui) },
+onOpenDahui     = { navController.navigate(Routes.Dahui) },
                 // 2026-09-19 §6:第五个主入口「闯荡江湖」→ 雾隐机关镇地图页
                 onOpenChuangdang = { navController.navigate(Routes.Chuangdang) },
                 dahuiEnabled = conferenceState.conferenceEnabled != false,
                 hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+                progressSnapshot = progressSnapshot,
+                learningOverview = luggageDetailState.learningOverview,
+                progressLoading = progressLoading,
+                progressMessage = progressMessage,
+                onRefreshProgress = {
+                    authViewModel.clearFeedback()
+                    luggageViewModel.loadProgressOverview()
+                },
+                onOpenRecommendedManual = { id ->
+                    navController.navigateSingleTop(Routes.luggageManualDetail(id))
+                },
             )
         }
 
@@ -646,31 +659,32 @@ fun JianghuNavHost(
         }
 
         composable(Routes.Xiulian)  {
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
             XiulianScreen(
                 onBack         = { navController.popBackStack() },
-                onOpenLuggage  = { navController.navigate(Routes.Luggage) },
-                onOpenManuals  = { navController.navigate(Routes.luggageManuals(null)) },
-                onOpenLearning = { navController.navigate(Routes.LuggageGrowth) },
-                onOpenTrials   = { navController.navigate(Routes.Shilian) },
-                onOpenGunlun1  = { navController.navigate(Routes.Gunlun1) },
-                onOpenRecommendedManual = { id -> navController.navigate(Routes.luggageManualDetail(id)) },
-                learningOverview = luggageDetailState.learningOverview,
-                onOpenWendao   = { navController.navigate(Routes.Home1) },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenLetters  = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
+                onOpenGunlun1 = {
+                    navController.navigate(Routes.Gunlun1) {
+                        popUpTo(Routes.Xiulian) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
+                learningOverview = luggageDetailState.learningOverview,
             )
         }
-        composable(Routes.Shilian) {
+        composable(
+            route = Routes.ShilianPattern,
+            arguments = listOf(
+                navArgument("lessonId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { backStackEntry ->
+            LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
+            val targetLessonId = backStackEntry.arguments?.getString("lessonId")
             Houshan1Screen(
-                actions = Houshan1Actions(
+actions = Houshan1Actions(
                     onBack = { navController.popBackStack() },
                     onOpenHoushan2 = { navController.navigate(Routes.Shilian2) },
                     // §25:用户指令"点击标签识机真决改成无法跳转" → 不再传 onOpenVolume1
@@ -764,12 +778,10 @@ fun JianghuNavHost(
                 )
             },
             // §33:后山 4 现在 dolly 到后山 5,淡出与后山 2→3 / 后山 3→4 同款
-            // (稍长以覆盖 dolly 后半程,与 Houshan4 内部推进在 DOLLY_HANDOFF_MS 处交接)
             exitTransition = {
                 if (targetState.destination.route == Routes.Shilian5) {
                     fadeOut(animationSpec = tween(durationMillis = 520, easing = LinearEasing))
                 } else {
-                    // 其他去向(返回后山3、4 个标签→各卷)保持轻淡出,不引入硬切
                     fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
                 }
             },
@@ -779,24 +791,20 @@ fun JianghuNavHost(
         ) {
             Houshan4Screen(
                 actions = Houshan4Actions(
-                    onBack = { navController.popBackStack() },   // 2026-09-18 §15 恢复:返回上一页
-                    // §33:点击标签以外任意位置 → dolly 推进到后山5
-                    onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },   // §15 寻径迷踪步 → 后山5
-                    onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },   // §15 百炼识物诀 → 后山6
-                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },   // §15 分门辨类掌 → 后山7
-                    // §32:4 个标签的跳转目标(参数名已从 §24 的占位 onOpenTagN 改为语义名)
-                    //   ⚠️ 后山4 的标签文字是 §24 改过的,映射表与后山2/3 不完全相同 —— 按文字对齐
-                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },   // 2026-09-18 §14 恢复(Y 最大标签:万象谱 → 卷3)
-                    onOpenVolume4Part1 = {},   // 2026-09-18 §12 取消跳转(原:寻径迷踪步)
-                    onOpenVolume5Part1 = {},   // 2026-09-18 §12 取消跳转(原:百炼识物诀)
-                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌)
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan5 = { navController.navigate(Routes.Shilian5) },
+                    onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },
+                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },
+                    onOpenVolume3Part1 = { navController.navigate(Routes.Volume3Part1) },
+                    onOpenVolume4Part1 = {},
+                    onOpenVolume5Part1 = {},
+                    onOpenVolume6Part1 = {},
                 ),
             )
         }
-        // §33:后山 5 页 —— 复用后山 3 的素材/动画,2026-09-18 §4 升级为过场页(整屏触发 dolly 到后山6)
+        // §33:后山 5 页 —— 复用后山 3 的素材/动画,2026-09-18 §4 升级为过场页
         composable(
             route = Routes.Shilian5,
-            // 镜头减速停稳(与后山 4 内部 dolly 末态衔接)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -812,21 +820,18 @@ fun JianghuNavHost(
         ) {
             Houshan5Screen(
                 actions = Houshan5Actions(
-                    onBack = { navController.popBackStack() },   // 2026-09-18 §15 恢复:返回上一页
-                    // 2026-09-18 §4:点击标签以外任意位置 → dolly 推进到后山6
-                    onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },   // §15 百炼识物诀 → 后山6
-                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },   // §15 分门辨类掌 → 后山7
-                    // §34:3 个标签按"文字→卷"映射接好 —— 详见 Houshan5Screen 顶 KDoc
-                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },   // 2026-09-18 §14 恢复(Y 最大标签:寻径迷踪步 → 卷4)
-                    onOpenVolume5Part1 = {},   // 2026-09-18 §12 取消跳转(原:百炼识物诀 → 第五卷-1)
-                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌 → 第六卷-1)
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan6 = { navController.navigate(Routes.Shilian6) },
+                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },
+                    onOpenVolume4Part1 = { navController.navigate(Routes.Volume4Part1) },
+                    onOpenVolume5Part1 = {},
+                    onOpenVolume6Part1 = {},
                 ),
             )
         }
-        // 2026-09-18 §4:后山 6 页 —— 复用后山 4 的素材/动画,§9 升级为过场页(整屏触发 dolly 到后山7)
+        // 2026-09-18 §4:后山 6 页 —— 复用后山 4 的素材/动画,§9 升级为过场页
         composable(
             route = Routes.Shilian6,
-            // 镜头减速停稳(与后山 5 内部 dolly 末态衔接,与 Shilian5 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -842,23 +847,20 @@ fun JianghuNavHost(
         ) {
             Houshan6Screen(
                 actions = Houshan6Actions(
-                    onBack = { navController.popBackStack() },   // 2026-09-18 §15 恢复:返回上一页
-                    // 2026-09-18 §9:点击标签以外任意位置 → dolly 推进到后山7
-                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },   // §15 分门辨类掌 → 后山7
-                    onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },   // §15 千层观心镜 → 后山8
-                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },   // §15 赏罚驭灵诀 → 后山9
-                    // 2026-09-18 §8:4 个标签按 §32 的"文字→卷"映射接好(文案重命名 §4→§8)
-                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },   // 2026-09-18 §14 恢复(Y 最大标签:百炼识物诀 → 卷5)
-                    onOpenVolume6Part1 = {},   // 2026-09-18 §12 取消跳转(原:分门辨类掌 → 第六卷-1)
-                    onOpenVolume7Part1 = {},   // 2026-09-18 §12 取消跳转(原:千层观心镜 → 第七卷-1)
-                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan7 = { navController.navigate(Routes.Shilian7) },
+                    onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },
+                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },
+                    onOpenVolume5Part1 = { navController.navigate(Routes.Volume5Part1) },
+                    onOpenVolume6Part1 = {},
+                    onOpenVolume7Part1 = {},
+                    onOpenVolume8Part1 = {},
                 ),
             )
         }
-        // 2026-09-18 §9:后山 7 页 —— 复用后山 5 的素材/动画,§10 升级为过场页(整屏触发 dolly 到后山8)
+        // 2026-09-18 §9:后山 7 页 —— 复用后山 5 的素材/动画,§10 升级为过场页
         composable(
             route = Routes.Shilian7,
-            // 镜头减速停稳(与后山 6 内部 dolly 末态衔接,与 Shilian5/6 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -874,21 +876,18 @@ fun JianghuNavHost(
         ) {
             Houshan7Screen(
                 actions = Houshan7Actions(
-                    onBack = { navController.popBackStack() },   // 2026-09-18 §15 恢复:返回上一页
-                    // 2026-09-18 §10:点击标签以外任意位置 → dolly 推进到后山8
-                    onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },   // §15 千层观心镜 → 后山8
-                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },   // §15 赏罚驭灵诀 → 后山9
-                    // 2026-09-18 §9:3 个标签按 §8 的"文字→卷"映射接好(分门辨类掌/千层观心镜/赏罚驭灵诀)
-                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },   // 2026-09-18 §14 恢复(Y 最大标签:分门辨类掌 → 卷6)
-                    onOpenVolume7Part1 = {},   // 2026-09-18 §12 取消跳转(原:千层观心镜 → 第七卷-1)
-                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan8 = { navController.navigate(Routes.Shilian8) },
+                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },
+                    onOpenVolume6Part1 = { navController.navigate(Routes.Volume6Part1) },
+                    onOpenVolume7Part1 = {},
+                    onOpenVolume8Part1 = {},
                 ),
             )
         }
-        // 2026-09-18 §10:后山 8 页 —— 复用后山 6 的素材/动画,§11 升级为过场页(整屏触发 dolly 到后山9)
+        // 2026-09-18 §10:后山 8 页 —— 复用后山 6 的素材/动画,§11 升级为过场页
         composable(
             route = Routes.Shilian8,
-            // 镜头减速停稳(与后山 7 内部 dolly 末态衔接,与 Shilian5/6/7 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -904,23 +903,20 @@ fun JianghuNavHost(
         ) {
             Houshan8Screen(
                 actions = Houshan8Actions(
-                    onBack = { navController.popBackStack() },   // 2026-09-18 §15 恢复:返回上一页
-                    // 2026-09-18 §11:点击标签以外任意位置 → dolly 推进到后山9
-                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },   // §15 赏罚驭灵诀 → 后山9
-                    onOpenHoushan10 = { navController.navigate(Routes.Shilian10) },   // 2026-09-19 §2 听言解意篇 → 后山10
-                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },   // 2026-09-19 §3 正心守道录 → dolly 推进到后山11
-                    // 2026-09-18 §10:4 个标签按 §32 的"文字→卷"映射接好(千层观心镜/赏罚驭灵诀/听言解意篇/正心守道录)
-                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },   // 2026-09-18 §14 恢复(Y 最大标签:千层观心镜 → 卷7)
-                    onOpenVolume8Part1 = {},   // 2026-09-18 §12 取消跳转(原:赏罚驭灵诀 → 第八卷-1)
-                    onOpenVolume9Part1 = {},   // 2026-09-18 §12 取消跳转(原:听言解意篇 → 第九卷-1)
-                    onOpenVolume10Part1 = {},   // 2026-09-18 §12 取消跳转(原:正心守道录 → 第十卷-1)
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan9 = { navController.navigate(Routes.Shilian9) },
+                    onOpenHoushan10 = { navController.navigate(Routes.Shilian10) },
+                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },
+                    onOpenVolume7Part1 = { navController.navigate(Routes.Volume7Part1) },
+                    onOpenVolume8Part1 = {},
+                    onOpenVolume9Part1 = {},
+                    onOpenVolume10Part1 = {},
                 ),
             )
         }
-        // 2026-09-18 §11:后山 9 页 —— 复用后山 7 的素材/动画;2026-09-19 §2 升级为过场页(标签触发 dolly 到后山10)
+        // 2026-09-18 §11:后山 9 页 —— 复用后山 7 的素材/动画;2026-09-19 §2 升级为过场页
         composable(
             route = Routes.Shilian9,
-            // 镜头减速停稳(与后山 8 内部 dolly 末态衔接,与 Shilian5~8 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -936,21 +932,18 @@ fun JianghuNavHost(
         ) {
             Houshan9Screen(
                 actions = Houshan9Actions(
-                    onBack = { navController.popBackStack() },   // → 后山8
-                    // ── 2026-09-19 §2:后山9 升级为过场页 —— dolly 半程后推进(触发点:用户指定的标签)──
-                    onOpenHoushan10 = { navController.navigate(Routes.Shilian10) },   // 赏罚驭灵诀 / 听言解意篇 → 后山10
-                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },   // 2026-09-19 §3 正心守道录 → dolly 推进到后山11
-                    // ── 卷跳转(2026-09-19 §2 起均不再使用)──
-                    onOpenVolume8Part1 = {},   // ⚠️ 原"赏罚驭灵诀(本页 Y 最大)→ 卷8",被 dolly 取代
-                    onOpenVolume9Part1 = {},   // 听言解意篇 改为 dolly → 后山10
-                    onOpenVolume10Part1 = {},  // 正心守道录 改为 dolly → 后山10
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan10 = { navController.navigate(Routes.Shilian10) },
+                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },
+                    onOpenVolume8Part1 = {},
+                    onOpenVolume9Part1 = {},
+                    onOpenVolume10Part1 = {},
                 ),
             )
         }
-        // 2026-09-19 §2:后山 10 页 —— 复用后山 8 的素材/动画(标签从 4 个减到 2 个),当前是**终点页**(整屏 noop)
+        // 2026-09-19 §2:后山 10 页 —— 复用后山 8 的素材/动画,当前是终点页
         composable(
             route = Routes.Shilian10,
-            // 镜头减速停稳(与后山 9 内部 dolly 末态衔接,与 Shilian5~9 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -966,18 +959,15 @@ fun JianghuNavHost(
         ) {
             Houshan10Screen(
                 actions = Houshan10Actions(
-                    onBack = { navController.popBackStack() },   // → 后山9
-                    // 2026-09-19 §3:正心守道录由"死区"改为 dolly 推进到后山11
-                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },   // 正心守道录 → dolly 推进到后山11
-                    // 2026-09-19 §2:仅"听言解意篇"(本页 Y 最大,Y=570)跳卷
-                    onOpenVolume9Part1 = { navController.navigate(Routes.Volume9Part1) },   // 听言解意篇 → 第九卷-1
+                    onBack = { navController.popBackStack() },
+                    onOpenHoushan11 = { navController.navigate(Routes.Shilian11) },
+                    onOpenVolume9Part1 = { navController.navigate(Routes.Volume9Part1) },
                 ),
             )
         }
-        // 2026-09-19 §3:后山 11 页 —— 复用后山 9 的素材/动画(标签从 3 个减到 1 个),当前是**终点页**(整屏 noop)
+        // 2026-09-19 §3:后山 11 页 —— 复用后山 9 的素材/动画,当前是终点页
         composable(
             route = Routes.Shilian11,
-            // 镜头减速停稳(与后山 10 内部 dolly 末态衔接,与 Shilian5~10 同款)
             enterTransition = {
                 scaleIn(
                     animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
@@ -993,9 +983,8 @@ fun JianghuNavHost(
         ) {
             Houshan11Screen(
                 actions = Houshan11Actions(
-                    onBack = { navController.popBackStack() },   // → 上一页(后山8/9/10,取决于从哪进入)
-                    // 2026-09-19 §3:仅"正心守道录"(本页 Y 最大,Y=521)跳卷
-                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },   // 正心守道录 → 第十卷-1
+                    onBack = { navController.popBackStack() },
+                    onOpenVolume10Part1 = { navController.navigate(Routes.Volume10Part1) },
                 ),
             )
         }
@@ -1003,60 +992,120 @@ fun JianghuNavHost(
             UnfinishedScreen(
                 onBack = { navController.popBackStack() },
                 onOpenGunlun1 = {
-                    navController.navigate(Routes.Gunlun1) {
-                        popUpTo(Routes.Gunlun1) { inclusive = true }
+                    navController.navigate(Routes.Wushuhuan) {
+                        popUpTo(Routes.Gunlun1) { inclusive = false }
+                        launchSingleTop = true
                     }
                 },
             )
         }
-        composable(Routes.Houshan) {
-            LearningScreen(
-                onBack = { navController.popBackStack() },
-                onOpenLearning2 = { navController.navigate(Routes.Learning2) },
-            )
-        }
-        composable(Routes.Learning2) {
-            Learning2Screen(
-                onBack = { navController.popBackStack() },
-                onOpenLearning3 = { navController.navigate(Routes.Learning3) },
-                onOpenLearning4 = { navController.navigate(Routes.Learning4) },
-            )
-        }
-        composable(Routes.Learning3) {
-            Learning3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
-            )
-        }
-        composable(Routes.Learning4) {
-            Learning4Screen(onBack = { navController.popBackStack() })
-        }
-        composable(Routes.Learning3) {
-            Learning3Screen(
-                onBack = { navController.popBackStack() },
-                onOpenPendingUnlock = { navController.navigate(Routes.PendingUnlock) },
-            )
-        }
-        composable(Routes.PendingUnlock) {
-            PendingUnlockScreen(
-                onBack = { navController.popBackStack() },
-                onOpenGunlun1 = { navController.navigate(Routes.Gunlun1) },
-            )
-        }
+        // 旧 Learning/PendingUnlock 静态分支已从导航图移除。
+        // 预测、作答、服务端判分统一复用 LearningTrialScreen，避免自动判对与伪奖励。
         composable(Routes.Gunlun1) {
+            // 首页会直接进入本页；概览尚未载入时在此补充请求。
+            LaunchedEffect(Unit) {
+                if (luggageDetailState.learningOverview == null && !luggageDetailState.loading) {
+                    luggageViewModel.loadLearningOverview()
+                }
+            }
             Gunlun1Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun2 = { navController.navigate(Routes.Gunlun2) },
-                // 滚轮1 的"修\n炼"按钮 → 学习1 页 (LearningScreen)
-                onOpenLearning1 = { navController.navigate(Routes.Houshan) },
-                // 滚轮1 的"后\n山"按钮 → 后山1 页 (Houshan1Screen, 原 ShilianScreen)
-                onOpenHoushan1 = { navController.navigate(Routes.Shilian) },
+                onOpenWushuhuan = {
+                    navController.navigateSingleTop(Routes.Wushuhuan)
+                },
+                onOpenHoushan1 = {
+                    navController.openBackMountainWendao()
+                },
+                learningOverview = luggageDetailState.learningOverview,
             )
         }
-        composable(Routes.Gunlun2) {
-            Gunlun2Screen(
+        // Gunlun2—15 仅保留为旧深链兼容别名；正常书环交互使用独立 Wushuhuan 路由。
+        listOf(
+            Routes.Wushuhuan,
+            Routes.Gunlun2,
+            Routes.Gunlun3,
+            Routes.Gunlun4,
+            Routes.Gunlun5,
+            Routes.Gunlun6,
+            Routes.Gunlun7,
+            Routes.Gunlun8,
+            Routes.Gunlun9,
+            Routes.Gunlun10,
+            Routes.Gunlun11,
+            Routes.Gunlun12,
+            Routes.Gunlun13,
+            Routes.Gunlun14,
+            Routes.Gunlun15,
+        ).forEach { route ->
+            composable(route) {
+                LaunchedEffect(Unit) { luggageViewModel.loadLearningOverview() }
+                WushuhuanScreen(
+                    onBack = { navController.popBackStack() },
+                    learningOverview = luggageDetailState.learningOverview,
+                    manualDetail = luggageDetailState.manualDetail,
+                    isLoading = luggageDetailState.loading,
+                    loadMessage = luggageDetailState.message,
+                    onOpenHoushan = { lessonId ->
+                        navController.openBackMountainWendao(lessonId)
+                    },
+                    onLoadManualDetail = luggageViewModel::loadManualDetail,
+                    onOpenReader = { volumeNo, manualId, continueToTrial ->
+                        navController.navigateSingleTop(
+                            Routes.manualReader(volumeNo, manualId, continueToTrial)
+                        )
+                    },
+                    onOpenTrial = { trialId ->
+                        navController.navigateSingleTop(
+                            Routes.learningTrial(trialId, returnToWushuhuan = true)
+                        )
+                    },
+                    onUseInCreation = { manualId ->
+                        navController.navigateSingleTop(Routes.gongfang(manualId))
+                    },
+                )
+            }
+        }
+        composable(
+            route = Routes.ManualReaderPattern,
+            arguments = listOf(
+                navArgument("volumeNo") { type = NavType.IntType },
+                navArgument("manualId") { type = NavType.StringType },
+                navArgument("continueToTrial") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
+            val volumeNo = entry.arguments?.getInt("volumeNo") ?: 1
+            val manualId = entry.arguments?.getString("manualId").orEmpty()
+            val continueToTrial = entry.arguments?.getBoolean("continueToTrial") ?: false
+            LaunchedEffect(manualId) {
+                if (manualId.isNotBlank()) luggageViewModel.loadManualDetail(manualId)
+            }
+            val detail = luggageDetailState.manualDetail
+                ?.takeIf { it.manual.id == manualId }
+            ManualReaderScreen(
+                volumeNo = volumeNo,
+                lessonPageNo = detail?.manual?.pageNo,
+                isCompleting = luggageDetailState.loading,
+                message = luggageDetailState.message,
                 onBack = { navController.popBackStack() },
-                onOpenGunlun3 = { navController.navigate(Routes.Gunlun3) },
+                onComplete = {
+                    if (manualId.isBlank()) return@ManualReaderScreen
+                    luggageViewModel.completeManualReading(manualId) {
+                        val trialId = detail?.manual?.trialId
+                        if (continueToTrial && trialId != null) {
+                            navController.navigate(
+                                Routes.learningTrial(trialId, returnToWushuhuan = true)
+                            ) {
+                                popUpTo(entry.destination.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
+                },
             )
         }
         composable(Routes.Gunlun3) {
@@ -2010,10 +2059,14 @@ fun JianghuNavHost(
                         launchSingleTop = true
                     }
                 },
-                onOpenGongfang = {
-                    // 进入创作台时移除引导页，保证任何返回路径都不会重新露出引导页。
+                onOpenCreationDesk = {
                     navController.navigate(Routes.Gongfang) {
-                        popUpTo(Routes.Zaowu) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onOpenCreationArchive = {
+                    navController.navigate(Routes.Chuangzuodangan) {
+                        launchSingleTop = true
                     }
                 },
             )
@@ -2063,7 +2116,6 @@ fun JianghuNavHost(
                 onOpenBrowseRecord = {
                     navController.navigate(Routes.YanwuchangVideoBrowseRecord)
                 },
-                onOpenMyClass = { navController.navigate(Routes.Challenge) },
             )
         }
         composable(Routes.YanwuchangVideoBrowseRecord) {
@@ -2218,11 +2270,20 @@ fun JianghuNavHost(
                 },
                 onOpenArena = { navController.navigateConferenceRoot(Routes.DahuiArena) },
                 onOpenRecords = { navController.navigateConferenceRoot(Routes.DahuiRecords) },
-                onOpenPublicationInbox = { navController.navigate(Routes.Challenge) },
                 onMessageShown = conferenceViewModel::clearMessage,
             )
         }
-        composable(Routes.Gongfang) {
+        composable(
+            route = Routes.GongfangPattern,
+            arguments = listOf(
+                navArgument("sourceManualId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            val sourceManualId = entry.arguments?.getString("sourceManualId")
             val recentWorks = creationState.recentProjects
                 .asSequence()
                 .mapNotNull { it.toCreationResumeItem() }
@@ -2237,12 +2298,21 @@ fun JianghuNavHost(
             GongfangScreen(
                 onBack   = {
                     creationViewModel.clearDerivative()
-                    // 创作台的页面返回与系统返回都直接回首页，同时移除引导页与创作台。
-                    navController.navigate(Routes.Home1) {
-                        popUpTo(Routes.Home1) { inclusive = false }
-                        launchSingleTop = true
+                    if (!sourceManualId.isNullOrBlank()) {
+                        navController.popBackStack()
+                    } else if (
+                        navController.previousBackStackEntry?.destination?.route == Routes.Zaowu
+                    ) {
+                        navController.popBackStack()
+                    } else {
+                        // 非工坊入口继续沿用原逻辑，避免改变其他创作来源的返回路径。
+                        navController.navigate(Routes.Home1) {
+                            popUpTo(Routes.Home1) { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                 },
+                initialManualId = sourceManualId,
                 onStartConversation = { idea, assets, manuals ->
                     creationViewModel.startConversation(idea, assets, manuals) { conversation ->
                         navController.navigate(Routes.shengtuProject(conversation.project.id))
@@ -2251,7 +2321,6 @@ fun JianghuNavHost(
                 onContinueWork = { workId ->
                     navController.navigate(Routes.shengtuProject(workId))
                 },
-                onOpenChuangzuodangan = openCreationArchive,
                 onOpenAllWorks = openCreationArchive,
                 recentWorks = recentWorks,
                 recentWorksLoading = creationState.loadingRecent,
@@ -2280,7 +2349,6 @@ fun JianghuNavHost(
             LaunchedEffect(projectId) {
                 luggageViewModel.loadCreationDetail(projectId)
                 creationViewModel.loadCreationSources()
-                distributionViewModel.loadClassrooms()
             }
             val bundle = luggageDetailState.creationDetail
                 ?.takeIf { it.project.id == projectId }
@@ -2358,6 +2426,9 @@ fun JianghuNavHost(
                 },
                 onBack = { navController.popBackStack() },
                 onOpenChuangzuodangan = { navController.navigate(Routes.Chuangzuodangan) },
+                onPublishToConference = {
+                    navController.navigateSingleTop(Routes.conferencePublish(projectId))
+                },
             )
         }
 
@@ -2374,22 +2445,13 @@ fun JianghuNavHost(
                         navController.navigate(Routes.shengtuProject(projectId))
                     }
                 },
-                onWithdrawWork = { projectId ->
-                    luggageViewModel.withdrawPublication(projectId) {
-                        creationViewModel.loadRecentProjects()
-                    }
+                onPublishWork = { projectId ->
+                    navController.navigateSingleTop(Routes.conferencePublish(projectId))
                 },
                 onDeleteWork = { projectId ->
                     luggageViewModel.deleteCreationProject(projectId) {
-                        creationViewModel.loadRecentProjects()
-                        navController.navigate(Routes.Gongfang) {
-                            popUpTo(Routes.Chuangzuodangan) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                        creationViewModel.removeDeletedProject(projectId)
                     }
-                },
-                onAppealWork = { projectId, caseId, reason ->
-                    luggageViewModel.createAppeal(projectId, caseId, reason)
                 },
                 recentWorks = creationState.recentProjects,
                 recentWorksLoading = creationState.loadingRecent,
@@ -2402,20 +2464,6 @@ fun JianghuNavHost(
                 archiveDetailLoading = luggageDetailState.loading,
                 archiveDetailMessage = luggageDetailState.message,
                 onArchiveWorkSelected = luggageViewModel::loadCreationDetail,
-                onRetryArchiveDetail = {
-                    luggageDetailState.creationDetailProjectId?.let(luggageViewModel::loadCreationDetail)
-                },
-                onOpenCreationDesk = {
-                    val returnedToDesk = navController.popBackStack(
-                        route = Routes.Gongfang,
-                        inclusive = false,
-                    )
-                    if (!returnedToDesk) {
-                        navController.navigate(Routes.Gongfang) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
             )
         }
 
@@ -2423,7 +2471,6 @@ fun JianghuNavHost(
         // 行囊页(Figma 设计) — 点击首页1的"行囊"按钮跳转
         composable(Routes.Luggage) {
             LaunchedEffect(Unit) { luggageViewModel.refresh() }
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             LuggageScreen(
                 uiState = luggageState,
                 onBack = { navController.popBackStack() },
@@ -2451,14 +2498,6 @@ fun JianghuNavHost(
                 onContinueCreation = { id -> navController.navigate(Routes.luggageCreationDetail(id)) },
                 onOpenEvidence = { navController.navigate(Routes.LuggageEvidence) },
                 onOpenPrivacy = { navController.navigate(Routes.LuggagePrivacySafety) },
-                onOpenLetters = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
-                },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
             )
         }
 
@@ -2575,18 +2614,47 @@ fun JianghuNavHost(
 
         composable(
             Routes.LearningTrialPattern,
-            arguments = listOf(navArgument("trialId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("trialId") { type = NavType.StringType },
+                navArgument("returnToWushuhuan") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
         ) { entry ->
             val trialId = entry.arguments?.getString("trialId").orEmpty()
+            val returnToWushuhuan =
+                entry.arguments?.getBoolean("returnToWushuhuan") ?: false
+            val completeTrial: () -> Unit = {
+                luggageViewModel.loadLearningOverview()
+                if (returnToWushuhuan) {
+                    if (!navController.popBackStack(Routes.Wushuhuan, inclusive = false)) {
+                        navController.navigate(Routes.Wushuhuan) {
+                            popUpTo(entry.destination.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                } else {
+                    navController.popBackStack()
+                }
+            }
             LearningTrialScreen(
                 trialId = trialId,
                 state = luggageDetailState,
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    if (returnToWushuhuan && luggageDetailState.trialResult?.passed == true) {
+                        completeTrial()
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
                 onLoad = luggageViewModel::loadLearningTrial,
                 onSubmit = { prediction, answer, explanation ->
                     luggageViewModel.submitLearningTrial(trialId, prediction, answer, explanation)
                 },
-                onComplete = { navController.popBackStack() },
+                onRetry = luggageViewModel::retryLearningTrial,
+                onComplete = completeTrial,
+                completeLabel = if (returnToWushuhuan) "返回悟书环查看状态" else "返回秘籍",
             )
         }
 
@@ -2661,11 +2729,41 @@ fun JianghuNavHost(
                 onContinue = {
                     navController.navigate(Routes.shengtuProject(it))
                 },
+                onPublish = { id ->
+                    navController.navigateSingleTop(Routes.conferencePublish(id))
+                },
                 onWithdraw = luggageViewModel::withdrawPublication,
                 onAppeal = luggageViewModel::createAppeal,
                 onDelete = { id ->
                     luggageViewModel.deleteCreationProject(id) {
                         navController.popBackStack()
+                    }
+                },
+            )
+        }
+
+        composable(
+            Routes.ConferencePublishPattern,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            val projectId = entry.arguments?.getString("projectId").orEmpty()
+            ConferencePublishScreen(
+                projectId = projectId,
+                state = luggageDetailState,
+                publishBusy = creationState.workflowBusy &&
+                    creationState.workflowMessageProjectId == projectId,
+                publishMessage = creationState.workflowMessage
+                    ?.takeIf { creationState.workflowMessageProjectId == projectId },
+                publishFailed = creationState.workflowFailed &&
+                    creationState.workflowMessageProjectId == projectId,
+                onBack = { navController.popBackStack() },
+                onLoad = luggageViewModel::loadCreationDetail,
+                onSubmit = { bundle, draft ->
+                    creationViewModel.publishToConference(bundle, draft) {
+                        luggageViewModel.loadCreationDetail(projectId)
+                        luggageViewModel.refresh(force = true)
+                        creationViewModel.loadRecentProjects()
+                        conferenceViewModel.invalidateFeed()
                     }
                 },
             )
@@ -2741,18 +2839,8 @@ fun JianghuNavHost(
 
         // 设置页(Figma 设计) — 点击首页1的"设置"图标跳转
         composable(Routes.Settings) {
-            LaunchedEffect(Unit) { conferenceViewModel.syncLetters() }
             SettingsScreen(
                 onBack             = { navController.popBackStack() },
-                onOpenWendao       = { navController.navigate(Routes.Home1) },
-                onOpenLetters      = {
-                    navController.navigate(
-                        if (conferenceState.conferenceEnabled == false) Routes.Challenge
-                        else Routes.DahuiLetters,
-                    )
-                },
-                onOpenLuggage      = { navController.navigate(Routes.Luggage) },
-                hasUnreadLetters = conferenceState.unreadLetterCount > 0,
                 onOpenAccount      = { navController.navigate(Routes.SettingsAccount) },
                 onOpenMessage      = { navController.navigate(Routes.SettingsMessage) },
                 onOpenGeneral      = { navController.navigate(Routes.SettingsGeneral) },
@@ -2824,35 +2912,13 @@ fun JianghuNavHost(
             SettingsDetailScreen(SettingsPage.DataRecovery, onBack = { navController.popBackStack() })
         }
 
-        // 书信中的切磋来信可进入挑战页。
-        composable(Routes.Challenge) {
-            LaunchedEffect(Unit) { distributionViewModel.refreshInboxAndClassrooms() }
-            ChallengeScreen(
-                inbox = distributionState.inbox,
-                inboxLoading = distributionState.inboxLoading,
-                inboxError = distributionState.inboxError,
-                canLoadMore = distributionState.inboxCursor != null,
-                classrooms = distributionState.classrooms,
-                classroomLoading = distributionState.classroomLoading,
-                classroomMessage = distributionState.classroomMessage,
-                oneTimeJoinCode = distributionState.oneTimeJoinCode,
-                isAdult = currentUser?.ageBand == "ADULT",
-                onRefresh = distributionViewModel::refreshInboxAndClassrooms,
-                onLoadMore = { distributionViewModel.loadInbox(loadMore = true) },
-                onCreateClassroom = distributionViewModel::createClassroom,
-                onJoinClassroom = distributionViewModel::joinClassroom,
-                onDismissJoinCode = distributionViewModel::clearOneTimeJoinCode,
-                onBack = { navController.popBackStack() },
-                onOpenWendao = { navController.navigate(Routes.Xiulian) },
-                onOpenSettings = { navController.navigate(Routes.Settings) },
-                onOpenProgress = { /* TODO:进度弹窗或页面 */ },
+    }
+        if (loginTransitionRunning) {
+            LoginMistTransition(
+                phase = { mistPhase.value },
+                modifier = Modifier.fillMaxSize(),
             )
         }
-    }
-        LoginMistTransition(
-            phase = mistPhase.value,
-            modifier = Modifier.fillMaxSize(),
-        )
     }
 }
 

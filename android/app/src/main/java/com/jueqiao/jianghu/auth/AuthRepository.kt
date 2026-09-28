@@ -27,8 +27,14 @@ class AuthRepository(
             _currentUser.value = api.currentUser(requireAccessToken())
             true
         } catch (error: AuthApiException) {
-            if (error.statusCode == 401) clearSession()
-            false
+            if (error.statusCode == 401) {
+                clearSession()
+                false
+            } else {
+                // A timeout or unreachable server is not evidence that the
+                // refresh token is invalid. Keep it for the next in-page retry.
+                throw error
+            }
         }
     }
 
@@ -44,7 +50,6 @@ class AuthRepository(
         verificationCode: String,
         password: String,
         ageBand: AgeBand,
-        guardianConsentToken: String?,
     ): AuthResponseDto {
         val response = api.register(
             RegisterRequest(
@@ -54,7 +59,6 @@ class AuthRepository(
                 ageBand = ageBand.apiValue,
                 termsVersion = BuildConfig.TERMS_VERSION,
                 privacyVersion = BuildConfig.PRIVACY_VERSION,
-                guardianConsentToken = guardianConsentToken,
                 clientRequestId = UUID.randomUUID().toString(),
             )
         )
@@ -67,20 +71,6 @@ class AuthRepository(
         phone: String,
         purpose: VerificationPurpose,
     ): VerificationCodeAccepted = api.requestVerificationCode(phone, purpose)
-
-    suspend fun verifyGuardianConsent(
-        childPhone: String,
-        guardianPhone: String,
-        verificationCode: String,
-    ): GuardianConsentResponse = api.verifyGuardianConsent(
-        GuardianConsentRequest(
-            childPhone = childPhone,
-            guardianPhone = guardianPhone,
-            verificationCode = verificationCode,
-            termsVersion = BuildConfig.TERMS_VERSION,
-            privacyVersion = BuildConfig.PRIVACY_VERSION,
-        )
-    )
 
     suspend fun resetPassword(
         phone: String,

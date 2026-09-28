@@ -31,7 +31,6 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -79,7 +78,6 @@ fun YanwuchangVideoMyScreen(
     onOpenWork: (String) -> Unit = {},
     onOpenReviews: (String) -> Unit = {},
     onOpenBrowseRecord: () -> Unit = {},
-    onOpenMyClass: () -> Unit = {},
 ) {
     BackHandler(enabled = true, onBack = onBack)
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -144,8 +142,7 @@ fun YanwuchangVideoMyScreen(
             )
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuickAction("浏览记录", Icons.Outlined.History, onOpenBrowseRecord, Modifier.weight(1f))
-                QuickAction("我的班级", Icons.Outlined.School, onOpenMyClass, Modifier.weight(1f))
+                QuickAction("浏览记录", Icons.Outlined.History, onOpenBrowseRecord, Modifier.fillMaxWidth())
             }
             Spacer(Modifier.height(12.dp))
             Column(

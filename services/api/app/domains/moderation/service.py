@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
 from app.core.security import utcnow
+from app.domains.learning.creation_growth import award_conference_growth
 from app.domains.creations.models import Publication, PublicationStatus
 from app.domains.conference.models import (
     ConferenceDerivativeAuthorization,
@@ -172,6 +173,7 @@ class ModerationService:
             publication.return_reason_code = None
             publication.return_reason_summary = None
             activate_publication_delivery(self.db, publication)
+            award_conference_growth(self.db, publication)
         elif payload.decision == ModerationDecision.RETURN:
             publication.status = PublicationStatus.RETURNED
             publication.returned_at = now

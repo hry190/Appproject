@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,7 +70,8 @@ private val WorkshopEntranceOffset = 56.dp
 @Composable
 fun ZaowuScreen(
     onBack: () -> Unit = {},
-    onOpenGongfang: () -> Unit = {},
+    onOpenCreationDesk: () -> Unit = {},
+    onOpenCreationArchive: () -> Unit = {},
     guideSessionKey: String = "guest",
 ) {
     val context = LocalContext.current
@@ -86,6 +88,7 @@ fun ZaowuScreen(
     val bubbleMovement = remember(guideSessionKey) { Animatable(0f) }
     val workshopAlpha = remember(guideSessionKey) { Animatable(if (guideAlreadyCompleted) 1f else 0f) }
     val workshopMovement = remember(guideSessionKey) { Animatable(if (guideAlreadyCompleted) 1f else 0f) }
+    val destinationSelected = remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val workshopEntranceOffsetPx = with(density) { WorkshopEntranceOffset.toPx() }
 
@@ -179,11 +182,16 @@ fun ZaowuScreen(
         DirectionalTyndallEffect()
 
         // 内容层(避开系统导航条)
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
+        // 门口入口使用屏幕宽度的相对位置，避免在常见手机宽度上漂到熊猫或屏幕外。
+        val archiveEntranceX = (maxWidth * 0.60f)
+            .coerceIn(196.dp, maxWidth - 71.dp)
+        val archiveEntranceY = (maxHeight * 0.38f)
+            .coerceIn(276.dp, 322.dp)
         // 贴脚的半透明接触阴影：保留石板纹理，不再铺一块大面积黑雾。
         PandaContactShadow(
             modifier = Modifier
@@ -244,10 +252,11 @@ fun ZaowuScreen(
                 },
         )
 
-        // 气泡退场后，工坊入口复刻首页四个一级入口的淡入与上移入场节奏。
+        // 气泡退场后，两个工坊入口复刻首页一级入口的淡入、上移与点击节奏。
         DecorButton(
             imageRes = R.drawable.img_zaowu_51,
-            text = "工坊",
+            text = "创作台",
+            accessibilityLabel = "进入创作台",
             x = 55.dp,
             y = 510.dp,
             width = 55.dp,
@@ -257,7 +266,32 @@ fun ZaowuScreen(
                 (1f - workshopMovement.value) * workshopEntranceOffsetPx,
             entranceEnabled =
                 workshopAlpha.value >= 0.99f && workshopMovement.value >= 0.99f,
-            onClick = onOpenGongfang,
+            onClick = {
+                if (!destinationSelected.value) {
+                    destinationSelected.value = true
+                    onOpenCreationDesk()
+                }
+            },
+        )
+        DecorButton(
+            imageRes = R.drawable.img_zaowu_51,
+            text = "创作档案",
+            accessibilityLabel = "进入创作档案",
+            x = archiveEntranceX,
+            y = archiveEntranceY,
+            width = 55.dp,
+            height = 90.dp,
+            entranceAlpha = workshopAlpha.value,
+            entranceTranslationY =
+                (1f - workshopMovement.value) * workshopEntranceOffsetPx,
+            entranceEnabled =
+                workshopAlpha.value >= 0.99f && workshopMovement.value >= 0.99f,
+            onClick = {
+                if (!destinationSelected.value) {
+                    destinationSelected.value = true
+                    onOpenCreationArchive()
+                }
+            },
         )
         }
     }

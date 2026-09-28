@@ -677,7 +677,6 @@ fun ConferenceLettersScreen(
     onOpenTarget: (ConferenceLetterDto) -> Boolean,
     onOpenArena: () -> Unit,
     onOpenRecords: () -> Unit,
-    onOpenPublicationInbox: () -> Unit,
     onMessageShown: () -> Unit,
 ) {
     LaunchedEffect(Unit) { onLoad() }
@@ -696,7 +695,6 @@ fun ConferenceLettersScreen(
         onOpenTarget = onOpenTarget,
         onOpenArena = onOpenArena,
         onOpenRecords = onOpenRecords,
-        onOpenPublicationInbox = onOpenPublicationInbox,
         snackbarHost = snackbarHost,
     )
 }
