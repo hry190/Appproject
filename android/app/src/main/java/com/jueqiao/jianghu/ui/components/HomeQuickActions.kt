@@ -302,7 +302,7 @@ private fun UtilityActionItem(
 
     Column(
         modifier = Modifier
-            .width(48.dp)
+            .width(50.dp)
             .heightIn(min = 48.dp)
             .graphicsLayer {
                 scaleX = scale

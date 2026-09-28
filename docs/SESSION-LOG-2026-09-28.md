@@ -544,3 +544,27 @@ git checkout ww
 - 今日 commit 笔数:**+1 → 7**
 - HEAD(ww):本笔 commit(见 git log)
 - origin/ww:本笔 push 后同步
+
+---
+
+## §17 19:30 — HomeQuickActions 标签宽度 48dp → 50dp(修为"为"字测试微调)
+
+**用户意图**:修为"为"字在 home1 看起来右边紧贴 48dp Column 边界,微调到 50dp 看效果。
+
+### 改动(单文件,1 行)
+- 文件:`android/app/src/main/java/com/jueqiao/jianghu/ui/components/HomeQuickActions.kt`
+- 行 305:`.width(48.dp)` → `.width(50.dp)`
+- 影响范围:四个标签(问道/修为/书信/设置)共用同一个 Column,全部 +2dp
+- 不影响:图标尺寸(23dp)、字体(15sp YaHei Medium)、最大行数(maxLines=1)
+
+### 同时清理
+- 删除 `docs/screenshots/` 目录(11 张诊断 PNG,~4.5MB)——纯诊断产物,不入 git
+- 该目录从未被 track,本笔也不入 commit
+
+### 备注
+- 还没 rebuild & install APK,手机 App 仍显示 48dp 旧版
+- 用户可能继续微调(56/64dp / 改 padding / 改字号);如调完一起 commit
+
+### 收工快照(预计)
+- 今日 commit 笔数:**+1 → 8**
+- HEAD(ww):本笔 commit(见 git log)
