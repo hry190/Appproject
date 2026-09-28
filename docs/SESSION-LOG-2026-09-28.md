@@ -568,3 +568,35 @@ git checkout ww
 ### 收工快照(预计)
 - 今日 commit 笔数:**+1 → 8**
 - HEAD(ww):本笔 commit(见 git log)
+
+---
+
+## §18 19:40 — fast-forward main 到 ww(3 笔 fix 同步)
+
+**用户指令**:"推到 main"
+
+### 拓扑验证
+- main HEAD:`6536a93`(上一次 ff 同步后的状态)
+- ww HEAD:`9540894`(3 笔新 commit)
+- merge-base:`6536a93`(= main HEAD)
+- 结论:ww 是 main 的直接延伸,可 `--ff-only`
+
+### 同步的 3 笔
+| SHA | 说明 |
+|---|---|
+| `9540894` | chore(home1): 标签宽度 48dp → 50dp |
+| `4b753cf` | fix(gunlun1): 气泡尺寸 148×84 → 188×134 |
+| `8f54893` | fix(home1): 闯荡江湖按钮坐标 X286 Y227 → X285 Y150 |
+
+### 操作
+```bash
+git checkout main
+git merge --ff-only ww
+git push origin main
+```
+
+### 收工快照(预计)
+- HEAD(main):`9540894`(同 ww)
+- HEAD(ww):`9540894`
+- origin/main:`9540894`(push 后同步)
+- working 区:clean
