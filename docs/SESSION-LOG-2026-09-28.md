@@ -462,14 +462,23 @@ git checkout ww
 - 回到 ww 分支结束:用户当前工作分支是 ww,不能丢
 
 ### 收工快照(预计)
-- HEAD(main):`<待回填 merge commit SHA>`
-- HEAD(ww):`63dd03d`(未动)
-- origin/main:`<待回填>`(push 后同步)
-- 今日 commit 笔数:**+1 → 4**
+- HEAD(main):`237fa44 merge ww → main: ww 9 commits ahead + 1 commit 同步 + 3 deletion divergence`
+- HEAD(ww):`55a3e4e`(已 +1: §14 commit)
+- origin/main:`237fa44`(push 后同步)
+- 今日 commit 笔数:**+1 → 5**(§14 commit + merge commit)
 - 工作区:clean
 
 ### 实际执行(回填区)
-- merge commit:`<PENDING>`
-- push commit:`<PENDING>`
-- 3 个 git rm 文件名确认:`<PENDING>`
-- 任何 untracked 文件或 stash:`<PENDING>`
+- merge commit:`237fa44e4f4ac5379fede5d091a155a826f5bef4`
+- push commit:`237fa44` → origin/main(`ca2f606..237fa44`)
+- 3 个 git rm 文件名确认:`DistributionViewModel.kt` / `PublicationFeedCard.kt` / `ChallengeScreen.kt`(全部已 delete mode)
+- 任何 untracked 文件或 stash:无
+- push 结果:`To https://github.com/hry190/Appproject.git / ca2f606..237fa44  main -> main`(1 次 push 即同步)
+- 自动策略:git 默认 deletion divergence 选 ww 删除侧(因 main 有 / ww 删,新版 merge 算法倾向 later commit 端的删除意图)
+
+### 收工快照(16:30)
+- HEAD(main):`237fa44`(merge commit)
+- HEAD(ww):`55a3e4e`(§14 commit,merge 后未再动)
+- origin/main:`237fa44`(已同步)
+- 今日 commit 笔数:**5**(§11 reset 1 + §12 1 + §13 amend 1 + §14 commit 1 + merge commit 1;按"合并时 reset 不算 commit"算 4)
+- 工作区:clean(已切回 ww 后再 revert 任何残留)
