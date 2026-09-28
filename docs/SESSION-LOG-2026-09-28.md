@@ -396,3 +396,80 @@ git merge --no-commit --no-ff --strategy=recursive origin/feature/creation-conte
 - 今日 commit 笔数:**3**(`6723236` amend + 之前 reset + 第一次 merge commit 已被 amend)
 - HEAD:`6723236 merge origin/feature/creation-contest-demo → ww`
 - 工作区:除备份目录外 clean
+
+---
+
+## §14 16:30 — merge ww → main(9 ahead + 1 behind,3 个 deletion 冲突)
+
+**用户指令**:"现在把当前分支的内容同步到main分支行" + 回答两个澄清问题:
+1. 3 个 deletion 冲突 → **接受 ww 的删除**(b5d2c8c 重构已替代)
+2. push 时机 → **合并并立即 push**
+
+### 4 步侦察/评估
+
+**拓扑**
+- `main` HEAD:`ca2f606`(`merge zzz → main: CdOrder 拖动改写 + 09-22 日志 + 去半透明`,merge 父:`dcce4fb` + `dc3e61d`)
+- `ww` HEAD:`63dd03d`(`fix(gunlun1): 修炼按钮无条件跳转`)
+- `origin/main` = `origin/ww` = 本地两份 HEAD(fetch 校验一致)
+- merge-base = `dc3e61d`(`fix(chuangdang): CdDraggableOrderRow 去半透明`)
+
+**ww 领先 main(9 commits)**
+```
+63dd03d fix(gunlun1): 修炼按钮无条件跳转
+7008a87 chore(ww): 清理 backup 目录,省 33MB
+2f5a083 chore(chuangzuodangan): 用 feature 新版(从 aa HEAD 拉)替换 main 旧版
+d4d8f63 Add feature expansion for conference workflows and sync Android creation flows
+6bca742 merge origin/feature/creation-contest-demo → ww
+2757c48 docs(infra): 加 TROUBLESHOOTING.md + diag/start-reverse 一键脚本
+bf0e2fa docs(session-log): 09-28 日志 —— 清理污染 + 排坑文档/脚本固化
+ad6a053 chore(gitignore): 排除 uvicorn 运行时日志
+b5d2c8c feat: sync Android creation flows and backend updates
+```
+
+**main 领先 ww(1 commit)**
+- `ca2f606` 内容覆盖了 ww 已有的 `f0bc01a` + `f55118f` + `dc3e61d` 三件套,merge-base 落在 `dc3e61d`,所以这部分自动合并干净。
+
+### 真实冲突:3 个文件(deletion divergence)
+
+`git merge-tree` 预演显示"removed in remote"(ww 删除 / main 保留):
+
+| 文件 | 来源 | 处理 |
+|---|---|---|
+| `android/app/src/main/java/com/jueqiao/jianghu/distribution/DistributionViewModel.kt` | `b5d2c8c` 删除 | `git rm`(被 LuggageViewModel + ConferencePublishScreen 替代) |
+| `android/app/src/main/java/com/jueqiao/jianghu/ui/components/PublicationFeedCard.kt` | `b5d2c8c` 删除 | `git rm`(新版在 LuggageDetailScreens 重写) |
+| `android/app/src/main/java/com/jueqiao/jianghu/ui/screens/home/ChallengeScreen.kt` | `b5d2c8c` 删除 | `git rm`(被新版 HomeQuickActions 替代) |
+
+git 默认行为是**保留**这些文件(因 main 有 / ww 删)—— 与 `b5d2c8c` 重构意图相反,会引入冗余死代码,故选 `git rm`。
+
+### 合并策略
+
+按 SOP(Windows bash git bug 必须加 `--strategy=recursive`):
+
+```bash
+git checkout main
+git merge --no-ff ww -m "merge ww → main: ..." --strategy=recursive
+# 预期 3 个 CONFLICT (modify/delete)
+git rm <3 files>
+git commit --no-edit
+git push origin main
+git checkout ww
+```
+
+### 关键决策
+- `--no-ff`:保留 merge commit 拓扑(便于审计 ww → main 的集成轨迹)
+- 不写 commit body:沿用 merge 默认 message(--no-edit),commit subject 由 -m 提供
+- 不 amend 任何旧 commit:ww 那 9 个 commit 全部原样入 main
+- 回到 ww 分支结束:用户当前工作分支是 ww,不能丢
+
+### 收工快照(预计)
+- HEAD(main):`<待回填 merge commit SHA>`
+- HEAD(ww):`63dd03d`(未动)
+- origin/main:`<待回填>`(push 后同步)
+- 今日 commit 笔数:**+1 → 4**
+- 工作区:clean
+
+### 实际执行(回填区)
+- merge commit:`<PENDING>`
+- push commit:`<PENDING>`
+- 3 个 git rm 文件名确认:`<PENDING>`
+- 任何 untracked 文件或 stash:`<PENDING>`
