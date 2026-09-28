@@ -353,8 +353,8 @@ fun WushuhuanScreen(
                     horizontalPadding = 14.dp,
                     verticalPadding = 14.dp,
                     modifier = Modifier
-                        .offset(x = (maxWidth - 166.dp).coerceAtLeast(0.dp), y = 374.dp)
-                        .size(width = 166.dp, height = 122.dp)
+                        .offset(x = (maxWidth - 216.dp).coerceAtLeast(0.dp), y = 324.dp)
+                        .size(width = 216.dp, height = 176.dp)
                         .testTag("wushuhuan_status_bubble")
                         .then(
                             if (canOpenContextualHoushan) {
@@ -489,7 +489,7 @@ private fun statusCopy(
     isLoading && book == null -> "正在查看你的秘籍……"
     book == null && !loadMessage.isNullOrBlank() -> "秘籍状态暂未读到\n稍后再试"
     book == null -> "第${selectedVolume}卷 · 暂无秘籍\n轻触气泡去后山"
-    book.state == "UNSEEN" -> "第${book.volumeNo}卷${displayVolumeTitle(book)} · 未闻\n轻触气泡去后山"
+    book.state == "UNSEEN" -> "第${book.volumeNo}卷${displayVolumeTitle(book)}·未闻\n轻触气泡去后山"
     book.reviewDue -> "第${book.volumeNo}卷${displayVolumeTitle(book)} · 待温习\n轻触正中秘籍"
     else -> "第${book.volumeNo}卷${displayVolumeTitle(book)} · ${book.stateLabel}\n轻触正中秘籍"
 }
