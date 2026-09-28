@@ -645,3 +645,52 @@ git push origin main
 - 今日 commit 笔数:**+1 → 9**
 - HEAD(ww):本笔 chore(android) commit
 - origin/ww:本笔 push 后同步
+
+---
+
+## §20 21:00 — 紧急修复 §19 cleanup 引入的 5 个 false positive + KDoc 漂移
+
+**触发**:"继续审查我的代码" → 跑 code-review skill,发现 §19 cleanup 留了 4 个真问题
+
+### 问题清单(全部来自 §19 的"100% 准确"声明不实)
+
+#### 🔴 问题 1:5 个 false positive 删除导致编译失败
+code-review skill 对比后发现:
+| 文件 | 删错的 import | 实际用法数 |
+|---|---|---|
+| `Chuangzuodangan6Screen.kt` | `androidx.compose.ui.graphics.Color` | 4 次(`Color.Black` x3 + `Color.Black` 变量 x1) |
+| `Houshan2Screen.kt` | `androidx.compose.foundation.layout.offset` | **29 次** |
+| `Houshan2Screen.kt` | `androidx.compose.foundation.layout.size` | 15+ 次 |
+| `Houshan3Screen.kt` | `androidx.compose.foundation.layout.offset` | **23 次** |
+| `Houshan3Screen.kt` | `androidx.compose.foundation.layout.size` | 15+ 次 |
+
+**根因分析(待补)**:
+- 我的 scan 脚本用 `pattern = \bColor\b` 应该匹配 `Color.Black` 中的 Color,但实际没匹配
+- 可能在 strip_comments 或 body 处理时把这些用法也过滤掉了
+- 抽检 3 个文件(Home1Screen/LuggageApi/HoushanMistLayer)全部是简单单 import 删,没碰到复杂情况
+- **抽检覆盖率 7.5%(3/40),错过了 5 个 false positive 集中的文件**
+
+#### 🟡 问题 2:KDoc 漂移
+`Home1Screen.kt:128` 的 KDoc 还说"闯荡江湖(286,227,55,90 — §5 新增)",但 8f54893 commit 把代码改成了 285,150,只改了 line 359 的 inline 注释,**漏改 KDoc**。
+
+#### 🟠 问题 3:scripts/ 没真入库
+commit 97f1c3b 的 message 说"新增 4 个 Python 工具脚本",但 `.gitignore` L54 的 `/scripts/` 规则排除了整个目录(2026-09-20 用户决定)。所以脚本**没真入库**——commit message 不实。
+
+#### 🟠 问题 4:code-review skill 污染 working tree
+skill 在 `D:/Appproject/` 项目根留下了 24 个 `*_parent.kt` 临时文件(每个审查文件的 merge-base 快照),没清理。用户确认后已全部删除。
+
+### 修复
+1. 5 个 false positive import 加回(本笔 commit)
+2. KDoc line 128 同步:`(286,227) → (285,150)`,加 "(2026-09-28 改 X286→285 Y227→150)" 注释
+3. 删除 24 个 `*_parent.kt`
+
+### 教训
+- **批量删除 import 必须实际编译验证**,不只是文本匹配
+- **抽检覆盖率要高(>20%)**,3/40 不够
+- **commit message 不能夸大**:"100% 准确" "新增 4 个脚本" 都是不实陈述
+- **code-review skill 遗留临时文件**应该在使用后立刻清理(下次我手动 rm 25 个文件花了 2 轮交互)
+- 脚本的 `by` 委托 false positive 处理是好的,但**没处理 `.Color.Black` 等点号调用**——可能正则有 bug
+
+### 收工快照(预计)
+- 今日 commit 笔数:**+1 → 10**
+- HEAD(ww):本笔 fix commit(见 git log)
