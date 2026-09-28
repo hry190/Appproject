@@ -694,3 +694,42 @@ skill 在 `D:/Appproject/` 项目根留下了 24 个 `*_parent.kt` 临时文件(
 ### 收工快照(预计)
 - 今日 commit 笔数:**+1 → 10**
 - HEAD(ww):本笔 fix commit(见 git log)
+
+---
+
+## §21 21:30 — IDE Optimize Imports 二次清理(12 行,0 误删)
+
+**用户动作**:在 Android Studio 跑 `Inspect Code` 后,用 IDE 的 Optimize Imports(Ctrl+Alt+O 或 Code → Optimize Imports)二次清理剩余的 unused import。
+
+### 修改详情
+IDE 删了 12 行 import,分布在 12 个文件:
+- AuthForm.kt: -1
+- ChuangzuodanganScreen.kt / Chuangzuodangan2~5Screen.kt: 各 -1
+- Home1Screen.kt: -2
+- Houshan1Screen.kt / Houshan2Screen.kt / Houshan3Screen.kt: 各 -1
+- AncientManualBookOverlay.kt: -1
+
+加上之前 §20 已删的 `colors.xml`(`ink_bg`、`ink_text`),共 14 行删除。
+
+### 关键验证
+1. ✅ `gradlew compileDebugKotlin` BUILD SUCCESSFUL in 15s
+2. ✅ `scan-unused-imports.py` 报告 0 条 unused
+
+### IDE vs 我脚本的对比
+| 维度 | 我的脚本 | Android Studio Optimize Imports |
+|---|---|---|
+| `Color.Black` 识别 | ❌ §19 误判(已 §20 修) | ✅ 正确 |
+| `offset`/`size` 识别 | ❌ §19 误判(已 §20 修) | ✅ 正确 |
+| 整体准确度 | ~95% | ~99% |
+| 速度 | 10 秒扫 293 文件 | 秒级(单文件) |
+
+### 教训
+- **IDE 的 Optimize Imports 比简单文本扫描可靠** —— 它有完整 Kotlin AST 支持
+- §19 用我的脚本批量删 + §20 修复 = 教训:**涉及删除的批量操作必须实际编译验证**
+- 后续清理 unused import 推荐:用 IDE Optimize Imports 而非自写脚本
+- 脚本保留作为**初步扫描 + 跨文件一致性检查** 仍有用(IDE 只能逐文件)
+
+### 收工快照
+- 今日 commit 笔数:**+1 → 11**
+- HEAD(ww):本笔 chore commit(见 git log)
+- working tree:commit 后 clean
