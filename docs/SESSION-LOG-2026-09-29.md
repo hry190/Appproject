@@ -186,3 +186,53 @@ git branch -D zzz               # 删本地(强制,-D 因为 zzz 是 orphan)
 ### 收工快照(预计)
 - 本地分支:`main`、`ww`、`feature/authentication-foundation`(本地无)
 - 远程分支:`main`、`ww`、`feature/authentication-foundation`、`feature/creation-contest-demo`(孤儿,待评估)
+
+---
+
+## §30 12:30 — 卷最后一页的滚轮跳转改为悟书环跳转
+
+**用户指令**:"后山2~11页面的可以跳转的卷页面的最后一个页面的可以跳转的滚轮页可以删掉,然后将卷页面的最后一页可以跳转到wushu环"
+
+### 用户意图澄清
+
+通过 AskUserQuestion 确认:
+1. 滚轮跳转按钮 → **改 onClick 目标为 wushu 环**(复用原按钮)
+2. wushu 环入口 → 复用原按钮,**不**新增按钮
+
+### 实施细节
+
+**唯一修改文件**:`android/app/src/main/java/com/jueqiao/jianghu/nav/JianghuNavHost.kt`
+
+9 个 Volume 最后一页的 `onOpenGunlun*N*` lambda 体改为 `navigateSingleTop(Routes.Wushuhuan)`:
+
+| Vol | NavHost 行 | 参数 | 备注 |
+|---|---|---|---|
+| 1 | 1211 | onOpenGunlun6 | — |
+| 2 | 1301 | onOpenGunlun10 | — |
+| 4 | 1480 | onOpenGunlun8 | plan 写 1388 实际是 1480(脚本误判) |
+| 5 | 1772 | onOpenGunlun12 | — |
+| 6 | 1960 | onOpenGunlun14 | — |
+| 7 | 2043 | onOpenGunlun16 | — |
+| 8 | 1675 | onOpenGunlun11 | — |
+| 9 | 1577 | onOpenGunlun9 | — |
+| 10 | 1863 | onOpenGunlun13 | — |
+
+### Vol 3 特殊情况
+
+`Volume3Part14Screen` 在 NavHost 里是单行定义(`Volume3Part14Screen(onBack = { navController.popBackStack() })`),**没有 onOpenGunlun 参数**,原本就没有跳转按钮——无需改。
+
+### 不动的东西
+
+- 后山 2-11 各 Screen 的 `onOpenVolume*N*Part1` 字段全部保留
+- Volume 屏幕本体(参数名 `onOpenGunlun6` 等保留)
+- Gunlun 屏幕(`onOpenGunlun*N*` 在 gunlun 屏幕内部调用,**不**改)
+- Wushuhuan 屏幕、Routes.kt
+
+### 验证
+
+- ✅ compileDebugKotlin:BUILD SUCCESSFUL in 29s
+- ⏳ 视觉验证(用户自行):每卷最后一页点卷尾按钮 → 进悟书环
+
+### 收工快照
+- HEAD(ww):`<待回填>`
+- working tree:本笔 commit 后 clean

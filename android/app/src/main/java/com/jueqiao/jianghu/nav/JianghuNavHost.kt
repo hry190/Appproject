@@ -1208,7 +1208,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume1Part14) {
             Volume1Part14Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun6 = { navController.navigate(Routes.Gunlun6) },
+                onOpenGunlun6 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Volume2Part1) {
@@ -1298,7 +1298,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume2Part15) {
             Volume2Part15Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun10 = { navController.navigate(Routes.Gunlun10) },
+                onOpenGunlun10 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Volume3Part1) {
@@ -1477,7 +1477,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume4Part14) {
             Volume4Part14Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun8 = { navController.navigate(Routes.Gunlun8) },
+                onOpenGunlun8 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun9) {
@@ -1574,7 +1574,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume9Part15) {
             Volume9Part15Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun9 = { navController.navigate(Routes.Gunlun9) },
+                onOpenGunlun9 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun10) {
@@ -1672,7 +1672,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume8Part14) {
             Volume8Part14Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun11 = { navController.navigate(Routes.Gunlun11) },
+                onOpenGunlun11 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun12) {
@@ -1769,7 +1769,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume5Part15) {
             Volume5Part15Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun12 = { navController.navigate(Routes.Gunlun12) },
+                onOpenGunlun12 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun13) {
@@ -1860,7 +1860,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume10Part14) {
             Volume10Part14Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun13 = { navController.navigate(Routes.Gunlun13) },
+                onOpenGunlun13 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun14) {
@@ -1957,7 +1957,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume6Part15) {
             Volume6Part15Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun14 = { navController.navigate(Routes.Gunlun14) },
+                onOpenGunlun14 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Gunlun15) {
@@ -2040,7 +2040,7 @@ actions = Houshan1Actions(
         composable(Routes.Volume7Part12) {
             Volume7Part12Screen(
                 onBack = { navController.popBackStack() },
-                onOpenGunlun16 = { navController.navigate(Routes.Gunlun16) },
+                onOpenGunlun16 = { navController.navigateSingleTop(Routes.Wushuhuan) },
             )
         }
         composable(Routes.Zaowu)    {
