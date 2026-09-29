@@ -157,3 +157,32 @@ git push origin main
 - HEAD(ww):`8ad2d8b`
 - origin/main:push 后同步
 - working tree:clean
+
+---
+
+## §29 11:45 — 清理孤儿分支 origin/zzz + 本地 zzz
+
+**用户指令**:"清理 origin/zzz"
+
+### 验证 zzz 是孤儿
+```
+zzz HEAD:           63dd03d fix(gunlun1): 修炼按钮无条件跳转
+merge-base zzz+main: 63dd03d  ← 完全相等
+main..zzz:          空(zzz 无 main 没有的 commit)
+zzz..main:          18 个 commit(main 已有 zzz 全部内容)
+```
+
+合并点:`6bca742 merge origin/feature/creation-contest-demo → ww`(09-28 已合并)
+后续 `400508a`、`47eee1b`、`8ad2d8b` 等 commit 都在 zzz 之后。
+
+**结论**:**删除安全**——zzz 没有 main 没有的独立工作。
+
+### 操作
+```bash
+git push origin --delete zzz   # 删远程
+git branch -D zzz               # 删本地(强制,-D 因为 zzz 是 orphan)
+```
+
+### 收工快照(预计)
+- 本地分支:`main`、`ww`、`feature/authentication-foundation`(本地无)
+- 远程分支:`main`、`ww`、`feature/authentication-foundation`、`feature/creation-contest-demo`(孤儿,待评估)
