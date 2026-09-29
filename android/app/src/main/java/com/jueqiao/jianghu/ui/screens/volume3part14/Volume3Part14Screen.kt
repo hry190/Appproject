@@ -3,6 +3,7 @@ package com.jueqiao.jianghu.ui.screens.volume3part14
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,6 +50,7 @@ import com.jueqiao.jianghu.R
 @Composable
 fun Volume3Part14Screen(
     onBack: () -> Unit = {},
+    onOpenWushuhuan: () -> Unit = {},
 ) {
     BackHandler(enabled = true) { onBack() }
 
@@ -87,7 +89,7 @@ fun Volume3Part14Screen(
                 .windowInsetsPadding(WindowInsets.navigationBars),
         ) {
             // 标题"多感和参"(字号 24,bold,黑色,X=110, Y=67, W=192, H=32)— 与 Vol-3-12/3-13 同款。
-            // 本屏暂无后继页,故未接 clickable(等 Vol-3-15 创建时按历次约定回填 onOpenVolume3Part15)。
+            // 点击标题跳转到悟书环(2026-09-29 §31)。
             Text(
                 text = "多感和参",
                 color = Color.Black,
@@ -95,7 +97,8 @@ fun Volume3Part14Screen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .offset(x = 110.dp, y = 67.dp)
-                    .size(width = 192.dp, height = 32.dp),
+                    .size(width = 192.dp, height = 32.dp)
+                    .clickable(onClick = onOpenWushuhuan),
             )
 
             // 图1(image 346.png,X=18, Y=135, W=355, H=327)— 在书框之上、上部。

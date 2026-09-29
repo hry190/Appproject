@@ -1380,7 +1380,10 @@ actions = Houshan1Actions(
             )
         }
         composable(Routes.Volume3Part14) {
-            Volume3Part14Screen(onBack = { navController.popBackStack() })
+            Volume3Part14Screen(
+                onBack = { navController.popBackStack() },
+                onOpenWushuhuan = { navController.navigateSingleTop(Routes.Wushuhuan) },
+            )
         }
         composable(Routes.Gunlun7) {
             Gunlun7Screen(
