@@ -233,6 +233,59 @@ git branch -D zzz               # 删本地(强制,-D 因为 zzz 是 orphan)
 - ✅ compileDebugKotlin:BUILD SUCCESSFUL in 29s
 - ⏳ 视觉验证(用户自行):每卷最后一页点卷尾按钮 → 进悟书环
 
-### 收工快照
+### 收工快照(预计)
 - HEAD(ww):`<待回填>`
 - working tree:本笔 commit 后 clean
+
+---
+
+## §31 12:45 — Vol3-14 标题点击跳转悟书环(续 §30,补 Vol3)
+
+**用户指令**:"点击vol3-14的页面的标题也要可以跳转到悟书环页面"
+
+### 背景
+- §30 把"卷最后一页的滚轮跳转"改为悟书环,但 `Volume3Part14Screen` 原本就没有 onOpenGunlun 字段(单行定义),无法触发跳转
+- 用户要求:Vol3-14 页面**标题**也能跳悟书环
+
+### 修改详情(2 文件)
+
+#### 1. `Volume3Part14Screen.kt`
+
+```kotlin
+// 加 import
++ import androidx.compose.foundation.clickable
+
+// 函数签名加参数
+fun Volume3Part14Screen(
+    onBack: () -> Unit = {},
++   onOpenWushuhuan: () -> Unit = {},
+)
+
+// 标题加 clickable(参考 Vol1Part14 line 91)
+Text(
+    text = "多感和参",
+    ...
+    modifier = Modifier
+        .offset(x = 110.dp, y = 67.dp)
+        .size(width = 192.dp, height = 32.dp)
++       .clickable(onClick = onOpenWushuhuan),
+)
+```
+
+#### 2. `JianghuNavHost.kt`
+
+```kotlin
+composable(Routes.Volume3Part14) {
+-   Volume3Part14Screen(onBack = { navController.popBackStack() })
++   Volume3Part14Screen(
++       onBack = { navController.popBackStack() },
++       onOpenWushuhuan = { navController.navigateSingleTop(Routes.Wushuhuan) },
++   )
+}
+```
+
+### 验证
+- ✅ compileDebugKotlin:BUILD SUCCESSFUL in 28s
+
+### 收工快照
+- HEAD(ww):`c2c39d5 feat(volume3-14): 标题点击跳转悟书环`(本笔待回填)
