@@ -129,3 +129,31 @@ UsbFfs tcp:8010 tcp:8010
 ### 收工快照
 - HEAD(ww):`<待回填>`
 - working tree:本笔 commit 后 clean
+
+---
+
+## §28 11:30 — fast-forward main 到 ww(悟书环 fix 同步)
+
+**用户指令**:"推到 main"
+
+### 拓扑
+- main HEAD:`519b60b docs(session-log): 09-28 §24`
+- ww HEAD:`8ad2d8b fix(wushuhuan): 悟书环 6 卷书籍图像重映射`
+- merge-base:`519b60b`(= main HEAD)
+- 结论:可 `--ff-only`
+
+### 同步的 1 笔
+- `8ad2d8b` fix(wushuhuan): 悟书环 6 卷书籍图像重映射(6-cycle)
+
+### 操作
+```bash
+git checkout main
+git merge --ff-only ww
+git push origin main
+```
+
+### 收工快照(预计)
+- HEAD(main):`8ad2d8b`
+- HEAD(ww):`8ad2d8b`
+- origin/main:push 后同步
+- working tree:clean
