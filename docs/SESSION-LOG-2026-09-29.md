@@ -85,3 +85,47 @@ UsbFfs tcp:8010 tcp:8010
 ## §26 待续
 
 如果今日继续调试/开发,在这里按 `## §N` 格式追加。
+
+---
+
+## §27 11:00 — 悟书环书籍图像 6-cycle 重映射
+
+**用户指令**:悟书环页面,6 卷书的图像与卷名不对应,按用户指定的 6-cycle 循环移位调整。
+
+### 修改详情
+
+**唯一改动文件**:`android/app/src/main/java/com/jueqiao/jianghu/ui/screens/wushuhuan/WushuhuanScreen.kt`(line 73-84,`bookSlots` List)
+
+6 个 `BookSlot.imageRes` 字段循环置换:
+| 卷号 | 当前 | 目标 |
+|---|---|---|
+| 3 | `img_wushuhuan_book_03` | **`img_wushuhuan_book_10`** |
+| 4 | `img_wushuhuan_book_04` | **`img_wushuhuan_book_09`** |
+| 5 | `img_wushuhuan_book_05` | **`img_wushuhuan_book_04`** |
+| 8 | `img_wushuhuan_book_08` | **`img_wushuhuan_book_03`** |
+| 9 | `img_wushuhuan_book_09` | **`img_wushuhuan_book_08`** |
+| 10 | `img_wushuhuan_book_10` | **`img_wushuhuan_book_05`** |
+
+跟随链(闭合 6-cycle):`3 → 10 → 5 → 4 → 9 → 8 → 3`
+
+其他 4 卷(1, 2, 6, 7)的 imageRes 不变。
+其他字段(x, y, width, height, rotation)全部不变。
+所有 `BookSlot` data class、点击跳转、卷名解析都不改。
+
+### 不动的东西
+- 10 个 PNG 文件本身(`res/drawable/img_wushuhuan_book_01.png` ~ `book_10.png`)—— 只是改了代码里的引用
+- `BookSlot` data class 定义
+- 卷名来源:`displayVolumeTitle()` 从 `LearningBookDto.volumeTitle` 解析(后端 API 动态)
+- 跳转逻辑:`onOpenReader(book.volumeNo, book.manualPageId, false)`(line 392)
+
+### 笔误修正
+用户原话"卷十←卷五《赏罚驭灵诀》"是笔误,确认后改为"卷五《百炼识物诀》"(因为卷五是《百炼识物诀》,卷八才是《赏罚驭灵诀》)。
+
+### 验证
+- ✅ 静态检查:`grep BookSlot(` 输出与映射表一致
+- ✅ 编译:`compileDebugKotlin` BUILD SUCCESSFUL in 25s(只改常量,不影响类型)
+- ⏳ 视觉验证:用户自行 installDebug + 截图确认
+
+### 收工快照
+- HEAD(ww):`<待回填>`
+- working tree:本笔 commit 后 clean

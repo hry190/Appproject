@@ -74,14 +74,14 @@ private val bookSlots = listOf(
     BookSlot(1, R.drawable.img_wushuhuan_book_01, 135.dp, 221.dp, 155.dp, 147.dp),
     BookSlot(2, R.drawable.img_wushuhuan_book_02, 8.dp, 205.dp, 96.dp, 96.dp),
     // 原稿把第 3 册裁出屏幕 21dp，导致实际可触范围不足 48dp；向内收齐以保证整本可点。
-    BookSlot(3, R.drawable.img_wushuhuan_book_03, 0.dp, 130.29.dp, 66.29.dp, 69.dp, -11.03f),
-    BookSlot(4, R.drawable.img_wushuhuan_book_04, 50.dp, 87.dp, 64.dp, 66.6.dp),
-    BookSlot(5, R.drawable.img_wushuhuan_book_05, 123.4.dp, 66.dp, 55.6.dp, 57.9.dp),
+    BookSlot(3, R.drawable.img_wushuhuan_book_10, 0.dp, 130.29.dp, 66.29.dp, 69.dp, -11.03f),
+    BookSlot(4, R.drawable.img_wushuhuan_book_09, 50.dp, 87.dp, 64.dp, 66.6.dp),
+    BookSlot(5, R.drawable.img_wushuhuan_book_04, 123.4.dp, 66.dp, 55.6.dp, 57.9.dp),
     BookSlot(6, R.drawable.img_wushuhuan_book_06, 198.dp, 69.dp, 42.62.dp, 38.41.dp),
     BookSlot(7, R.drawable.img_wushuhuan_book_07, 258.15.dp, 68.5.dp, 54.78.dp, 51.85.dp),
-    BookSlot(8, R.drawable.img_wushuhuan_book_08, 311.04.dp, 92.dp, 58.dp, 57.5.dp),
-    BookSlot(9, R.drawable.img_wushuhuan_book_09, 357.dp, 136.32.dp, 66.dp, 69.dp),
-    BookSlot(10, R.drawable.img_wushuhuan_book_10, 321.dp, 205.dp, 93.dp, 92.dp),
+    BookSlot(8, R.drawable.img_wushuhuan_book_03, 311.04.dp, 92.dp, 58.dp, 57.5.dp),
+    BookSlot(9, R.drawable.img_wushuhuan_book_08, 357.dp, 136.32.dp, 66.dp, 69.dp),
+    BookSlot(10, R.drawable.img_wushuhuan_book_05, 321.dp, 205.dp, 93.dp, 92.dp),
 )
 
 private const val BookCount = 10
