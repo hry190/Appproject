@@ -289,3 +289,37 @@ composable(Routes.Volume3Part14) {
 
 ### 收工快照
 - HEAD(ww):`c2c39d5 feat(volume3-14): 标题点击跳转悟书环`(本笔待回填)
+
+---
+
+## §32 13:00 — fast-forward main 到 ww(悟书环跳转代码同步到 main)
+
+**用户指令**:"推到 main"
+
+### 拓扑
+- main HEAD:`40920c7 docs(session-log): 09-28 §24 — fast-forward main 到 ww 计划`
+- ww HEAD:`2008864 docs(session-log): 09-29 §31`
+- merge-base:`40920c7`(= main HEAD)
+- 结论:可 `--ff-only`
+
+### 同步的 3 笔
+| SHA | 说明 |
+|---|---|
+| `2008864` | docs(session-log): 09-29 §31 Vol3-14 标题跳转悟书环 |
+| `c2c39d5` | feat(volume3-14): 标题点击跳转悟书环(2 文件代码) |
+| `588cfce` | fix(nav): 卷最后一页滚轮跳转改为跳转到悟书环(9 个 Volume) |
+
+注:`4861394`(§29 清理 zzz)也在 main..ww 范围,但本次同步一并带入(main 之前没收到这笔记 zzz 删除说明)。
+
+### 操作
+```bash
+git checkout main
+git merge --ff-only ww
+git push origin main
+```
+
+### 收工快照(预计)
+- HEAD(main):`2008864`
+- HEAD(ww):`2008864`
+- origin/main:push 后同步
+- working tree:clean
